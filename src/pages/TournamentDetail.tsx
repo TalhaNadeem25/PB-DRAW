@@ -9,10 +9,10 @@ import {
   Users,
   Trophy,
   Clock,
-  DollarSign,
   ArrowLeft,
   Share2,
   Heart,
+  Settings,
 } from "lucide-react";
 
 // Mock tournament data
@@ -128,7 +128,7 @@ const TournamentDetail = () => {
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-hero-gradient rounded-full"
+                          className="h-full bg-primary rounded-full"
                           style={{ width: `${(tournament.playerCount / tournament.maxPlayers) * 100}%` }}
                         />
                       </div>
@@ -173,7 +173,15 @@ const TournamentDetail = () => {
                               <div className="text-sm text-muted-foreground">Entry Fee</div>
                               <div className="font-display font-bold text-primary">${event.price}</div>
                             </div>
-                            <Button>Register</Button>
+                            <div className="flex gap-2">
+                              <Button asChild>
+                                <Link to={`/tournaments/${id}/events/${event.id}/pools`}>
+                                  <Settings className="w-4 h-4 mr-1" />
+                                  Manage
+                                </Link>
+                              </Button>
+                              <Button variant="outline">Register</Button>
+                            </div>
                           </div>
                         </div>
                       </div>
