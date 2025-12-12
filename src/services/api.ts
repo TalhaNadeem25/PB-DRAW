@@ -146,6 +146,11 @@ export const teamAPI = {
     return response.data;
   },
 
+  getMyTeams: async () => {
+    const response = await api.get('/teams', { params: { userId: 'me' } });
+    return response.data;
+  },
+
   getById: async (id: string) => {
     const response = await api.get(`/teams/${id}`);
     return response.data;
@@ -262,6 +267,44 @@ export const userAPI = {
   // Get tournament history (completed tournaments)
   getMyHistory: async () => {
     const response = await api.get('/tournaments', { params: { status: 'completed', participant: 'me' } });
+    return response.data;
+  },
+};
+
+// Invitations
+export const invitationAPI = {
+  send: async (teamId: string, data: { inviteeEmail: string; inviteeName?: string; message?: string }) => {
+    const response = await api.post(`/teams/${teamId}/invitations`, data);
+    return response.data;
+  },
+
+  getReceived: async () => {
+    const response = await api.get('/invitations', { params: { type: 'received' } });
+    return response.data;
+  },
+
+  getSent: async () => {
+    const response = await api.get('/invitations', { params: { type: 'sent' } });
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await api.get(`/invitations/${id}`);
+    return response.data;
+  },
+
+  accept: async (id: string) => {
+    const response = await api.put(`/invitations/${id}/accept`);
+    return response.data;
+  },
+
+  decline: async (id: string) => {
+    const response = await api.put(`/invitations/${id}/decline`);
+    return response.data;
+  },
+
+  cancel: async (id: string) => {
+    const response = await api.delete(`/invitations/${id}`);
     return response.data;
   },
 };

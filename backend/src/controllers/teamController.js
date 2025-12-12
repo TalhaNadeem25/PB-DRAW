@@ -1,14 +1,35 @@
 import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 
-// @desc    Get all teams for an event
-// @route   GET /api/events/:eventId/teams
+// @desc    Get all teams for an event OR for current user
+// @route   GET /api/events/:eventId/teams OR GET /api/teams?userId=me
 // @access  Public
 export const getTeams = async (req, res, next) => {
   try {
-    const teams = await Team.find({ event: req.params.eventId })
+    let query = {};
+
+    // If eventId is provided in params, filter by event
+    if (req.params.eventId) {
+      query.event = req.params.eventId;
+    }
+
+    // If userId=me query param, filter by current user's teams
+    if (req.query.userId === 'me' && req.user) {
+      query.players = req.user.id;
+    }
+
+    const teams = await Team.find(query)
       .populate('players', 'name email skillLevel')
-      .populate('pool', 'name');
+      .populate('pool', 'name')
+      .populate({
+        path: 'event',
+        select: 'name format playFormat skillLevel tournament',
+        populate: {
+          path: 'tournament',
+          select: 'name location startDate endDate'
+        }
+      })
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,

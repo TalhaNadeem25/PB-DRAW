@@ -133,6 +133,21 @@ export const updateMatchScore = async (req, res, next) => {
       await team2.save();
     }
 
+    // Playoff bracket advancement logic
+    if (match.bracket === 'semifinals' && match.status === 'completed' && match.winner) {
+      // Find the finals match and advance the winner
+      const finalsMatch = await Match.findOne({
+        event: match.event._id,
+        pool: match.pool,
+        bracket: 'finals'
+      });
+
+      if (finalsMatch && !finalsMatch.team2) {
+        finalsMatch.team2 = match.winner;
+        await finalsMatch.save();
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: 'Match score updated successfully',

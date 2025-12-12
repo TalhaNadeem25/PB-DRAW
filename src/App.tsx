@@ -10,11 +10,13 @@ import Tournaments from "./pages/Tournaments";
 import TournamentDetail from "./pages/TournamentDetail";
 import CreateTournament from "./pages/CreateTournament";
 import PoolManagement from "./pages/PoolManagement";
+import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import EditTournament from "./pages/EditTournament";
+import Teams from "./pages/Teams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,8 +48,17 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/teams"
+              element={
+                <ProtectedRoute>
+                  <Teams />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/tournaments" element={<Tournaments />} />
             <Route path="/tournaments/:id" element={<TournamentDetail />} />
+            <Route path="/tournaments/:id/register" element={<Register />} />
             <Route
               path="/tournaments/:id/edit"
               element={

@@ -314,8 +314,10 @@ const TournamentDetail = () => {
                   </div>
                 )}
                 {tournament.status === 'open' && !isOrganizer && (
-                  <Button variant="accent" size="lg">
-                    Register Now
+                  <Button variant="accent" size="lg" asChild>
+                    <Link to={`/tournaments/${id}/register`}>
+                      Register Now
+                    </Link>
                   </Button>
                 )}
               </div>

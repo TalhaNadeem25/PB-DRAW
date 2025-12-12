@@ -17,6 +17,7 @@ import poolRoutes from './routes/poolRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import matchRoutes from './routes/matchRoutes.js';
 import playoffRoutes from './routes/playoffRoutes.js';
+import invitationRoutes from './routes/invitationRoutes.js';
 
 // Initialize Express app
 const app = express();
@@ -60,12 +61,14 @@ app.use('/api/events/:eventId/pools', poolRoutes);
 app.use('/api/events/:eventId/teams', teamRoutes);
 app.use('/api/events/:eventId/playoffs', playoffRoutes);
 app.use('/api/pools/:poolId/matches', matchRoutes);
+app.use('/api/teams/:teamId/invitations', invitationRoutes);
 
 // Standalone routes for direct access
 app.use('/api/events', eventRoutes);
 app.use('/api/pools', poolRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/invitations', invitationRoutes);
 
 // Error handling
 app.use(notFound);

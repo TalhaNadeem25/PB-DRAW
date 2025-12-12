@@ -64,9 +64,21 @@ teamSchema.pre('save', async function(next) {
   if (this.isModified('players')) {
     const event = await mongoose.model('Event').findById(this.event);
     if (event) {
-      const requiredPlayers = event.format === 'singles' ? 1 : 2;
-      if (this.players.length !== requiredPlayers) {
-        throw new Error(`${event.format} requires exactly ${requiredPlayers} player(s)`);
+      const maxPlayers = event.format === 'singles' ? 1 : 2;
+
+      // Require at least 1 player
+      if (this.players.length < 1) {
+        throw new Error('Team must have at least 1 player');
+      }
+
+      // For singles, must have exactly 1 player
+      if (event.format === 'singles' && this.players.length !== 1) {
+        throw new Error('Singles events require exactly 1 player');
+      }
+
+      // For doubles/mixed, allow 1-2 players (partial teams allowed until partner is added)
+      if (event.format !== 'singles' && this.players.length > maxPlayers) {
+        throw new Error(`${event.format} allows a maximum of ${maxPlayers} players`);
       }
     }
   }
