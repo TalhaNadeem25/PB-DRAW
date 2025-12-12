@@ -1,18 +1,20 @@
 // Tournament and Pool Management Types
 
 export type SkillLevel = "2.5" | "3.0" | "3.5" | "4.0" | "4.5" | "5.0" | "Open";
-export type EventFormat = "Singles" | "Doubles" | "Mixed Doubles";
+export type GameType = "Singles" | "Doubles" | "Mixed Doubles";
+export type TournamentFormat = "Round-Robin" | "Single Elimination" | "Double Elimination" | "Pool Play" | "Swiss";
 export type TournamentStatus = "draft" | "open" | "closed" | "in-progress" | "completed";
 export type MatchStatus = "pending" | "in-progress" | "completed";
 
 export interface TournamentEvent {
   id: string;
   name: string;
-  format: EventFormat;
+  gameType: GameType;
+  format: TournamentFormat;
   skillLevel: SkillLevel;
-  maxTeams: number;
+  maxPlayers: number;
   entryFee: number;
-  registeredTeams: number;
+  registeredPlayers: number;
 }
 
 export interface Tournament {

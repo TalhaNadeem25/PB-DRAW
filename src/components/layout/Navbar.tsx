@@ -1,12 +1,29 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    setIsOpen(false);
+  };
 
   const navLinks = [
     { href: "/tournaments", label: "Find Tournaments" },
@@ -48,18 +65,62 @@ const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">
-                <LogIn className="w-4 h-4 mr-1" />
-                Log In
-              </Link>
-            </Button>
-            <Button variant="default" size="sm" asChild>
-              <Link to="/signup">
-                <User className="w-4 h-4 mr-1" />
-                Sign Up
-              </Link>
-            </Button>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <UserCircle className="w-4 h-4" />
+                    <span>{user?.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {user?.role} • {user?.skillLevel} skill
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  {(user?.role === 'organizer' || user?.role === 'admin') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/create-tournament">Create Tournament</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">
+                    <LogIn className="w-4 h-4 mr-1" />
+                    Log In
+                  </Link>
+                </Button>
+                <Button variant="default" size="sm" asChild>
+                  <Link to="/signup">
+                    <User className="w-4 h-4 mr-1" />
+                    Sign Up
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -90,18 +151,40 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="pt-3 border-t border-border flex flex-col gap-2">
-              <Button variant="ghost" size="sm" asChild className="justify-start">
-                <Link to="/login" onClick={() => setIsOpen(false)}>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Log In
-                </Link>
-              </Button>
-              <Button variant="default" size="sm" asChild>
-                <Link to="/signup" onClick={() => setIsOpen(false)}>
-                  <User className="w-4 h-4 mr-2" />
-                  Sign Up
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <div className="py-2 px-3 bg-accent rounded-lg">
+                    <p className="text-sm font-medium">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  </div>
+                  {(user?.role === 'organizer' || user?.role === 'admin') && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/create-tournament" onClick={() => setIsOpen(false)}>
+                        Create Tournament
+                      </Link>
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={handleLogout} className="justify-start text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Log Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" asChild className="justify-start">
+                    <Link to="/login" onClick={() => setIsOpen(false)}>
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Log In
+                    </Link>
+                  </Button>
+                  <Button variant="default" size="sm" asChild>
+                    <Link to="/signup" onClick={() => setIsOpen(false)}>
+                      <User className="w-4 h-4 mr-2" />
+                      Sign Up
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

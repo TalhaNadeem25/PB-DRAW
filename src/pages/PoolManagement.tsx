@@ -1,25 +1,13 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -27,197 +15,204 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  ArrowLeft,
-  Plus,
-  Users,
-  Trophy,
-  Shuffle,
-  Save,
-  Edit2,
-  Check,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Plus, Users, Trophy, Shuffle, Loader2, AlertCircle, Edit2, Check, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Pool,
-  Team,
-  Match,
-  generateRoundRobinMatches,
-  calculateStandings,
-} from "@/types/tournament";
-
-// Mock event data
-const mockEvent = {
-  id: "1",
-  name: "Men's Singles",
-  format: "Singles" as const,
-  skillLevel: "4.0" as const,
-  maxTeams: 32,
-  entryFee: 50,
-  registeredTeams: 16,
-};
-
-// Mock teams
-const mockTeams: Team[] = [
-  { id: "t1", name: "John Smith", players: ["John Smith"], seed: 1 },
-  { id: "t2", name: "Mike Johnson", players: ["Mike Johnson"], seed: 2 },
-  { id: "t3", name: "David Williams", players: ["David Williams"], seed: 3 },
-  { id: "t4", name: "James Brown", players: ["James Brown"], seed: 4 },
-  { id: "t5", name: "Robert Davis", players: ["Robert Davis"], seed: 5 },
-  { id: "t6", name: "Chris Miller", players: ["Chris Miller"], seed: 6 },
-  { id: "t7", name: "Tom Wilson", players: ["Tom Wilson"], seed: 7 },
-  { id: "t8", name: "Alex Taylor", players: ["Alex Taylor"], seed: 8 },
-];
+import { eventAPI, poolAPI, teamAPI, matchAPI, playoffAPI } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PoolManagement = () => {
   const { id, eventId } = useParams();
-  const [pools, setPools] = useState<Pool[]>([]);
-  const [selectedPool, setSelectedPool] = useState<Pool | null>(null);
-  const [unassignedTeams, setUnassignedTeams] = useState<Team[]>(mockTeams);
-  const [editingMatch, setEditingMatch] = useState<string | null>(null);
-  const [editScores, setEditScores] = useState({ team1: "", team2: "" });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
   const [newPoolName, setNewPoolName] = useState("");
   const [isCreatePoolOpen, setIsCreatePoolOpen] = useState(false);
+  const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
+  const [editingMatch, setEditingMatch] = useState<string | null>(null);
+  const [editScores, setEditScores] = useState({ team1Score: 0, team2Score: 0 });
+
+  // Fetch event data with teams and pools
+  const { data: eventData, isLoading: eventLoading } = useQuery({
+    queryKey: ['event', eventId],
+    queryFn: () => eventAPI.getById(eventId!),
+    enabled: !!eventId,
+  });
+
+  const { data: teamsData } = useQuery({
+    queryKey: ['teams', eventId],
+    queryFn: () => teamAPI.getByEvent(eventId!),
+    enabled: !!eventId,
+  });
+
+  const { data: poolsData } = useQuery({
+    queryKey: ['pools', eventId],
+    queryFn: () => poolAPI.getByEvent(eventId!),
+    enabled: !!eventId,
+  });
+
+  // Fetch playoffs for selected pool
+  const { data: playoffsData } = useQuery({
+    queryKey: ['playoffs', eventId, selectedPoolId],
+    queryFn: () => playoffAPI.get(eventId!, selectedPoolId!),
+    enabled: !!eventId && !!selectedPoolId,
+  });
+
+  const event = eventData?.data;
+  const teams = teamsData?.data || [];
+  const pools = poolsData?.data || [];
+  const playoffs = playoffsData?.data || [];
+
+  // Get unassigned teams (teams without a pool)
+  const unassignedTeams = teams.filter((team: any) => !team.pool);
+
+  // Create pool mutation
+  const createPoolMutation = useMutation({
+    mutationFn: (data: any) => poolAPI.create(eventId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      setNewPoolName("");
+      setIsCreatePoolOpen(false);
+      toast.success("Pool created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create pool");
+    },
+  });
+
+  // Add team to pool mutation
+  const addTeamToPoolMutation = useMutation({
+    mutationFn: ({ poolId, teamId }: { poolId: string; teamId: string }) =>
+      poolAPI.addTeams(poolId, [teamId]),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['teams', eventId] });
+      toast.success("Team added to pool successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to add team to pool");
+    },
+  });
+
+  const handleAssignTeamToPool = (teamId: string, poolId: string) => {
+    if (!poolId) return;
+    addTeamToPoolMutation.mutate({ poolId, teamId });
+  };
+
+  // Remove team from pool mutation
+  const removeTeamFromPoolMutation = useMutation({
+    mutationFn: async ({ teamId, poolId }: { teamId: string; poolId: string }) => {
+      // Remove team from pool by setting pool to null
+      await teamAPI.removeFromPool(teamId);
+      // Update pool to remove team from teams array and regenerate matches
+      const pool = pools.find((p: any) => p._id === poolId);
+      if (pool) {
+        const updatedTeams = pool.teams
+          .map((t: any) => t._id || t)
+          .filter((tid: string) => tid !== teamId);
+        return poolAPI.update(poolId, { teams: updatedTeams });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['teams', eventId] });
+      toast.success("Team removed from pool successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to remove team from pool");
+    },
+  });
+
+  const handleRemoveTeamFromPool = (teamId: string, poolId: string) => {
+    removeTeamFromPoolMutation.mutate({ teamId, poolId });
+  };
+
+  // Update match score mutation
+  const updateMatchScoreMutation = useMutation({
+    mutationFn: ({ matchId, scores }: any) => matchAPI.updateScore(matchId, scores),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['teams', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['playoffs', eventId, selectedPoolId] });
+      setEditingMatch(null);
+      toast.success("Score updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update score");
+    },
+  });
+
+  // Generate playoffs mutation (per pool)
+  const generatePlayoffsMutation = useMutation({
+    mutationFn: (poolId: string) => playoffAPI.generate(eventId!, poolId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      toast.success(data.message || "Playoff bracket generated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to generate playoffs");
+    },
+  });
 
   const createPool = () => {
     if (!newPoolName) {
       toast.error("Please enter a pool name");
       return;
     }
-    const newPool: Pool = {
-      id: `pool-${Date.now()}`,
+
+    createPoolMutation.mutate({
       name: newPoolName,
-      eventId: eventId || "1",
-      teams: [],
-      matches: [],
-      standings: [],
-    };
-    setPools([...pools, newPool]);
-    setNewPoolName("");
-    setIsCreatePoolOpen(false);
-    toast.success(`Pool "${newPoolName}" created`);
-  };
-
-  const autoGeneratePools = () => {
-    if (unassignedTeams.length < 4) {
-      toast.error("Need at least 4 teams to generate pools");
-      return;
-    }
-
-    const numPools = Math.ceil(unassignedTeams.length / 4);
-    const newPools: Pool[] = [];
-    const shuffled = [...unassignedTeams].sort(() => Math.random() - 0.5);
-
-    for (let i = 0; i < numPools; i++) {
-      const poolTeams = shuffled.slice(i * 4, (i + 1) * 4);
-      const pool: Pool = {
-        id: `pool-${Date.now()}-${i}`,
-        name: `Pool ${String.fromCharCode(65 + i)}`,
-        eventId: eventId || "1",
-        teams: poolTeams,
-        matches: generateRoundRobinMatches(`pool-${Date.now()}-${i}`, poolTeams),
-        standings: calculateStandings(poolTeams, []),
-      };
-      newPools.push(pool);
-    }
-
-    setPools(newPools);
-    setUnassignedTeams([]);
-    toast.success(`Generated ${numPools} pools with ${shuffled.length} teams`);
-  };
-
-  const addTeamToPool = (poolId: string, team: Team) => {
-    setPools(
-      pools.map((pool) => {
-        if (pool.id === poolId) {
-          const newTeams = [...pool.teams, team];
-          const newMatches = generateRoundRobinMatches(poolId, newTeams);
-          return {
-            ...pool,
-            teams: newTeams,
-            matches: newMatches,
-            standings: calculateStandings(newTeams, newMatches),
-          };
-        }
-        return pool;
-      })
-    );
-    setUnassignedTeams(unassignedTeams.filter((t) => t.id !== team.id));
-  };
-
-  const removeTeamFromPool = (poolId: string, team: Team) => {
-    setPools(
-      pools.map((pool) => {
-        if (pool.id === poolId) {
-          const newTeams = pool.teams.filter((t) => t.id !== team.id);
-          const newMatches = generateRoundRobinMatches(poolId, newTeams);
-          return {
-            ...pool,
-            teams: newTeams,
-            matches: newMatches,
-            standings: calculateStandings(newTeams, newMatches),
-          };
-        }
-        return pool;
-      })
-    );
-    setUnassignedTeams([...unassignedTeams, team]);
-  };
-
-  const startEditScore = (match: Match) => {
-    setEditingMatch(match.id);
-    setEditScores({
-      team1: match.team1Score?.toString() || "",
-      team2: match.team2Score?.toString() || "",
+      teamIds: [],
     });
   };
 
-  const saveScore = (poolId: string, matchId: string) => {
-    const score1 = parseInt(editScores.team1);
-    const score2 = parseInt(editScores.team2);
-
-    if (isNaN(score1) || isNaN(score2)) {
+  const saveScore = (matchId: string) => {
+    if (editScores.team1Score === 0 && editScores.team2Score === 0) {
       toast.error("Please enter valid scores");
       return;
     }
 
-    setPools(
-      pools.map((pool) => {
-        if (pool.id === poolId) {
-          const newMatches = pool.matches.map((match) => {
-            if (match.id === matchId) {
-              return {
-                ...match,
-                team1Score: score1,
-                team2Score: score2,
-                status: "completed" as const,
-                winner: score1 > score2 ? match.team1.id : match.team2.id,
-              };
-            }
-            return match;
-          });
-          return {
-            ...pool,
-            matches: newMatches,
-            standings: calculateStandings(pool.teams, newMatches),
-          };
-        }
-        return pool;
-      })
-    );
-
-    setEditingMatch(null);
-    toast.success("Score saved");
+    updateMatchScoreMutation.mutate({
+      matchId,
+      scores: {
+        team1Score: editScores.team1Score,
+        team2Score: editScores.team2Score,
+        status: 'completed',
+      },
+    });
   };
+
+  if (eventLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading pool management...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!event) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Event Not Found</h2>
+            <Button onClick={() => navigate(`/tournaments/${id}`)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Tournament
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const selectedPool = pools.find((p: any) => p._id === selectedPoolId);
 
   return (
     <Layout>
@@ -238,20 +233,16 @@ const PoolManagement = () => {
                   Pool Play
                 </Badge>
                 <h1 className="text-4xl font-display font-bold text-primary-foreground">
-                  {mockEvent.name}
+                  {event.name}
                 </h1>
                 <p className="text-primary-foreground/80 mt-1">
                   Manage pools, matches, and scores
                 </p>
               </div>
               <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                <Button variant="glass" onClick={autoGeneratePools}>
-                  <Shuffle className="w-4 h-4 mr-2" />
-                  Auto Generate Pools
-                </Button>
                 <Dialog open={isCreatePoolOpen} onOpenChange={setIsCreatePoolOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="accent">
+                    <Button variant="glass">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Pool
                     </Button>
@@ -259,9 +250,7 @@ const PoolManagement = () => {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Create New Pool</DialogTitle>
-                      <DialogDescription>
-                        Enter a name for your new pool
-                      </DialogDescription>
+                      <DialogDescription>Enter a name for the new pool</DialogDescription>
                     </DialogHeader>
                     <Input
                       placeholder="e.g., Pool A"
@@ -272,7 +261,9 @@ const PoolManagement = () => {
                       <Button variant="outline" onClick={() => setIsCreatePoolOpen(false)}>
                         Cancel
                       </Button>
-                      <Button onClick={createPool}>Create Pool</Button>
+                      <Button onClick={createPool} disabled={createPoolMutation.isPending}>
+                        {createPoolMutation.isPending ? "Creating..." : "Create"}
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -281,55 +272,78 @@ const PoolManagement = () => {
           </div>
         </div>
 
+        {/* Content */}
         <div className="container mx-auto px-4 py-8">
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Unassigned Teams Sidebar */}
-            <div className="lg:col-span-1">
-              <Card className="sticky top-24">
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Pools List */}
+            <div className="space-y-4">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Users className="w-5 h-5 text-primary" />
-                    Unassigned Teams
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-primary" />
+                    Pools ({pools.length})
                   </CardTitle>
-                  <CardDescription>
-                    {unassignedTeams.length} teams waiting
-                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {pools.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No pools created yet</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {pools.map((pool: any) => (
+                        <Button
+                          key={pool._id}
+                          variant={selectedPoolId === pool._id ? "default" : "outline"}
+                          className="w-full justify-start"
+                          onClick={() => setSelectedPoolId(pool._id)}
+                        >
+                          {pool.name}
+                          <Badge variant="secondary" className="ml-auto">
+                            {pool.teams?.length || 0} teams
+                          </Badge>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-primary" />
+                    Unassigned Teams ({unassignedTeams.length})
+                  </CardTitle>
+                  <CardDescription>Teams not in any pool</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {unassignedTeams.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      All teams assigned to pools
-                    </p>
+                    <p className="text-sm text-muted-foreground text-center py-4">All teams assigned</p>
                   ) : (
                     <div className="space-y-2">
-                      {unassignedTeams.map((team) => (
+                      {unassignedTeams.map((team: any) => (
                         <div
-                          key={team.id}
-                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                          key={team._id}
+                          className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border"
                         >
-                          <div>
-                            <span className="font-medium text-sm">{team.name}</span>
-                            {team.seed && (
-                              <Badge variant="outline" className="ml-2 text-xs">
-                                #{team.seed}
-                              </Badge>
-                            )}
-                          </div>
-                          {pools.length > 0 && (
+                          <span className="font-medium text-sm flex-1">{team.name}</span>
+                          {pools.length > 0 ? (
                             <Select
-                              onValueChange={(poolId) => addTeamToPool(poolId, team)}
+                              onValueChange={(poolId) => handleAssignTeamToPool(team._id, poolId)}
+                              disabled={addTeamToPoolMutation.isPending}
                             >
-                              <SelectTrigger className="w-24 h-8 text-xs">
-                                <SelectValue placeholder="Add to" />
+                              <SelectTrigger className="w-32 h-8 text-xs">
+                                <SelectValue placeholder="Assign to" />
                               </SelectTrigger>
                               <SelectContent>
-                                {pools.map((pool) => (
-                                  <SelectItem key={pool.id} value={pool.id}>
+                                {pools.map((pool: any) => (
+                                  <SelectItem key={pool._id} value={pool._id}>
                                     {pool.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No pools</span>
                           )}
                         </div>
                       ))}
@@ -339,259 +353,620 @@ const PoolManagement = () => {
               </Card>
             </div>
 
-            {/* Pools Grid */}
+            {/* Pool Details */}
             <div className="lg:col-span-3">
-              {pools.length === 0 ? (
-                <Card className="py-16">
-                  <CardContent className="text-center">
-                    <Trophy className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-                    <h3 className="text-xl font-display font-bold mb-2">
-                      No Pools Created
-                    </h3>
-                    <p className="text-muted-foreground mb-6">
-                      Create pools manually or auto-generate them from registered teams
-                    </p>
-                    <div className="flex gap-3 justify-center">
-                      <Button variant="outline" onClick={() => setIsCreatePoolOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Pool
-                      </Button>
-                      <Button onClick={autoGeneratePools}>
-                        <Shuffle className="w-4 h-4 mr-2" />
-                        Auto Generate
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-8">
-                  {pools.map((pool) => (
-                    <Card key={pool.id} className="animate-fade-in">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-hero-gradient flex items-center justify-center text-primary-foreground font-bold">
-                              {pool.name.charAt(pool.name.length - 1)}
-                            </div>
-                            {pool.name}
-                          </CardTitle>
-                          <Badge variant="outline">
-                            {pool.teams.length} Teams • {pool.matches.length} Matches
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        {/* Teams */}
-                        <div>
-                          <h4 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">
-                            Teams
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {pool.teams.map((team) => (
-                              <Badge
-                                key={team.id}
-                                variant="secondary"
-                                className="py-1.5 px-3 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                                onClick={() => removeTeamFromPool(pool.id, team)}
-                              >
-                                {team.name}
-                                {team.seed && (
-                                  <span className="ml-1 opacity-60">#{team.seed}</span>
-                                )}
-                                <X className="w-3 h-3 ml-1" />
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Standings */}
-                        {pool.teams.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">
-                              Standings
-                            </h4>
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-12">#</TableHead>
-                                  <TableHead>Team</TableHead>
-                                  <TableHead className="text-center">W</TableHead>
-                                  <TableHead className="text-center">L</TableHead>
-                                  <TableHead className="text-center">PF</TableHead>
-                                  <TableHead className="text-center">PA</TableHead>
-                                  <TableHead className="text-center">+/-</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {pool.standings.map((standing, idx) => (
-                                  <TableRow key={standing.team.id}>
-                                    <TableCell className="font-bold">{idx + 1}</TableCell>
-                                    <TableCell className="font-medium">
-                                      {standing.team.name}
-                                    </TableCell>
-                                    <TableCell className="text-center text-primary font-semibold">
-                                      {standing.wins}
-                                    </TableCell>
-                                    <TableCell className="text-center text-destructive">
-                                      {standing.losses}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {standing.pointsFor}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {standing.pointsAgainst}
-                                    </TableCell>
-                                    <TableCell
-                                      className={`text-center font-semibold ${
-                                        standing.pointDifferential > 0
-                                          ? "text-primary"
-                                          : standing.pointDifferential < 0
-                                          ? "text-destructive"
-                                          : ""
-                                      }`}
-                                    >
-                                      {standing.pointDifferential > 0 ? "+" : ""}
-                                      {standing.pointDifferential}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
+              {selectedPool ? (
+                <div className="space-y-6">
+                  {/* Standings */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>Standings - {selectedPool.name}</CardTitle>
+                        {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
+                          <Button
+                            onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
+                            disabled={generatePlayoffsMutation.isPending}
+                            size="sm"
+                          >
+                            {generatePlayoffsMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Trophy className="w-4 h-4 mr-2" />
+                                Generate Playoffs
+                              </>
+                            )}
+                          </Button>
                         )}
-
-                        {/* Matches */}
-                        {pool.matches.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">
-                              Matches
-                            </h4>
-                            <div className="space-y-2">
-                              {pool.matches.map((match) => (
-                                <div
-                                  key={match.id}
-                                  className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border"
-                                >
-                                  <div className="flex items-center gap-4 flex-1">
-                                    <div
-                                      className={`flex-1 text-right font-medium ${
-                                        match.winner === match.team1.id
-                                          ? "text-primary"
-                                          : ""
-                                      }`}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {selectedPool.teams && selectedPool.teams.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-12">#</TableHead>
+                              <TableHead>Team</TableHead>
+                              <TableHead className="text-center">W</TableHead>
+                              <TableHead className="text-center">L</TableHead>
+                              <TableHead className="text-center">PF</TableHead>
+                              <TableHead className="text-center">PA</TableHead>
+                              <TableHead className="text-center">Diff</TableHead>
+                              <TableHead className="w-12">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {selectedPool.teams
+                              .sort((a: any, b: any) => {
+                                const aDiff = (a.stats?.wins || 0) - (a.stats?.losses || 0);
+                                const bDiff = (b.stats?.wins || 0) - (b.stats?.losses || 0);
+                                return bDiff - aDiff || (b.stats?.pointDifferential || 0) - (a.stats?.pointDifferential || 0);
+                              })
+                              .map((team: any, index: number) => (
+                                <TableRow key={team._id}>
+                                  <TableCell className="font-medium">{index + 1}</TableCell>
+                                  <TableCell className="font-medium">{team.name}</TableCell>
+                                  <TableCell className="text-center">{team.stats?.wins || 0}</TableCell>
+                                  <TableCell className="text-center">{team.stats?.losses || 0}</TableCell>
+                                  <TableCell className="text-center">{team.stats?.pointsFor || 0}</TableCell>
+                                  <TableCell className="text-center">{team.stats?.pointsAgainst || 0}</TableCell>
+                                  <TableCell className="text-center">{team.stats?.pointDifferential || 0}</TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleRemoveTeamFromPool(team._id, selectedPool._id)}
+                                      disabled={removeTeamFromPoolMutation.isPending}
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      title="Remove from pool"
                                     >
-                                      {match.team1.name}
-                                    </div>
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-8">No teams in this pool yet</p>
+                      )}
+                    </CardContent>
+                  </Card>
 
-                                    {editingMatch === match.id ? (
+                  {/* Game Format Info */}
+                  <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                          <Trophy className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-display font-bold text-lg">
+                              {event.playFormat ? event.playFormat.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Round Robin'}
+                            </h3>
+                            <Badge variant="secondary" className="capitalize">
+                              {event.format.replace('-', ' ')} Game
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {event.playFormat === 'round-robin' && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
+                            {event.playFormat === 'single-elimination' && "Single elimination bracket - lose once and you're out. Winner advances to the next round."}
+                            {event.playFormat === 'double-elimination' && "Teams must lose twice to be eliminated. Includes a winners bracket and a losers bracket."}
+                            {event.playFormat === 'pool-play' && "Pool play followed by playoffs. Top teams from each pool advance to elimination rounds."}
+                            {event.playFormat === 'swiss' && "Swiss system - teams are paired based on their current record. No elimination until final rounds."}
+                            {!event.playFormat && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Matches */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>Matches</CardTitle>
+                          <CardDescription>
+                            {event.playFormat === 'round-robin' || !event.playFormat
+                              ? "All teams play each other once in pool play"
+                              : event.playFormat === 'single-elimination'
+                              ? "Bracket matches - win to advance"
+                              : event.playFormat === 'double-elimination'
+                              ? "Winners and losers bracket matches"
+                              : "Matches based on current standings"}
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {selectedPool.matches && selectedPool.matches.length > 0 ? (
+                        <div className="space-y-4">
+                          {selectedPool.matches.map((match: any, index: number) => {
+                            const isSingles = event.format === 'singles';
+                            const isCompleted = match.status === 'completed';
+                            const playFormat = event.playFormat || 'round-robin';
+
+                            return (
+                              <div
+                                key={match._id}
+                                className={`p-4 rounded-lg border-2 transition-colors ${
+                                  isCompleted
+                                    ? 'bg-muted/50 border-muted'
+                                    : 'bg-card border-border hover:border-primary/50'
+                                }`}
+                              >
+                                {/* Match Header */}
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    {playFormat === 'single-elimination' || playFormat === 'double-elimination' ? (
+                                      <>
+                                        <Badge variant="secondary">
+                                          {match.bracket ? `${match.bracket.charAt(0).toUpperCase() + match.bracket.slice(1)} Bracket` : `Round ${match.round || 1}`}
+                                        </Badge>
+                                        <Badge variant="outline">Match #{match.matchNumber || index + 1}</Badge>
+                                      </>
+                                    ) : playFormat === 'swiss' ? (
+                                      <Badge variant="secondary">Round {match.round || 1} - Match {index + 1}</Badge>
+                                    ) : (
+                                      <Badge variant="secondary">Match {index + 1}</Badge>
+                                    )}
+                                    {isCompleted && (
+                                      <Badge variant="default" className="bg-green-500">Completed</Badge>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Match Content */}
+                                <div className="grid grid-cols-[2fr_1fr_2fr] gap-4 items-center">
+                                  {/* Team 1 */}
+                                  <div className="text-right">
+                                    <div className="font-bold text-lg mb-1">
+                                      {match.team1?.name || "Team 1"}
+                                    </div>
+                                    {!isSingles && match.team1?.players && (
+                                      <div className="text-sm text-muted-foreground">
+                                        {match.team1.players.map((p: any, i: number) => (
+                                          <div key={i}>{p.name || `Player ${i + 1}`}</div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Score */}
+                                  <div className="flex flex-col items-center gap-2">
+                                    {editingMatch === match._id ? (
                                       <div className="flex items-center gap-2">
                                         <Input
                                           type="number"
-                                          className="w-16 text-center"
-                                          value={editScores.team1}
+                                          className="w-16 text-center text-xl font-bold"
+                                          value={editScores.team1Score}
                                           onChange={(e) =>
-                                            setEditScores({
-                                              ...editScores,
-                                              team1: e.target.value,
-                                            })
+                                            setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })
                                           }
+                                          min="0"
+                                          max="21"
                                         />
-                                        <span className="text-muted-foreground">-</span>
+                                        <span className="text-lg font-bold">-</span>
                                         <Input
                                           type="number"
-                                          className="w-16 text-center"
-                                          value={editScores.team2}
+                                          className="w-16 text-center text-xl font-bold"
+                                          value={editScores.team2Score}
                                           onChange={(e) =>
-                                            setEditScores({
-                                              ...editScores,
-                                              team2: e.target.value,
-                                            })
+                                            setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })
                                           }
+                                          min="0"
+                                          max="21"
                                         />
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          onClick={() => saveScore(pool.id, match.id)}
-                                        >
-                                          <Check className="w-4 h-4 text-primary" />
-                                        </Button>
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          onClick={() => setEditingMatch(null)}
-                                        >
-                                          <X className="w-4 h-4 text-destructive" />
-                                        </Button>
                                       </div>
                                     ) : (
-                                      <div className="flex items-center gap-2">
-                                        <span
-                                          className={`w-8 text-center font-display font-bold text-lg ${
-                                            match.status === "completed" &&
-                                            match.team1Score! > match.team2Score!
-                                              ? "text-primary"
-                                              : ""
-                                          }`}
-                                        >
-                                          {match.team1Score ?? "-"}
+                                      <div className="flex items-center gap-3">
+                                        <span className={`text-3xl font-bold ${
+                                          isCompleted && match.score?.team1Score > match.score?.team2Score
+                                            ? 'text-green-600'
+                                            : ''
+                                        }`}>
+                                          {match.score?.team1Score ?? "-"}
                                         </span>
-                                        <span className="text-muted-foreground">vs</span>
-                                        <span
-                                          className={`w-8 text-center font-display font-bold text-lg ${
-                                            match.status === "completed" &&
-                                            match.team2Score! > match.team1Score!
-                                              ? "text-primary"
-                                              : ""
-                                          }`}
-                                        >
-                                          {match.team2Score ?? "-"}
+                                        <span className="text-2xl text-muted-foreground">-</span>
+                                        <span className={`text-3xl font-bold ${
+                                          isCompleted && match.score?.team2Score > match.score?.team1Score
+                                            ? 'text-green-600'
+                                            : ''
+                                        }`}>
+                                          {match.score?.team2Score ?? "-"}
                                         </span>
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          onClick={() => startEditScore(match)}
-                                        >
-                                          <Edit2 className="w-4 h-4" />
-                                        </Button>
                                       </div>
                                     )}
 
-                                    <div
-                                      className={`flex-1 font-medium ${
-                                        match.winner === match.team2.id
-                                          ? "text-primary"
-                                          : ""
-                                      }`}
-                                    >
-                                      {match.team2.name}
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2">
+                                      {editingMatch === match._id ? (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            onClick={() => saveScore(match._id)}
+                                            disabled={updateMatchScoreMutation.isPending}
+                                          >
+                                            <Check className="w-4 h-4 mr-1" />
+                                            Save
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setEditingMatch(null)}
+                                          >
+                                            <X className="w-4 h-4 mr-1" />
+                                            Cancel
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => {
+                                            setEditingMatch(match._id);
+                                            setEditScores({
+                                              team1Score: match.score?.team1Score || 0,
+                                              team2Score: match.score?.team2Score || 0,
+                                            });
+                                          }}
+                                        >
+                                          <Edit2 className="w-4 h-4 mr-1" />
+                                          {isCompleted ? 'Edit Score' : 'Enter Score'}
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
 
-                                  <Badge
-                                    variant={
-                                      match.status === "completed"
-                                        ? "default"
-                                        : match.status === "in-progress"
-                                        ? "secondary"
-                                        : "outline"
-                                    }
-                                    className="ml-4"
-                                  >
-                                    {match.status === "completed"
-                                      ? "Final"
-                                      : match.status === "in-progress"
-                                      ? "Live"
-                                      : "Pending"}
-                                  </Badge>
+                                  {/* Team 2 */}
+                                  <div className="text-left">
+                                    <div className="font-bold text-lg mb-1">
+                                      {match.team2?.name || "Team 2"}
+                                    </div>
+                                    {!isSingles && match.team2?.players && (
+                                      <div className="text-sm text-muted-foreground">
+                                        {match.team2.players.map((p: any, i: number) => (
+                                          <div key={i}>{p.name || `Player ${i + 1}`}</div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-8">
+                          {selectedPool.teams?.length < 2
+                            ? "Add at least 2 teams to generate matches"
+                            : "No matches generated yet"}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Playoff Bracket for this Pool */}
+                  {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && playoffs.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <Trophy className="w-6 h-6 text-primary" />
+                          <div>
+                            <CardTitle>Playoff Bracket - {selectedPool.name}</CardTitle>
+                            <CardDescription>Top 3 teams advancing to elimination rounds</CardDescription>
                           </div>
-                        )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-6">
+                          {/* Semifinals */}
+                          {playoffs.filter((match: any) => match.bracket === 'semifinals').length > 0 && (
+                            <div>
+                              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <Badge variant="secondary">Semifinals</Badge>
+                              </h3>
+                              <div className="grid md:grid-cols-2 gap-4">
+                                {playoffs
+                                  .filter((match: any) => match.bracket === 'semifinals')
+                                  .sort((a: any, b: any) => a.matchNumber - b.matchNumber)
+                                  .map((match: any) => {
+                                    const isCompleted = match.status === 'completed';
+                                    const isSingles = event.format === 'singles';
+
+                                    return (
+                                      <div
+                                        key={match._id}
+                                        className={`p-4 rounded-lg border-2 transition-colors ${
+                                          isCompleted
+                                            ? 'bg-muted/50 border-muted'
+                                            : 'bg-card border-border hover:border-primary/50'
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between mb-3">
+                                          <Badge variant="outline">Match #{match.matchNumber}</Badge>
+                                          {isCompleted && (
+                                            <Badge variant="default" className="bg-green-500">Completed</Badge>
+                                          )}
+                                        </div>
+
+                                        <div className="space-y-3">
+                                          {/* Team 1 */}
+                                          <div className={`flex items-center justify-between p-3 rounded-lg ${
+                                            isCompleted && match.winner?._id === match.team1?._id
+                                              ? 'bg-green-500/20 border-2 border-green-500'
+                                              : 'bg-muted/50'
+                                          }`}>
+                                            <div className="flex-1">
+                                              <div className="font-bold">{match.team1?.name || "TBD"}</div>
+                                              {!isSingles && match.team1?.players && (
+                                                <div className="text-xs text-muted-foreground">
+                                                  {match.team1.players.map((p: any) => p.name).join(', ')}
+                                                </div>
+                                              )}
+                                            </div>
+                                            {editingMatch === match._id ? (
+                                              <Input
+                                                type="number"
+                                                className="w-16 text-center text-xl font-bold ml-4"
+                                                value={editScores.team1Score}
+                                                onChange={(e) =>
+                                                  setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })
+                                                }
+                                                min="0"
+                                                max="21"
+                                              />
+                                            ) : (
+                                              <div className="text-2xl font-bold ml-4">
+                                                {match.score?.team1Score ?? "-"}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Team 2 */}
+                                          <div className={`flex items-center justify-between p-3 rounded-lg ${
+                                            isCompleted && match.winner?._id === match.team2?._id
+                                              ? 'bg-green-500/20 border-2 border-green-500'
+                                              : 'bg-muted/50'
+                                          }`}>
+                                            <div className="flex-1">
+                                              <div className="font-bold">{match.team2?.name || "TBD"}</div>
+                                              {!isSingles && match.team2?.players && (
+                                                <div className="text-xs text-muted-foreground">
+                                                  {match.team2.players.map((p: any) => p.name).join(', ')}
+                                                </div>
+                                              )}
+                                            </div>
+                                            {editingMatch === match._id ? (
+                                              <Input
+                                                type="number"
+                                                className="w-16 text-center text-xl font-bold ml-4"
+                                                value={editScores.team2Score}
+                                                onChange={(e) =>
+                                                  setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })
+                                                }
+                                                min="0"
+                                                max="21"
+                                              />
+                                            ) : (
+                                              <div className="text-2xl font-bold ml-4">
+                                                {match.score?.team2Score ?? "-"}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Edit/Save Buttons */}
+                                          <div className="flex justify-center gap-2 pt-2">
+                                            {editingMatch === match._id ? (
+                                              <>
+                                                <Button
+                                                  size="sm"
+                                                  onClick={() => saveScore(match._id)}
+                                                  disabled={updateMatchScoreMutation.isPending}
+                                                >
+                                                  <Check className="w-4 h-4 mr-1" />
+                                                  Save
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => setEditingMatch(null)}
+                                                >
+                                                  <X className="w-4 h-4 mr-1" />
+                                                  Cancel
+                                                </Button>
+                                              </>
+                                            ) : (
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                  setEditingMatch(match._id);
+                                                  setEditScores({
+                                                    team1Score: match.score?.team1Score || 0,
+                                                    team2Score: match.score?.team2Score || 0,
+                                                  });
+                                                }}
+                                              >
+                                                <Edit2 className="w-4 h-4 mr-1" />
+                                                {isCompleted ? 'Edit Score' : 'Enter Score'}
+                                              </Button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Finals */}
+                          {playoffs.filter((match: any) => match.bracket === 'finals').length > 0 && (
+                            <div>
+                              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <Badge variant="default" className="bg-primary">Finals</Badge>
+                              </h3>
+                              <div className="max-w-2xl mx-auto">
+                                {playoffs
+                                  .filter((match: any) => match.bracket === 'finals')
+                                  .map((match: any) => {
+                                    const isCompleted = match.status === 'completed';
+                                    const isSingles = event.format === 'singles';
+
+                                    return (
+                                      <div
+                                        key={match._id}
+                                        className={`p-6 rounded-lg border-2 transition-colors ${
+                                          isCompleted
+                                            ? 'bg-primary/10 border-primary'
+                                            : 'bg-card border-primary/50'
+                                        }`}
+                                      >
+                                        {isCompleted && (
+                                          <div className="text-center mb-4">
+                                            <Badge variant="default" className="bg-green-500 text-lg px-4 py-1">
+                                              Pool Winner: {match.winner?.name}
+                                            </Badge>
+                                          </div>
+                                        )}
+
+                                        <div className="space-y-3">
+                                          {/* Team 1 (#1 Seed) */}
+                                          <div className={`flex items-center justify-between p-4 rounded-lg ${
+                                            isCompleted && match.winner?._id === match.team1?._id
+                                              ? 'bg-green-500/20 border-2 border-green-500'
+                                              : 'bg-muted/50'
+                                          }`}>
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <Badge variant="secondary" className="text-xs">#1 Seed</Badge>
+                                                <div className="font-bold text-lg">{match.team1?.name || "TBD"}</div>
+                                              </div>
+                                              {!isSingles && match.team1?.players && (
+                                                <div className="text-sm text-muted-foreground">
+                                                  {match.team1.players.map((p: any) => p.name).join(', ')}
+                                                </div>
+                                              )}
+                                            </div>
+                                            {editingMatch === match._id ? (
+                                              <Input
+                                                type="number"
+                                                className="w-20 text-center text-2xl font-bold ml-4"
+                                                value={editScores.team1Score}
+                                                onChange={(e) =>
+                                                  setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })
+                                                }
+                                                min="0"
+                                                max="21"
+                                              />
+                                            ) : (
+                                              <div className="text-3xl font-bold ml-4">
+                                                {match.score?.team1Score ?? "-"}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Team 2 (Semifinal Winner) */}
+                                          <div className={`flex items-center justify-between p-4 rounded-lg ${
+                                            isCompleted && match.winner?._id === match.team2?._id
+                                              ? 'bg-green-500/20 border-2 border-green-500'
+                                              : 'bg-muted/50'
+                                          }`}>
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <Badge variant="secondary" className="text-xs">SF Winner</Badge>
+                                                <div className="font-bold text-lg">{match.team2?.name || "TBD"}</div>
+                                              </div>
+                                              {!isSingles && match.team2?.players && (
+                                                <div className="text-sm text-muted-foreground">
+                                                  {match.team2.players.map((p: any) => p.name).join(', ')}
+                                                </div>
+                                              )}
+                                            </div>
+                                            {editingMatch === match._id ? (
+                                              <Input
+                                                type="number"
+                                                className="w-20 text-center text-2xl font-bold ml-4"
+                                                value={editScores.team2Score}
+                                                onChange={(e) =>
+                                                  setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })
+                                                }
+                                                min="0"
+                                                max="21"
+                                              />
+                                            ) : (
+                                              <div className="text-3xl font-bold ml-4">
+                                                {match.score?.team2Score ?? "-"}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Edit/Save Buttons */}
+                                          <div className="flex justify-center gap-2 pt-2">
+                                            {editingMatch === match._id ? (
+                                              <>
+                                                <Button
+                                                  size="sm"
+                                                  onClick={() => saveScore(match._id)}
+                                                  disabled={updateMatchScoreMutation.isPending}
+                                                >
+                                                  <Check className="w-4 h-4 mr-1" />
+                                                  Save
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => setEditingMatch(null)}
+                                                >
+                                                  <X className="w-4 h-4 mr-1" />
+                                                  Cancel
+                                                </Button>
+                                              </>
+                                            ) : (
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                  setEditingMatch(match._id);
+                                                  setEditScores({
+                                                    team1Score: match.score?.team1Score || 0,
+                                                    team2Score: match.score?.team2Score || 0,
+                                                  });
+                                                }}
+                                              >
+                                                <Edit2 className="w-4 h-4 mr-1" />
+                                                {isCompleted ? 'Edit Score' : 'Enter Score'}
+                                              </Button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )}
                 </div>
+              ) : (
+                <Card className="h-full flex items-center justify-center">
+                  <CardContent className="text-center py-12">
+                    <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <h3 className="text-xl font-bold mb-2">Select a Pool</h3>
+                    <p className="text-muted-foreground">
+                      Choose a pool from the left to view standings and manage matches
+                    </p>
+                  </CardContent>
+                </Card>
               )}
             </div>
           </div>

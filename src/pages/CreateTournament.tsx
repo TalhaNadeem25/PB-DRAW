@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,36 +40,103 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { TournamentEvent, EventFormat, SkillLevel } from "@/types/tournament";
+import { tournamentAPI, eventAPI } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
+import type { TournamentEvent, GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
 
 const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
-const eventFormats: EventFormat[] = ["Singles", "Doubles", "Mixed Doubles"];
+const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
+const tournamentFormats: TournamentFormat[] = ["Round-Robin", "Single Elimination", "Double Elimination", "Pool Play", "Swiss"];
 
 const CreateTournament = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user, isAuthenticated } = useAuth();
+
+  // All hooks must be declared at the top before any conditional logic
   const [step, setStep] = useState(1);
-  
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
   // Form state
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
+  const [maxPlayers, setMaxPlayers] = useState(128);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [registrationDeadline, setRegistrationDeadline] = useState<Date>();
-  const [maxPlayers, setMaxPlayers] = useState("256");
-  
+
   // Events state
-  const [events, setEvents] = useState<Omit<TournamentEvent, "id" | "registeredTeams">[]>([]);
+  const [events, setEvents] = useState<Omit<TournamentEvent, "id" | "registeredPlayers">[]>([]);
   const [newEvent, setNewEvent] = useState({
     name: "",
-    format: "Singles" as EventFormat,
+    gameType: "Singles" as GameType,
+    format: "Round-Robin" as TournamentFormat,
     skillLevel: "4.0" as SkillLevel,
-    maxTeams: 32,
+    maxPlayers: 32,
     entryFee: 50,
   });
+
+  // Mutation for creating tournament
+  const createTournamentMutation = useMutation({
+    mutationFn: async (tournamentData: any) => {
+      const tournament = await tournamentAPI.create(tournamentData);
+      return tournament.data;
+    },
+    onSuccess: async (tournament) => {
+      // Create events for the tournament
+      for (const event of events) {
+        try {
+          await eventAPI.create(tournament._id, {
+            name: event.name,
+            format: event.gameType.toLowerCase().replace(/ /g, '-'),
+            playFormat: event.format.toLowerCase().replace(/ /g, '-'),
+            skillLevel: event.skillLevel,
+            maxTeams: event.maxPlayers,
+            entryFee: event.entryFee,
+            status: 'upcoming',
+          });
+        } catch (error) {
+          console.error('Error creating event:', error);
+        }
+      }
+
+      // Invalidate tournaments query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+
+      toast.success("Tournament created successfully!");
+      navigate(`/tournaments/${tournament._id}`);
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Failed to create tournament';
+      toast.error(message);
+    },
+  });
+
+  // Handle authentication and authorization checks
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    if (user?.role !== 'organizer' && user?.role !== 'admin') {
+      toast.error('Only organizers can create tournaments');
+      navigate('/tournaments');
+      return;
+    }
+
+    setIsCheckingAuth(false);
+  }, [isAuthenticated, user, navigate]);
+
+  // Show nothing while checking authentication
+  if (isCheckingAuth || !isAuthenticated || (user?.role !== 'organizer' && user?.role !== 'admin')) {
+    return null;
+  }
 
   const addEvent = () => {
     if (!newEvent.name) {
@@ -78,9 +146,10 @@ const CreateTournament = () => {
     setEvents([...events, { ...newEvent }]);
     setNewEvent({
       name: "",
-      format: "Singles",
+      gameType: "Singles",
+      format: "Round-Robin",
       skillLevel: "4.0",
-      maxTeams: 32,
+      maxPlayers: 32,
       entryFee: 50,
     });
     toast.success("Event added");
@@ -91,19 +160,28 @@ const CreateTournament = () => {
   };
 
   const handleSubmit = () => {
-    if (!name || !location || !startDate || !endDate || events.length === 0) {
+    if (!name || !location || !address || !description || !startDate || !endDate || !registrationDeadline || events.length === 0) {
       toast.error("Please fill in all required fields and add at least one event");
       return;
     }
 
-    // In a real app, this would save to the database
-    toast.success("Tournament created successfully!");
-    navigate("/tournaments");
+    // Create tournament via API
+    createTournamentMutation.mutate({
+      name,
+      description,
+      location,
+      address,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      registrationDeadline: registrationDeadline.toISOString(),
+      maxPlayers,
+      status: 'open',
+    });
   };
 
   const canProceed = () => {
     if (step === 1) {
-      return name && location && startDate && endDate && registrationDeadline;
+      return name && location && address && description && startDate && endDate && registrationDeadline && maxPlayers;
     }
     if (step === 2) {
       return events.length > 0;
@@ -224,7 +302,7 @@ const CreateTournament = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
+                      <Label htmlFor="description">Description *</Label>
                       <Textarea
                         id="description"
                         placeholder="Tell players what makes your tournament special..."
@@ -235,18 +313,15 @@ const CreateTournament = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Max Players</Label>
-                      <Select value={maxPlayers} onValueChange={setMaxPlayers}>
-                        <SelectTrigger className="w-full md:w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="64">64 Players</SelectItem>
-                          <SelectItem value="128">128 Players</SelectItem>
-                          <SelectItem value="256">256 Players</SelectItem>
-                          <SelectItem value="512">512 Players</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="maxPlayers">Max Players *</Label>
+                      <Input
+                        id="maxPlayers"
+                        type="number"
+                        min="4"
+                        placeholder="e.g., 128"
+                        value={maxPlayers}
+                        onChange={(e) => setMaxPlayers(parseInt(e.target.value) || 128)}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -365,7 +440,7 @@ const CreateTournament = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-4">
                       <div className="space-y-2">
                         <Label>Event Name</Label>
                         <Input
@@ -377,10 +452,30 @@ const CreateTournament = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Format</Label>
+                        <Label>Game Type</Label>
+                        <Select
+                          value={newEvent.gameType}
+                          onValueChange={(v: GameType) =>
+                            setNewEvent({ ...newEvent, gameType: v })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {gameTypes.map((gt) => (
+                              <SelectItem key={gt} value={gt}>
+                                {gt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Game Format</Label>
                         <Select
                           value={newEvent.format}
-                          onValueChange={(v: EventFormat) =>
+                          onValueChange={(v: TournamentFormat) =>
                             setNewEvent({ ...newEvent, format: v })
                           }
                         >
@@ -388,9 +483,9 @@ const CreateTournament = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {eventFormats.map((f) => (
-                              <SelectItem key={f} value={f}>
-                                {f}
+                            {tournamentFormats.map((tf) => (
+                              <SelectItem key={tf} value={tf}>
+                                {tf}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -417,14 +512,14 @@ const CreateTournament = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Max Teams</Label>
+                        <Label>Max Players</Label>
                         <Input
                           type="number"
-                          value={newEvent.maxTeams}
+                          value={newEvent.maxPlayers}
                           onChange={(e) =>
                             setNewEvent({
                               ...newEvent,
-                              maxTeams: parseInt(e.target.value) || 32,
+                              maxPlayers: parseInt(e.target.value) || 32,
                             })
                           }
                         />
@@ -481,7 +576,8 @@ const CreateTournament = () => {
                               <div>
                                 <h4 className="font-semibold">{event.name}</h4>
                                 <div className="flex gap-2 mt-1">
-                                  <Badge variant="outline">{event.format}</Badge>
+                                  <Badge variant="outline">{event.gameType}</Badge>
+                                  <Badge variant="secondary">{event.format}</Badge>
                                   <Badge variant="accent">{event.skillLevel}+</Badge>
                                 </div>
                               </div>
@@ -490,7 +586,7 @@ const CreateTournament = () => {
                               <div className="text-right hidden sm:block">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Users className="w-4 h-4" />
-                                  {event.maxTeams} teams
+                                  {event.maxPlayers} players
                                 </div>
                                 <div className="flex items-center gap-1 text-sm font-medium text-primary">
                                   <DollarSign className="w-4 h-4" />
@@ -548,10 +644,6 @@ const CreateTournament = () => {
                               <p className="font-medium">{address}</p>
                             </div>
                           )}
-                          <div>
-                            <span className="text-sm text-muted-foreground">Max Players</span>
-                            <p className="font-medium">{maxPlayers}</p>
-                          </div>
                         </div>
                       </div>
 
@@ -593,6 +685,9 @@ const CreateTournament = () => {
                               <span className="font-medium">{event.name}</span>
                               <div className="flex gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs">
+                                  {event.gameType}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
                                   {event.format}
                                 </Badge>
                                 <Badge variant="accent" className="text-xs">
@@ -629,9 +724,22 @@ const CreateTournament = () => {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
-                <Button variant="hero" onClick={handleSubmit}>
-                  Create Tournament
-                  <Check className="w-4 h-4 ml-2" />
+                <Button
+                  variant="hero"
+                  onClick={handleSubmit}
+                  disabled={createTournamentMutation.isPending}
+                >
+                  {createTournamentMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      Create Tournament
+                      <Check className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

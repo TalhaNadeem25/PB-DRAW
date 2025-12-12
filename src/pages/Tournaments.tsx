@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
 import TournamentCard from "@/components/tournaments/TournamentCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, MapPin } from "lucide-react";
+import { Search, Filter, MapPin, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,91 +12,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-// Mock data for tournaments
-const mockTournaments = [
-  {
-    id: "1",
-    name: "Summer Slam Championship 2024",
-    location: "Austin, TX",
-    startDate: "Jun 15",
-    endDate: "Jun 17",
-    playerCount: 128,
-    maxPlayers: 256,
-    eventCount: 6,
-    status: "open" as const,
-    featured: true,
-  },
-  {
-    id: "2",
-    name: "Desert Classic Open",
-    location: "Phoenix, AZ",
-    startDate: "Jun 22",
-    endDate: "Jun 24",
-    playerCount: 64,
-    maxPlayers: 128,
-    eventCount: 4,
-    status: "open" as const,
-  },
-  {
-    id: "3",
-    name: "Pacific Coast Showdown",
-    location: "San Diego, CA",
-    startDate: "Jul 1",
-    endDate: "Jul 3",
-    playerCount: 200,
-    maxPlayers: 200,
-    eventCount: 8,
-    status: "closed" as const,
-  },
-  {
-    id: "4",
-    name: "Midwest Masters",
-    location: "Chicago, IL",
-    startDate: "Jul 8",
-    endDate: "Jul 10",
-    playerCount: 156,
-    maxPlayers: 256,
-    eventCount: 6,
-    status: "in-progress" as const,
-    featured: true,
-  },
-  {
-    id: "5",
-    name: "Rocky Mountain Challenge",
-    location: "Denver, CO",
-    startDate: "Jul 15",
-    endDate: "Jul 17",
-    playerCount: 48,
-    maxPlayers: 128,
-    eventCount: 4,
-    status: "open" as const,
-  },
-  {
-    id: "6",
-    name: "Southeast Showdown",
-    location: "Atlanta, GA",
-    startDate: "May 20",
-    endDate: "May 22",
-    playerCount: 128,
-    maxPlayers: 128,
-    eventCount: 5,
-    status: "completed" as const,
-  },
-];
+import { tournamentAPI } from "@/services/api";
+import { format } from "date-fns";
 
 const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredTournaments = mockTournaments.filter((tournament) => {
-    const matchesSearch =
-      tournament.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tournament.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || tournament.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  // Fetch tournaments from API
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['tournaments', searchQuery, statusFilter],
+    queryFn: () => tournamentAPI.getAll({
+      status: statusFilter,
+      search: searchQuery,
+      limit: 50,
+    }),
   });
+
+  const tournaments = data?.data || [];
+
+  // Format tournament data for TournamentCard component
+  const formattedTournaments = tournaments.map((tournament: any) => ({
+    id: tournament._id,
+    name: tournament.name,
+    location: tournament.location,
+    startDate: format(new Date(tournament.startDate), 'MMM dd'),
+    endDate: format(new Date(tournament.endDate), 'MMM dd'),
+    playerCount: tournament.currentPlayers || 0,
+    maxPlayers: tournament.maxPlayers,
+    eventCount: tournament.events?.length || 0,
+    status: tournament.status,
+    featured: false,
+  }));
 
   return (
     <Layout>
@@ -150,32 +98,49 @@ const Tournaments = () => {
 
         {/* Results */}
         <div className="container mx-auto px-4 py-12">
-          <div className="flex justify-between items-center mb-8">
-            <p className="text-muted-foreground">
-              Showing <span className="font-semibold text-foreground">{filteredTournaments.length}</span> tournaments
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTournaments.map((tournament, index) => (
-              <div
-                key={tournament.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <TournamentCard {...tournament} />
-              </div>
-            ))}
-          </div>
-
-          {filteredTournaments.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
-                <Search className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-display font-bold mb-2">No tournaments found</h3>
-              <p className="text-muted-foreground">Try adjusting your search or filters.</p>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">Loading tournaments...</p>
             </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <Search className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="text-xl font-display font-bold mb-2">Error loading tournaments</h3>
+              <p className="text-muted-foreground">Please try again later.</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-8">
+                <p className="text-muted-foreground">
+                  Showing <span className="font-semibold text-foreground">{formattedTournaments.length}</span> tournaments
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {formattedTournaments.map((tournament: any, index: number) => (
+                  <div
+                    key={tournament.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <TournamentCard {...tournament} />
+                  </div>
+                ))}
+              </div>
+
+              {formattedTournaments.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
+                    <Search className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-display font-bold mb-2">No tournaments found</h3>
+                  <p className="text-muted-foreground">Try adjusting your search or filters.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
