@@ -5,6 +5,7 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,11 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Users, Trophy, Shuffle, Loader2, AlertCircle, Edit2, Check, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Users, Trophy, Shuffle, Loader2, AlertCircle, Edit2, Check, X, Trash2, Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { eventAPI, poolAPI, teamAPI, matchAPI, playoffAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import PlayoffBracket from "@/components/tournament/PlayoffBracket";
+import PoolStandings from "@/components/tournament/PoolStandings";
+import PlayoffResults from "@/components/tournament/PlayoffResults";
 
 const PoolManagement = () => {
   const { id, eventId } = useParams();
@@ -32,6 +35,8 @@ const PoolManagement = () => {
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
   const [editingMatch, setEditingMatch] = useState<string | null>(null);
   const [editScores, setEditScores] = useState({ team1Score: 0, team2Score: 0 });
+  const [schedulingMatch, setSchedulingMatch] = useState<string | null>(null);
+  const [scheduleData, setScheduleData] = useState({ scheduledTime: "", courtNumber: 1 });
 
   // Fetch event data with teams and pools
   const { data: eventData, isLoading: eventLoading } = useQuery({
@@ -143,6 +148,20 @@ const PoolManagement = () => {
     },
   });
 
+  // Update match schedule mutation
+  const updateMatchScheduleMutation = useMutation({
+    mutationFn: ({ matchId, data }: any) => matchAPI.update(matchId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['playoffs', eventId, selectedPoolId] });
+      setSchedulingMatch(null);
+      toast.success("Match scheduled successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to schedule match");
+    },
+  });
+
   // Generate playoffs mutation (per pool)
   const generatePlayoffsMutation = useMutation({
     mutationFn: (poolId: string) => playoffAPI.generate(eventId!, poolId),
@@ -179,6 +198,21 @@ const PoolManagement = () => {
         team1Score: editScores.team1Score,
         team2Score: editScores.team2Score,
         status: 'completed',
+      },
+    });
+  };
+
+  const saveSchedule = (matchId: string) => {
+    if (!scheduleData.scheduledTime) {
+      toast.error("Please select a date and time");
+      return;
+    }
+
+    updateMatchScheduleMutation.mutate({
+      matchId,
+      data: {
+        scheduledTime: new Date(scheduleData.scheduledTime).toISOString(),
+        courtNumber: scheduleData.courtNumber,
       },
     });
   };
@@ -358,84 +392,37 @@ const PoolManagement = () => {
             <div className="lg:col-span-3">
               {selectedPool ? (
                 <div className="space-y-6">
-                  {/* Standings */}
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle>Standings - {selectedPool.name}</CardTitle>
-                        {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
-                          <Button
-                            onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
-                            disabled={generatePlayoffsMutation.isPending}
-                            size="sm"
-                          >
-                            {generatePlayoffsMutation.isPending ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Trophy className="w-4 h-4 mr-2" />
-                                Generate Playoffs
-                              </>
-                            )}
-                          </Button>
+                  {/* Generate Playoffs Button */}
+                  {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
+                        disabled={generatePlayoffsMutation.isPending}
+                        size="lg"
+                      >
+                        {generatePlayoffsMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating Playoffs...
+                          </>
+                        ) : (
+                          <>
+                            <Trophy className="w-4 h-4 mr-2" />
+                            Generate Playoffs
+                          </>
                         )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {selectedPool.teams && selectedPool.teams.length > 0 ? (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-12">#</TableHead>
-                              <TableHead>Team</TableHead>
-                              <TableHead className="text-center">W</TableHead>
-                              <TableHead className="text-center">L</TableHead>
-                              <TableHead className="text-center">PF</TableHead>
-                              <TableHead className="text-center">PA</TableHead>
-                              <TableHead className="text-center">Diff</TableHead>
-                              <TableHead className="w-12">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {selectedPool.teams
-                              .sort((a: any, b: any) => {
-                                const aDiff = (a.stats?.wins || 0) - (a.stats?.losses || 0);
-                                const bDiff = (b.stats?.wins || 0) - (b.stats?.losses || 0);
-                                return bDiff - aDiff || (b.stats?.pointDifferential || 0) - (a.stats?.pointDifferential || 0);
-                              })
-                              .map((team: any, index: number) => (
-                                <TableRow key={team._id}>
-                                  <TableCell className="font-medium">{index + 1}</TableCell>
-                                  <TableCell className="font-medium">{team.name}</TableCell>
-                                  <TableCell className="text-center">{team.stats?.wins || 0}</TableCell>
-                                  <TableCell className="text-center">{team.stats?.losses || 0}</TableCell>
-                                  <TableCell className="text-center">{team.stats?.pointsFor || 0}</TableCell>
-                                  <TableCell className="text-center">{team.stats?.pointsAgainst || 0}</TableCell>
-                                  <TableCell className="text-center">{team.stats?.pointDifferential || 0}</TableCell>
-                                  <TableCell>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleRemoveTeamFromPool(team._id, selectedPool._id)}
-                                      disabled={removeTeamFromPoolMutation.isPending}
-                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                      title="Remove from pool"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                          </TableBody>
-                        </Table>
-                      ) : (
-                        <p className="text-muted-foreground text-center py-8">No teams in this pool yet</p>
-                      )}
-                    </CardContent>
-                  </Card>
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Standings */}
+                  <PoolStandings
+                    teams={selectedPool.teams || []}
+                    poolName={selectedPool.name}
+                    showPlayoffIndicators={event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin'}
+                    onRemoveTeam={(teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
+                    isRemoving={removeTeamFromPoolMutation.isPending}
+                  />
 
                   {/* Game Format Info */}
                   <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
@@ -503,7 +490,7 @@ const PoolManagement = () => {
                               >
                                 {/* Match Header */}
                                 <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     {playFormat === 'single-elimination' || playFormat === 'double-elimination' ? (
                                       <>
                                         <Badge variant="secondary">
@@ -519,7 +506,30 @@ const PoolManagement = () => {
                                     {isCompleted && (
                                       <Badge variant="default" className="bg-green-500">Completed</Badge>
                                     )}
+                                    {match.scheduledTime && (
+                                      <Badge variant="outline" className="gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        {new Date(match.scheduledTime).toLocaleDateString()} {new Date(match.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </Badge>
+                                    )}
+                                    {match.courtNumber && (
+                                      <Badge variant="outline">Court {match.courtNumber}</Badge>
+                                    )}
                                   </div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSchedulingMatch(match._id);
+                                      setScheduleData({
+                                        scheduledTime: match.scheduledTime ? new Date(match.scheduledTime).toISOString().slice(0, 16) : "",
+                                        courtNumber: match.courtNumber || 1,
+                                      });
+                                    }}
+                                  >
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    Schedule
+                                  </Button>
                                 </div>
 
                                 {/* Match Content */}
@@ -654,29 +664,39 @@ const PoolManagement = () => {
 
                   {/* Playoff Bracket for this Pool */}
                   {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && playoffs.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center gap-3">
-                          <Trophy className="w-6 h-6 text-primary" />
-                          <div>
-                            <CardTitle>Playoff Bracket - {selectedPool.name}</CardTitle>
-                            <CardDescription>Top 3 teams advancing to elimination rounds</CardDescription>
+                    <>
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-center gap-3">
+                            <Trophy className="w-6 h-6 text-primary" />
+                            <div>
+                              <CardTitle>Playoff Bracket - {selectedPool.name}</CardTitle>
+                              <CardDescription>Top 3 teams advancing to elimination rounds</CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <PlayoffBracket
-                          matches={playoffs}
-                          onUpdateScore={(matchId, team1Score, team2Score) => {
-                            updateMatchScoreMutation.mutate({
-                              matchId,
-                              scores: { team1Score, team2Score }
-                            });
-                          }}
-                          isUpdating={updateMatchScoreMutation.isPending}
-                        />
-                      </CardContent>
-                    </Card>
+                        </CardHeader>
+                        <CardContent>
+                          <PlayoffBracket
+                            matches={playoffs}
+                            onUpdateScore={(matchId, team1Score, team2Score) => {
+                              updateMatchScoreMutation.mutate({
+                                matchId,
+                                scores: { team1Score, team2Score }
+                              });
+                            }}
+                            isUpdating={updateMatchScoreMutation.isPending}
+                          />
+                        </CardContent>
+                      </Card>
+
+                      {/* Final Results */}
+                      <PlayoffResults
+                        eventId={eventId!}
+                        poolId={selectedPoolId!}
+                        poolName={selectedPool.name}
+                        eventName={event.name}
+                      />
+                    </>
                   )}
                 </div>
               ) : (
@@ -694,6 +714,61 @@ const PoolManagement = () => {
           </div>
         </div>
       </div>
+
+      {/* Schedule Match Dialog */}
+      <Dialog open={!!schedulingMatch} onOpenChange={(open) => !open && setSchedulingMatch(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule Match</DialogTitle>
+            <DialogDescription>
+              Set the date, time, and court for this match
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="schedule-time">Date & Time *</Label>
+              <Input
+                id="schedule-time"
+                type="datetime-local"
+                value={scheduleData.scheduledTime}
+                onChange={(e) => setScheduleData({ ...scheduleData, scheduledTime: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="court-number">Court Number *</Label>
+              <Input
+                id="court-number"
+                type="number"
+                min="1"
+                max="20"
+                value={scheduleData.courtNumber}
+                onChange={(e) => setScheduleData({ ...scheduleData, courtNumber: parseInt(e.target.value) || 1 })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSchedulingMatch(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => saveSchedule(schedulingMatch!)}
+              disabled={updateMatchScheduleMutation.isPending}
+            >
+              {updateMatchScheduleMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Schedule"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

@@ -54,6 +54,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
+import BracketViewer from "@/components/tournament/BracketViewer";
+import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 
 const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
@@ -569,17 +571,11 @@ const TournamentDetail = () => {
                 </TabsContent>
 
                 <TabsContent value="schedule" className="mt-6">
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Schedule will be available closer to the event date.</p>
-                  </div>
+                  <TournamentSchedule tournamentId={id!} />
                 </TabsContent>
 
                 <TabsContent value="brackets" className="mt-6">
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Brackets will be generated once registration closes.</p>
-                  </div>
+                  <BracketViewer tournamentId={id!} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -587,7 +583,7 @@ const TournamentDetail = () => {
             {/* Sidebar */}
             <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               {/* Registration Card */}
-              <div className="bg-card rounded-xl border border-border p-6 shadow-card sticky top-24">
+              <div className="bg-card rounded-xl border border-border p-6 shadow-card">
                 <h3 className="font-display font-bold text-lg mb-4">Quick Registration</h3>
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">

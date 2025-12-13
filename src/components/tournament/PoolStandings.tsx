@@ -1,0 +1,230 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Trophy, Medal, Award, TrendingUp, TrendingDown, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface Team {
+  _id: string;
+  name?: string;
+  players: Array<{ _id: string; name: string }>;
+  stats: {
+    wins: number;
+    losses: number;
+    pointsFor: number;
+    pointsAgainst: number;
+    pointDifferential: number;
+  };
+}
+
+interface PoolStandingsProps {
+  teams: Team[];
+  poolName?: string;
+  showPlayoffIndicators?: boolean;
+  onRemoveTeam?: (teamId: string) => void;
+  isRemoving?: boolean;
+}
+
+const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemoveTeam, isRemoving = false }: PoolStandingsProps) => {
+  // Sort teams by wins (desc), then point differential (desc)
+  const sortedTeams = [...teams].sort((a, b) => {
+    if (b.stats.wins !== a.stats.wins) {
+      return b.stats.wins - a.stats.wins;
+    }
+    return b.stats.pointDifferential - a.stats.pointDifferential;
+  });
+
+  // Get team display name
+  const getTeamName = (team: Team) => {
+    if (team.name) return team.name;
+    return team.players.map(p => p.name).join(' / ') || 'Unnamed Team';
+  };
+
+  // Get rank badge/icon
+  const getRankBadge = (rank: number) => {
+    if (!showPlayoffIndicators) return null;
+
+    switch (rank) {
+      case 1:
+        return (
+          <Badge className="bg-yellow-500 text-white hover:bg-yellow-600 gap-1">
+            <Trophy className="w-3 h-3" />
+            #1 Seed
+          </Badge>
+        );
+      case 2:
+        return (
+          <Badge className="bg-gray-400 text-white hover:bg-gray-500 gap-1">
+            <Medal className="w-3 h-3" />
+            #2 Seed
+          </Badge>
+        );
+      case 3:
+        return (
+          <Badge className="bg-orange-600 text-white hover:bg-orange-700 gap-1">
+            <Award className="w-3 h-3" />
+            #3 Seed
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Calculate win percentage
+  const getWinPercentage = (team: Team) => {
+    const totalGames = team.stats.wins + team.stats.losses;
+    if (totalGames === 0) return '0.000';
+    return (team.stats.wins / totalGames).toFixed(3);
+  };
+
+  if (!teams || teams.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Pool Standings</CardTitle>
+          <CardDescription>No teams in this pool yet</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-primary" />
+          {poolName ? `${poolName} - Standings` : 'Pool Standings'}
+        </CardTitle>
+        <CardDescription>
+          {showPlayoffIndicators && 'Top 3 teams advance to playoffs'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-12 text-center font-bold">Rank</TableHead>
+                <TableHead className="font-bold">Team</TableHead>
+                <TableHead className="text-center font-bold">W</TableHead>
+                <TableHead className="text-center font-bold">L</TableHead>
+                <TableHead className="text-center font-bold">PCT</TableHead>
+                <TableHead className="text-center font-bold">PF</TableHead>
+                <TableHead className="text-center font-bold">PA</TableHead>
+                <TableHead className="text-center font-bold">DIFF</TableHead>
+                {showPlayoffIndicators && <TableHead className="font-bold">Playoff Seed</TableHead>}
+                {onRemoveTeam && <TableHead className="w-12 font-bold">Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedTeams.map((team, index) => {
+                const rank = index + 1;
+                const isPlayoffTeam = rank <= 3;
+                const pointDiff = team.stats.pointDifferential;
+
+                return (
+                  <TableRow
+                    key={team._id}
+                    className={`
+                      ${isPlayoffTeam && showPlayoffIndicators ? 'bg-primary/5 font-medium' : ''}
+                      hover:bg-muted/50 transition-colors
+                    `}
+                  >
+                    <TableCell className="text-center font-bold text-lg">
+                      {rank}
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      <div className="flex items-center gap-2">
+                        {rank === 1 && showPlayoffIndicators && (
+                          <Trophy className="w-4 h-4 text-yellow-500" />
+                        )}
+                        {getTeamName(team)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center font-semibold text-green-600">
+                      {team.stats.wins}
+                    </TableCell>
+                    <TableCell className="text-center font-semibold text-red-600">
+                      {team.stats.losses}
+                    </TableCell>
+                    <TableCell className="text-center font-mono">
+                      {getWinPercentage(team)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {team.stats.pointsFor}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {team.stats.pointsAgainst}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {pointDiff > 0 && <TrendingUp className="w-4 h-4 text-green-600" />}
+                        {pointDiff < 0 && <TrendingDown className="w-4 h-4 text-red-600" />}
+                        <span className={`font-semibold ${
+                          pointDiff > 0 ? 'text-green-600' :
+                          pointDiff < 0 ? 'text-red-600' :
+                          'text-muted-foreground'
+                        }`}>
+                          {pointDiff > 0 ? '+' : ''}{pointDiff}
+                        </span>
+                      </div>
+                    </TableCell>
+                    {showPlayoffIndicators && (
+                      <TableCell>
+                        {getRankBadge(rank)}
+                      </TableCell>
+                    )}
+                    {onRemoveTeam && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onRemoveTeam(team._id)}
+                          disabled={isRemoving}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="Remove from pool"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Legend */}
+        {showPlayoffIndicators && (
+          <div className="mt-4 pt-4 border-t">
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Legend:</span>
+              </div>
+              <div>W = Wins</div>
+              <div>L = Losses</div>
+              <div>PCT = Win Percentage</div>
+              <div>PF = Points For</div>
+              <div>PA = Points Against</div>
+              <div>DIFF = Point Differential</div>
+            </div>
+            <div className="mt-2 text-sm text-muted-foreground">
+              * Teams are ranked by wins, then point differential
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default PoolStandings;

@@ -17,6 +17,8 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import EditTournament from "./pages/EditTournament";
 import Teams from "./pages/Teams";
+import Live from "./pages/Live";
+import LiveTournamentDetail from "./pages/LiveTournamentDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +61,8 @@ const App = () => (
             <Route path="/tournaments" element={<Tournaments />} />
             <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/tournaments/:id/register" element={<Register />} />
+            <Route path="/live" element={<Live />} />
+            <Route path="/live/:id" element={<LiveTournamentDetail />} />
             <Route
               path="/tournaments/:id/edit"
               element={

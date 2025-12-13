@@ -6,17 +6,40 @@ import Team from '../models/Team.js';
 // @access  Public
 export const getMatches = async (req, res, next) => {
   try {
-    const matches = await Match.find({ pool: req.params.poolId })
+    const { poolId } = req.params;
+    
+    if (!poolId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pool ID is required'
+      });
+    }
+
+    const matches = await Match.find({ pool: poolId })
       .populate({
         path: 'team1',
-        populate: { path: 'players', select: 'name' }
+        select: 'name players',
+        populate: { 
+          path: 'players', 
+          select: 'name',
+          model: 'User'
+        }
       })
       .populate({
         path: 'team2',
-        populate: { path: 'players', select: 'name' }
+        select: 'name players',
+        populate: { 
+          path: 'players', 
+          select: 'name',
+          model: 'User'
+        }
       })
-      .populate('winner', 'name')
-      .sort({ scheduledTime: 1 });
+      .populate({
+        path: 'winner',
+        select: 'name',
+        model: 'Team'
+      })
+      .sort({ scheduledTime: 1, createdAt: 1 });
 
     res.status(200).json({
       success: true,
@@ -24,6 +47,7 @@ export const getMatches = async (req, res, next) => {
       data: matches
     });
   } catch (error) {
+    console.error('Error fetching matches:', error);
     next(error);
   }
 };

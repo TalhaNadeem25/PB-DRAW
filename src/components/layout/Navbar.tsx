@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Search, DollarSign, HelpCircle, Home, LayoutDashboard, Users } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Search, DollarSign, HelpCircle, Home, LayoutDashboard, Users, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -26,6 +26,7 @@ const Navbar = () => {
   };
 
   const navLinks = [
+    { href: "/live", label: "Live", icon: Radio, isLive: true },
     { href: "/tournaments", label: "Find Tournaments", icon: Search },
     { href: "/how-it-works", label: "How It Works", icon: HelpCircle },
     { href: "/pricing", label: "Pricing", icon: DollarSign },
@@ -62,12 +63,13 @@ const Navbar = () => {
             <div className="hidden md:flex items-center gap-6">
               {authenticatedNavLinks.map((link) => {
                 const Icon = link.icon;
+                const isLiveLink = (link as any).isLive;
                 return (
                   <Link
                     key={link.href}
                     to={link.href}
                     className={cn(
-                      "flex items-center gap-1.5 text-sm font-medium transition-colors px-3 py-2 rounded-lg",
+                      "flex items-center gap-1.5 text-sm font-medium transition-colors px-3 py-2 rounded-lg relative",
                       isActive(link.href)
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:text-primary hover:bg-accent"
@@ -75,6 +77,12 @@ const Navbar = () => {
                   >
                     <Icon className="w-4 h-4" />
                     {link.label}
+                    {isLiveLink && (
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -176,12 +184,13 @@ const Navbar = () => {
           <div className="container mx-auto px-4 py-4 space-y-2">
             {authenticatedNavLinks.map((link) => {
               const Icon = link.icon;
+              const isLiveLink = (link as any).isLive;
               return (
                 <Link
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors relative",
                     isActive(link.href)
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground hover:text-primary hover:bg-accent"
@@ -190,6 +199,12 @@ const Navbar = () => {
                 >
                   <Icon className="w-4 h-4" />
                   {link.label}
+                  {isLiveLink && (
+                    <span className="relative flex h-2 w-2 ml-auto">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                  )}
                 </Link>
               );
             })}
