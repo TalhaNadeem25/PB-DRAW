@@ -28,8 +28,13 @@ const connectToDatabase = async () => {
   if (isConnected) {
     return;
   }
-  await connectDB();
-  isConnected = true;
+  try {
+    await connectDB();
+    isConnected = true;
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    throw error;
+  }
 };
 
 // Middleware
@@ -67,6 +72,15 @@ app.use(errorHandler);
 
 // Vercel serverless function export
 export default async (req, res) => {
-  await connectToDatabase();
-  return app(req, res);
+  try {
+    await connectToDatabase();
+    return app(req, res);
+  } catch (error) {
+    console.error('Serverless function error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'An error occurred'
+    });
+  }
 };
