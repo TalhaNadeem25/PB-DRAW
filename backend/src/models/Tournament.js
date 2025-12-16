@@ -76,7 +76,75 @@ const tournamentSchema = new mongoose.Schema({
   contactPhone: {
     type: String,
     trim: true
-  }
+  },
+  entryFee: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  maxTeams: {
+    type: Number,
+    min: 2
+  },
+  currentTeams: {
+    type: Number,
+    default: 0
+  },
+  skillLevelRequirement: {
+    min: {
+      type: Number,
+      min: 2.5,
+      max: 5.0
+    },
+    max: {
+      type: Number,
+      min: 2.5,
+      max: 5.0
+    }
+  },
+  rules: {
+    type: String,
+    maxlength: 2000
+  },
+  prizePool: {
+    total: {
+      type: Number,
+      default: 0
+    },
+    distribution: {
+      first: String,
+      second: String,
+      third: String,
+      other: String
+    }
+  },
+  settings: {
+    allowWaitlist: {
+      type: Boolean,
+      default: false
+    },
+    requirePartnerOnRegistration: {
+      type: Boolean,
+      default: false
+    },
+    autoConfirmRegistrations: {
+      type: Boolean,
+      default: true
+    },
+    publicBrackets: {
+      type: Boolean,
+      default: true
+    },
+    showPlayerStats: {
+      type: Boolean,
+      default: true
+    }
+  },
+  categories: [{
+    type: String,
+    enum: ['Recreational', 'Competitive', 'Professional', 'Charity', 'Corporate', 'Youth', 'Senior']
+  }],
+  tags: [String]
 }, {
   timestamps: true
 });

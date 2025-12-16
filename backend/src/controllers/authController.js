@@ -1,4 +1,6 @@
 import User from '../models/User.js';
+import Team from '../models/Team.js';
+import Tournament from '../models/Tournament.js';
 import { generateToken } from '../utils/jwt.js';
 
 // @desc    Register a new user
@@ -118,11 +120,26 @@ export const getMe = async (req, res, next) => {
 // @access  Private
 export const updateProfile = async (req, res, next) => {
   try {
-    const { name, phone, skillLevel, avatar } = req.body;
+    const { name, phone, skillLevel, avatar, bio, location, preferences } = req.body;
+
+    const updateData = {
+      name,
+      phone,
+      skillLevel,
+      avatar,
+      bio,
+      location,
+      preferences
+    };
+
+    // Remove undefined fields
+    Object.keys(updateData).forEach(key =>
+      updateData[key] === undefined && delete updateData[key]
+    );
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name, phone, skillLevel, avatar },
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -132,6 +149,62 @@ export const updateProfile = async (req, res, next) => {
       data: user
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get user statistics and history
+// @route   GET /api/auth/stats
+// @access  Private
+export const getUserStats = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    // Get all teams the user is part of (check both players.user and players directly)
+    const teams = await Team.find({
+      $or: [
+        { 'players.user': userId },
+        { 'players': userId }
+      ]
+    }).populate({
+      path: 'event',
+      populate: { path: 'tournament' }
+    }).lean();
+
+    // Get all tournaments the user has participated in
+    const tournamentIds = [...new Set(teams.map(team => team.event?.tournament?._id || team.event?.tournament).filter(Boolean))];
+    const tournaments = await Tournament.find({
+      _id: { $in: tournamentIds }
+    }).sort({ startDate: -1 }).lean();
+
+    // Get user statistics from user model
+    const user = await User.findById(userId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        statistics: user.statistics,
+        tournaments: tournaments.map(t => ({
+          _id: t._id,
+          name: t.name,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          status: t.status,
+          location: t.location
+        })),
+        teams: teams.map(t => ({
+          _id: t._id,
+          name: t.name,
+          event: t.event ? {
+            _id: t.event._id,
+            name: t.event.name,
+            tournament: t.event.tournament
+          } : null
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error in getUserStats:', error);
     next(error);
   }
 };

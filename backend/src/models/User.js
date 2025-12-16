@@ -40,6 +40,58 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  bio: {
+    type: String,
+    maxlength: 500,
+    default: ''
+  },
+  location: {
+    city: {
+      type: String,
+      default: ''
+    },
+    state: {
+      type: String,
+      default: ''
+    }
+  },
+  preferences: {
+    playingDays: [{
+      type: String,
+      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    }],
+    partnerPreference: {
+      type: String,
+      enum: ['looking', 'have-partner', 'either'],
+      default: 'either'
+    }
+  },
+  statistics: {
+    matchesPlayed: {
+      type: Number,
+      default: 0
+    },
+    matchesWon: {
+      type: Number,
+      default: 0
+    },
+    tournamentsPlayed: {
+      type: Number,
+      default: 0
+    },
+    goldMedals: {
+      type: Number,
+      default: 0
+    },
+    silverMedals: {
+      type: Number,
+      default: 0
+    },
+    bronzeMedals: {
+      type: Number,
+      default: 0
+    }
+  },
   tournaments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Tournament'

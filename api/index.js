@@ -15,6 +15,7 @@ import teamRoutes from '../backend/src/routes/teamRoutes.js';
 import matchRoutes from '../backend/src/routes/matchRoutes.js';
 import playoffRoutes from '../backend/src/routes/playoffRoutes.js';
 import invitationRoutes from '../backend/src/routes/invitationRoutes.js';
+import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,7 @@ app.get('/api', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/pools', poolRoutes);
 app.use('/api/teams', teamRoutes);

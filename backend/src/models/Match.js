@@ -74,6 +74,48 @@ const matchSchema = new mongoose.Schema({
   notes: {
     type: String,
     trim: true
+  },
+  checkIn: {
+    team1: {
+      status: {
+        type: String,
+        enum: ['pending', 'checked-in', 'no-show'],
+        default: 'pending'
+      },
+      checkedInAt: {
+        type: Date,
+        default: null
+      },
+      checkedInBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+      }
+    },
+    team2: {
+      status: {
+        type: String,
+        enum: ['pending', 'checked-in', 'no-show'],
+        default: 'pending'
+      },
+      checkedInAt: {
+        type: Date,
+        default: null
+      },
+      checkedInBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+      }
+    },
+    deadline: {
+      type: Date,
+      default: null
+    },
+    required: {
+      type: Boolean,
+      default: true
+    }
   }
 }, {
   timestamps: true

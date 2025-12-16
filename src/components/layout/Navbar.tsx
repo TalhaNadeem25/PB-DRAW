@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Search, DollarSign, HelpCircle, Home, LayoutDashboard, Users, Radio } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Search, DollarSign, HelpCircle, Home, LayoutDashboard, Users, Radio, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -27,9 +27,9 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/live", label: "Live", icon: Radio, isLive: true },
-    { href: "/tournaments", label: "Find Tournaments", icon: Search },
-    { href: "/how-it-works", label: "How It Works", icon: HelpCircle },
-    { href: "/pricing", label: "Pricing", icon: DollarSign },
+    // { href: "/discover", label: "Discover", icon: Compass },
+    { href: "/tournaments", label: "My Tournaments", icon: Trophy },
+    { href: "/Dashboard", label: "Dashboard", icon: LayoutDashboard },
   ];
 
   const authenticatedNavLinks = isAuthenticated

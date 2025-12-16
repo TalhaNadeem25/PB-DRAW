@@ -1,5 +1,6 @@
 import Match from '../models/Match.js';
 import Team from '../models/Team.js';
+import User from '../models/User.js';
 
 // @desc    Get all matches for a pool
 // @route   GET /api/pools/:poolId/matches
@@ -215,6 +216,158 @@ export const updateMatch = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Match updated successfully',
+      data: match
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Check in for a match
+// @route   POST /api/matches/:id/check-in
+// @access  Private (Player)
+export const checkInMatch = async (req, res, next) => {
+  try {
+    const match = await Match.findById(req.params.id)
+      .populate('team1')
+      .populate('team2');
+
+    if (!match) {
+      return res.status(404).json({
+        success: false,
+        message: 'Match not found'
+      });
+    }
+
+    // Check if check-in is required
+    if (!match.checkIn.required) {
+      return res.status(400).json({
+        success: false,
+        message: 'Check-in is not required for this match'
+      });
+    }
+
+    // Check if past deadline
+    if (match.checkIn.deadline && new Date() > new Date(match.checkIn.deadline)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Check-in deadline has passed'
+      });
+    }
+
+    // Determine which team the user belongs to
+    let isTeam1 = false;
+    let isTeam2 = false;
+
+    if (match.team1) {
+      const team1Players = match.team1.players || [];
+      isTeam1 = team1Players.some((p) => p.user?.toString() === req.user.id || p.toString() === req.user.id);
+    }
+
+    if (match.team2) {
+      const team2Players = match.team2.players || [];
+      isTeam2 = team2Players.some((p) => p.user?.toString() === req.user.id || p.toString() === req.user.id);
+    }
+
+    if (!isTeam1 && !isTeam2) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not a player in this match'
+      });
+    }
+
+    // Update check-in status
+    if (isTeam1) {
+      if (match.checkIn.team1.status === 'checked-in') {
+        return res.status(400).json({
+          success: false,
+          message: 'Team 1 has already checked in'
+        });
+      }
+      match.checkIn.team1.status = 'checked-in';
+      match.checkIn.team1.checkedInAt = new Date();
+      match.checkIn.team1.checkedInBy = req.user.id;
+    }
+
+    if (isTeam2) {
+      if (match.checkIn.team2.status === 'checked-in') {
+        return res.status(400).json({
+          success: false,
+          message: 'Team 2 has already checked in'
+        });
+      }
+      match.checkIn.team2.status = 'checked-in';
+      match.checkIn.team2.checkedInAt = new Date();
+      match.checkIn.team2.checkedInBy = req.user.id;
+    }
+
+    await match.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Successfully checked in for the match',
+      data: match
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Mark team as no-show (Organizer only)
+// @route   POST /api/matches/:id/no-show
+// @access  Private (Organizer/Admin)
+export const markNoShow = async (req, res, next) => {
+  try {
+    const { teamNumber } = req.body; // 1 or 2
+
+    if (!teamNumber || (teamNumber !== 1 && teamNumber !== 2)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please specify teamNumber (1 or 2)'
+      });
+    }
+
+    const match = await Match.findById(req.params.id)
+      .populate({
+        path: 'event',
+        populate: { path: 'tournament' }
+      });
+
+    if (!match) {
+      return res.status(404).json({
+        success: false,
+        message: 'Match not found'
+      });
+    }
+
+    // Check authorization
+    if (match.event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to mark no-shows'
+      });
+    }
+
+    // Mark as no-show
+    if (teamNumber === 1) {
+      match.checkIn.team1.status = 'no-show';
+      // Auto-forfeit: award win to team 2
+      match.status = 'completed';
+      match.winner = match.team2;
+      match.completedAt = new Date();
+    } else {
+      match.checkIn.team2.status = 'no-show';
+      // Auto-forfeit: award win to team 1
+      match.status = 'completed';
+      match.winner = match.team1;
+      match.completedAt = new Date();
+    }
+
+    await match.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Team marked as no-show and match forfeited',
       data: match
     });
   } catch (error) {

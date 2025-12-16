@@ -18,6 +18,7 @@ import teamRoutes from './routes/teamRoutes.js';
 import matchRoutes from './routes/matchRoutes.js';
 import playoffRoutes from './routes/playoffRoutes.js';
 import invitationRoutes from './routes/invitationRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 // Initialize Express app
 const app = express();
@@ -47,13 +48,15 @@ app.get('/api', (req, res) => {
       events: '/api/events',
       pools: '/api/pools',
       teams: '/api/teams',
-      matches: '/api/matches'
+      matches: '/api/matches',
+      payments: '/api/payments'
     }
   });
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Tournaments from "./pages/Tournaments";
 import TournamentDetail from "./pages/TournamentDetail";
@@ -19,6 +20,9 @@ import EditTournament from "./pages/EditTournament";
 import Teams from "./pages/Teams";
 import Live from "./pages/Live";
 import LiveTournamentDetail from "./pages/LiveTournamentDetail";
+import Discover from "./pages/Discover";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import EventRegistration from "./pages/EventRegistration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +34,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -59,8 +64,11 @@ const App = () => (
               }
             />
             <Route path="/tournaments" element={<Tournaments />} />
+            <Route path="/discover" element={<Discover />} />
             <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/tournaments/:id/register" element={<Register />} />
+            <Route path="/tournaments/:tournamentId/register/:eventId" element={<EventRegistration />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/live" element={<Live />} />
             <Route path="/live/:id" element={<LiveTournamentDetail />} />
             <Route

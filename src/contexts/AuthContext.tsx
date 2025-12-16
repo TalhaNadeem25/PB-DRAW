@@ -10,6 +10,23 @@ interface User {
   skillLevel?: number;
   phone?: string;
   avatar?: string;
+  bio?: string;
+  location?: {
+    city?: string;
+    state?: string;
+  };
+  preferences?: {
+    playingDays?: string[];
+    partnerPreference?: 'looking' | 'have-partner' | 'either';
+  };
+  statistics?: {
+    matchesPlayed: number;
+    matchesWon: number;
+    tournamentsPlayed: number;
+    goldMedals: number;
+    silverMedals: number;
+    bronzeMedals: number;
+  };
 }
 
 interface AuthContextType {

@@ -67,8 +67,22 @@ export const authAPI = {
     phone?: string;
     skillLevel?: number;
     avatar?: string;
+    bio?: string;
+    location?: {
+      city?: string;
+      state?: string;
+    };
+    preferences?: {
+      playingDays?: string[];
+      partnerPreference?: string;
+    };
   }) => {
     const response = await api.put('/auth/profile', data);
+    return response.data;
+  },
+
+  getStats: async () => {
+    const response = await api.get('/auth/stats');
     return response.data;
   },
 };
@@ -235,6 +249,16 @@ export const matchAPI = {
     const response = await api.put(`/matches/${id}`, data);
     return response.data;
   },
+
+  checkIn: async (matchId: string) => {
+    const response = await api.post(`/matches/${matchId}/check-in`);
+    return response.data;
+  },
+
+  markNoShow: async (matchId: string, teamNumber: number) => {
+    const response = await api.post(`/matches/${matchId}/no-show`, { teamNumber });
+    return response.data;
+  },
 };
 
 // Playoffs
@@ -305,6 +329,34 @@ export const invitationAPI = {
 
   cancel: async (id: string) => {
     const response = await api.delete(`/invitations/${id}`);
+    return response.data;
+  },
+};
+
+// Payments
+export const paymentAPI = {
+  createIntent: async (data: { teamId: string; eventId: string }) => {
+    const response = await api.post('/payments/create-intent', data);
+    return response.data;
+  },
+
+  confirmPayment: async (paymentIntentId: string) => {
+    const response = await api.post('/payments/confirm', { paymentIntentId });
+    return response.data;
+  },
+
+  getPayment: async (id: string) => {
+    const response = await api.get(`/payments/${id}`);
+    return response.data;
+  },
+
+  getMyPayments: async () => {
+    const response = await api.get('/payments/my-payments');
+    return response.data;
+  },
+
+  refundPayment: async (id: string, reason?: string) => {
+    const response = await api.post(`/payments/${id}/refund`, { reason });
     return response.data;
   },
 };

@@ -54,6 +54,33 @@ const teamSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['unpaid', 'partially_paid', 'paid'],
+    default: 'unpaid'
+  },
+  paymentAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  paidAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  payments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Payment'
+  }],
+  paymentDeadline: {
+    type: Date,
+    default: null
+  },
+  registrationConfirmed: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

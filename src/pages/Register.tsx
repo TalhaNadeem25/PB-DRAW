@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,10 +32,14 @@ import {
   Target,
   UserPlus,
 } from "lucide-react";
-import { tournamentAPI, eventAPI, teamAPI, invitationAPI } from "@/services/api";
+import { tournamentAPI, eventAPI, teamAPI, invitationAPI, paymentAPI } from "@/services/api";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import PaymentForm from "@/components/payment/PaymentForm";
+
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
 const Register = () => {
   const { id } = useParams();
@@ -45,6 +51,9 @@ const Register = () => {
   const [isPartnerDialogOpen, setIsPartnerDialogOpen] = useState(false);
   const [partnerName, setPartnerName] = useState("");
   const [partnerEmail, setPartnerEmail] = useState("");
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [createdTeam, setCreatedTeam] = useState<any>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   // Fetch tournament data
   const { data: tournamentData, isLoading } = useQuery({
@@ -90,7 +99,7 @@ const Register = () => {
 
       const teamData: any = {
         name: teamName,
-        players: [user?.id],
+        players: [user?._id],
       };
 
       const teamResponse = await teamAPI.create(data.eventId, teamData);
@@ -111,19 +120,52 @@ const Register = () => {
 
       return teamResponse;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['events', id] });
-      if (variables.eventFormat === 'singles') {
-        toast.success("Successfully registered for the event!");
-      } else if (variables.partnerEmail) {
-        toast.success("Team created and invitation sent to your partner!");
-      } else {
-        toast.success("Team created! You can invite your partner from the Teams page.");
-      }
+
+      // Store the created team
+      setCreatedTeam(data.data);
       setIsPartnerDialogOpen(false);
-      setPartnerName("");
-      setPartnerEmail("");
-      setSelectedEvent(null);
+
+      // Check if payment is required
+      const entryFee = tournament?.entryFee || 0;
+
+      if (entryFee > 0) {
+        // Create payment intent
+        try {
+          const paymentResponse = await paymentAPI.createIntent({
+            teamId: data.data._id,
+            eventId: selectedEvent._id,
+          });
+
+          if (paymentResponse.data.requiresPayment) {
+            // Show payment dialog
+            setClientSecret(paymentResponse.data.clientSecret);
+            setIsPaymentDialogOpen(true);
+          } else {
+            // Free tournament or payment not required
+            toast.success("Successfully registered for the event!");
+            setPartnerName("");
+            setPartnerEmail("");
+            setSelectedEvent(null);
+          }
+        } catch (paymentError: any) {
+          console.error('Payment setup error:', paymentError);
+          toast.error(paymentError.response?.data?.message || "Failed to set up payment");
+        }
+      } else {
+        // No payment required
+        if (variables.eventFormat === 'singles') {
+          toast.success("Successfully registered for the event!");
+        } else if (variables.partnerEmail) {
+          toast.success("Team created and invitation sent to your partner!");
+        } else {
+          toast.success("Team created! You can invite your partner from the Teams page.");
+        }
+        setPartnerName("");
+        setPartnerEmail("");
+        setSelectedEvent(null);
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to register for event");
@@ -152,18 +194,8 @@ const Register = () => {
       return;
     }
 
-    setSelectedEvent(event);
-
-    // For singles, automatically create team without dialog
-    if (event.format === 'singles') {
-      createTeamMutation.mutate({
-        eventId: event._id,
-        eventFormat: event.format,
-      });
-    } else {
-      // For doubles/mixed, show partner dialog
-      setIsPartnerDialogOpen(true);
-    }
+    // Navigate to dedicated event registration page
+    navigate(`/tournaments/${id}/register/${event._id}`);
   };
 
   const handleCreateTeamWithPartner = () => {
@@ -175,6 +207,22 @@ const Register = () => {
         partnerEmail: partnerEmail.trim() || undefined,
       });
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsPaymentDialogOpen(false);
+    setClientSecret(null);
+    setCreatedTeam(null);
+    setPartnerName("");
+    setPartnerEmail("");
+    setSelectedEvent(null);
+    navigate('/dashboard');
+  };
+
+  const handlePaymentCancel = () => {
+    setIsPaymentDialogOpen(false);
+    toast.info("Payment cancelled. You can complete payment later from your Teams page.");
+    navigate('/teams');
   };
 
   if (isLoading) {
@@ -544,6 +592,55 @@ const Register = () => {
                 )}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Dialog */}
+        <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
+          if (!open) {
+            handlePaymentCancel();
+          }
+        }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <DollarSign className="w-6 h-6 text-primary" />
+                Complete Payment
+              </DialogTitle>
+              <DialogDescription>
+                Complete your payment to confirm your registration for {selectedEvent?.name}
+              </DialogDescription>
+            </DialogHeader>
+
+            {clientSecret && (
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  appearance: {
+                    theme: 'stripe',
+                    variables: {
+                      colorPrimary: '#ea580c',
+                      colorBackground: '#ffffff',
+                      colorText: '#1e293b',
+                      colorDanger: '#ef4444',
+                      fontFamily: 'system-ui, sans-serif',
+                      borderRadius: '8px',
+                    },
+                  },
+                }}
+              >
+                <PaymentForm
+                  teamId={createdTeam?._id || ''}
+                  eventId={selectedEvent?._id || ''}
+                  tournamentName={tournament?.name || ''}
+                  eventName={selectedEvent?.name || ''}
+                  amount={tournament?.entryFee || 0}
+                  onSuccess={handlePaymentSuccess}
+                  onCancel={handlePaymentCancel}
+                />
+              </Elements>
+            )}
           </DialogContent>
         </Dialog>
       </div>
