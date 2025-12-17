@@ -15,7 +15,8 @@ import teamRoutes from '../backend/src/routes/teamRoutes.js';
 import matchRoutes from '../backend/src/routes/matchRoutes.js';
 import playoffRoutes from '../backend/src/routes/playoffRoutes.js';
 import invitationRoutes from '../backend/src/routes/invitationRoutes.js';
-import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
+// TODO: Re-enable payment routes after fixing Vercel deployment
+// import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -58,12 +59,22 @@ app.get('/api', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
-app.use('/api/payments', paymentRoutes);
+// TODO: Re-enable payment routes after fixing Vercel deployment
+// app.use('/api/payments', paymentRoutes);
+
+// Nested routes (must come before standalone routes)
+app.use('/api/tournaments/:tournamentId/events', eventRoutes);
+app.use('/api/events/:eventId/pools', poolRoutes);
+app.use('/api/events/:eventId/teams', teamRoutes);
+app.use('/api/events/:eventId/playoffs', playoffRoutes);
+app.use('/api/pools/:poolId/matches', matchRoutes);
+app.use('/api/teams/:teamId/invitations', invitationRoutes);
+
+// Standalone routes for direct access
 app.use('/api/events', eventRoutes);
 app.use('/api/pools', poolRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
-app.use('/api/playoffs', playoffRoutes);
 app.use('/api/invitations', invitationRoutes);
 
 // Error handlers
