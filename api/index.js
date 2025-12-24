@@ -3,8 +3,11 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
 import connectDB from '../backend/src/config/database.js';
 import { errorHandler, notFound } from '../backend/src/middleware/errorHandler.js';
+import { apiLimiter, authLimiter, paymentLimiter } from '../backend/src/middleware/rateLimiter.js';
 
 // Import routes
 import authRoutes from '../backend/src/routes/authRoutes.js';
@@ -15,8 +18,8 @@ import teamRoutes from '../backend/src/routes/teamRoutes.js';
 import matchRoutes from '../backend/src/routes/matchRoutes.js';
 import playoffRoutes from '../backend/src/routes/playoffRoutes.js';
 import invitationRoutes from '../backend/src/routes/invitationRoutes.js';
-// TODO: Re-enable payment routes after fixing Vercel deployment
-// import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
+import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
+import stripeConnectRoutes from '../backend/src/routes/stripeConnectRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -47,6 +50,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Security middleware
+app.use(mongoSanitize());
+app.use(xss());
+
 // Health check
 app.get('/api', (req, res) => {
   res.json({
@@ -57,10 +64,11 @@ app.get('/api', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
+app.use('/api', apiLimiter); // Apply general rate limiting to all API routes
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
-// TODO: Re-enable payment routes after fixing Vercel deployment
-// app.use('/api/payments', paymentRoutes);
+app.use('/api/payments', paymentLimiter, paymentRoutes);
+app.use('/api/stripe/connect', stripeConnectRoutes);
 
 // Nested routes (must come before standalone routes)
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);
