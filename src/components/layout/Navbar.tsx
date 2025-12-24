@@ -28,7 +28,7 @@ const Navbar = () => {
   const navLinks = [
     { href: "/live", label: "Live", icon: Radio, isLive: true },
     // { href: "/discover", label: "Discover", icon: Compass },
-    { href: "/tournaments", label: "My Tournaments", icon: Trophy },
+    { href: "/tournaments", label: "Find Tournaments", icon: Trophy },
     { href: "/Dashboard", label: "Dashboard", icon: LayoutDashboard },
   ];
 

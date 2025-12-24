@@ -103,6 +103,19 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  // Stripe Connect fields
+  stripeConnectAccountId: {
+    type: String,
+    default: null
+  },
+  stripeConnectOnboarded: {
+    type: Boolean,
+    default: false
+  },
+  stripeConnectOnboardingCompleted: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

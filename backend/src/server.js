@@ -3,8 +3,11 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
 import connectDB from './config/database.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { apiLimiter, authLimiter, paymentLimiter, createLimiter } from './middleware/rateLimiter.js';
 
 // Load environment variables
 dotenv.config();
@@ -19,6 +22,7 @@ import matchRoutes from './routes/matchRoutes.js';
 import playoffRoutes from './routes/playoffRoutes.js';
 import invitationRoutes from './routes/invitationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import stripeConnectRoutes from './routes/stripeConnectRoutes.js';
 
 // Initialize Express app
 const app = express();
@@ -35,6 +39,13 @@ app.use(cors({
 app.use(express.json()); // Body parser
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev')); // HTTP request logger
+
+// Security middleware
+app.use(mongoSanitize()); // Prevent NoSQL injection
+app.use(xss()); // Prevent XSS attacks
+
+// Rate limiting - apply to all API routes
+app.use('/api', apiLimiter);
 
 // API Routes
 app.get('/api', (req, res) => {
@@ -54,9 +65,11 @@ app.get('/api', (req, res) => {
   });
 });
 
-app.use('/api/auth', authRoutes);
+// Apply specific rate limiters to sensitive routes
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api/payments', paymentLimiter, paymentRoutes);
+app.use('/api/stripe/connect', stripeConnectRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);

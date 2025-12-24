@@ -26,6 +26,7 @@ import {
 import { tournamentAPI, authAPI, teamAPI, invitationAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
+import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -222,6 +223,12 @@ const Dashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Stripe Connect - Payment Setup */}
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Payment Setup</h2>
+                <ConnectAccountStatus />
               </div>
 
               {/* Quick Actions */}

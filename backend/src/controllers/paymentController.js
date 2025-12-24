@@ -3,6 +3,8 @@ import Payment from '../models/Payment.js';
 import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
+import User from '../models/User.js';
+import { sendTicketPurchaseEmail } from '../services/emailService.js';
 
 // Initialize Stripe with lazy loading to ensure env vars are loaded
 let stripe;
@@ -51,8 +53,15 @@ export const createPaymentIntent = async (req, res, next) => {
       });
     }
 
-    // Get event and tournament details
-    const event = await Event.findById(eventId).populate('tournament');
+    // Get event and tournament details with organizer
+    const event = await Event.findById(eventId).populate({
+      path: 'tournament',
+      populate: {
+        path: 'organizer',
+        model: 'User'
+      }
+    });
+
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -65,6 +74,16 @@ export const createPaymentIntent = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: 'Tournament not found'
+      });
+    }
+
+    // Check if organizer has Stripe Connect onboarded
+    const organizer = tournament.organizer;
+    if (!organizer.stripeConnectAccountId || !organizer.stripeConnectOnboarded) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tournament organizer has not completed Stripe setup yet. Please contact the organizer.',
+        requiresStripeOnboarding: true
       });
     }
 
@@ -100,19 +119,32 @@ export const createPaymentIntent = async (req, res, next) => {
       });
     }
 
-    // Create Stripe payment intent
+    // Calculate platform fee
+    const amountInCents = Math.round(amount * 100);
+    const platformFeePercent = tournament.platformFeePercent || 10;
+    const platformFeeAmount = Math.round(amountInCents * (platformFeePercent / 100));
+
+    // Create Stripe payment intent using Platform model (direct charges)
+    // Payment goes to organizer's account, platform takes application fee
     const paymentIntent = await getStripe().paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: amountInCents,
       currency: 'usd',
+      application_fee_amount: platformFeeAmount, // Platform's cut
+      on_behalf_of: organizer.stripeConnectAccountId, // Charge to organizer's account
       metadata: {
         teamId: teamId.toString(),
         eventId: eventId.toString(),
         tournamentId: tournament._id.toString(),
         userId: req.user.id,
         teamName: team.name,
-        tournamentName: tournament.name
+        tournamentName: tournament.name,
+        platformFee: platformFeeAmount.toString(),
+        organizerId: organizer._id.toString()
       },
-      description: `Entry fee for ${tournament.name} - ${event.name}`
+      description: `Entry fee for ${tournament.name} - ${event.name}`,
+      transfer_data: {
+        destination: organizer.stripeConnectAccountId,
+      }
     });
 
     // Create payment record
@@ -168,7 +200,18 @@ export const confirmPayment = async (req, res, next) => {
     // Find payment by Stripe payment intent ID
     const payment = await Payment.findOne({
       stripePaymentIntentId: paymentIntentId
-    }).populate('team');
+    })
+      .populate('team')
+      .populate('user', 'name email')
+      .populate('event', 'name date')
+      .populate({
+        path: 'tournament',
+        populate: {
+          path: 'organizer',
+          model: 'User',
+          select: 'name email'
+        }
+      });
 
     if (!payment) {
       return res.status(404).json({
@@ -201,6 +244,25 @@ export const confirmPayment = async (req, res, next) => {
       team.paymentStatus = 'paid';
       team.registrationConfirmed = true;
       await team.save();
+
+      // Send ticket purchase confirmation email
+      try {
+        await sendTicketPurchaseEmail({
+          to: payment.user.email,
+          playerName: payment.user.name,
+          tournamentName: payment.tournament.name,
+          eventName: payment.event.name,
+          eventDate: payment.event.date,
+          entryFee: payment.amount,
+          transactionId: payment.stripePaymentIntentId,
+          organizerName: payment.tournament.organizer.name,
+          organizerEmail: payment.tournament.organizer.email
+        });
+        console.log(`Ticket confirmation email sent to ${payment.user.email}`);
+      } catch (emailError) {
+        // Don't fail the payment if email fails
+        console.error('Failed to send ticket purchase email:', emailError);
+      }
 
       return res.status(200).json({
         success: true,

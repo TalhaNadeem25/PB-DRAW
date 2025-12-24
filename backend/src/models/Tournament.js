@@ -52,6 +52,17 @@ const tournamentSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  // Stripe Connect - organizer's connected account ID
+  stripeAccountId: {
+    type: String,
+    default: null
+  },
+  platformFeePercent: {
+    type: Number,
+    default: 10, // 10% platform fee
+    min: 0,
+    max: 100
+  },
   events: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event'
