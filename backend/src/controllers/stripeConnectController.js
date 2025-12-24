@@ -71,7 +71,14 @@ export const createConnectAccountLink = async (req, res, next) => {
     });
   } catch (error) {
     console.error('Stripe Connect onboarding error:', error);
-    next(error);
+
+    // Send detailed error for debugging
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Failed to create Stripe Connect account',
+      stripeError: error.type,
+      details: error.raw?.message || error.message
+    });
   }
 };
 

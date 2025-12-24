@@ -15,8 +15,16 @@ export const ConnectAccountButton = () => {
       // Redirect to Stripe onboarding
       window.location.href = response.data.url;
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to start Stripe onboarding');
-      console.error(error);
+      const errorMessage = error.response?.data?.message || 'Failed to start Stripe onboarding';
+      const errorDetails = error.response?.data?.details;
+
+      toast.error(errorMessage);
+      console.error('Stripe Connect Error:', {
+        message: errorMessage,
+        details: errorDetails,
+        fullError: error.response?.data,
+        rawError: error
+      });
     } finally {
       setLoading(false);
     }
