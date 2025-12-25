@@ -26,6 +26,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy - Vercel runs behind a proxy
+app.set('trust proxy', 1);
+
 // Connect to MongoDB (connection pooling for serverless)
 let isConnected = false;
 const connectToDatabase = async () => {

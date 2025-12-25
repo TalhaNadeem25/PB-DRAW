@@ -27,6 +27,9 @@ import stripeConnectRoutes from './routes/stripeConnectRoutes.js';
 // Initialize Express app
 const app = express();
 
+// Trust proxy for rate limiting behind reverse proxies
+app.set('trust proxy', 1);
+
 // Connect to MongoDB
 connectDB();
 
