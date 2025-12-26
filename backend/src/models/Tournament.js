@@ -88,6 +88,7 @@ const tournamentSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  // DEPRECATED: Use event.entryFee instead - fees are now set per event, not per tournament
   entryFee: {
     type: Number,
     default: 0,

@@ -50,6 +50,26 @@ const eventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team'
   }],
+  // For singles events - direct player registrations
+  registeredPlayers: [{
+    player: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    registeredAt: {
+      type: Date,
+      default: Date.now
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'paid'],
+      default: 'unpaid'
+    },
+    payment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Payment'
+    }
+  }],
   pools: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Pool'

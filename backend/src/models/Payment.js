@@ -7,16 +7,43 @@ const paymentSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
+    // Legacy single-event fields (optional for backward compatibility)
     team: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Team',
-      required: true
+      required: false
     },
     event: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
-      required: true
+      required: false
     },
+    // New multi-event fields
+    teams: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Team'
+    }],
+    events: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event'
+    }],
+    eventBreakdown: [{
+      eventId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Event'
+      },
+      teamId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Team'
+      },
+      // For singles events (no team)
+      isSingles: {
+        type: Boolean,
+        default: false
+      },
+      amount: Number,
+      eventName: String
+    }],
     tournament: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Tournament',

@@ -340,6 +340,13 @@ export const paymentAPI = {
     return response.data;
   },
 
+  createMultiEventIntent: async (data: {
+    eventRegistrations: { eventId: string; teamId: string }[]
+  }) => {
+    const response = await api.post('/payments/create-multi-event-intent', data);
+    return response.data;
+  },
+
   confirmPayment: async (paymentIntentId: string) => {
     const response = await api.post('/payments/confirm', { paymentIntentId });
     return response.data;

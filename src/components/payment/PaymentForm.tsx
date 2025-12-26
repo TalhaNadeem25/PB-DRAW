@@ -7,10 +7,20 @@ import { paymentAPI } from "@/services/api";
 import { toast } from "sonner";
 
 interface PaymentFormProps {
-  teamId: string;
-  eventId: string;
+  // Support both single and multi-event
+  teamId?: string;
+  eventId?: string;
+
+  // Multi-event props
+  eventBreakdown?: Array<{
+    eventId: string;
+    teamId: string;
+    amount: number;
+    eventName: string;
+  }>;
+
   tournamentName: string;
-  eventName: string;
+  eventName?: string;
   amount: number;
   onSuccess: () => void;
   onCancel?: () => void;
@@ -19,6 +29,7 @@ interface PaymentFormProps {
 const PaymentForm = ({
   teamId,
   eventId,
+  eventBreakdown,
   tournamentName,
   eventName,
   amount,
@@ -87,10 +98,26 @@ const PaymentForm = ({
           <span className="text-sm text-muted-foreground">Tournament</span>
           <span className="font-medium">{tournamentName}</span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Event</span>
-          <span className="font-medium">{eventName}</span>
-        </div>
+
+        {eventBreakdown && eventBreakdown.length > 1 ? (
+          // Multi-event breakdown
+          <>
+            <div className="text-sm font-medium mt-2 mb-1">Events:</div>
+            {eventBreakdown.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between text-sm pl-2">
+                <span className="text-muted-foreground">{item.eventName}</span>
+                <span className="font-medium">${item.amount.toFixed(2)}</span>
+              </div>
+            ))}
+          </>
+        ) : (
+          // Single event
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Event</span>
+            <span className="font-medium">{eventName}</span>
+          </div>
+        )}
+
         <div className="pt-2 border-t border-border">
           <div className="flex items-center justify-between">
             <span className="font-semibold">Total Amount</span>

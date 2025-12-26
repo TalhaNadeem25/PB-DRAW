@@ -106,7 +106,7 @@ const EventRegistration = () => {
       setCreatedTeam(data.data);
 
       // Check if payment is required
-      const entryFee = tournament?.entryFee || 0;
+      const entryFee = event?.entryFee || 0;
       console.log('Entry fee:', entryFee);
 
       if (entryFee > 0) {
@@ -218,7 +218,7 @@ const EventRegistration = () => {
     );
   }
 
-  const entryFee = tournament.entryFee || 0;
+  const entryFee = event.entryFee || 0;
   const requiresPartner = event.format !== 'singles';
 
   return (
