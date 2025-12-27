@@ -36,6 +36,10 @@ export const getEvent = async (req, res, next) => {
       .populate({
         path: 'pools',
         populate: { path: 'teams matches' }
+      })
+      .populate({
+        path: 'registeredPlayers.player',
+        select: 'name email skillLevel'
       });
 
     if (!event) {

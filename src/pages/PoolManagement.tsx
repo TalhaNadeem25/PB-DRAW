@@ -69,8 +69,20 @@ const PoolManagement = () => {
   const pools = poolsData?.data || [];
   const playoffs = playoffsData?.data || [];
 
-  // Get unassigned teams (teams without a pool)
-  const unassignedTeams = teams.filter((team: any) => !team.pool);
+  // Check if this is a singles event
+  const isSingles = event?.format === 'singles';
+
+  // Get unassigned teams (teams without a pool) OR unassigned players for singles
+  const unassignedTeams = isSingles
+    ? [] // For singles, we'll handle players separately
+    : teams.filter((team: any) => !team.pool);
+
+  // Get unassigned players for singles events (players not in any pool)
+  const unassignedPlayers = isSingles
+    ? (event?.registeredPlayers || [])
+        .filter((reg: any) => reg.paymentStatus === 'paid' && !reg.pool)
+        .map((reg: any) => reg.player)
+    : [];
 
   // Create pool mutation
   const createPoolMutation = useMutation({
@@ -346,21 +358,48 @@ const PoolManagement = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-primary" />
-                    Unassigned Teams ({unassignedTeams.length})
+                    {isSingles
+                      ? `Unassigned Players (${unassignedPlayers.length})`
+                      : `Unassigned Teams (${unassignedTeams.length})`
+                    }
                   </CardTitle>
-                  <CardDescription>Teams not in any pool</CardDescription>
+                  <CardDescription>
+                    {isSingles ? 'Players not in any pool' : 'Teams not in any pool'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {unassignedTeams.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">All teams assigned</p>
+                  {(isSingles ? unassignedPlayers.length === 0 : unassignedTeams.length === 0) ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      {isSingles ? 'All players assigned' : 'All teams assigned'}
+                    </p>
                   ) : (
                     <div className="space-y-2">
-                      {unassignedTeams.map((team: any) => (
-                        <div
-                          key={team._id}
-                          className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border"
-                        >
-                          <span className="font-medium text-sm flex-1">{team.name}</span>
+                      {isSingles ? (
+                        // Display players for singles events
+                        unassignedPlayers.map((player: any) => (
+                          <div
+                            key={player._id}
+                            className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border"
+                          >
+                            <div className="flex-1">
+                              <span className="font-medium text-sm">{player.name}</span>
+                              <p className="text-xs text-muted-foreground">{player.email}</p>
+                              {player.skillLevel && (
+                                <Badge variant="outline" className="mt-1 text-xs">
+                                  Skill: {player.skillLevel}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        // Display teams for doubles/mixed events
+                        unassignedTeams.map((team: any) => (
+                          <div
+                            key={team._id}
+                            className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border"
+                          >
+                            <span className="font-medium text-sm flex-1">{team.name}</span>
                           {pools.length > 0 ? (
                             <Select
                               onValueChange={(poolId) => handleAssignTeamToPool(team._id, poolId)}
