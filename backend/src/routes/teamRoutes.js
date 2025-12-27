@@ -10,7 +10,7 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/', getTeams);
+router.get('/', protect, getTeams); // Add protect middleware to filter by authenticated user
 router.get('/:id', getTeam);
 router.post('/', protect, createTeam);
 router.put('/:id', protect, updateTeam);

@@ -252,19 +252,26 @@ export const createMultiEventPaymentIntent = async (req, res, next) => {
       });
     }
 
-    // Check if user already has teams OR singles registrations in any of these events
+    // Check if user already has PAID teams OR singles registrations in any of these events
+    // Unpaid registrations don't count - users can retry payment
     const eventIds = events.map(e => e._id);
 
-    // Check for existing team registrations
+    // Check for existing PAID team registrations
     const existingTeams = await Team.find({
       event: { $in: eventIds },
-      players: req.user.id
+      players: req.user.id,
+      paymentStatus: 'paid'  // Only check paid teams
     }).populate('event', 'name');
 
-    // Check for existing singles registrations
+    // Check for existing PAID singles registrations
     const eventsWithPlayerRegistered = await Event.find({
       _id: { $in: eventIds },
-      'registeredPlayers.player': req.user.id
+      'registeredPlayers': {
+        $elemMatch: {
+          player: req.user.id,
+          paymentStatus: 'paid'  // Only check paid registrations
+        }
+      }
     }, 'name');
 
     const alreadyRegisteredEvents = [

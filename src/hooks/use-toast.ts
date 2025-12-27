@@ -183,4 +183,32 @@ function useToast() {
   };
 }
 
+// Helper methods for common toast variants
+const toastHelpers = {
+  success: (title: string, description?: string) => {
+    return toast({
+      variant: "success",
+      title,
+      description,
+    });
+  },
+  error: (title: string, description?: string) => {
+    return toast({
+      variant: "destructive",
+      title,
+      description,
+    });
+  },
+  info: (title: string, description?: string) => {
+    return toast({
+      variant: "default",
+      title,
+      description,
+    });
+  },
+};
+
+// Attach helper methods to toast function
+Object.assign(toast, toastHelpers);
+
 export { useToast, toast };

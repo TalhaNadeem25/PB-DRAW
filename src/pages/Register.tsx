@@ -175,14 +175,32 @@ const Register = () => {
   const myTeams = myTeamsData?.data || [];
 
   // Get event IDs user is already registered for (both team and singles)
-  const teamEventIds = myTeams.map((team: any) => team.event?._id || team.event).filter(Boolean);
+  // IMPORTANT: Only count PAID teams - unpaid teams don't count as registered
+  const teamEventIds = myTeams
+    .filter((team: any) => team.paymentStatus === 'paid') // Only paid teams
+    .map((team: any) => team.event?._id || team.event)
+    .filter(Boolean)
+    .map(String); // Convert to strings for consistent comparison
 
   // Also check if user is registered as singles player in any events
+  // IMPORTANT: Only count PAID registrations
   const singlesEventIds = events
-    .filter((event: any) =>
-      event.registeredPlayers?.some((reg: any) => reg.player === user?._id || reg.player?._id === user?._id)
-    )
-    .map((event: any) => event._id);
+    .filter((event: any) => {
+      if (!event.registeredPlayers || event.registeredPlayers.length === 0) {
+        return false;
+      }
+      return event.registeredPlayers.some((reg: any) => {
+        if (!reg || !reg.player || !user?._id) {
+          return false;
+        }
+        // Convert both to strings for comparison
+        const regPlayerId = String(reg.player?._id || reg.player);
+        const userId = String(user._id);
+        // Only count if this registration is paid
+        return regPlayerId === userId && reg.paymentStatus === 'paid';
+      });
+    })
+    .map((event: any) => String(event._id));
 
   const registeredEventIds = [...new Set([...teamEventIds, ...singlesEventIds])];
 
@@ -197,7 +215,7 @@ const Register = () => {
     }
 
     // Check if user is already registered for this event
-    if (registeredEventIds.includes(event._id)) {
+    if (registeredEventIds.includes(String(event._id))) {
       toast.error("You are already registered for this event");
       return;
     }
@@ -253,8 +271,25 @@ const Register = () => {
 
   const handlePaymentCancel = () => {
     setIsPaymentDialogOpen(false);
-    toast.info("Payment cancelled. You can complete payment later from your Teams page.");
-    navigate('/teams');
+
+    // Check if any of the selected events are singles
+    const hasSingles = selectedEvents.some(sel => sel.event.format === 'singles');
+    const hasTeams = selectedEvents.some(sel => sel.event.format !== 'singles');
+
+    // Show appropriate message and redirect based on event types
+    if (hasSingles && !hasTeams) {
+      // Only singles events
+      toast.info("Payment cancelled. You can try registering again from the tournament page.");
+      navigate(`/tournaments/${id}`);
+    } else if (hasTeams && !hasSingles) {
+      // Only team events (doubles/mixed)
+      toast.info("Payment cancelled. You can complete payment later from your Teams page.");
+      navigate('/teams');
+    } else {
+      // Mix of singles and team events
+      toast.info("Payment cancelled. You can retry from the tournament page or complete payment from Teams.");
+      navigate(`/tournaments/${id}`);
+    }
   };
 
   if (isLoading) {
@@ -403,10 +438,17 @@ const Register = () => {
                     <div className="space-y-4">
                       {events.map((event: any) => {
                         const isFull = event.currentTeams >= event.maxTeams;
-                        const isAlreadyRegistered = registeredEventIds.includes(event._id);
+                        const isAlreadyRegistered = registeredEventIds.includes(String(event._id));
                         const isSelected = selectedEvents.some(sel => sel.eventId === event._id);
                         const selection = selectedEvents.find(sel => sel.eventId === event._id);
                         const needsPartner = event.format === 'doubles' || event.format === 'mixed-doubles';
+
+                        // Check if there's an unpaid registration for this event
+                        const hasUnpaidRegistration = myTeams.some((team: any) =>
+                          (String(team.event?._id || team.event) === String(event._id)) &&
+                          team.paymentStatus === 'unpaid'
+                        );
+
                         const isDisabled = isFull || isAlreadyRegistered;
 
                         return (
@@ -441,6 +483,11 @@ const Register = () => {
                               )}
                               {isAlreadyRegistered && !isFull && (
                                 <Badge variant="default" className="bg-green-600">Registered</Badge>
+                              )}
+                              {hasUnpaidRegistration && !isAlreadyRegistered && !isFull && (
+                                <Badge variant="outline" className="bg-yellow-50 border-yellow-300 text-yellow-700">
+                                  Payment Pending
+                                </Badge>
                               )}
                             </div>
 
