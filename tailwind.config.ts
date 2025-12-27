@@ -51,6 +51,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         court: {
           green: "hsl(var(--court-green))",
           "green-dark": "hsl(var(--court-green-dark))",
@@ -74,15 +82,27 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+      },
+      boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)",
+        glow: "var(--shadow-glow)",
+        "glow-yellow": "var(--shadow-glow-yellow)",
+        inner: "var(--shadow-inner)",
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+          from: { height: "0", opacity: "0" },
+          to: { height: "var(--radix-accordion-content-height)", opacity: "1" },
         },
         "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          from: { height: "var(--radix-accordion-content-height)", opacity: "1" },
+          to: { height: "0", opacity: "0" },
         },
         "fade-in": {
           from: { opacity: "0", transform: "translateY(10px)" },
@@ -100,6 +120,15 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-5px)" },
         },
+        shimmer: {
+          from: { transform: "translateX(-100%)" },
+          to: { transform: "translateX(100%)" },
+        },
+        "pulse-ring": {
+          "0%": { transform: "scale(0.95)", opacity: "1" },
+          "50%": { transform: "scale(1)", opacity: "0.5" },
+          "100%": { transform: "scale(0.95)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -108,6 +137,8 @@ export default {
         "slide-in-left": "slide-in-left 0.5s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
+        shimmer: "shimmer 2s infinite",
+        "pulse-ring": "pulse-ring 2s ease-in-out infinite",
       },
     },
   },
