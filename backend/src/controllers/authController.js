@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Team from '../models/Team.js';
+import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
 import { generateToken } from '../utils/jwt.js';
 
