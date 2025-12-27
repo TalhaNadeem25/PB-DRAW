@@ -171,8 +171,16 @@ export const getUserStats = async (req, res, next) => {
       populate: { path: 'tournament' }
     }).lean();
 
-    // Get all tournaments the user has participated in
-    const tournamentIds = [...new Set(teams.map(team => team.event?.tournament?._id || team.event?.tournament).filter(Boolean))];
+    // ALSO get events where user is registered as singles player
+    const singlesEvents = await Event.find({
+      'registeredPlayers.player': userId
+    }).populate('tournament').lean();
+
+    // Get all tournaments the user has participated in (from both teams AND singles)
+    const teamTournamentIds = teams.map(team => team.event?.tournament?._id || team.event?.tournament).filter(Boolean);
+    const singlesTournamentIds = singlesEvents.map(event => event.tournament?._id || event.tournament).filter(Boolean);
+    const tournamentIds = [...new Set([...teamTournamentIds, ...singlesTournamentIds])];
+
     const tournaments = await Tournament.find({
       _id: { $in: tournamentIds }
     }).sort({ startDate: -1 }).lean();
@@ -200,6 +208,12 @@ export const getUserStats = async (req, res, next) => {
             name: t.event.name,
             tournament: t.event.tournament
           } : null
+        })),
+        singlesEvents: singlesEvents.map(e => ({
+          _id: e._id,
+          name: e.name,
+          format: e.format,
+          tournament: e.tournament
         }))
       }
     });

@@ -538,6 +538,18 @@ export const confirmPayment = async (req, res, next) => {
           team.paymentStatus = 'paid';
           team.registrationConfirmed = true;
           await team.save();
+
+          // Update event's currentTeams count
+          const event = await Event.findById(team.event);
+          if (event) {
+            // Add team to event.teams array if not already there
+            if (!event.teams.includes(teamId)) {
+              event.teams.push(teamId);
+            }
+            // Update the count
+            event.currentTeams = event.teams.length;
+            await event.save();
+          }
         }
       }
 
@@ -555,6 +567,13 @@ export const confirmPayment = async (req, res, next) => {
 
             if (playerReg) {
               playerReg.paymentStatus = 'paid';
+
+              // Update currentTeams count (for singles, this tracks # of registered players)
+              const paidPlayersCount = event.registeredPlayers.filter(
+                reg => reg.paymentStatus === 'paid'
+              ).length;
+              event.currentTeams = paidPlayersCount;
+
               await event.save();
             }
           }
