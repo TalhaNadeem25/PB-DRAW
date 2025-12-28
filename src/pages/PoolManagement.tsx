@@ -159,6 +159,21 @@ const PoolManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
       toast.success("Player assigned to pool successfully");
+
+      // Auto-generate matches if pool has 2+ players
+      const poolPlayerCount = (event?.registeredPlayers || []).filter(
+        (reg: any) => reg.paymentStatus === 'paid' && reg.pool?.toString() === poolId
+      ).length + 1; // +1 for the player we just assigned
+
+      if (poolPlayerCount >= 2) {
+        try {
+          await poolAPI.generateSinglesMatches(poolId);
+          queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+          toast.success("Matches generated successfully");
+        } catch (error: any) {
+          console.error("Failed to generate matches:", error);
+        }
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to assign player to pool");
     }
@@ -188,8 +203,34 @@ const PoolManagement = () => {
     },
   });
 
-  const handleRemoveTeamFromPool = (teamId: string, poolId: string) => {
-    removeTeamFromPoolMutation.mutate({ teamId, poolId });
+  const handleRemoveTeamFromPool = async (teamId: string, poolId: string) => {
+    // For singles events, handle player removal differently
+    if (isSingles) {
+      try {
+        await eventAPI.removePlayerFromPool(eventId!, teamId);
+        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+        queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+        toast.success("Player removed from pool successfully");
+
+        // Regenerate matches with remaining players
+        const poolPlayerCount = (event?.registeredPlayers || []).filter(
+          (reg: any) => reg.paymentStatus === 'paid' && reg.pool?.toString() === poolId && reg.player?.toString() !== teamId
+        ).length;
+
+        if (poolPlayerCount >= 2) {
+          try {
+            await poolAPI.generateSinglesMatches(poolId);
+            queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+          } catch (error: any) {
+            console.error("Failed to regenerate matches:", error);
+          }
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to remove player from pool");
+      }
+    } else {
+      removeTeamFromPoolMutation.mutate({ teamId, poolId });
+    }
   };
 
   // Update match score mutation

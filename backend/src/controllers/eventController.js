@@ -234,3 +234,53 @@ export const assignPlayerToPool = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Remove singles player from pool
+// @route   PUT /api/events/:eventId/remove-player/:playerId
+// @access  Private (Organizer/Admin)
+export const removePlayerFromPool = async (req, res, next) => {
+  try {
+    const { eventId, playerId } = req.params;
+
+    const event = await Event.findById(eventId).populate('tournament');
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    // Check authorization
+    if (event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to modify players for this event'
+      });
+    }
+
+    // Find the player in registeredPlayers
+    const playerRegistration = event.registeredPlayers.find(
+      reg => reg.player.toString() === playerId
+    );
+
+    if (!playerRegistration) {
+      return res.status(404).json({
+        success: false,
+        message: 'Player not registered for this event'
+      });
+    }
+
+    // Remove player's pool assignment
+    playerRegistration.pool = null;
+    await event.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Player removed from pool successfully',
+      data: event
+    });
+  } catch (error) {
+    next(error);
+  }
+};

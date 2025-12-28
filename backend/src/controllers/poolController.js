@@ -403,3 +403,71 @@ export const deletePool = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Generate matches for singles pool
+// @route   POST /api/pools/:id/generate-singles-matches
+// @access  Private (Organizer/Admin)
+export const generateSinglesMatches = async (req, res, next) => {
+  try {
+    const pool = await Pool.findById(req.params.id).populate({
+      path: 'event',
+      populate: { path: 'tournament' }
+    });
+
+    if (!pool) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pool not found'
+      });
+    }
+
+    // Check authorization
+    if (pool.event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to generate matches for this pool'
+      });
+    }
+
+    // Get all players assigned to this pool
+    const playerIds = pool.event.registeredPlayers
+      .filter(reg => reg.pool && reg.pool.toString() === pool._id.toString() && reg.paymentStatus === 'paid')
+      .map(reg => reg.player);
+
+    if (playerIds.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Need at least 2 players to generate matches'
+      });
+    }
+
+    // Delete old matches
+    await Match.deleteMany({ pool: pool._id });
+
+    // Generate new matches (use player IDs as if they were team IDs for singles)
+    const playFormat = pool.event.playFormat || 'round-robin';
+    const matches = generateMatches(playerIds, pool._id, pool.event._id, playFormat);
+    const createdMatches = await Match.insertMany(matches);
+
+    pool.matches = createdMatches.map(m => m._id);
+    await pool.save();
+
+    // Populate matches for response
+    const populatedPool = await Pool.findById(pool._id)
+      .populate({
+        path: 'matches',
+        populate: [
+          { path: 'team1', select: 'name email skillLevel' },
+          { path: 'team2', select: 'name email skillLevel' }
+        ]
+      });
+
+    res.status(200).json({
+      success: true,
+      message: `${createdMatches.length} matches generated successfully`,
+      data: populatedPool
+    });
+  } catch (error) {
+    next(error);
+  }
+};

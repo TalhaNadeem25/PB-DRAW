@@ -156,6 +156,11 @@ export const eventAPI = {
     const response = await api.put(`/events/${eventId}/assign-player/${playerId}`, { poolId });
     return response.data;
   },
+
+  removePlayerFromPool: async (eventId: string, playerId: string) => {
+    const response = await api.put(`/events/${eventId}/remove-player/${playerId}`);
+    return response.data;
+  },
 };
 
 // Teams
@@ -225,6 +230,11 @@ export const poolAPI = {
 
   delete: async (id: string) => {
     const response = await api.delete(`/pools/${id}`);
+    return response.data;
+  },
+
+  generateSinglesMatches: async (poolId: string) => {
+    const response = await api.post(`/pools/${poolId}/generate-singles-matches`);
     return response.data;
   },
 };
