@@ -400,27 +400,28 @@ const PoolManagement = () => {
                             className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border"
                           >
                             <span className="font-medium text-sm flex-1">{team.name}</span>
-                          {pools.length > 0 ? (
-                            <Select
-                              onValueChange={(poolId) => handleAssignTeamToPool(team._id, poolId)}
-                              disabled={addTeamToPoolMutation.isPending}
-                            >
-                              <SelectTrigger className="w-32 h-8 text-xs">
-                                <SelectValue placeholder="Assign to" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {pools.map((pool: any) => (
-                                  <SelectItem key={pool._id} value={pool._id}>
-                                    {pool.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">No pools</span>
-                          )}
-                        </div>
-                      ))}
+                            {pools.length > 0 ? (
+                              <Select
+                                onValueChange={(poolId) => handleAssignTeamToPool(team._id, poolId)}
+                                disabled={addTeamToPoolMutation.isPending}
+                              >
+                                <SelectTrigger className="w-32 h-8 text-xs">
+                                  <SelectValue placeholder="Assign to" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {pools.map((pool: any) => (
+                                    <SelectItem key={pool._id} value={pool._id}>
+                                      {pool.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No pools</span>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
                 </CardContent>
