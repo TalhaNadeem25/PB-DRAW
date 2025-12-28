@@ -117,6 +117,21 @@ const PoolManagement = () => {
     addTeamToPoolMutation.mutate({ poolId, teamId });
   };
 
+  // Assign player to pool for singles events
+  const handleAssignPlayerToPool = async (playerId: string, poolId: string) => {
+    if (!poolId) return;
+
+    try {
+      // For singles, we need to update the player's registration to include pool
+      await eventAPI.assignPlayerToPool(eventId!, playerId, poolId);
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      toast.success("Player assigned to pool successfully");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to assign player to pool");
+    }
+  };
+
   // Remove team from pool mutation
   const removeTeamFromPoolMutation = useMutation({
     mutationFn: async ({ teamId, poolId }: { teamId: string; poolId: string }) => {
@@ -390,6 +405,24 @@ const PoolManagement = () => {
                                 </Badge>
                               )}
                             </div>
+                            {pools.length > 0 ? (
+                              <Select
+                                onValueChange={(poolId) => handleAssignPlayerToPool(player._id, poolId)}
+                              >
+                                <SelectTrigger className="w-32 h-8 text-xs">
+                                  <SelectValue placeholder="Assign to" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {pools.map((pool: any) => (
+                                    <SelectItem key={pool._id} value={pool._id}>
+                                      {pool.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No pools</span>
+                            )}
                           </div>
                         ))
                       ) : (
