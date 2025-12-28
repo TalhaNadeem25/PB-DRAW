@@ -68,6 +68,10 @@ const eventSchema = new mongoose.Schema({
     payment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Payment'
+    },
+    pool: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Pool'
     }
   }],
   pools: [{
