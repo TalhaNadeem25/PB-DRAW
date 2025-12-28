@@ -84,6 +84,26 @@ const PoolManagement = () => {
         .map((reg: any) => reg.player)
     : [];
 
+  // Helper function to get pool member count (for singles, count from registeredPlayers)
+  const getPoolMemberCount = (pool: any) => {
+    if (isSingles) {
+      return (event?.registeredPlayers || []).filter(
+        (reg: any) => reg.paymentStatus === 'paid' && reg.pool?.toString() === pool._id?.toString()
+      ).length;
+    }
+    return pool.teams?.length || 0;
+  };
+
+  // Helper function to get pool members (for singles, get players from registeredPlayers)
+  const getPoolMembers = (pool: any) => {
+    if (isSingles) {
+      return (event?.registeredPlayers || [])
+        .filter((reg: any) => reg.paymentStatus === 'paid' && reg.pool?.toString() === pool._id?.toString())
+        .map((reg: any) => reg.player);
+    }
+    return pool.teams || [];
+  };
+
   // Create pool mutation
   const createPoolMutation = useMutation({
     mutationFn: (data: any) => poolAPI.create(eventId!, data),
@@ -360,7 +380,7 @@ const PoolManagement = () => {
                         >
                           {pool.name}
                           <Badge variant="secondary" className="ml-auto">
-                            {pool.teams?.length || 0} teams
+                            {getPoolMemberCount(pool)} {isSingles ? 'players' : 'teams'}
                           </Badge>
                         </Button>
                       ))}
@@ -490,7 +510,7 @@ const PoolManagement = () => {
 
                   {/* Standings */}
                   <PoolStandings
-                    teams={selectedPool.teams || []}
+                    teams={getPoolMembers(selectedPool)}
                     poolName={selectedPool.name}
                     showPlayoffIndicators={event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin'}
                     onRemoveTeam={(teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
@@ -727,8 +747,8 @@ const PoolManagement = () => {
                         </div>
                       ) : (
                         <p className="text-muted-foreground text-center py-8">
-                          {selectedPool.teams?.length < 2
-                            ? "Add at least 2 teams to generate matches"
+                          {getPoolMemberCount(selectedPool) < 2
+                            ? `Add at least 2 ${isSingles ? 'players' : 'teams'} to generate matches`
                             : "No matches generated yet"}
                         </p>
                       )}

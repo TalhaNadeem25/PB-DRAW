@@ -222,11 +222,8 @@ export const assignPlayerToPool = async (req, res, next) => {
     playerRegistration.pool = poolId;
     await event.save();
 
-    // Add player to pool's teams array (for singles, we treat individual players as "teams")
-    if (!pool.teams.includes(playerId)) {
-      pool.teams.push(playerId);
-      await pool.save();
-    }
+    // Note: For singles events, we don't add to pool.teams (that's for Team documents)
+    // The player's pool assignment is stored in event.registeredPlayers[].pool
 
     res.status(200).json({
       success: true,
