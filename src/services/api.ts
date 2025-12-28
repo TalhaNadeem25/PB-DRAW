@@ -151,6 +151,11 @@ export const eventAPI = {
     const response = await api.delete(`/events/${id}`);
     return response.data;
   },
+
+  assignPlayerToPool: async (eventId: string, playerId: string, poolId: string) => {
+    const response = await api.put(`/events/${eventId}/assign-player/${playerId}`, { poolId });
+    return response.data;
+  },
 };
 
 // Teams

@@ -171,3 +171,69 @@ export const deleteEvent = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Assign singles player to pool
+// @route   PUT /api/events/:eventId/assign-player/:playerId
+// @access  Private (Organizer/Admin)
+export const assignPlayerToPool = async (req, res, next) => {
+  try {
+    const { eventId, playerId } = req.params;
+    const { poolId } = req.body;
+
+    const event = await Event.findById(eventId).populate('tournament');
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    // Check authorization
+    if (event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to assign players for this event'
+      });
+    }
+
+    // Verify pool exists and belongs to this event
+    const pool = await Pool.findById(poolId);
+    if (!pool || pool.event.toString() !== eventId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pool not found or does not belong to this event'
+      });
+    }
+
+    // Find the player in registeredPlayers
+    const playerRegistration = event.registeredPlayers.find(
+      reg => reg.player.toString() === playerId
+    );
+
+    if (!playerRegistration) {
+      return res.status(404).json({
+        success: false,
+        message: 'Player not registered for this event'
+      });
+    }
+
+    // Update player's pool assignment
+    playerRegistration.pool = poolId;
+    await event.save();
+
+    // Add player to pool's teams array (for singles, we treat individual players as "teams")
+    if (!pool.teams.includes(playerId)) {
+      pool.teams.push(playerId);
+      await pool.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Player assigned to pool successfully',
+      data: event
+    });
+  } catch (error) {
+    next(error);
+  }
+};
