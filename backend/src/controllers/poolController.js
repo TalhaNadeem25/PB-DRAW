@@ -447,7 +447,15 @@ export const generateSinglesMatches = async (req, res, next) => {
     // Generate new matches (use player IDs as if they were team IDs for singles)
     const playFormat = pool.event.playFormat || 'round-robin';
     const matches = generateMatches(playerIds, pool._id, pool.event._id, playFormat);
-    const createdMatches = await Match.insertMany(matches);
+
+    // Set team1Model and team2Model to 'User' for singles matches
+    const singlesMatches = matches.map(match => ({
+      ...match,
+      team1Model: 'User',
+      team2Model: 'User'
+    }));
+
+    const createdMatches = await Match.insertMany(singlesMatches);
 
     pool.matches = createdMatches.map(m => m._id);
     await pool.save();

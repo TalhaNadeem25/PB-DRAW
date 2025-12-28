@@ -14,14 +14,24 @@ const matchSchema = new mongoose.Schema({
   },
   team1: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Team',
+    refPath: 'team1Model',
     required: true
+  },
+  team1Model: {
+    type: String,
+    enum: ['Team', 'User'],
+    default: 'Team'
   },
   team2: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Team',
+    refPath: 'team2Model',
     required: false,
     default: null
+  },
+  team2Model: {
+    type: String,
+    enum: ['Team', 'User'],
+    default: 'Team'
   },
   score: {
     team1Score: {
