@@ -97,9 +97,21 @@ const PoolManagement = () => {
   // Helper function to get pool members (for singles, get players from registeredPlayers)
   const getPoolMembers = (pool: any) => {
     if (isSingles) {
+      // For singles, transform players into team-like objects with stats
       return (event?.registeredPlayers || [])
         .filter((reg: any) => reg.paymentStatus === 'paid' && reg.pool?.toString() === pool._id?.toString())
-        .map((reg: any) => reg.player);
+        .map((reg: any) => ({
+          _id: reg.player._id,
+          name: reg.player.name,
+          players: [{ _id: reg.player._id, name: reg.player.name }],
+          stats: {
+            wins: 0,
+            losses: 0,
+            pointsFor: 0,
+            pointsAgainst: 0,
+            pointDifferential: 0
+          }
+        }));
     }
     return pool.teams || [];
   };
