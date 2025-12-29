@@ -1,6 +1,7 @@
 import Invitation from '../models/Invitation.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
+import { sendTeamInvitationEmail } from '../services/emailService.js';
 
 // @desc    Create/send team invitation
 // @route   POST /api/teams/:teamId/invitations
@@ -78,6 +79,25 @@ export const sendInvitation = async (req, res, next) => {
       invitee: inviteeUser?._id || null,
       message
     });
+
+    // Send invitation email
+    try {
+      const inviter = await User.findById(req.user.id);
+      const tournament = await event.populate('tournament');
+
+      await sendTeamInvitationEmail({
+        to: inviteeEmail.toLowerCase(),
+        inviteeName: inviteeName || 'Player',
+        inviterName: inviter.name,
+        teamName: team.name,
+        eventName: event.name,
+        tournamentName: tournament.tournament.name,
+        invitationId: invitation._id.toString()
+      });
+    } catch (emailError) {
+      console.error('Failed to send invitation email:', emailError);
+      // Don't fail the request if email fails
+    }
 
     res.status(201).json({
       success: true,
