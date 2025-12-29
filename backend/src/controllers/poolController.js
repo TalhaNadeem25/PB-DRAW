@@ -149,16 +149,30 @@ export const getPools = async (req, res, next) => {
         populate: [
           {
             path: 'team1',
-            select: 'name players',
-            populate: { path: 'players', select: 'name email skillLevel' }
+            select: 'name email skillLevel players'
           },
           {
             path: 'team2',
-            select: 'name players',
-            populate: { path: 'players', select: 'name email skillLevel' }
+            select: 'name email skillLevel players'
           }
         ]
       });
+
+    // Manually populate players for Team matches (not needed for User/singles matches)
+    for (const pool of pools) {
+      if (pool.matches) {
+        for (const match of pool.matches) {
+          // If team1 is a Team (has players field), populate it
+          if (match.team1 && match.team1.players && Array.isArray(match.team1.players)) {
+            await match.populate('team1.players', 'name email skillLevel');
+          }
+          // If team2 is a Team (has players field), populate it
+          if (match.team2 && match.team2.players && Array.isArray(match.team2.players)) {
+            await match.populate('team2.players', 'name email skillLevel');
+          }
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -183,8 +197,8 @@ export const getPool = async (req, res, next) => {
       .populate({
         path: 'matches',
         populate: [
-          { path: 'team1', select: 'name players' },
-          { path: 'team2', select: 'name players' }
+          { path: 'team1', select: 'name email skillLevel players' },
+          { path: 'team2', select: 'name email skillLevel players' }
         ]
       })
       .populate('event', 'name tournament');
@@ -194,6 +208,18 @@ export const getPool = async (req, res, next) => {
         success: false,
         message: 'Pool not found'
       });
+    }
+
+    // Manually populate players for Team matches
+    if (pool.matches) {
+      for (const match of pool.matches) {
+        if (match.team1 && match.team1.players && Array.isArray(match.team1.players)) {
+          await match.populate('team1.players', 'name email skillLevel');
+        }
+        if (match.team2 && match.team2.players && Array.isArray(match.team2.players)) {
+          await match.populate('team2.players', 'name email skillLevel');
+        }
+      }
     }
 
     res.status(200).json({
