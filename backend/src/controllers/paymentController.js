@@ -590,36 +590,35 @@ export const confirmPayment = async (req, res, next) => {
 
       // Send ticket purchase confirmation email
       try {
-        // For multi-event payments, include all events in email
-        if (payment.eventBreakdown && payment.eventBreakdown.length > 1) {
-          // Multi-event email - simplified for now, can be enhanced later
-          const eventNames = payment.events.map(e => e.name).join(', ');
-          await sendTicketPurchaseEmail({
-            to: payment.user.email,
-            playerName: payment.user.name,
-            tournamentName: payment.tournament.name,
-            eventName: `${payment.events.length} Events: ${eventNames}`,
-            eventDate: payment.events[0].date,
-            entryFee: payment.amount,
-            transactionId: payment.stripePaymentIntentId,
-            organizerName: payment.tournament.organizer.name,
-            organizerEmail: payment.tournament.organizer.email
-          });
+        // Determine which event(s) to use for email
+        const events = payment.events && payment.events.length > 0
+          ? payment.events
+          : payment.event
+            ? [payment.event]
+            : [];
+
+        if (events.length === 0) {
+          console.warn('No events found for payment confirmation email');
         } else {
-          // Single event email (existing logic)
+          const eventNames = events.map(e => e.name).join(', ');
+          const eventName = events.length === 1
+            ? events[0].name
+            : `${events.length} Events: ${eventNames}`;
+
           await sendTicketPurchaseEmail({
             to: payment.user.email,
             playerName: payment.user.name,
             tournamentName: payment.tournament.name,
-            eventName: payment.event.name,
-            eventDate: payment.event.date,
+            eventName: eventName,
+            eventDate: events[0].date,
             entryFee: payment.amount,
             transactionId: payment.stripePaymentIntentId,
             organizerName: payment.tournament.organizer.name,
             organizerEmail: payment.tournament.organizer.email
           });
+
+          console.log(`Ticket confirmation email sent to ${payment.user.email}`);
         }
-        console.log(`Ticket confirmation email sent to ${payment.user.email}`);
       } catch (emailError) {
         // Don't fail the payment if email fails
         console.error('Failed to send ticket purchase email:', emailError);
