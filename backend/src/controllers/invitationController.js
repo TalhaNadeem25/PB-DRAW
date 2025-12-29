@@ -12,7 +12,15 @@ export const sendInvitation = async (req, res, next) => {
     const teamId = req.params.teamId;
 
     // Get team and verify user is a member
-    const team = await Team.findById(teamId).populate('players event');
+    const team = await Team.findById(teamId)
+      .populate('players')
+      .populate({
+        path: 'event',
+        populate: {
+          path: 'tournament',
+          select: 'name'
+        }
+      });
     if (!team) {
       return res.status(404).json({
         success: false,
@@ -83,7 +91,11 @@ export const sendInvitation = async (req, res, next) => {
     // Send invitation email
     try {
       const inviter = await User.findById(req.user.id);
-      const tournament = await event.populate('tournament');
+
+      console.log('Sending team invitation email to:', inviteeEmail);
+      console.log('Tournament name:', event.tournament?.name);
+      console.log('Event name:', event.name);
+      console.log('Team name:', team.name);
 
       await sendTeamInvitationEmail({
         to: inviteeEmail.toLowerCase(),
@@ -91,11 +103,19 @@ export const sendInvitation = async (req, res, next) => {
         inviterName: inviter.name,
         teamName: team.name,
         eventName: event.name,
-        tournamentName: tournament.tournament.name,
+        tournamentName: event.tournament.name,
         invitationId: invitation._id.toString()
       });
+
+      console.log('Team invitation email sent successfully to:', inviteeEmail);
     } catch (emailError) {
       console.error('Failed to send invitation email:', emailError);
+      console.error('Email error details:', {
+        to: inviteeEmail,
+        eventName: event?.name,
+        tournamentName: event?.tournament?.name,
+        error: emailError.message
+      });
       // Don't fail the request if email fails
     }
 
