@@ -174,7 +174,18 @@ export const getInvitations = async (req, res, next) => {
 // @access  Private
 export const getInvitation = async (req, res, next) => {
   try {
-    const invitation = await Invitation.findById(req.params.id);
+    const invitation = await Invitation.findById(req.params.id)
+      .populate('inviter', 'name email')
+      .populate({
+        path: 'team',
+        populate: {
+          path: 'event',
+          populate: {
+            path: 'tournament',
+            select: 'name location startDate endDate'
+          }
+        }
+      });
 
     if (!invitation) {
       return res.status(404).json({
@@ -184,7 +195,7 @@ export const getInvitation = async (req, res, next) => {
     }
 
     // Check if user is authorized to view this invitation
-    const isInviter = invitation.inviter._id.toString() === req.user.id;
+    const isInviter = invitation.inviter && invitation.inviter._id.toString() === req.user.id;
     const isInvitee = invitation.inviteeEmail === req.user.email.toLowerCase() ||
                      (invitation.invitee && invitation.invitee.toString() === req.user.id);
 
