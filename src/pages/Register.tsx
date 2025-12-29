@@ -103,16 +103,17 @@ const Register = () => {
           players: [user?._id]
         });
 
-        // Send invitation if partner provided
+        // Create invitation if partner provided (but don't send email yet - will be sent after payment)
         if (selection.partnerEmail && teamResponse.data) {
           try {
             await invitationAPI.send(teamResponse.data._id, {
               inviteeEmail: selection.partnerEmail,
               inviteeName: selection.partnerName,
-              message: `${user?.name} invited you for ${selection.event.name}`
+              message: `${user?.name} invited you for ${selection.event.name}`,
+              sendEmail: false // Don't send email yet - will be sent after payment confirmation
             });
           } catch (inviteError) {
-            console.error('Failed to send invitation:', inviteError);
+            console.error('Failed to create invitation:', inviteError);
           }
         }
 

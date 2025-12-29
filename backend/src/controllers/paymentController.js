@@ -626,6 +626,64 @@ export const confirmPayment = async (req, res, next) => {
         console.error('Failed to send ticket purchase email:', emailError);
       }
 
+      // Send partner invitation emails for teams that just became paid
+      try {
+        const Invitation = (await import('../models/Invitation.js')).default;
+        const User = (await import('../models/User.js')).default;
+        const { sendTeamInvitationEmail } = await import('../services/emailService.js');
+
+        for (const teamId of teamsToUpdate) {
+          // Find pending invitations for this team
+          const invitations = await Invitation.find({
+            team: teamId,
+            status: 'pending'
+          });
+
+          console.log(`Found ${invitations.length} pending invitation(s) for team ${teamId}`);
+
+          // Send email for each pending invitation
+          for (const invitation of invitations) {
+            try {
+              // Get team with populated event and tournament
+              const team = await Team.findById(teamId)
+                .populate({
+                  path: 'event',
+                  populate: {
+                    path: 'tournament',
+                    select: 'name'
+                  }
+                });
+
+              const inviter = await User.findById(invitation.inviter);
+
+              if (team && team.event && team.event.tournament && inviter) {
+                console.log(`Sending partner invitation email to ${invitation.inviteeEmail} for team ${team.name}`);
+
+                await sendTeamInvitationEmail({
+                  to: invitation.inviteeEmail,
+                  inviteeName: invitation.inviteeName || 'Player',
+                  inviterName: inviter.name,
+                  teamName: team.name,
+                  eventName: team.event.name,
+                  tournamentName: team.event.tournament.name,
+                  invitationId: invitation._id.toString()
+                });
+
+                console.log(`Partner invitation email sent successfully to ${invitation.inviteeEmail}`);
+              } else {
+                console.warn(`Missing data for invitation email: team=${!!team}, event=${!!team?.event}, tournament=${!!team?.event?.tournament}, inviter=${!!inviter}`);
+              }
+            } catch (invitationEmailError) {
+              console.error(`Failed to send invitation email to ${invitation.inviteeEmail}:`, invitationEmailError);
+              // Don't fail the entire payment if one invitation email fails
+            }
+          }
+        }
+      } catch (invitationError) {
+        console.error('Failed to send partner invitation emails:', invitationError);
+        // Don't fail the payment if invitation emails fail
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Payment confirmed successfully',

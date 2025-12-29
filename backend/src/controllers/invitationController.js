@@ -8,7 +8,7 @@ import { sendTeamInvitationEmail } from '../services/emailService.js';
 // @access  Private
 export const sendInvitation = async (req, res, next) => {
   try {
-    const { inviteeEmail, inviteeName, message } = req.body;
+    const { inviteeEmail, inviteeName, message, sendEmail = true } = req.body;
     const teamId = req.params.teamId;
 
     // Get team and verify user is a member
@@ -88,35 +88,39 @@ export const sendInvitation = async (req, res, next) => {
       message
     });
 
-    // Send invitation email
-    try {
-      const inviter = await User.findById(req.user.id);
+    // Send invitation email (only if sendEmail is true)
+    if (sendEmail) {
+      try {
+        const inviter = await User.findById(req.user.id);
 
-      console.log('Sending team invitation email to:', inviteeEmail);
-      console.log('Tournament name:', event.tournament?.name);
-      console.log('Event name:', event.name);
-      console.log('Team name:', team.name);
+        console.log('Sending team invitation email to:', inviteeEmail);
+        console.log('Tournament name:', event.tournament?.name);
+        console.log('Event name:', event.name);
+        console.log('Team name:', team.name);
 
-      await sendTeamInvitationEmail({
-        to: inviteeEmail.toLowerCase(),
-        inviteeName: inviteeName || 'Player',
-        inviterName: inviter.name,
-        teamName: team.name,
-        eventName: event.name,
-        tournamentName: event.tournament.name,
-        invitationId: invitation._id.toString()
-      });
+        await sendTeamInvitationEmail({
+          to: inviteeEmail.toLowerCase(),
+          inviteeName: inviteeName || 'Player',
+          inviterName: inviter.name,
+          teamName: team.name,
+          eventName: event.name,
+          tournamentName: event.tournament.name,
+          invitationId: invitation._id.toString()
+        });
 
-      console.log('Team invitation email sent successfully to:', inviteeEmail);
-    } catch (emailError) {
-      console.error('Failed to send invitation email:', emailError);
-      console.error('Email error details:', {
-        to: inviteeEmail,
-        eventName: event?.name,
-        tournamentName: event?.tournament?.name,
-        error: emailError.message
-      });
-      // Don't fail the request if email fails
+        console.log('Team invitation email sent successfully to:', inviteeEmail);
+      } catch (emailError) {
+        console.error('Failed to send invitation email:', emailError);
+        console.error('Email error details:', {
+          to: inviteeEmail,
+          eventName: event?.name,
+          tournamentName: event?.tournament?.name,
+          error: emailError.message
+        });
+        // Don't fail the request if email fails
+      }
+    } else {
+      console.log('Invitation created but email sending skipped (will be sent after payment confirmation)');
     }
 
     res.status(201).json({
