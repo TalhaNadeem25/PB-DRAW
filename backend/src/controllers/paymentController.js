@@ -484,15 +484,16 @@ export const confirmPayment = async (req, res, next) => {
       .populate('team')
       .populate('teams')
       .populate('user', 'name email')
-      .populate('event', 'name date')
-      .populate('events', 'name date')
+      .populate('event', 'name')
+      .populate('events', 'name')
       .populate({
         path: 'tournament',
         populate: {
           path: 'organizer',
           model: 'User',
           select: 'name email'
-        }
+        },
+        select: 'name location startDate endDate organizer'
       });
 
     if (!payment) {
@@ -609,8 +610,9 @@ export const confirmPayment = async (req, res, next) => {
             to: payment.user.email,
             playerName: payment.user.name,
             tournamentName: payment.tournament.name,
+            tournamentLocation: payment.tournament.location,
             eventName: eventName,
-            eventDate: events[0].date,
+            eventDate: payment.tournament.startDate,
             entryFee: payment.amount,
             transactionId: payment.stripePaymentIntentId,
             organizerName: payment.tournament.organizer.name,

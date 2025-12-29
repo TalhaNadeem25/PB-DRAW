@@ -47,6 +47,7 @@ export const sendTicketPurchaseEmail = async ({
   to,
   playerName,
   tournamentName,
+  tournamentLocation,
   eventName,
   eventDate,
   entryFee,
@@ -69,146 +70,243 @@ export const sendTicketPurchaseEmail = async ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
           body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #1f2937;
             max-width: 600px;
             margin: 0 auto;
+            padding: 0;
+            background: #f3f4f6;
+          }
+          .email-wrapper {
+            background: #f3f4f6;
             padding: 20px;
           }
           .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
             color: white;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
-            border-radius: 10px 10px 0 0;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+            overflow: hidden;
+          }
+          .header::before {
+            content: '🎾';
+            position: absolute;
+            font-size: 120px;
+            opacity: 0.1;
+            top: -20px;
+            right: -20px;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          .header p {
+            margin: 10px 0 0 0;
+            font-size: 16px;
+            opacity: 0.95;
           }
           .content {
-            background: #f9fafb;
-            padding: 30px;
-            border: 1px solid #e5e7eb;
+            background: white;
+            padding: 40px 30px;
+            border-left: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+          }
+          .success-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #78350f;
+            padding: 12px 24px;
+            border-radius: 24px;
+            display: inline-block;
+            margin: 0 0 24px 0;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(251, 191, 36, 0.3);
           }
           .ticket-details {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: linear-gradient(to bottom, #f0fdf4, #dcfce7);
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px 0;
+            border: 2px solid #16a34a;
+            position: relative;
+          }
+          .ticket-details::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #16a34a, #fbbf24, #16a34a);
+          }
+          .ticket-details h3 {
+            margin: 0 0 16px 0;
+            color: #15803d;
+            font-size: 18px;
+            font-weight: 700;
           }
           .detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 0;
+            border-bottom: 1px solid #bbf7d0;
           }
           .detail-row:last-child {
             border-bottom: none;
           }
           .label {
             font-weight: 600;
-            color: #6b7280;
+            color: #166534;
           }
           .value {
-            color: #111827;
-            font-weight: 500;
-          }
-          .footer {
-            background: #374151;
-            color: #d1d5db;
-            padding: 20px;
-            text-align: center;
-            font-size: 14px;
-            border-radius: 0 0 10px 10px;
-          }
-          .success-badge {
-            background: #10b981;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            display: inline-block;
-            margin: 10px 0;
+            color: #1f2937;
             font-weight: 600;
+            text-align: right;
+          }
+          .location-badge {
+            background: white;
+            border: 2px solid #16a34a;
+            color: #15803d;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 16px 0;
+            font-weight: 600;
+            font-size: 14px;
           }
           .cta-button {
-            background: #667eea;
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
             color: white;
-            padding: 12px 24px;
+            padding: 16px 32px;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 8px;
             display: inline-block;
-            margin: 20px 0;
-            font-weight: 600;
+            margin: 24px 0;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);
+            transition: transform 0.2s;
+          }
+          .next-steps {
+            background: #fef9c3;
+            border-left: 4px solid #fbbf24;
+            padding: 20px;
+            margin: 24px 0;
+            border-radius: 0 8px 8px 0;
+          }
+          .next-steps h4 {
+            margin: 0 0 12px 0;
+            color: #78350f;
+            font-size: 16px;
+          }
+          .next-steps ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #78350f;
+          }
+          .next-steps li {
+            margin: 8px 0;
+          }
+          .footer {
+            background: #1f2937;
+            color: #d1d5db;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+            border-radius: 0 0 12px 12px;
+          }
+          .footer a {
+            color: #86efac;
+            text-decoration: none;
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <h1 style="margin: 0;">🎾 Pickle Rally</h1>
-          <p style="margin: 10px 0 0 0; font-size: 18px;">Tournament Registration Confirmed</p>
-        </div>
+        <div class="email-wrapper">
+          <div class="header">
+            <h1>🏓 PICKLE RALLY</h1>
+            <p>Registration Confirmed</p>
+          </div>
 
-        <div class="content">
-          <div class="success-badge">✓ Payment Successful</div>
+          <div class="content">
+            <div class="success-badge">✓ PAYMENT SUCCESSFUL</div>
 
-          <p>Hi <strong>${playerName}</strong>,</p>
+            <p style="font-size: 16px; margin: 0 0 16px 0;">Hi <strong>${playerName}</strong>,</p>
 
-          <p>Great news! Your registration for <strong>${tournamentName}</strong> has been confirmed. Get ready to compete!</p>
+            <p style="font-size: 16px; margin: 0 0 24px 0;">Great news! You're all set for <strong>${tournamentName}</strong>. Time to bring your A-game! 🎾</p>
 
-          <div class="ticket-details">
-            <h3 style="margin-top: 0; color: #111827;">Event Details</h3>
-            <div class="detail-row">
-              <span class="label">Tournament:</span>
-              <span class="value">${tournamentName}</span>
+            <div class="ticket-details">
+              <h3>🎟️ Event Details</h3>
+              <div class="detail-row">
+                <span class="label">Tournament</span>
+                <span class="value">${tournamentName}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Event</span>
+                <span class="value">${eventName}</span>
+              </div>
+              ${tournamentLocation ? `<div class="detail-row">
+                <span class="label">Location</span>
+                <span class="value">${tournamentLocation}</span>
+              </div>` : ''}
+              <div class="detail-row">
+                <span class="label">Date</span>
+                <span class="value">${new Date(eventDate).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Entry Fee</span>
+                <span class="value">$${entryFee.toFixed(2)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Transaction ID</span>
+                <span class="value" style="font-family: monospace; font-size: 12px;">${transactionId}</span>
+              </div>
             </div>
-            <div class="detail-row">
-              <span class="label">Event:</span>
-              <span class="value">${eventName}</span>
+
+            <div style="text-align: center;">
+              <a href="${process.env.CLIENT_URL}/dashboard" class="cta-button">View My Dashboard</a>
             </div>
-            <div class="detail-row">
-              <span class="label">Date:</span>
-              <span class="value">${new Date(eventDate).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</span>
+
+            <div class="next-steps">
+              <h4>📋 What's Next?</h4>
+              <ul>
+                <li>Check your dashboard for tournament updates and pool assignments</li>
+                <li>Arrive 15 minutes early on event day for check-in</li>
+                <li>Bring your paddle, water bottle, and competitive spirit!</li>
+                <li>Review the tournament rules and format</li>
+              </ul>
             </div>
-            <div class="detail-row">
-              <span class="label">Entry Fee:</span>
-              <span class="value">$${entryFee.toFixed(2)}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Transaction ID:</span>
-              <span class="value" style="font-family: monospace; font-size: 12px;">${transactionId}</span>
+
+            <div style="margin-top: 30px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
+              <p style="margin: 0 0 8px 0; font-weight: 600; color: #15803d;">Tournament Organizer</p>
+              <p style="margin: 0;">
+                <strong>${organizerName}</strong><br>
+                <a href="mailto:${organizerEmail}" style="color: #16a34a;">${organizerEmail}</a>
+              </p>
             </div>
           </div>
 
-          <h3 style="color: #111827;">Organizer Contact</h3>
-          <p style="margin: 10px 0;">
-            <strong>${organizerName}</strong><br>
-            <a href="mailto:${organizerEmail}" style="color: #667eea;">${organizerEmail}</a>
-          </p>
-
-          <p style="margin-top: 30px;">
-            <a href="${process.env.CLIENT_URL}/dashboard" class="cta-button">View My Tournaments</a>
-          </p>
-
-          <p style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280;">
-            <strong>What's next?</strong><br>
-            • Check your dashboard for tournament updates<br>
-            • Arrive 15 minutes early on event day<br>
-            • Bring your paddle and your A-game!<br>
-          </p>
-        </div>
-
-        <div class="footer">
-          <p style="margin: 0;">
-            Questions? Contact the tournament organizer at
-            <a href="mailto:${organizerEmail}" style="color: #93c5fd;">${organizerEmail}</a>
-          </p>
-          <p style="margin: 10px 0 0 0; font-size: 12px;">
-            © ${new Date().getFullYear()} Pickle Rally. All rights reserved.
-          </p>
+          <div class="footer">
+            <p style="margin: 0 0 12px 0;">
+              Questions about the tournament?<br>
+              Contact <a href="mailto:${organizerEmail}">${organizerName}</a>
+            </p>
+            <p style="margin: 12px 0 0 0; font-size: 12px; opacity: 0.8;">
+              © ${new Date().getFullYear()} Pickle Rally. All rights reserved.
+            </p>
+          </div>
         </div>
       </body>
       </html>
