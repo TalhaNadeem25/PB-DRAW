@@ -463,6 +463,163 @@ export const createMultiEventPaymentIntent = async (req, res, next) => {
   }
 };
 
+// @desc    Create payment intent for partner accepting invitation
+// @route   POST /api/payments/create-partner-intent
+// @access  Private
+export const createPartnerPaymentIntent = async (req, res, next) => {
+  try {
+    const { invitationId } = req.body;
+
+    if (!invitationId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invitation ID is required'
+      });
+    }
+
+    // Import Invitation model
+    const Invitation = (await import('../models/Invitation.js')).default;
+
+    // Get invitation and populate all required data
+    const invitation = await Invitation.findById(invitationId)
+      .populate({
+        path: 'team',
+        populate: {
+          path: 'event',
+          populate: {
+            path: 'tournament',
+            populate: { path: 'organizer', model: 'User' }
+          }
+        }
+      });
+
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invitation not found'
+      });
+    }
+
+    // Verify user is the invitee
+    const isInvitee = invitation.inviteeEmail === req.user.email.toLowerCase() ||
+                     (invitation.invitee && invitation.invitee.toString() === req.user.id);
+
+    if (!isInvitee) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to accept this invitation'
+      });
+    }
+
+    // Check if invitation is still pending
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Invitation has already been ${invitation.status}`
+      });
+    }
+
+    const team = invitation.team;
+    const event = team.event;
+    const tournament = event.tournament;
+    const organizer = tournament.organizer;
+    const entryFee = event.entryFee || 0;
+
+    // Handle free events
+    if (entryFee === 0) {
+      // For free events, just accept the invitation immediately
+      team.players.push(req.user.id);
+      await team.save();
+
+      invitation.status = 'accepted';
+      invitation.invitee = req.user.id;
+      await invitation.save();
+
+      // Cancel other pending invitations for this team
+      await Invitation.updateMany(
+        {
+          team: team._id,
+          status: 'pending',
+          _id: { $ne: invitation._id }
+        },
+        { status: 'cancelled' }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Invitation accepted - no payment required',
+        data: { requiresPayment: false, team }
+      });
+    }
+
+    // Check Stripe Connect onboarding
+    if (!organizer.stripeConnectAccountId || !organizer.stripeConnectOnboarded) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tournament organizer has not completed Stripe setup yet'
+      });
+    }
+
+    // Calculate platform fee
+    const amountInCents = Math.round(entryFee * 100);
+    const platformFeePercent = tournament.platformFeePercent || 10;
+    const platformFeeAmount = Math.round(amountInCents * (platformFeePercent / 100));
+
+    // Create Stripe payment intent
+    const paymentIntent = await getStripe().paymentIntents.create({
+      amount: amountInCents,
+      currency: 'usd',
+      application_fee_amount: platformFeeAmount,
+      on_behalf_of: organizer.stripeConnectAccountId,
+      metadata: {
+        userId: req.user.id,
+        tournamentId: tournament._id.toString(),
+        organizerId: organizer._id.toString(),
+        eventId: event._id.toString(),
+        teamId: team._id.toString(),
+        invitationId: invitation._id.toString(),
+        platformFee: platformFeeAmount.toString(),
+        paymentType: 'partner_invitation'
+      },
+      description: `Partner entry for ${event.name} in ${tournament.name}`,
+      transfer_data: {
+        destination: organizer.stripeConnectAccountId,
+      }
+    });
+
+    // Create payment record
+    const payment = await Payment.create({
+      user: req.user.id,
+      team: team._id,
+      event: event._id,
+      tournament: tournament._id,
+      amount: entryFee,
+      status: 'pending',
+      stripePaymentIntentId: paymentIntent.id,
+      metadata: {
+        invitationId: invitation._id.toString(),
+        paymentType: 'partner_invitation',
+        description: `Partner entry for ${event.name}`,
+        receiptEmail: req.user.email
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        amount: entryFee,
+        paymentId: payment._id,
+        requiresPayment: true
+      }
+    });
+  } catch (error) {
+    console.error('Error creating partner payment intent:', error);
+    next(error);
+  }
+};
+
 // @desc    Confirm payment after successful Stripe payment
 // @route   POST /api/payments/confirm
 // @access  Private
@@ -551,6 +708,47 @@ export const confirmPayment = async (req, res, next) => {
             event.currentTeams = event.teams.length;
             await event.save();
           }
+        }
+      }
+
+      // Handle partner invitation payments (add partner to team after payment)
+      if (payment.metadata && payment.metadata.paymentType === 'partner_invitation' && payment.metadata.invitationId) {
+        try {
+          const Invitation = (await import('../models/Invitation.js')).default;
+          const invitation = await Invitation.findById(payment.metadata.invitationId);
+
+          if (invitation && invitation.status === 'pending') {
+            const team = await Team.findById(payment.team);
+
+            if (team) {
+              // Add partner to team
+              if (!team.players.includes(req.user.id)) {
+                team.players.push(req.user.id);
+                await team.save();
+                console.log(`Partner ${req.user.email} added to team ${team._id} after payment confirmation`);
+              }
+
+              // Accept invitation
+              invitation.status = 'accepted';
+              invitation.invitee = req.user.id;
+              await invitation.save();
+
+              // Cancel other pending invitations for this team
+              await Invitation.updateMany(
+                {
+                  team: team._id,
+                  status: 'pending',
+                  _id: { $ne: invitation._id }
+                },
+                { status: 'cancelled' }
+              );
+
+              console.log(`Invitation ${invitation._id} accepted after partner payment`);
+            }
+          }
+        } catch (invitationError) {
+          console.error('Error handling partner invitation after payment:', invitationError);
+          // Don't fail the payment confirmation if invitation handling fails
         }
       }
 

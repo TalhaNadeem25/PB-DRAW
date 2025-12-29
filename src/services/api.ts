@@ -362,6 +362,11 @@ export const paymentAPI = {
     return response.data;
   },
 
+  createPartnerPaymentIntent: async (data: { invitationId: string }) => {
+    const response = await api.post('/payments/create-partner-intent', data);
+    return response.data;
+  },
+
   confirmPayment: async (paymentIntentId: string) => {
     const response = await api.post('/payments/confirm', { paymentIntentId });
     return response.data;

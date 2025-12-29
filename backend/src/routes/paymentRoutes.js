@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createPaymentIntent,
   createMultiEventPaymentIntent,
+  createPartnerPaymentIntent,
   confirmPayment,
   getPayment,
   getMyPayments,
@@ -16,6 +17,7 @@ const router = express.Router();
 // Protected routes
 router.post('/create-intent', protect, createPaymentIntent);
 router.post('/create-multi-event-intent', protect, createMultiEventPaymentIntent);
+router.post('/create-partner-intent', protect, createPartnerPaymentIntent);
 router.post('/confirm', protect, confirmPayment);
 router.get('/my-payments', protect, getMyPayments);
 router.get('/:id', protect, getPayment);

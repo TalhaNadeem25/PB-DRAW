@@ -11,6 +11,9 @@ interface PaymentFormProps {
   teamId?: string;
   eventId?: string;
 
+  // Partner invitation payment
+  invitationId?: string;
+
   // Multi-event props
   eventBreakdown?: Array<{
     eventId: string;
@@ -29,6 +32,7 @@ interface PaymentFormProps {
 const PaymentForm = ({
   teamId,
   eventId,
+  invitationId,
   eventBreakdown,
   tournamentName,
   eventName,

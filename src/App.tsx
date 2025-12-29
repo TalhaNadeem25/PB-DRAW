@@ -23,6 +23,7 @@ import LiveTournamentDetail from "./pages/LiveTournamentDetail";
 import Discover from "./pages/Discover";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import EventRegistration from "./pages/EventRegistration";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/tournaments/:id/register" element={<Register />} />
             <Route path="/tournaments/:tournamentId/register/:eventId" element={<EventRegistration />} />
+            <Route path="/invitations/:id/accept" element={<AcceptInvitation />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/live" element={<Live />} />
             <Route path="/live/:id" element={<LiveTournamentDetail />} />
