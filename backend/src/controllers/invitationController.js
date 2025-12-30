@@ -211,6 +211,13 @@ export const getInvitation = async (req, res, next) => {
     console.log('Event:', invitation.team?.event);
     console.log('Event entryFee:', invitation.team?.event?.entryFee);
 
+    // Check raw event from database
+    if (invitation.team?.event?._id) {
+      const rawEvent = await Event.findById(invitation.team.event._id);
+      console.log('Raw event from DB:', rawEvent);
+      console.log('Raw event entryFee:', rawEvent?.entryFee);
+    }
+
     res.status(200).json({
       success: true,
       data: invitation
