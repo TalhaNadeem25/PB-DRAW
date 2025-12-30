@@ -519,8 +519,9 @@ export const createPartnerPaymentIntent = async (req, res, next) => {
       });
     }
 
-    const team = invitation.team;
-    const event = team.event;
+    // Re-fetch team to ensure we have all fields including players array
+    const team = await Team.findById(invitation.team._id);
+    const event = invitation.team.event;
     const tournament = event.tournament;
     const organizer = tournament.organizer;
     const entryFee = event.entryFee || 0;
