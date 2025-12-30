@@ -48,28 +48,42 @@ const AcceptInvitation = () => {
   const event = team?.event;
   const tournament = event?.tournament;
 
+  // Log data for debugging
+  console.log('Invitation data:', invitation);
+  console.log('Team:', team);
+  console.log('Event:', event);
+  console.log('Entry fee:', event?.entryFee);
+
   // Accept invitation and create payment
   const acceptMutation = useMutation({
     mutationFn: async () => {
       // Check if payment is required
       const entryFee = event?.entryFee || 0;
 
+      console.log('Accept mutation triggered, entryFee:', entryFee);
+
       if (entryFee > 0) {
         // Create payment intent for partner
+        console.log('Creating payment intent for partner with invitationId:', id);
         const paymentResponse = await paymentAPI.createPartnerPaymentIntent({
           invitationId: id!,
         });
 
+        console.log('Payment response:', paymentResponse);
+
         if (paymentResponse.data.requiresPayment) {
+          console.log('Payment required, showing payment form');
           setClientSecret(paymentResponse.data.clientSecret);
           setStep("payment");
         } else {
+          console.log('No payment required, accepting directly');
           // Free event - just accept
           await invitationAPI.accept(id!);
           toast.success("Invitation accepted! You've joined the team.");
           navigate('/teams');
         }
       } else {
+        console.log('Entry fee is 0, accepting without payment');
         // Free event - just accept
         await invitationAPI.accept(id!);
         toast.success("Invitation accepted! You've joined the team.");
