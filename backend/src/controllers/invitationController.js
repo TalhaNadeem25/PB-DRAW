@@ -206,17 +206,14 @@ export const getInvitation = async (req, res, next) => {
       });
     }
 
-    // Debug logging
-    console.log('Returning invitation:', invitation._id);
-    console.log('Team:', invitation.team);
-    console.log('Event:', invitation.team?.event);
-    console.log('Event entryFee:', invitation.team?.event?.entryFee);
-
-    // Check raw event from database
+    // Fix: Manually fetch and attach full event data (populate strips some fields)
     if (invitation.team?.event?._id) {
-      const rawEvent = await Event.findById(invitation.team.event._id);
-      console.log('Raw event from DB:', rawEvent);
-      console.log('Raw event entryFee:', rawEvent?.entryFee);
+      const rawEvent = await Event.findById(invitation.team.event._id).populate('tournament');
+
+      // Replace the populated event with the raw one to preserve all fields
+      invitation.team.event = rawEvent;
+
+      console.log('Fixed event with entryFee:', rawEvent.entryFee);
     }
 
     res.status(200).json({
