@@ -1,6 +1,7 @@
 import Invitation from '../models/Invitation.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
+import Event from '../models/Event.js';
 import { sendTeamInvitationEmail } from '../services/emailService.js';
 
 // @desc    Create/send team invitation
