@@ -178,8 +178,10 @@ export const getInvitation = async (req, res, next) => {
       .populate('inviter', 'name email')
       .populate({
         path: 'team',
+        select: 'name event players',
         populate: {
           path: 'event',
+          select: 'name format entryFee skillLevel playFormat maxTeams currentTeams tournament',
           populate: {
             path: 'tournament',
             select: 'name location startDate endDate'
