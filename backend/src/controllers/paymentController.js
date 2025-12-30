@@ -519,12 +519,15 @@ export const createPartnerPaymentIntent = async (req, res, next) => {
       });
     }
 
-    // Re-fetch team to ensure we have all fields including players array
+    // Re-fetch team and event to ensure we have all fields
     const team = await Team.findById(invitation.team._id);
-    const event = invitation.team.event;
-    const tournament = event.tournament;
+    const event = await Event.findById(invitation.team.event._id);
+    const tournament = await Tournament.findById(event.tournament).populate('organizer');
     const organizer = tournament.organizer;
     const entryFee = event.entryFee || 0;
+
+    console.log('Partner payment - entryFee:', entryFee);
+    console.log('Partner payment - event:', event.name);
 
     // Handle free events
     if (entryFee === 0) {
