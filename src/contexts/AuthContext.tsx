@@ -45,6 +45,7 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
+  setAuthData: (user: User, token: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -140,6 +141,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
+  const setAuthData = (userData: User, userToken: string) => {
+    setUser(userData);
+    setToken(userToken);
+    localStorage.setItem('token', userToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   const value = {
     user,
     token,
@@ -149,6 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     logout,
     updateUser,
+    setAuthData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

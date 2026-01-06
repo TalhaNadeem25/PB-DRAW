@@ -658,8 +658,221 @@ Note: You'll need to create an account or log in to accept this invitation.
   }
 };
 
+/**
+ * Send password reset email
+ */
+export const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
+  const transport = getTransporter();
+  if (!transport) {
+    console.log('Email not sent - email service disabled or not configured');
+    return { success: false, message: 'Email service not configured' };
+  }
+
+  try {
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+            background: #ffffff;
+          }
+          .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+          }
+          .header {
+            background: #ffffff;
+            padding: 48px 40px 32px;
+            border-bottom: 3px solid #ef4444;
+          }
+          .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: -0.5px;
+            margin: 0 0 8px 0;
+          }
+          .logo-accent {
+            color: #16a34a;
+          }
+          .header-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0;
+            font-weight: 500;
+          }
+          .content {
+            padding: 48px 40px;
+          }
+          .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 32px;
+          }
+          .greeting {
+            font-size: 16px;
+            color: #111827;
+            margin: 0 0 24px 0;
+            line-height: 1.5;
+          }
+          .warning-box {
+            background: #fef2f2;
+            border-left: 3px solid #ef4444;
+            padding: 24px;
+            margin: 32px 0;
+            border-radius: 4px;
+          }
+          .warning-text {
+            font-size: 14px;
+            color: #991b1b;
+            margin: 0;
+            line-height: 1.6;
+          }
+          .cta-button {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #ef4444;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 32px 0;
+          }
+          .info-section {
+            margin: 32px 0;
+            padding: 24px;
+            background: #f9fafb;
+            border-left: 3px solid #6b7280;
+            border-radius: 4px;
+          }
+          .info-text {
+            margin: 0;
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.6;
+          }
+          .footer {
+            background: #f9fafb;
+            padding: 32px 40px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+          }
+          .footer-text {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 0 0 8px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <div class="logo">Pickle<span class="logo-accent">Rally</span></div>
+            <p class="header-subtitle">Password Reset Request</p>
+          </div>
+
+          <div class="content">
+            <div class="status-badge">Password Reset</div>
+
+            <p class="greeting">
+              Hi ${name},<br><br>
+              We received a request to reset your password for your Pickle Rally account. Click the button below to choose a new password.
+            </p>
+
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="cta-button">Reset Password</a>
+            </div>
+
+            <div class="warning-box">
+              <p class="warning-text">
+                <strong>This link will expire in 1 hour.</strong> If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+              </p>
+            </div>
+
+            <div class="info-section">
+              <p class="info-text">
+                <strong>Having trouble?</strong><br>
+                If the button above doesn't work, copy and paste this URL into your browser:<br>
+                <span style="word-break: break-all; color: #111827; font-family: monospace; font-size: 12px;">${resetUrl}</span>
+              </p>
+            </div>
+
+            <p class="greeting" style="margin-top: 32px;">
+              If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
+            </p>
+          </div>
+
+          <div class="footer">
+            <p class="footer-text">
+              This is an automated message, please do not reply to this email.
+            </p>
+            <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
+              © ${new Date().getFullYear()} PickleRally. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const emailText = `
+Pickle Rally - Password Reset Request
+
+Hi ${name},
+
+We received a request to reset your password for your Pickle Rally account.
+
+Reset your password by clicking this link:
+${resetUrl}
+
+This link will expire in 1 hour.
+
+If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
+
+© ${new Date().getFullYear()} Pickle Rally
+    `;
+
+    const info = await transport.sendMail({
+      from: `"Pickle Rally" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: to,
+      subject: 'Reset Your Password - Pickle Rally',
+      text: emailText,
+      html: emailHtml,
+    });
+
+    console.log('Password reset email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 export default {
   sendTicketPurchaseEmail,
   sendWelcomeEmail,
   sendTeamInvitationEmail,
+  sendPasswordResetEmail,
 };

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -116,6 +117,15 @@ const userSchema = new mongoose.Schema({
   stripeConnectOnboardingCompleted: {
     type: Date,
     default: null
+  },
+  // Password reset fields
+  resetPasswordToken: {
+    type: String,
+    default: null
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
@@ -133,6 +143,20 @@ userSchema.pre('save', async function(next) {
 // Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Method to generate password reset token
+userSchema.methods.generatePasswordResetToken = function() {
+  // Generate token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // Hash token and set to resetPasswordToken field
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  // Set expiry to 1 hour
+  this.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+
+  return resetToken;
 };
 
 // Remove password from JSON output

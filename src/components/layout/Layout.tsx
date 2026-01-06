@@ -14,7 +14,7 @@ const Layout = ({ children }: LayoutProps) => {
       <NotificationListener />
       <ConnectionStatus />
       <Navbar />
-      <main className="flex-1 pt-[68px]">
+      <main className="flex-1">
         {children}
       </main>
       <Footer />
