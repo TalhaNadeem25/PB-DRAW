@@ -20,6 +20,7 @@ import playoffRoutes from '../backend/src/routes/playoffRoutes.js';
 import invitationRoutes from '../backend/src/routes/invitationRoutes.js';
 import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
 import stripeConnectRoutes from '../backend/src/routes/stripeConnectRoutes.js';
+import analyticsRoutes from '../backend/src/routes/analyticsRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -72,6 +73,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/payments', paymentLimiter, paymentRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Nested routes (must come before standalone routes)
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);
