@@ -50,6 +50,9 @@ const EditTournament = () => {
   const [endDate, setEndDate] = useState<Date>();
   const [registrationDeadline, setRegistrationDeadline] = useState<Date>();
   const [status, setStatus] = useState("open");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
 
   // Populate form when tournament data loads
   useEffect(() => {
@@ -63,13 +66,42 @@ const EditTournament = () => {
       setEndDate(tournament.endDate ? new Date(tournament.endDate) : undefined);
       setRegistrationDeadline(tournament.registrationDeadline ? new Date(tournament.registrationDeadline) : undefined);
       setStatus(tournament.status || "open");
+      setCurrentImage(tournament.image || null);
     }
   }, [tournament]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      // Validate file type
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        toast.error("Only JPEG, PNG, and WEBP images are allowed");
+        return;
+      }
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: (data: any) => tournamentAPI.update(id!, data),
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Upload image if a new one was selected
+      if (imageFile) {
+        try {
+          await tournamentAPI.uploadImage(id!, imageFile);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast.error('Tournament updated but image upload failed');
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['tournament', id] });
       queryClient.invalidateQueries({ queryKey: ['tournaments'] });
       toast.success("Tournament updated successfully!");
@@ -260,6 +292,33 @@ const EditTournament = () => {
                         <option value="completed">Completed</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="image">Tournament Image</Label>
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageChange}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Upload a new tournament image (JPG, PNG, or WEBP, max 5MB)
+                    </p>
+                    {(imagePreview || currentImage) && (
+                      <div className="mt-2">
+                        <img
+                          src={imagePreview || currentImage!}
+                          alt="Tournament"
+                          className="w-full max-w-md rounded-lg border border-border object-cover"
+                        />
+                        {imagePreview && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            New image selected (will be uploaded on save)
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

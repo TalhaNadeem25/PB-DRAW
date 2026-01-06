@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,10 +47,21 @@ import {
   AlertCircle,
   Plus,
   Trash2,
+  Image as ImageIcon,
+  Mail,
+  Phone,
 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { tournamentAPI, favoritesAPI, eventAPI } from "@/services/api";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSocket } from "@/contexts/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
@@ -66,6 +77,7 @@ const TournamentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { socket, joinTournament, leaveTournament } = useSocket();
   const queryClient = useQueryClient();
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
@@ -137,6 +149,50 @@ const TournamentDetail = () => {
       toast.error(error.response?.data?.message || "Failed to delete tournament");
     },
   });
+
+  // Join tournament room on mount, leave on unmount
+  useEffect(() => {
+    if (id) {
+      joinTournament(id);
+      return () => {
+        leaveTournament(id);
+      };
+    }
+  }, [id, joinTournament, leaveTournament]);
+
+  // Listen for socket events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleTournamentUpdate = (tournamentData: any) => {
+      console.log('🏆 Tournament updated:', tournamentData);
+      // Invalidate and refetch tournament data
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+      toast.info('Tournament information updated');
+    };
+
+    const handleMatchUpdate = (matchData: any) => {
+      console.log('🏓 Match updated:', matchData);
+      // Invalidate tournament data to refresh schedule/brackets
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+    };
+
+    const handleScoreUpdate = (scoreData: any) => {
+      console.log('📊 Score updated:', scoreData);
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+      toast.success(`Match score updated: ${scoreData.team1Score}-${scoreData.team2Score}`);
+    };
+
+    socket.on('tournament-updated', handleTournamentUpdate);
+    socket.on('match-updated', handleMatchUpdate);
+    socket.on('score-updated', handleScoreUpdate);
+
+    return () => {
+      socket.off('tournament-updated', handleTournamentUpdate);
+      socket.off('match-updated', handleMatchUpdate);
+      socket.off('score-updated', handleScoreUpdate);
+    };
+  }, [socket, id, queryClient]);
 
   const handleDeleteClick = (eventId: string, eventName: string) => {
     // Show warning toast first
@@ -329,6 +385,31 @@ const TournamentDetail = () => {
 
         {/* Content */}
         <div className="container mx-auto px-4 py-12">
+          {/* Photo Gallery */}
+          {tournament.image && (
+            <div className="bg-card rounded-xl border border-border p-6 shadow-card mb-8 animate-fade-in">
+              <h3 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                Tournament Gallery
+              </h3>
+              <Carousel className="w-full">
+                <CarouselContent>
+                  <CarouselItem>
+                    <div className="relative aspect-video rounded-lg overflow-hidden">
+                      <img
+                        src={tournament.image}
+                        alt={tournament.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
@@ -377,6 +458,68 @@ const TournamentDetail = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Venue Details */}
+                  {tournament.venue && (
+                    <div className="mt-8 p-6 bg-card rounded-xl border border-border">
+                      <h3 className="font-display font-bold text-lg mb-4">Venue Information</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <span className="text-sm text-muted-foreground">Venue Name</span>
+                          <p className="font-semibold">{tournament.venue.name}</p>
+                        </div>
+                        {tournament.venue.courts && (
+                          <div>
+                            <span className="text-sm text-muted-foreground">Available Courts</span>
+                            <p className="font-semibold">{tournament.venue.courts} Courts</p>
+                          </div>
+                        )}
+                        {tournament.venue.facilities && tournament.venue.facilities.length > 0 && (
+                          <div>
+                            <span className="text-sm text-muted-foreground">Facilities</span>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {tournament.venue.facilities.map((facility: string, idx: number) => (
+                                <Badge key={idx} variant="outline">{facility}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rules */}
+                  {tournament.rules && (
+                    <div className="mt-8 p-6 bg-card rounded-xl border border-border">
+                      <h3 className="font-display font-bold text-lg mb-4">Tournament Rules</h3>
+                      <p className="text-muted-foreground whitespace-pre-wrap">{tournament.rules}</p>
+                    </div>
+                  )}
+
+                  {/* Contact Information */}
+                  {(tournament.contactEmail || tournament.contactPhone) && (
+                    <div className="mt-8 p-6 bg-card rounded-xl border border-border">
+                      <h3 className="font-display font-bold text-lg mb-4">Contact Information</h3>
+                      <div className="space-y-2">
+                        {tournament.contactEmail && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-muted-foreground" />
+                            <a href={`mailto:${tournament.contactEmail}`} className="font-semibold text-primary hover:underline">
+                              {tournament.contactEmail}
+                            </a>
+                          </div>
+                        )}
+                        {tournament.contactPhone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-muted-foreground" />
+                            <a href={`tel:${tournament.contactPhone}`} className="font-semibold">
+                              {tournament.contactPhone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="events" className="mt-6">

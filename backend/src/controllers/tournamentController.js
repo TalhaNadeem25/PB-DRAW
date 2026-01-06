@@ -1,5 +1,6 @@
 import Tournament from '../models/Tournament.js';
 import Event from '../models/Event.js';
+import cloudinary from '../config/cloudinary.js';
 
 // @desc    Get all tournaments
 // @route   GET /api/tournaments
@@ -222,6 +223,64 @@ export const registerForTournament = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Successfully registered for tournament',
+      data: tournament
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Upload tournament image
+// @route   POST /api/tournaments/:id/upload-image
+// @access  Private (Organizer/Admin)
+export const uploadTournamentImage = async (req, res, next) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+
+    if (!tournament) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tournament not found'
+      });
+    }
+
+    // Check ownership
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this tournament'
+      });
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file'
+      });
+    }
+
+    // Delete old image from Cloudinary if exists
+    if (tournament.image) {
+      try {
+        // Extract public_id from image URL
+        const urlParts = tournament.image.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const publicId = `pickle-rally/tournaments/${filename.split('.')[0]}`;
+        await cloudinary.uploader.destroy(publicId);
+      } catch (error) {
+        console.error('Error deleting old image:', error);
+        // Continue even if deletion fails
+      }
+    }
+
+    // Update tournament with new image URL from Cloudinary
+    tournament.image = req.file.path;
+    await tournament.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Tournament image uploaded successfully',
       data: tournament
     });
   } catch (error) {

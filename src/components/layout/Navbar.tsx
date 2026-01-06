@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Search, DollarSign, HelpCircle, Home, LayoutDashboard, Users, Radio, Compass } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Search, DollarSign, HelpCircle, Home, LayoutDashboard, Users, Radio, Compass, BarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -136,6 +136,14 @@ const Navbar = () => {
                         My Teams
                       </Link>
                     </DropdownMenuItem>
+                    {(user?.role === 'organizer' || user?.role === 'admin') && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/analytics">
+                          <BarChart className="w-4 h-4 mr-2" />
+                          Analytics
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link to="/profile">
                         <UserCircle className="w-4 h-4 mr-2" />
@@ -236,6 +244,14 @@ const Navbar = () => {
                       My Teams
                     </Link>
                   </Button>
+                  {(user?.role === 'organizer' || user?.role === 'admin') && (
+                    <Button variant="ghost" size="sm" asChild className="justify-start">
+                      <Link to="/analytics" onClick={() => setIsOpen(false)}>
+                        <BarChart className="w-4 h-4 mr-2" />
+                        Analytics
+                      </Link>
+                    </Button>
+                  )}
                   <Button variant="ghost" size="sm" asChild className="justify-start">
                     <Link to="/profile" onClick={() => setIsOpen(false)}>
                       <UserCircle className="w-4 h-4 mr-2" />

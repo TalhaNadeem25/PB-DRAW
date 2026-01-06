@@ -1,4 +1,6 @@
 import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -23,9 +25,25 @@ import playoffRoutes from './routes/playoffRoutes.js';
 import invitationRoutes from './routes/invitationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import stripeConnectRoutes from './routes/stripeConnectRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 
 // Initialize Express app
 const app = express();
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:8080',
+    credentials: true,
+    methods: ['GET', 'POST']
+  }
+});
+
+// Make io accessible to routes
+app.set('io', io);
 
 // Trust proxy for rate limiting behind reverse proxies
 app.set('trust proxy', 1);
@@ -63,7 +81,8 @@ app.get('/api', (req, res) => {
       pools: '/api/pools',
       teams: '/api/teams',
       matches: '/api/matches',
-      payments: '/api/payments'
+      payments: '/api/payments',
+      analytics: '/api/analytics'
     }
   });
 });
@@ -73,6 +92,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/payments', paymentLimiter, paymentRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);
@@ -89,14 +109,54 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/invitations', invitationRoutes);
 
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+
+  // Join tournament room
+  socket.on('join-tournament', (tournamentId) => {
+    socket.join(`tournament:${tournamentId}`);
+    console.log(`📺 Socket ${socket.id} joined tournament:${tournamentId}`);
+  });
+
+  // Leave tournament room
+  socket.on('leave-tournament', (tournamentId) => {
+    socket.leave(`tournament:${tournamentId}`);
+    console.log(`👋 Socket ${socket.id} left tournament:${tournamentId}`);
+  });
+
+  // Join match room
+  socket.on('join-match', (matchId) => {
+    socket.join(`match:${matchId}`);
+    console.log(`🏓 Socket ${socket.id} joined match:${matchId}`);
+  });
+
+  // Leave match room
+  socket.on('leave-match', (matchId) => {
+    socket.leave(`match:${matchId}`);
+    console.log(`👋 Socket ${socket.id} left match:${matchId}`);
+  });
+
+  // Join user room (for personal notifications)
+  socket.on('join-user', (userId) => {
+    socket.join(`user:${userId}`);
+    console.log(`👤 Socket ${socket.id} joined user:${userId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`❌ User disconnected: ${socket.id}`);
+  });
+});
+
 // Error handling
 app.use(notFound);
 app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
+  console.log(`🔌 Socket.IO ready for connections`);
   console.log(`🎾 Pickle Rally Backend is ready!\n`);
 });

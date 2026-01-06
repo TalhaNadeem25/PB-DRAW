@@ -1,6 +1,7 @@
 import Match from '../models/Match.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
+import { emitMatchScoreUpdate, notifyTeamPlayers } from '../utils/socket.js';
 
 // @desc    Get all matches for a pool
 // @route   GET /api/pools/:poolId/matches
@@ -171,6 +172,46 @@ export const updateMatchScore = async (req, res, next) => {
         finalsMatch.team2 = match.winner;
         await finalsMatch.save();
       }
+    }
+
+    // GET IO INSTANCE AND EMIT SOCKET EVENTS
+    const io = req.app.get('io');
+    const tournamentId = match.event.tournament._id.toString();
+
+    // Emit match score update to all connected clients
+    emitMatchScoreUpdate(io, match._id.toString(), tournamentId, {
+      matchId: match._id,
+      team1Score,
+      team2Score,
+      status: match.status,
+      winner: match.winner,
+      completedAt: match.completedAt
+    });
+
+    // If match completed, notify players
+    if (match.status === 'completed') {
+      const winnerTeam = team1Score > team2Score ? team1 : team2;
+      const loserTeam = team1Score > team2Score ? team2 : team1;
+
+      // Notify winner team
+      await notifyTeamPlayers(io, winnerTeam._id, {
+        type: 'match-completed',
+        title: 'Match Completed - Victory!',
+        message: `Your match has been completed. Final score: ${team1Score}-${team2Score}`,
+        matchId: match._id,
+        tournamentId,
+        result: 'win'
+      });
+
+      // Notify loser team
+      await notifyTeamPlayers(io, loserTeam._id, {
+        type: 'match-completed',
+        title: 'Match Completed',
+        message: `Your match has been completed. Final score: ${team1Score}-${team2Score}`,
+        matchId: match._id,
+        tournamentId,
+        result: 'loss'
+      });
     }
 
     res.status(200).json({

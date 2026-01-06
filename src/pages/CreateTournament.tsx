@@ -69,6 +69,8 @@ const CreateTournament = () => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [registrationDeadline, setRegistrationDeadline] = useState<Date>();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Events state
   const [events, setEvents] = useState<Omit<TournamentEvent, "id" | "registeredPlayers">[]>([]);
@@ -102,6 +104,16 @@ const CreateTournament = () => {
           });
         } catch (error) {
           console.error('Error creating event:', error);
+        }
+      }
+
+      // Upload image if provided
+      if (imageFile) {
+        try {
+          await tournamentAPI.uploadImage(tournament._id, imageFile);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast.error('Tournament created but image upload failed');
         }
       }
 
@@ -157,6 +169,24 @@ const CreateTournament = () => {
 
   const removeEvent = (index: number) => {
     setEvents(events.filter((_, i) => i !== index));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      // Validate file type
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        toast.error("Only JPEG, PNG, and WEBP images are allowed");
+        return;
+      }
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = () => {
@@ -322,6 +352,28 @@ const CreateTournament = () => {
                         value={maxPlayers}
                         onChange={(e) => setMaxPlayers(parseInt(e.target.value) || 128)}
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="image">Tournament Image</Label>
+                      <Input
+                        id="image"
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        onChange={handleImageChange}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Upload a tournament image (JPG, PNG, or WEBP, max 5MB)
+                      </p>
+                      {imagePreview && (
+                        <div className="mt-2">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full max-w-md rounded-lg border border-border object-cover"
+                          />
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

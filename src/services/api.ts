@@ -123,6 +123,17 @@ export const tournamentAPI = {
     const response = await api.post(`/tournaments/${id}/register`);
     return response.data;
   },
+
+  uploadImage: async (id: string, imageFile: File) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    const response = await api.post(`/tournaments/${id}/upload-image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
 
 // Events
@@ -384,6 +395,42 @@ export const paymentAPI = {
 
   refundPayment: async (id: string, reason?: string) => {
     const response = await api.post(`/payments/${id}/refund`, { reason });
+    return response.data;
+  },
+};
+
+// Analytics
+export const analyticsAPI = {
+  getOrganizationAnalytics: async (userId: string, params?: {
+    startDate?: string;
+    endDate?: string;
+    tournamentId?: string;
+  }) => {
+    const response = await api.get(`/analytics/organization/${userId}`, { params });
+    return response.data;
+  },
+
+  exportCSV: async (userId: string, params?: {
+    startDate?: string;
+    endDate?: string;
+    tournamentId?: string;
+  }) => {
+    const response = await api.get(`/analytics/organization/${userId}/export/csv`, {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  exportPDF: async (userId: string, params?: {
+    startDate?: string;
+    endDate?: string;
+    tournamentId?: string;
+  }) => {
+    const response = await api.get(`/analytics/organization/${userId}/export/pdf`, {
+      params,
+      responseType: 'blob',
+    });
     return response.data;
   },
 };
