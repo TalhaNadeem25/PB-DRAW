@@ -24,6 +24,19 @@ const poolSchema = new mongoose.Schema({
     enum: ['pending', 'in-progress', 'completed'],
     default: 'pending'
   },
+  playFormat: {
+    type: String,
+    enum: ['round-robin', 'single-elimination', 'double-elimination', 'pool-play', 'swiss'],
+    required: true
+  },
+  bracketGenerated: {
+    type: Boolean,
+    default: false
+  },
+  bracketGeneratedAt: {
+    type: Date,
+    default: null
+  },
   advancementRules: {
     teamsToAdvance: {
       type: Number,

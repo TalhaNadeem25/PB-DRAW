@@ -29,6 +29,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import PaymentForm from "@/components/payment/PaymentForm";
+import WaitlistButton from "@/components/registration/WaitlistButton";
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
@@ -255,7 +256,31 @@ const EventRegistration = () => {
               <div className="grid lg:grid-cols-3 gap-8">
                 {/* Main Form */}
                 <div className="lg:col-span-2 space-y-6">
-                  <Card>
+                  {/* Check if event is full and show waitlist */}
+                  {event.currentTeams >= event.maxTeams && tournament?.settings?.allowWaitlist ? (
+                    <WaitlistButton eventId={event._id} isEventFull={true} />
+                  ) : event.currentTeams >= event.maxTeams ? (
+                    <Card className="border-red-500 bg-red-50">
+                      <CardHeader>
+                        <CardTitle className="text-red-900 flex items-center gap-2">
+                          <AlertCircle className="w-5 h-5" />
+                          Event Full
+                        </CardTitle>
+                        <CardDescription className="text-red-700">
+                          This event has reached its maximum capacity and waitlist is not available.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button asChild>
+                          <Link to={`/tournaments/${tournamentId}`}>
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back to Tournament
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <UserPlus className="w-5 h-5 text-primary" />
@@ -362,6 +387,7 @@ const EventRegistration = () => {
                       </Button>
                     </CardContent>
                   </Card>
+                  )}
                 </div>
 
                 {/* Sidebar - Event Summary */}

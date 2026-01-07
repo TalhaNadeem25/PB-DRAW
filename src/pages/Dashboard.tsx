@@ -22,8 +22,12 @@ import {
   Bell,
   Settings,
   Plus,
+  Ticket,
+  QrCode,
 } from "lucide-react";
 import { tournamentAPI, authAPI, teamAPI, invitationAPI } from "@/services/api";
+import TicketCard from "@/components/check-in/TicketCard";
+import WaitlistStatus from "@/components/registration/WaitlistStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
@@ -56,6 +60,38 @@ const Dashboard = () => {
   const { data: invitationsData, isLoading: invitationsLoading } = useQuery({
     queryKey: ['my-invitations'],
     queryFn: () => invitationAPI.getReceived(),
+    enabled: !!user,
+  });
+
+  // Fetch user's tickets
+  const { data: ticketsData, isLoading: ticketsLoading } = useQuery({
+    queryKey: ['my-tickets-dashboard'],
+    queryFn: async () => {
+      const response = await fetch('/api/check-in/my-tickets', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch tickets');
+      const data = await response.json();
+      return data.data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch waitlist entries
+  const { data: waitlistData, isLoading: waitlistLoading } = useQuery({
+    queryKey: ['my-waitlist'],
+    queryFn: async () => {
+      const response = await fetch('/api/waitlist/my-entries', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch waitlist');
+      const data = await response.json();
+      return data.data || [];
+    },
     enabled: !!user,
   });
 
@@ -574,6 +610,81 @@ const Dashboard = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* My Tickets */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Ticket className="w-5 h-5 text-green-600" />
+                      <div>
+                        <CardTitle>My Tickets</CardTitle>
+                        <CardDescription>Your tournament tickets with QR codes</CardDescription>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/tickets">
+                        View All
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {ticketsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : ticketsData && ticketsData.length > 0 ? (
+                    <div className="space-y-4">
+                      {ticketsData.slice(0, 3).map((ticket: any) => (
+                        <TicketCard key={ticket.paymentId} payment={ticket} compact />
+                      ))}
+                      {ticketsData.length > 3 && (
+                        <Button variant="outline" className="w-full" asChild>
+                          <Link to="/tickets">
+                            View All {ticketsData.length} Tickets
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Ticket className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No tickets yet</p>
+                      <p className="text-sm mt-1">Your tickets will appear here after registration</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Waitlist Entries */}
+              {waitlistData && waitlistData.length > 0 && (
+                <Card className="border-yellow-200 bg-yellow-50/30">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-yellow-600" />
+                      <div>
+                        <CardTitle className="text-yellow-900">Waitlist Entries</CardTitle>
+                        <CardDescription>Events you're waiting to join</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {waitlistData.slice(0, 3).map((entry: any) => (
+                        <WaitlistStatus key={entry._id} entry={entry} />
+                      ))}
+                      {waitlistData.length > 3 && (
+                        <Button variant="outline" className="w-full mt-2">
+                          View All {waitlistData.length} Waitlist Entries
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </div>

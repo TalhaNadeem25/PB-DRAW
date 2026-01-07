@@ -1,0 +1,384 @@
+import Waitlist from '../models/Waitlist.js';
+import Event from '../models/Event.js';
+import Tournament from '../models/Tournament.js';
+import User from '../models/User.js';
+import { sendWaitlistJoinedEmail, sendWaitlistPromotionEmail, sendWaitlistExpiredEmail } from '../services/emailService.js';
+
+/**
+ * Join waitlist for an event
+ * @route   POST /api/events/:eventId/waitlist
+ * @access  Private
+ */
+export const joinWaitlist = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const { partnerEmail, partnerName, teamName } = req.body;
+
+    // Get event and tournament
+    const event = await Event.findById(eventId).populate('tournament');
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    const tournament = await Tournament.findById(event.tournament);
+    if (!tournament) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tournament not found'
+      });
+    }
+
+    // Check if waitlist is enabled
+    if (!tournament.settings?.allowWaitlist) {
+      return res.status(400).json({
+        success: false,
+        message: 'Waitlist is not enabled for this tournament'
+      });
+    }
+
+    // Check if event is full
+    if (event.currentTeams < event.maxTeams) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event is not full. Please register normally.'
+      });
+    }
+
+    // Check if user already on waitlist
+    const existingWaitlist = await Waitlist.findOne({
+      event: eventId,
+      user: req.user.id,
+      status: 'waiting'
+    });
+
+    if (existingWaitlist) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are already on the waitlist for this event',
+        data: { position: existingWaitlist.position }
+      });
+    }
+
+    // Calculate position (last position + 1)
+    const lastEntry = await Waitlist.findOne({
+      event: eventId,
+      status: 'waiting'
+    }).sort({ position: -1 });
+
+    const position = lastEntry ? lastEntry.position + 1 : 1;
+
+    // Create waitlist entry
+    const waitlistEntry = await Waitlist.create({
+      event: eventId,
+      user: req.user.id,
+      position,
+      status: 'waiting',
+      metadata: {
+        partnerEmail,
+        partnerName,
+        teamName
+      }
+    });
+
+    // Get total waitlist count
+    const totalWaiting = await Waitlist.countDocuments({
+      event: eventId,
+      status: 'waiting'
+    });
+
+    // Send confirmation email
+    try {
+      await sendWaitlistJoinedEmail({
+        to: req.user.email,
+        playerName: req.user.name,
+        eventName: event.name,
+        tournamentName: tournament.name,
+        position,
+        totalWaiting
+      });
+    } catch (emailError) {
+      console.error('Failed to send waitlist joined email:', emailError);
+      // Continue even if email fails
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Successfully joined waitlist',
+      data: {
+        waitlistId: waitlistEntry._id,
+        position,
+        totalWaiting,
+        estimatedWait: `${position} ${position === 1 ? 'person' : 'people'} ahead`
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get waitlist position for current user
+ * @route   GET /api/events/:eventId/waitlist/my-position
+ * @access  Private
+ */
+export const getWaitlistPosition = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+
+    const waitlistEntry = await Waitlist.findOne({
+      event: eventId,
+      user: req.user.id,
+      status: { $in: ['waiting', 'promoted'] }
+    });
+
+    if (!waitlistEntry) {
+      return res.status(404).json({
+        success: false,
+        message: 'You are not on the waitlist for this event'
+      });
+    }
+
+    // Get total waitlist count
+    const totalWaiting = await Waitlist.countDocuments({
+      event: eventId,
+      status: 'waiting'
+    });
+
+    // Get people ahead
+    const peopleAhead = await Waitlist.countDocuments({
+      event: eventId,
+      status: 'waiting',
+      position: { $lt: waitlistEntry.position }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        position: waitlistEntry.position,
+        status: waitlistEntry.status,
+        totalWaiting,
+        peopleAhead,
+        promotedAt: waitlistEntry.promotedAt,
+        promotionExpiresAt: waitlistEntry.promotionExpiresAt
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Leave waitlist
+ * @route   DELETE /api/events/:eventId/waitlist
+ * @access  Private
+ */
+export const leaveWaitlist = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+
+    const waitlistEntry = await Waitlist.findOne({
+      event: eventId,
+      user: req.user.id,
+      status: 'waiting'
+    });
+
+    if (!waitlistEntry) {
+      return res.status(404).json({
+        success: false,
+        message: 'You are not on the waitlist for this event'
+      });
+    }
+
+    const removedPosition = waitlistEntry.position;
+
+    // Remove entry
+    await waitlistEntry.deleteOne();
+
+    // Reorder positions for entries after this one
+    await Waitlist.updateMany(
+      {
+        event: eventId,
+        status: 'waiting',
+        position: { $gt: removedPosition }
+      },
+      {
+        $inc: { position: -1 }
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Successfully left waitlist'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Promote next person from waitlist (internal function)
+ * @param {string} eventId - Event ID
+ * @param {string} reason - Reason for promotion
+ * @returns {object} - Promoted waitlist entry
+ */
+export const promoteNextWaitlist = async (eventId, reason = 'spot-available') => {
+  try {
+    // Find next waiting entry
+    const nextEntry = await Waitlist.findOne({
+      event: eventId,
+      status: 'waiting'
+    }).sort({ position: 1 }).populate('user event');
+
+    if (!nextEntry) {
+      console.log('No waitlist entries to promote');
+      return null;
+    }
+
+    // Update status to promoted
+    nextEntry.status = 'promoted';
+    nextEntry.promotedAt = new Date();
+    nextEntry.promotionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await nextEntry.save();
+
+    // Get event and tournament details
+    const event = await Event.findById(eventId).populate('tournament');
+    const tournament = await Tournament.findById(event.tournament);
+
+    // Generate payment URL (assumes frontend payment page)
+    const paymentUrl = `${process.env.CLIENT_URL}/events/${eventId}/register`;
+
+    // Send promotion email
+    try {
+      await sendWaitlistPromotionEmail({
+        to: nextEntry.user.email,
+        playerName: nextEntry.user.name,
+        tournamentName: tournament.name,
+        eventName: event.name,
+        paymentUrl,
+        expiresAt: nextEntry.promotionExpiresAt,
+        deadline: '24 hours'
+      });
+    } catch (emailError) {
+      console.error('Failed to send promotion email:', emailError);
+    }
+
+    console.log(`Promoted waitlist entry ${nextEntry._id} for event ${eventId}`);
+
+    return nextEntry;
+  } catch (error) {
+    console.error('Error promoting waitlist:', error);
+    throw error;
+  }
+};
+
+/**
+ * Expire promotion and promote next (internal function)
+ * @param {string} waitlistId - Waitlist entry ID
+ */
+export const expirePromotion = async (waitlistId) => {
+  try {
+    const entry = await Waitlist.findById(waitlistId).populate('user event');
+
+    if (!entry) {
+      console.log(`Waitlist entry ${waitlistId} not found`);
+      return;
+    }
+
+    // Mark as expired
+    entry.status = 'expired';
+    await entry.save();
+
+    // Send expiration email
+    try {
+      await sendWaitlistExpiredEmail({
+        to: entry.user.email,
+        playerName: entry.user.name,
+        eventName: entry.event.name,
+        rejoinUrl: `${process.env.CLIENT_URL}/events/${entry.event._id}`
+      });
+    } catch (emailError) {
+      console.error('Failed to send expiration email:', emailError);
+    }
+
+    // Promote next person
+    await promoteNextWaitlist(entry.event._id, 'previous-expired');
+
+    console.log(`Expired waitlist entry ${waitlistId} and promoted next`);
+  } catch (error) {
+    console.error('Error expiring promotion:', error);
+    throw error;
+  }
+};
+
+/**
+ * Convert waitlist entry to registration (internal function)
+ * @param {string} waitlistId - Waitlist entry ID
+ * @param {string} paymentId - Payment ID
+ */
+export const convertWaitlistToRegistration = async (waitlistId, paymentId) => {
+  try {
+    const entry = await Waitlist.findById(waitlistId);
+
+    if (!entry) {
+      console.log(`Waitlist entry ${waitlistId} not found`);
+      return;
+    }
+
+    // Mark as converted
+    entry.status = 'converted';
+    entry.convertedAt = new Date();
+    entry.paymentId = paymentId;
+    await entry.save();
+
+    console.log(`Converted waitlist entry ${waitlistId} to registration`);
+  } catch (error) {
+    console.error('Error converting waitlist entry:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get event waitlist (admin only)
+ * @route   GET /api/events/:eventId/waitlist
+ * @access  Private (Organizer/Admin)
+ */
+export const getEventWaitlist = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+
+    // Get event to verify organizer
+    const event = await Event.findById(eventId).populate('tournament');
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    const tournament = await Tournament.findById(event.tournament);
+
+    // Check if user is organizer or admin
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view waitlist'
+      });
+    }
+
+    // Get all waitlist entries
+    const waitlistEntries = await Waitlist.find({
+      event: eventId
+    }).populate('user', 'name email').sort({ position: 1 });
+
+    res.status(200).json({
+      success: true,
+      count: waitlistEntries.length,
+      data: waitlistEntries
+    });
+  } catch (error) {
+    next(error);
+  }
+};

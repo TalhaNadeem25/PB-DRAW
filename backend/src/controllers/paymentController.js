@@ -5,6 +5,8 @@ import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
 import User from '../models/User.js';
 import { sendTicketPurchaseEmail } from '../services/emailService.js';
+import { generateTicketCode, generateQRCode, generateTicketPDF } from '../utils/qrCodeGenerator.js';
+import { promoteNextWaitlist } from './waitlistController.js';
 
 // Initialize Stripe with lazy loading to ensure env vars are loaded
 let stripe;
@@ -783,12 +785,66 @@ export const confirmPayment = async (req, res, next) => {
         }
       }
 
+      // Promote next person on waitlist for each event (if applicable)
+      try {
+        const eventsToCheck = payment.events && payment.events.length > 0
+          ? payment.events
+          : payment.event
+            ? [payment.event]
+            : [];
+
+        for (const event of eventsToCheck) {
+          await promoteNextWaitlist(event._id, 'payment_completed');
+        }
+      } catch (waitlistError) {
+        console.error('Error promoting waitlist after payment:', waitlistError);
+        // Don't fail the payment if waitlist promotion fails
+      }
+
       // Auto-register user to tournament if not already registered
       const tournament = await Tournament.findById(payment.tournament._id);
       if (tournament && !tournament.registeredPlayers.includes(req.user.id)) {
         tournament.registeredPlayers.push(req.user.id);
         tournament.currentPlayers = tournament.registeredPlayers.length;
         await tournament.save();
+      }
+
+      // Generate QR code and ticket PDF
+      try {
+        const ticketCode = generateTicketCode();
+
+        // Generate QR code
+        const qrCodeUrl = await generateQRCode(ticketCode, payment._id.toString());
+
+        // Prepare event names for PDF
+        const eventNamesForPDF = payment.events && payment.events.length > 0
+          ? payment.events.map(e => e.name)
+          : payment.event
+            ? [payment.event.name]
+            : [];
+
+        // Generate ticket PDF
+        const ticketPdfUrl = await generateTicketPDF({
+          ticketCode,
+          qrCodeUrl,
+          playerName: payment.user.name,
+          tournamentName: payment.tournament.name,
+          eventNames: eventNamesForPDF,
+          tournamentLocation: payment.tournament.location,
+          eventDate: payment.tournament.startDate,
+          paymentId: payment._id.toString()
+        });
+
+        // Update payment with ticket information
+        payment.ticketCode = ticketCode;
+        payment.qrCodeUrl = qrCodeUrl;
+        payment.ticketPdfUrl = ticketPdfUrl;
+        await payment.save();
+
+        console.log(`✅ Ticket generated for payment ${payment._id}: ${ticketCode}`);
+      } catch (ticketError) {
+        console.error('❌ Failed to generate ticket:', ticketError);
+        // Don't fail the payment if ticket generation fails
       }
 
       // Send ticket purchase confirmation email
@@ -818,7 +874,10 @@ export const confirmPayment = async (req, res, next) => {
             entryFee: payment.amount,
             transactionId: payment.stripePaymentIntentId,
             organizerName: payment.tournament.organizer.name,
-            organizerEmail: payment.tournament.organizer.email
+            organizerEmail: payment.tournament.organizer.email,
+            ticketCode: payment.ticketCode,
+            qrCodeUrl: payment.qrCodeUrl,
+            ticketPdfUrl: payment.ticketPdfUrl
           });
 
           console.log(`Ticket confirmation email sent to ${payment.user.email}`);

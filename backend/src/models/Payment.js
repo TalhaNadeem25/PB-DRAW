@@ -92,6 +92,37 @@ const paymentSchema = new mongoose.Schema(
     refundReason: {
       type: String,
       default: null
+    },
+    // QR Code Check-in fields
+    ticketCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null
+    },
+    qrCodeUrl: {
+      type: String,
+      default: null
+    },
+    ticketPdfUrl: {
+      type: String,
+      default: null
+    },
+    checkedIn: {
+      checkedInAt: {
+        type: Date,
+        default: null
+      },
+      checkedInBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+      },
+      method: {
+        type: String,
+        enum: ['qr-code', 'manual', 'self-check-in'],
+        default: null
+      }
     }
   },
   {

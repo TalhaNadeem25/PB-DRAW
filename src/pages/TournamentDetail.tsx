@@ -67,10 +67,39 @@ import { toast } from "sonner";
 import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
 import BracketViewer from "@/components/tournament/BracketViewer";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
+import { cn } from "@/lib/utils";
 
 const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
 const tournamentFormats: TournamentFormat[] = ["Round-Robin", "Single Elimination", "Double Elimination", "Pool+Knockout"];
+
+const statusConfig = {
+  open: {
+    label: "Registration Open",
+    className: "bg-primary/10 text-primary border-primary/20",
+    dotClass: "bg-primary"
+  },
+  closed: {
+    label: "Registration Closed",
+    className: "bg-muted text-muted-foreground border-border",
+    dotClass: "bg-muted-foreground"
+  },
+  "in-progress": {
+    label: "In Progress",
+    className: "bg-destructive/10 text-destructive border-destructive/20",
+    dotClass: "bg-destructive animate-pulse"
+  },
+  completed: {
+    label: "Completed",
+    className: "bg-accent text-accent-foreground border-accent-foreground/20",
+    dotClass: "bg-accent-foreground"
+  },
+  draft: {
+    label: "Draft",
+    className: "bg-muted text-muted-foreground border-border",
+    dotClass: "bg-muted-foreground"
+  },
+};
 
 const TournamentDetail = () => {
   // ALL HOOKS MUST BE DECLARED AT THE TOP BEFORE ANY CONDITIONAL LOGIC
@@ -283,16 +312,8 @@ const TournamentDetail = () => {
     );
   }
 
-  // Format data for display
-  const statusLabels: Record<string, string> = {
-    open: 'Registration Open',
-    closed: 'Registration Closed',
-    'in-progress': 'In Progress',
-    completed: 'Completed',
-    draft: 'Draft',
-  };
-
-  const statusLabel = statusLabels[tournament.status] || tournament.status;
+  // Get status configuration
+  const statusInfo = statusConfig[tournament.status as keyof typeof statusConfig] || statusConfig.draft;
 
   // Check if user is the organizer
   const isOrganizer = user?._id === tournament.organizer?._id || user?.role === 'admin';
@@ -313,8 +334,9 @@ const TournamentDetail = () => {
 
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
               <div className="animate-fade-in">
-                <Badge className="bg-secondary text-secondary-foreground mb-4">
-                  {statusLabel}
+                <Badge variant="outline" className={cn("font-medium border mb-4", statusInfo.className)}>
+                  <span className={cn("w-2 h-2 rounded-full mr-2", statusInfo.dotClass)} />
+                  {statusInfo.label}
                 </Badge>
                 <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-4">
                   {tournament.name}
@@ -387,26 +409,29 @@ const TournamentDetail = () => {
         <div className="container mx-auto px-4 py-12">
           {/* Photo Gallery */}
           {tournament.image && (
-            <div className="bg-card rounded-xl border border-border p-6 shadow-card mb-8 animate-fade-in">
-              <h3 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-primary" />
-                Tournament Gallery
-              </h3>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  <CarouselItem>
-                    <div className="relative aspect-video rounded-lg overflow-hidden">
-                      <img
-                        src={tournament.image}
-                        alt={tournament.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </CarouselItem>
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
+            <div className="glass-card-hover rounded-2xl overflow-hidden mb-8 animate-fade-in">
+              <div className="h-1.5 bg-hero-gradient" />
+              <div className="p-8">
+                <h3 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-primary" />
+                  Tournament Gallery
+                </h3>
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    <CarouselItem>
+                      <div className="relative aspect-video rounded-lg overflow-hidden">
+                        <img
+                          src={tournament.image}
+                          alt={tournament.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </CarouselItem>
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              </div>
             </div>
           )}
 
@@ -414,7 +439,7 @@ const TournamentDetail = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               <Tabs defaultValue="overview" className="animate-fade-in">
-                <TabsList className="w-full justify-start bg-muted/50 p-1 rounded-xl">
+                <TabsList className="w-full justify-start glass border border-border/50 p-1 rounded-xl">
                   <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
                   <TabsTrigger value="events" className="rounded-lg">Events</TabsTrigger>
                   <TabsTrigger value="schedule" className="rounded-lg">Schedule</TabsTrigger>
@@ -428,10 +453,10 @@ const TournamentDetail = () => {
                   </div>
 
                   <div className="mt-8 grid sm:grid-cols-2 gap-4">
-                    <div className="p-6 bg-card rounded-xl border border-border">
+                    <div className="group glass-card-hover rounded-2xl p-8">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                          <Users className="w-5 h-5 text-primary" />
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 group-hover:bg-hero-gradient group-hover:shadow-glow transition-all duration-300 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground">Registered Players</div>
@@ -440,16 +465,24 @@ const TournamentDetail = () => {
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-primary rounded-full"
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            (() => {
+                              const percentFull = Math.round(((tournament.currentPlayers || 0) / tournament.maxPlayers) * 100);
+                              if (percentFull >= 90) return "bg-destructive";
+                              if (percentFull >= 70) return "bg-warning";
+                              return "bg-hero-gradient";
+                            })()
+                          )}
                           style={{ width: `${((tournament.currentPlayers || 0) / tournament.maxPlayers) * 100}%` }}
                         />
                       </div>
                     </div>
 
-                    <div className="p-6 bg-card rounded-xl border border-border">
+                    <div className="group glass-card-hover rounded-2xl p-8">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                          <Clock className="w-5 h-5 text-primary" />
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 group-hover:bg-hero-gradient group-hover:shadow-glow transition-all duration-300 flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground">Registration Deadline</div>
@@ -461,7 +494,7 @@ const TournamentDetail = () => {
 
                   {/* Venue Details */}
                   {tournament.venue && (
-                    <div className="mt-8 p-6 bg-card rounded-xl border border-border">
+                    <div className="mt-8 glass-card-hover rounded-2xl p-8">
                       <h3 className="font-display font-bold text-lg mb-4">Venue Information</h3>
                       <div className="space-y-3">
                         <div>
@@ -490,7 +523,7 @@ const TournamentDetail = () => {
 
                   {/* Rules */}
                   {tournament.rules && (
-                    <div className="mt-8 p-6 bg-card rounded-xl border border-border">
+                    <div className="mt-8 glass-card-hover rounded-2xl p-8">
                       <h3 className="font-display font-bold text-lg mb-4">Tournament Rules</h3>
                       <p className="text-muted-foreground whitespace-pre-wrap">{tournament.rules}</p>
                     </div>
@@ -498,7 +531,7 @@ const TournamentDetail = () => {
 
                   {/* Contact Information */}
                   {(tournament.contactEmail || tournament.contactPhone) && (
-                    <div className="mt-8 p-6 bg-card rounded-xl border border-border">
+                    <div className="mt-8 glass-card-hover rounded-2xl p-8">
                       <h3 className="font-display font-bold text-lg mb-4">Contact Information</h3>
                       <div className="space-y-2">
                         {tournament.contactEmail && (
@@ -655,10 +688,11 @@ const TournamentDetail = () => {
                   </div>
                   {tournament.events && tournament.events.length > 0 ? (
                     <div className="space-y-4">
-                      {tournament.events.map((event: any) => (
+                      {tournament.events.map((event: any, index: number) => (
                         <div
                           key={event._id}
-                          className="p-6 bg-card rounded-xl border border-border hover:shadow-card transition-shadow"
+                          className="glass-card-hover rounded-2xl p-6 animate-fade-in"
+                          style={{ animationDelay: `${Math.min(index * 0.1, 0.5)}s` }}
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
@@ -726,7 +760,7 @@ const TournamentDetail = () => {
             {/* Sidebar */}
             <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               {/* Registration Card */}
-              <div className="bg-card rounded-xl border border-border p-6 shadow-card">
+              <div className="glass-card rounded-2xl p-8">
                 <h3 className="font-display font-bold text-lg mb-4">Quick Registration</h3>
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
@@ -747,14 +781,14 @@ const TournamentDetail = () => {
                   </div>
                 </div>
                 {tournament.status === 'open' && !isOrganizer && (
-                  <Button variant="hero" className="w-full" size="lg">
+                  <Button variant="hero" className="w-full shadow-md hover:shadow-glow transition-shadow" size="lg">
                     Register Now
                   </Button>
                 )}
               </div>
 
               {/* Organizer Info */}
-              <div className="bg-card rounded-xl border border-border p-6">
+              <div className="glass-card-hover rounded-2xl p-8">
                 <h3 className="font-display font-bold text-lg mb-4">Organizer</h3>
                 <div className="space-y-3 text-sm">
                   <div>
@@ -777,7 +811,7 @@ const TournamentDetail = () => {
               </div>
 
               {/* Venue Info */}
-              <div className="bg-card rounded-xl border border-border p-6">
+              <div className="glass-card-hover rounded-2xl p-8">
                 <h3 className="font-display font-bold text-lg mb-4">Venue</h3>
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-primary mt-0.5" />
@@ -788,7 +822,7 @@ const TournamentDetail = () => {
                 </div>
                 <Button
                   variant="outline"
-                  className="w-full mt-4"
+                  className="w-full mt-4 hover-lift"
                   onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(tournament.address)}`, '_blank')}
                 >
                   View on Map

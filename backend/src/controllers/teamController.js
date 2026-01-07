@@ -1,5 +1,7 @@
 import Team from '../models/Team.js';
 import Event from '../models/Event.js';
+import Tournament from '../models/Tournament.js';
+import { joinWaitlist } from './waitlistController.js';
 
 // @desc    Get all teams for an event OR for current user
 // @route   GET /api/events/:eventId/teams OR GET /api/teams?userId=me
@@ -72,7 +74,7 @@ export const getTeam = async (req, res, next) => {
 // @access  Private
 export const createTeam = async (req, res, next) => {
   try {
-    const event = await Event.findById(req.params.eventId);
+    const event = await Event.findById(req.params.eventId).populate('tournament');
 
     if (!event) {
       return res.status(404).json({
@@ -83,12 +85,32 @@ export const createTeam = async (req, res, next) => {
 
     // Check if event is full
     if (event.currentTeams >= event.maxTeams) {
+      // Check if tournament allows waitlist
+      const tournament = await Tournament.findById(event.tournament._id || event.tournament);
+
+      if (tournament && tournament.settings && tournament.settings.allowWaitlist) {
+        // Create unpaid team first for waitlist tracking
+        req.body.event = req.params.eventId;
+        req.body.paymentStatus = 'pending'; // Mark as pending
+        const team = await Team.create(req.body);
+
+        // Join waitlist instead of failing
+        req.body.teamId = team._id;
+        req.body.teamName = team.name;
+        req.body.partnerName = req.body.partnerName || '';
+        req.body.partnerEmail = req.body.partnerEmail || '';
+
+        return await joinWaitlist(req, res, next);
+      }
+
+      // No waitlist enabled - hard stop
       return res.status(400).json({
         success: false,
-        message: 'Event is full'
+        message: 'Event is full and waitlist is not available'
       });
     }
 
+    // Event has space - create team normally
     req.body.event = req.params.eventId;
     const team = await Team.create(req.body);
 

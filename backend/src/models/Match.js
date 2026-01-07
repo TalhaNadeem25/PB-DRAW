@@ -69,6 +69,35 @@ const matchSchema = new mongoose.Schema({
     type: Number,
     default: null
   },
+  // Advanced bracket fields for bracket visualization
+  bracketPosition: {
+    type: Number,
+    default: null
+  },
+  nextMatchId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Match',
+    default: null
+  },
+  previousMatch1Id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Match',
+    default: null
+  },
+  previousMatch2Id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Match',
+    default: null
+  },
+  isByeMatch: {
+    type: Boolean,
+    default: false
+  },
+  losersDropdownFrom: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Match',
+    default: null
+  },
   scheduledTime: {
     type: Date,
     default: null

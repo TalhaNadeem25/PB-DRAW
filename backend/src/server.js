@@ -26,6 +26,9 @@ import invitationRoutes from './routes/invitationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import stripeConnectRoutes from './routes/stripeConnectRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import waitlistRoutes from './routes/waitlistRoutes.js';
+import checkInRoutes from './routes/checkInRoutes.js';
+import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
 
 // Initialize Express app
 const app = express();
@@ -82,7 +85,9 @@ app.get('/api', (req, res) => {
       teams: '/api/teams',
       matches: '/api/matches',
       payments: '/api/payments',
-      analytics: '/api/analytics'
+      analytics: '/api/analytics',
+      checkIn: '/api/check-in',
+      waitlist: '/api/events/:eventId/waitlist'
     }
   });
 });
@@ -93,12 +98,14 @@ app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/payments', paymentLimiter, paymentRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/check-in', checkInRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);
 app.use('/api/events/:eventId/pools', poolRoutes);
 app.use('/api/events/:eventId/teams', teamRoutes);
 app.use('/api/events/:eventId/playoffs', playoffRoutes);
+app.use('/api/events/:eventId/waitlist', waitlistRoutes);
 app.use('/api/pools/:poolId/matches', matchRoutes);
 app.use('/api/teams/:teamId/invitations', invitationRoutes);
 
@@ -159,4 +166,7 @@ server.listen(PORT, () => {
   console.log(`📡 API available at http://localhost:${PORT}/api`);
   console.log(`🔌 Socket.IO ready for connections`);
   console.log(`🎾 Pickle Rally Backend is ready!\n`);
+
+  // Start cron jobs
+  startWaitlistExpirationJob();
 });

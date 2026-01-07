@@ -29,6 +29,8 @@ import EventRegistration from "./pages/EventRegistration";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import MyTickets from "./pages/MyTickets";
+import OrganizerScanner from "./pages/OrganizerScanner";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +111,22 @@ const App = () => (
               element={
                 <ProtectedRoute requireRole={['organizer', 'admin']}>
                   <AnalyticsDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tickets"
+              element={
+                <ProtectedRoute>
+                  <MyTickets />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner"
+              element={
+                <ProtectedRoute requireRole={['organizer', 'admin']}>
+                  <OrganizerScanner />
                 </ProtectedRoute>
               }
             />
