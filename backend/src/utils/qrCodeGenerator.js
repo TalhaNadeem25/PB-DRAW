@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import cloudinary from '../config/cloudinary.js';
 import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
+import https from 'https';
 
 /**
  * Generate unique ticket code
@@ -222,7 +223,7 @@ export const generateTicketPDF = async ({
 
       // Fetch and embed QR code image
       try {
-        const https = await import('https');
+        // Fetch QR code image from Cloudinary using https
         const qrImageBuffer = await new Promise((resolve, reject) => {
           https.get(qrCodeUrl, (response) => {
             const chunks = [];

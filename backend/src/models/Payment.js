@@ -97,16 +97,16 @@ const paymentSchema = new mongoose.Schema(
     ticketCode: {
       type: String,
       unique: true,
-      sparse: true,
-      default: null
+      sparse: true
+      // No default - field won't exist until ticket is generated
     },
     qrCodeUrl: {
-      type: String,
-      default: null
+      type: String
+      // No default - field won't exist until QR is generated
     },
     ticketPdfUrl: {
-      type: String,
-      default: null
+      type: String
+      // No default - field won't exist until PDF is generated
     },
     checkedIn: {
       checkedInAt: {

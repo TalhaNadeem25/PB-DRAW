@@ -62,10 +62,9 @@ const waitlistSchema = new mongoose.Schema({
 
 // Indexes for faster queries
 waitlistSchema.index({ event: 1, position: 1 });
-waitlistSchema.index({ user: 1, event: 1 });
 waitlistSchema.index({ status: 1, promotionExpiresAt: 1 });
 
-// Prevent duplicate waitlist entries for same user+event
+// Prevent duplicate waitlist entries for same user+event (while waiting)
 waitlistSchema.index({ user: 1, event: 1 }, { unique: true, partialFilterExpression: { status: 'waiting' } });
 
 const Waitlist = mongoose.model('Waitlist', waitlistSchema);
