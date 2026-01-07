@@ -18,6 +18,8 @@ import {
   CheckCircle2,
   UserPlus,
   Mail,
+  Sparkles,
+  PartyPopper,
 } from "lucide-react";
 import { invitationAPI, paymentAPI } from "@/services/api";
 import { format } from "date-fns";
@@ -48,43 +50,25 @@ const AcceptInvitation = () => {
   const event = team?.event;
   const tournament = event?.tournament;
 
-  // Log data for debugging
-  console.log('Invitation data:', invitation);
-  console.log('Team:', team);
-  console.log('Event:', event);
-  console.log('Entry fee:', event?.entryFee);
-
   // Accept invitation and create payment
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      // Check if payment is required
       const entryFee = event?.entryFee || 0;
 
-      console.log('Accept mutation triggered, entryFee:', entryFee);
-
       if (entryFee > 0) {
-        // Create payment intent for partner
-        console.log('Creating payment intent for partner with invitationId:', id);
         const paymentResponse = await paymentAPI.createPartnerPaymentIntent({
           invitationId: id!,
         });
 
-        console.log('Payment response:', paymentResponse);
-
         if (paymentResponse.data.requiresPayment) {
-          console.log('Payment required, showing payment form');
           setClientSecret(paymentResponse.data.clientSecret);
           setStep("payment");
         } else {
-          console.log('No payment required, accepting directly');
-          // Free event - just accept
           await invitationAPI.accept(id!);
           toast.success("Invitation accepted! You've joined the team.");
           navigate('/teams');
         }
       } else {
-        console.log('Entry fee is 0, accepting without payment');
-        // Free event - just accept
         await invitationAPI.accept(id!);
         toast.success("Invitation accepted! You've joined the team.");
         navigate('/teams');
@@ -108,8 +92,8 @@ const AcceptInvitation = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
+        <div className="min-h-screen bg-mesh-gradient flex items-center justify-center">
+          <div className="text-center glass p-8 rounded-2xl">
             <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading invitation...</p>
           </div>
@@ -121,19 +105,21 @@ const AcceptInvitation = () => {
   if (!invitation) {
     return (
       <Layout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Invitation Not Found</h2>
-            <p className="text-muted-foreground mb-6">
-              This invitation doesn't exist or has expired.
-            </p>
-            <Button onClick={() => navigate('/dashboard')}>
-              Go to Dashboard
-            </Button>
-          </div>
+        <div className="min-h-screen bg-mesh-gradient flex items-center justify-center p-4">
+          <Card className="max-w-md w-full glass border-0 shadow-float">
+            <CardContent className="pt-10 pb-8 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-6">
+                <AlertCircle className="w-10 h-10 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-display font-bold mb-2">Invitation Not Found</h2>
+              <p className="text-muted-foreground mb-6">
+                This invitation doesn't exist or has expired.
+              </p>
+              <Button onClick={() => navigate('/dashboard')} variant="hero" className="hover-lift">
+                Go to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     );
@@ -143,19 +129,23 @@ const AcceptInvitation = () => {
   if (invitation.status !== 'pending') {
     return (
       <Layout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-amber-500" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Invitation {invitation.status}</h2>
-            <p className="text-muted-foreground mb-6">
-              This invitation has already been {invitation.status}.
-            </p>
-            <Button onClick={() => navigate('/dashboard')}>
-              Go to Dashboard
-            </Button>
-          </div>
+        <div className="min-h-screen bg-mesh-gradient flex items-center justify-center p-4">
+          <Card className="max-w-md w-full glass border-0 shadow-float">
+            <CardContent className="pt-10 pb-8 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
+                <AlertCircle className="w-10 h-10 text-amber-500" />
+              </div>
+              <h2 className="text-2xl font-display font-bold mb-2 capitalize">
+                Invitation {invitation.status}
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                This invitation has already been {invitation.status}.
+              </p>
+              <Button onClick={() => navigate('/dashboard')} variant="hero" className="hover-lift">
+                Go to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     );
@@ -167,15 +157,24 @@ const AcceptInvitation = () => {
     <Layout>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
+        <div className="bg-hero-gradient py-12 relative overflow-hidden">
+          {/* Floating elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-10 right-20 w-32 h-32 bg-secondary/20 rounded-full blur-2xl animate-float" />
+            <div className="absolute bottom-10 left-20 w-40 h-40 bg-primary-foreground/10 rounded-full blur-2xl animate-float" style={{ animationDelay: "1s" }} />
+          </div>
+
+          <div className="container mx-auto px-4 relative z-10">
             <div className="animate-fade-in">
-              <Badge className="bg-secondary text-secondary-foreground mb-4">
-                <Mail className="w-3 h-3 mr-1" />
-                Team Invitation {step === "payment" && "- Payment"}
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-2">
+              <div className="flex items-center gap-3 mb-4">
+                <Badge className="bg-secondary text-secondary-foreground gap-1 px-3 py-1">
+                  <PartyPopper className="w-3 h-3" />
+                  Team Invitation {step === "payment" && "- Payment"}
+                </Badge>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-2 flex items-center gap-3">
                 You've Been Invited!
+                <Sparkles className="w-10 h-10 text-secondary animate-bounce" />
               </h1>
               <p className="text-xl text-primary-foreground/80">
                 Join {invitation.inviter?.name || 'your teammate'}'s team
@@ -191,46 +190,52 @@ const AcceptInvitation = () => {
               <div className="grid lg:grid-cols-3 gap-8">
                 {/* Main Card */}
                 <div className="lg:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <UserPlus className="w-5 h-5 text-primary" />
+                  <Card className="glass border-0 shadow-float overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
+                    <CardHeader className="pt-8">
+                      <CardTitle className="flex items-center gap-2 text-2xl">
+                        <UserPlus className="w-6 h-6 text-primary" />
                         Team Invitation Details
                       </CardTitle>
                       <CardDescription>
                         You've been invited to join a team for {event?.name}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
+                    <CardContent className="space-y-6 pb-8">
                       {/* Inviter Info */}
-                      <div className="bg-muted/50 p-4 rounded-lg">
-                        <h3 className="font-semibold mb-3">Invited By</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Name</span>
-                            <span className="font-medium">{invitation.inviter?.name}</span>
+                      <div className="bg-muted/50 p-5 rounded-xl border border-border/50">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-primary" />
+                          Invited By
+                        </h3>
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-xl font-bold">
+                            {invitation.inviter?.name?.charAt(0)?.toUpperCase()}
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Email</span>
-                            <span className="font-medium">{invitation.inviter?.email}</span>
+                          <div>
+                            <p className="font-medium text-lg">{invitation.inviter?.name}</p>
+                            <p className="text-sm text-muted-foreground">{invitation.inviter?.email}</p>
                           </div>
                         </div>
                       </div>
 
                       {/* Team Info */}
-                      <div className="bg-muted/50 p-4 rounded-lg">
-                        <h3 className="font-semibold mb-3">Team Details</h3>
-                        <div className="space-y-2">
+                      <div className="bg-muted/50 p-5 rounded-xl border border-border/50">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-primary" />
+                          Team Details
+                        </h3>
+                        <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Team Name</span>
+                            <span className="text-muted-foreground">Team Name</span>
                             <span className="font-medium">{team?.name}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Event</span>
+                            <span className="text-muted-foreground">Event</span>
                             <span className="font-medium">{event?.name}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Format</span>
+                            <span className="text-muted-foreground">Format</span>
                             <Badge variant="secondary" className="capitalize">
                               {event?.format}
                             </Badge>
@@ -240,21 +245,23 @@ const AcceptInvitation = () => {
 
                       {/* Message */}
                       {invitation.message && (
-                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                          <h3 className="font-semibold mb-2 text-blue-600">Personal Message</h3>
-                          <p className="text-sm text-muted-foreground">{invitation.message}</p>
+                        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
+                          <h3 className="font-semibold mb-2 text-primary">Personal Message</h3>
+                          <p className="text-muted-foreground italic">"{invitation.message}"</p>
                         </div>
                       )}
 
                       {/* Entry Fee Notice */}
                       {entryFee > 0 && (
-                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-                          <div className="flex gap-3">
-                            <DollarSign className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                            <div className="text-sm">
-                              <p className="font-medium text-amber-600 mb-1">Payment Required</p>
-                              <p className="text-muted-foreground">
-                                You'll need to pay ${entryFee.toFixed(2)} to join this team and confirm your registration.
+                        <div className="bg-secondary/10 border border-secondary/30 rounded-xl p-5">
+                          <div className="flex gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                              <DollarSign className="w-6 h-6 text-secondary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-secondary mb-1">Payment Required</p>
+                              <p className="text-sm text-muted-foreground">
+                                You'll need to pay <span className="font-bold text-foreground">${entryFee.toFixed(2)}</span> to join this team and confirm your registration.
                               </p>
                             </div>
                           </div>
@@ -262,26 +269,26 @@ const AcceptInvitation = () => {
                       )}
 
                       {/* Action Buttons */}
-                      <div className="flex gap-3 pt-4">
+                      <div className="flex gap-4 pt-4">
                         <Button
                           onClick={() => acceptMutation.mutate()}
                           disabled={acceptMutation.isPending}
-                          className="flex-1"
-                          size="lg"
+                          variant="hero"
+                          className="flex-1 h-14 text-lg hover-lift shadow-glow"
                         >
                           {acceptMutation.isPending ? (
                             <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                               Processing...
                             </>
                           ) : entryFee > 0 ? (
                             <>
                               Accept & Pay ${entryFee.toFixed(2)}
-                              <DollarSign className="w-4 h-4 ml-2" />
+                              <DollarSign className="w-5 h-5 ml-2" />
                             </>
                           ) : (
                             <>
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
+                              <CheckCircle2 className="w-5 h-5 mr-2" />
                               Accept Invitation
                             </>
                           )}
@@ -289,7 +296,7 @@ const AcceptInvitation = () => {
                         <Button
                           variant="outline"
                           onClick={() => navigate('/dashboard')}
-                          size="lg"
+                          className="h-14 px-8 hover-lift"
                         >
                           Decline
                         </Button>
@@ -300,38 +307,34 @@ const AcceptInvitation = () => {
 
                 {/* Sidebar - Tournament Info */}
                 <div className="space-y-6">
-                  <Card>
+                  <Card className="glass border-0 shadow-float">
                     <CardHeader>
-                      <CardTitle className="text-lg">Tournament Details</CardTitle>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-primary" />
+                        Tournament Details
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Trophy className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">{tournament?.name}</span>
-                        </div>
+                        <p className="font-medium text-lg">{tournament?.name}</p>
                       </div>
 
-                      <div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <span>{tournament?.location}</span>
-                        </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span>{tournament?.location}</span>
                       </div>
 
-                      <div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span>
-                            {tournament && format(new Date(tournament.startDate), 'MMM dd')} - {tournament && format(new Date(tournament.endDate), 'MMM dd, yyyy')}
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {tournament && format(new Date(tournament.startDate), 'MMM dd')} - {tournament && format(new Date(tournament.endDate), 'MMM dd, yyyy')}
+                        </span>
                       </div>
 
                       {entryFee > 0 && (
-                        <div className="bg-primary/5 p-4 rounded-lg mt-4">
-                          <p className="text-xs text-muted-foreground mb-2">Entry Fee</p>
-                          <p className="text-2xl font-bold text-primary">
+                        <div className="bg-gradient-to-br from-primary/10 to-secondary/10 p-5 rounded-xl mt-4 border border-primary/20">
+                          <p className="text-xs text-muted-foreground mb-1">Entry Fee</p>
+                          <p className="text-3xl font-display font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                             ${entryFee.toFixed(2)}
                           </p>
                         </div>
@@ -342,8 +345,9 @@ const AcceptInvitation = () => {
               </div>
             ) : (
               /* Payment Step */
-              <Card className="max-w-2xl mx-auto">
-                <CardHeader>
+              <Card className="max-w-2xl mx-auto glass border-0 shadow-float overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
+                <CardHeader className="pt-8">
                   <CardTitle className="flex items-center gap-2 text-2xl">
                     <DollarSign className="w-6 h-6 text-primary" />
                     Complete Payment
@@ -352,7 +356,7 @@ const AcceptInvitation = () => {
                     Secure your spot on {team?.name}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pb-8">
                   {clientSecret ? (
                     <Elements
                       stripe={stripePromise}
@@ -361,12 +365,12 @@ const AcceptInvitation = () => {
                         appearance: {
                           theme: 'stripe',
                           variables: {
-                            colorPrimary: '#ea580c',
+                            colorPrimary: '#16a34a',
                             colorBackground: '#ffffff',
                             colorText: '#1e293b',
                             colorDanger: '#ef4444',
                             fontFamily: 'system-ui, sans-serif',
-                            borderRadius: '8px',
+                            borderRadius: '12px',
                           },
                         },
                       }}
