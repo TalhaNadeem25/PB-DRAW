@@ -112,6 +112,7 @@ const TournamentDetail = () => {
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleteTournamentDialogOpen, setIsDeleteTournamentDialogOpen] = useState(false);
+  const [isStartTournamentDialogOpen, setIsStartTournamentDialogOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
     name: "",
     gameType: "Singles" as GameType,
@@ -176,6 +177,20 @@ const TournamentDetail = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to delete tournament");
+    },
+  });
+
+  // Start tournament mutation
+  const startTournamentMutation = useMutation({
+    mutationFn: (tournamentId: string) => tournamentAPI.startTournament(tournamentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      setIsStartTournamentDialogOpen(false);
+      toast.success("Tournament started! It's now live.");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to start tournament");
     },
   });
 
@@ -253,6 +268,16 @@ const TournamentDetail = () => {
   const handleConfirmDeleteTournament = () => {
     if (id) {
       deleteTournamentMutation.mutate(id);
+    }
+  };
+
+  const handleStartTournamentClick = () => {
+    setIsStartTournamentDialogOpen(true);
+  };
+
+  const handleConfirmStartTournament = () => {
+    if (id) {
+      startTournamentMutation.mutate(id);
     }
   };
 
@@ -388,6 +413,17 @@ const TournamentDetail = () => {
                 </Button>
                 {isOrganizer && (
                   <div className="flex flex-col gap-2">
+                    {(tournament.status === 'open' || tournament.status === 'closed') && (
+                      <Button
+                        variant="default"
+                        size="lg"
+                        className="bg-court-green text-white hover:bg-court-green-dark shadow-lg"
+                        onClick={handleStartTournamentClick}
+                      >
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Start Tournament
+                      </Button>
+                    )}
                     <Button variant="default" size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg" asChild>
                       <Link to={`/tournaments/${id}/edit`}>
                         <Settings className="w-4 h-4 mr-2" />
@@ -915,8 +951,41 @@ const TournamentDetail = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Start Tournament Confirmation Dialog */}
+        <AlertDialog open={isStartTournamentDialogOpen} onOpenChange={setIsStartTournamentDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Start Tournament?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will make the tournament go live and appear on the "Live Tournaments" page. Players will see this tournament as "In Progress" and matches can begin.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setIsStartTournamentDialogOpen(false);
+              }}>
+                No
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmStartTournament}
+                disabled={startTournamentMutation.isPending}
+                className="bg-court-green text-white hover:bg-court-green-dark"
+              >
+                {startTournamentMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Starting...
+                  </>
+                ) : (
+                  "Yes, Start Tournament"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Layout>
     );
   };
-  
+
   export default TournamentDetail;

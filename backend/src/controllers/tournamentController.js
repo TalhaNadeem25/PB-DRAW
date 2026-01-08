@@ -173,6 +173,50 @@ export const deleteTournament = async (req, res, next) => {
   }
 };
 
+// @desc    Start tournament (change status to in-progress)
+// @route   PUT /api/tournaments/:id/start
+// @access  Private (Organizer/Admin)
+export const startTournament = async (req, res, next) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+
+    if (!tournament) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tournament not found'
+      });
+    }
+
+    // Check if user is tournament organizer or admin
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to start this tournament'
+      });
+    }
+
+    // Check if tournament is in a valid status to start
+    if (tournament.status !== 'open' && tournament.status !== 'closed') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot start tournament with status "${tournament.status}". Tournament must be "open" or "closed" to start.`
+      });
+    }
+
+    // Update status to in-progress
+    tournament.status = 'in-progress';
+    await tournament.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Tournament started successfully! It is now live.',
+      data: tournament
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Register for tournament
 // @route   POST /api/tournaments/:id/register
 // @access  Private
