@@ -271,7 +271,7 @@ export const createPool = async (req, res, next) => {
       await pool.save();
 
       // Generate matches based on play format
-      const playFormat = event.playFormat || 'round-robin';
+      const playFormat = pool.playFormat || 'round-robin';
       const matches = generateMatches(req.body.teamIds, pool._id, event._id, playFormat);
       const createdMatches = await Match.insertMany(matches);
 
@@ -327,7 +327,7 @@ export const addTeamsToPool = async (req, res, next) => {
 
     // Generate new matches based on play format
     const allTeamIds = pool.teams.map(t => t._id || t);
-    const playFormat = pool.event.playFormat || 'round-robin';
+    const playFormat = pool.playFormat || 'round-robin';
     const newMatches = generateMatches(allTeamIds, pool._id, pool.event._id, playFormat);
 
     // Delete old matches and create new ones
@@ -471,7 +471,7 @@ export const generateSinglesMatches = async (req, res, next) => {
     await Match.deleteMany({ pool: pool._id });
 
     // Generate new matches (use player IDs as if they were team IDs for singles)
-    const playFormat = pool.event.playFormat || 'round-robin';
+    const playFormat = pool.playFormat || 'round-robin';
     const matches = generateMatches(playerIds, pool._id, pool.event._id, playFormat);
 
     // Set team1Model and team2Model to 'User' for singles matches

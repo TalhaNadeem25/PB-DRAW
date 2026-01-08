@@ -27,7 +27,7 @@ const poolSchema = new mongoose.Schema({
   playFormat: {
     type: String,
     enum: ['round-robin', 'single-elimination', 'double-elimination', 'pool-play', 'swiss'],
-    required: true
+    default: 'round-robin'
   },
   bracketGenerated: {
     type: Boolean,
