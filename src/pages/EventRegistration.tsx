@@ -227,20 +227,39 @@ const EventRegistration = () => {
     <Layout>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
+        <div className="bg-hero-gradient py-12 relative overflow-hidden">
+          {/* Floating Orbs */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-10 right-[15%] w-56 h-56 bg-secondary/20 rounded-full blur-3xl animate-float-slow" />
+            <div className="absolute bottom-5 left-[10%] w-40 h-40 bg-court-green-dark/30 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+            <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl animate-float" style={{ animationDelay: "3s" }} />
+          </div>
+          
+          {/* Court pattern */}
+          <div className="absolute inset-0 court-pattern opacity-5 pointer-events-none" />
+          
+          <div className="container mx-auto px-4 relative z-10">
             <Link
               to={`/tournaments/${tournamentId}/register`}
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors"
+              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors group"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Tournament Registration
             </Link>
 
             <div className="animate-fade-in">
-              <Badge className="bg-secondary text-secondary-foreground mb-4">
-                Event Registration {step === "payment" && "- Payment"}
-              </Badge>
+              {/* Step indicator */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step === "team-details" ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/20 text-primary-foreground"}`}>
+                  <span className="w-6 h-6 rounded-full bg-current/20 flex items-center justify-center text-xs">1</span>
+                  Team Details
+                </div>
+                <div className="w-8 h-px bg-primary-foreground/30" />
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step === "payment" ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/20 text-primary-foreground/60"}`}>
+                  <span className="w-6 h-6 rounded-full bg-current/20 flex items-center justify-center text-xs">2</span>
+                  Payment
+                </div>
+              </div>
               <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-2">
                 {event.name}
               </h1>
@@ -280,34 +299,41 @@ const EventRegistration = () => {
                       </CardContent>
                     </Card>
                   ) : (
-                    <Card>
+                    <Card className="glass-card border-border/50 shadow-lg">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <UserPlus className="w-5 h-5 text-primary" />
-                        Team Information
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <UserPlus className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <span>Team Information</span>
+                          <CardDescription className="mt-1">
+                            {requiresPartner
+                              ? "Enter your partner's information to create your team"
+                              : "Register as a singles player"}
+                          </CardDescription>
+                        </div>
                       </CardTitle>
-                      <CardDescription>
-                        {requiresPartner
-                          ? "Enter your partner's information to create your team"
-                          : "Register as a singles player"}
-                      </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Player Info */}
-                      <div className="bg-muted/50 p-4 rounded-lg">
-                        <Label className="text-sm font-medium mb-2 block">Your Information</Label>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
+                      <div className="glass rounded-xl p-5 border border-border/50">
+                        <Label className="text-sm font-medium mb-3 block flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                          Your Information
+                        </Label>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between py-2 border-b border-border/30">
                             <span className="text-sm text-muted-foreground">Name</span>
                             <span className="font-medium">{user?.name}</span>
                           </div>
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between py-2 border-b border-border/30">
                             <span className="text-sm text-muted-foreground">Email</span>
                             <span className="font-medium">{user?.email}</span>
                           </div>
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between py-2">
                             <span className="text-sm text-muted-foreground">Skill Level</span>
-                            <Badge variant="secondary">{user?.skillLevel}</Badge>
+                            <Badge variant="secondary" className="bg-primary/10 text-primary">{user?.skillLevel}</Badge>
                           </div>
                         </div>
                       </div>
@@ -392,15 +418,20 @@ const EventRegistration = () => {
 
                 {/* Sidebar - Event Summary */}
                 <div className="space-y-6">
-                  <Card>
+                  <Card className="glass-card border-border/50 shadow-lg overflow-hidden">
+                    {/* Gradient accent */}
+                    <div className="h-1.5 bg-hero-gradient" />
                     <CardHeader>
-                      <CardTitle className="text-lg">Event Details</CardTitle>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-primary" />
+                        Event Details
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label className="text-muted-foreground text-xs">Event Type</Label>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="capitalize">
+                          <Badge variant="secondary" className="capitalize bg-primary/10 text-primary">
                             {event.format.replace('-', ' ')}
                           </Badge>
                           <Badge variant="outline">
@@ -414,7 +445,7 @@ const EventRegistration = () => {
                       <div>
                         <Label className="text-muted-foreground text-xs">Skill Level</Label>
                         <div className="flex items-center gap-2 mt-1">
-                          <Target className="w-4 h-4 text-muted-foreground" />
+                          <Target className="w-4 h-4 text-primary" />
                           <span className="font-medium">{event.skillLevel}+</span>
                         </div>
                       </div>
@@ -422,10 +453,17 @@ const EventRegistration = () => {
                       <div>
                         <Label className="text-muted-foreground text-xs">Teams Registered</Label>
                         <div className="flex items-center gap-2 mt-1">
-                          <Users className="w-4 h-4 text-muted-foreground" />
+                          <Users className="w-4 h-4 text-primary" />
                           <span className="font-medium">
                             {event.currentTeams || 0} / {event.maxTeams}
                           </span>
+                        </div>
+                        {/* Progress bar */}
+                        <div className="h-1.5 bg-muted rounded-full mt-2 overflow-hidden">
+                          <div 
+                            className="h-full bg-hero-gradient rounded-full transition-all duration-500"
+                            style={{ width: `${((event.currentTeams || 0) / event.maxTeams) * 100}%` }}
+                          />
                         </div>
                       </div>
 
@@ -457,12 +495,13 @@ const EventRegistration = () => {
                       {entryFee > 0 && (
                         <>
                           <Separator />
-                          <div className="bg-primary/5 p-4 rounded-lg">
+                          <div className="glass rounded-xl p-4 border border-primary/20 shadow-glow">
                             <Label className="text-muted-foreground text-xs">Entry Fee</Label>
                             <div className="flex items-center justify-between mt-2">
-                              <span className="text-2xl font-bold text-primary">
+                              <span className="text-3xl font-display font-bold text-primary">
                                 ${entryFee.toFixed(2)}
                               </span>
+                              <DollarSign className="w-8 h-8 text-primary/30" />
                             </div>
                           </div>
                         </>
