@@ -4,6 +4,11 @@
  * Emit match update to all connected clients in match and tournament rooms
  */
 export const emitMatchUpdate = (io, matchId, tournamentId, eventId, matchData) => {
+  if (!io) {
+    console.warn('⚠️  Socket.IO not available (serverless environment) - skipping real-time emit');
+    return;
+  }
+
   // Emit to match room
   io.to(`match:${matchId}`).emit('match-updated', matchData);
 
@@ -22,6 +27,11 @@ export const emitMatchUpdate = (io, matchId, tournamentId, eventId, matchData) =
  * Emit match score update
  */
 export const emitMatchScoreUpdate = (io, matchId, tournamentId, scoreData) => {
+  if (!io) {
+    console.warn('⚠️  Socket.IO not available (serverless environment) - skipping real-time emit');
+    return;
+  }
+
   io.to(`match:${matchId}`).emit('score-updated', scoreData);
   io.to(`tournament:${tournamentId}`).emit('score-updated', scoreData);
 
@@ -32,6 +42,11 @@ export const emitMatchScoreUpdate = (io, matchId, tournamentId, scoreData) => {
  * Emit tournament update
  */
 export const emitTournamentUpdate = (io, tournamentId, tournamentData) => {
+  if (!io) {
+    console.warn('⚠️  Socket.IO not available (serverless environment) - skipping real-time emit');
+    return;
+  }
+
   io.to(`tournament:${tournamentId}`).emit('tournament-updated', tournamentData);
 
   console.log(`🏆 Tournament update emitted for tournament:${tournamentId}`);
@@ -41,6 +56,11 @@ export const emitTournamentUpdate = (io, tournamentId, tournamentData) => {
  * Send notification to a specific user
  */
 export const notifyPlayer = (io, userId, notification) => {
+  if (!io) {
+    console.warn('⚠️  Socket.IO not available (serverless environment) - skipping notification');
+    return;
+  }
+
   io.to(`user:${userId}`).emit('notification', notification);
 
   console.log(`🔔 Notification sent to user:${userId}`);
@@ -50,6 +70,11 @@ export const notifyPlayer = (io, userId, notification) => {
  * Send notification to all players in a team
  */
 export const notifyTeamPlayers = async (io, teamId, notification) => {
+  if (!io) {
+    console.warn('⚠️  Socket.IO not available (serverless environment) - skipping team notification');
+    return;
+  }
+
   try {
     // Dynamically import Team model to avoid circular dependencies
     const Team = (await import('../models/Team.js')).default;
