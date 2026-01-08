@@ -353,18 +353,27 @@ const PoolManagement = () => {
     <Layout>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
+        <div className="bg-hero-gradient py-12 relative overflow-hidden">
+          {/* Floating Orbs */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-10 right-[10%] w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-float-slow" />
+            <div className="absolute bottom-10 left-[5%] w-48 h-48 bg-court-green-dark/30 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+          </div>
+          
+          {/* Court pattern */}
+          <div className="absolute inset-0 court-pattern opacity-5 pointer-events-none" />
+          
+          <div className="container mx-auto px-4 relative z-10">
             <Link
               to={`/tournaments/${id}`}
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors"
+              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors group"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Tournament
             </Link>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="animate-fade-in">
-                <Badge className="bg-secondary text-secondary-foreground mb-2">
+                <Badge className="bg-secondary text-secondary-foreground mb-2 shadow-glow-yellow">
                   Pool Play
                 </Badge>
                 <h1 className="text-4xl font-display font-bold text-primary-foreground">
@@ -377,12 +386,12 @@ const PoolManagement = () => {
               <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 <Dialog open={isCreatePoolOpen} onOpenChange={setIsCreatePoolOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="glass">
+                    <Button variant="glass" className="hover:shadow-glow transition-shadow">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Pool
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="glass-card">
                     <DialogHeader>
                       <DialogTitle>Create New Pool</DialogTitle>
                       <DialogDescription>Enter a name for the new pool</DialogDescription>
@@ -391,12 +400,13 @@ const PoolManagement = () => {
                       placeholder="e.g., Pool A"
                       value={newPoolName}
                       onChange={(e) => setNewPoolName(e.target.value)}
+                      className="focus:shadow-glow transition-shadow"
                     />
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsCreatePoolOpen(false)}>
                         Cancel
                       </Button>
-                      <Button onClick={createPool} disabled={createPoolMutation.isPending}>
+                      <Button onClick={createPool} disabled={createPoolMutation.isPending} variant="hero">
                         {createPoolMutation.isPending ? "Creating..." : "Create"}
                       </Button>
                     </DialogFooter>
@@ -412,7 +422,7 @@ const PoolManagement = () => {
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Pools List */}
             <div className="space-y-4">
-              <Card>
+              <Card className="glass-card border-border/50 shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-primary" />
@@ -428,7 +438,7 @@ const PoolManagement = () => {
                         <Button
                           key={pool._id}
                           variant={selectedPoolId === pool._id ? "default" : "outline"}
-                          className="w-full justify-start"
+                          className={`w-full justify-start transition-all ${selectedPoolId === pool._id ? 'shadow-glow' : 'hover:border-primary/50'}`}
                           onClick={() => setSelectedPoolId(pool._id)}
                         >
                           {pool.name}
@@ -442,7 +452,7 @@ const PoolManagement = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="glass-card border-border/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-primary" />

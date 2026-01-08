@@ -322,19 +322,29 @@ const TournamentDetail = () => {
     <Layout>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
+        <div className="bg-hero-gradient py-12 relative overflow-hidden">
+          {/* Floating Orbs */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-10 right-[10%] w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-float-slow" />
+            <div className="absolute bottom-10 left-[5%] w-48 h-48 bg-court-green-dark/30 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+            <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl animate-float" style={{ animationDelay: "3s" }} />
+          </div>
+          
+          {/* Court pattern overlay */}
+          <div className="absolute inset-0 court-pattern opacity-5 pointer-events-none" />
+          
+          <div className="container mx-auto px-4 relative z-10">
             <Link
               to="/tournaments"
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors"
+              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors group"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Tournaments
             </Link>
 
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
               <div className="animate-fade-in">
-                <Badge variant="outline" className={cn("font-medium border mb-4", statusInfo.className)}>
+                <Badge variant="outline" className={cn("font-medium border mb-4 backdrop-blur-sm", statusInfo.className)}>
                   <span className={cn("w-2 h-2 rounded-full mr-2", statusInfo.dotClass)} />
                   {statusInfo.label}
                 </Badge>
@@ -342,12 +352,12 @@ const TournamentDetail = () => {
                   {tournament.name}
                 </h1>
                 <div className="flex flex-wrap gap-4 text-primary-foreground/80">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
+                  <div className="flex items-center gap-2 glass-dark px-3 py-1.5 rounded-full text-sm">
+                    <MapPin className="w-4 h-4" />
                     {tournament.location}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
+                  <div className="flex items-center gap-2 glass-dark px-3 py-1.5 rounded-full text-sm">
+                    <Calendar className="w-4 h-4" />
                     {format(new Date(tournament.startDate), 'MMM dd, yyyy')} - {format(new Date(tournament.endDate), 'MMM dd, yyyy')}
                   </div>
                 </div>
@@ -357,6 +367,7 @@ const TournamentDetail = () => {
                 <Button
                   variant="glass"
                   size="icon"
+                  className="hover:shadow-glow transition-shadow"
                   onClick={() => {
                     if (id) {
                       if (isFavorite) {
@@ -370,14 +381,14 @@ const TournamentDetail = () => {
                     }
                   }}
                 >
-                  <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current text-red-500' : ''}`} />
+                  <Heart className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                 </Button>
-                <Button variant="glass" size="icon">
+                <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow">
                   <Share2 className="w-5 h-5" />
                 </Button>
                 {isOrganizer && (
                   <div className="flex flex-col gap-2">
-                    <Button variant="default" size="lg" className="bg-white text-primary hover:bg-white/90" asChild>
+                    <Button variant="default" size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg" asChild>
                       <Link to={`/tournaments/${id}/edit`}>
                         <Settings className="w-4 h-4 mr-2" />
                         Edit Tournament
@@ -394,7 +405,7 @@ const TournamentDetail = () => {
                   </div>
                 )}
                 {tournament.status === 'open' && !isOrganizer && (
-                  <Button variant="accent" size="lg" asChild>
+                  <Button variant="accent" size="lg" className="shadow-glow-yellow hover:shadow-glow-lg transition-shadow" asChild>
                     <Link to={`/tournaments/${id}/register`}>
                       Register Now
                     </Link>
@@ -439,11 +450,11 @@ const TournamentDetail = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               <Tabs defaultValue="overview" className="animate-fade-in">
-                <TabsList className="w-full justify-start glass border border-border/50 p-1 rounded-xl">
-                  <TabsTrigger value="overview" className="rounded-lg">Overview</TabsTrigger>
-                  <TabsTrigger value="events" className="rounded-lg">Events</TabsTrigger>
-                  <TabsTrigger value="schedule" className="rounded-lg">Schedule</TabsTrigger>
-                  <TabsTrigger value="brackets" className="rounded-lg">Brackets</TabsTrigger>
+                <TabsList className="w-full justify-start glass border border-border/50 p-1.5 rounded-xl gap-1">
+                  <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Overview</TabsTrigger>
+                  <TabsTrigger value="events" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Events</TabsTrigger>
+                  <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Schedule</TabsTrigger>
+                  <TabsTrigger value="brackets" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Brackets</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">
@@ -760,29 +771,34 @@ const TournamentDetail = () => {
             {/* Sidebar */}
             <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               {/* Registration Card */}
-              <div className="glass-card rounded-2xl p-8">
+              <div className="glass-card rounded-2xl p-8 relative overflow-hidden">
+                {/* Gradient accent */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-hero-gradient" />
                 <h3 className="font-display font-bold text-lg mb-4">Quick Registration</h3>
                 <div className="space-y-4 mb-6">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Entry Fee</span>
-                    <span className="font-semibold">
+                    <span className="font-display font-bold text-lg text-primary">
                       {tournament.events && tournament.events.length > 0
                         ? `From $${Math.min(...tournament.events.map((e: any) => e.entryFee))}`
                         : 'TBD'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Events</span>
-                    <span className="font-semibold">{tournament.events?.length || 0} Available</span>
+                    <Badge variant="secondary">{tournament.events?.length || 0} Available</Badge>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Deadline</span>
                     <span className="font-semibold">{format(new Date(tournament.registrationDeadline), 'MMM dd')}</span>
                   </div>
                 </div>
                 {tournament.status === 'open' && !isOrganizer && (
-                  <Button variant="hero" className="w-full shadow-md hover:shadow-glow transition-shadow" size="lg">
-                    Register Now
+                  <Button variant="hero" className="w-full shadow-glow hover:shadow-glow-lg transition-all duration-300 group" size="lg" asChild>
+                    <Link to={`/tournaments/${id}/register`}>
+                      Register Now
+                      <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                   </Button>
                 )}
               </div>
