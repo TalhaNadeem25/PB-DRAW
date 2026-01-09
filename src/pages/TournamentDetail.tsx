@@ -50,6 +50,7 @@ import {
   Image as ImageIcon,
   Mail,
   Phone,
+  Sparkles,
 } from "lucide-react";
 import {
   Carousel,
@@ -68,6 +69,7 @@ import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament"
 import BracketViewer from "@/components/tournament/BracketViewer";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
+import AIPlannerChat from "@/components/tournament/AIPlannerChat";
 import { cn } from "@/lib/utils";
 
 const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
@@ -491,7 +493,13 @@ const TournamentDetail = () => {
                   <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Overview</TabsTrigger>
                   <TabsTrigger value="events" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Events</TabsTrigger>
                   {isOrganizer && (
-                    <TabsTrigger value="players" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Players Registered</TabsTrigger>
+                    <>
+                      <TabsTrigger value="players" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Players Registered</TabsTrigger>
+                      <TabsTrigger value="ai-planner" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">
+                        <Sparkles className="w-4 h-4 mr-1.5" />
+                        AI Planner
+                      </TabsTrigger>
+                    </>
                   )}
                   <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Schedule</TabsTrigger>
                   <TabsTrigger value="brackets" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Brackets</TabsTrigger>
@@ -801,6 +809,17 @@ const TournamentDetail = () => {
                 {isOrganizer && (
                   <TabsContent value="players" className="mt-6">
                     <RegisteredPlayers tournamentId={id!} />
+                  </TabsContent>
+
+                  <TabsContent value="ai-planner" className="mt-6">
+                    <AIPlannerChat
+                      tournamentId={id!}
+                      onEventsCreated={() => {
+                        queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+                        queryClient.invalidateQueries({ queryKey: ['events', id] });
+                        toast.success("Events created! Check the Events tab.");
+                      }}
+                    />
                   </TabsContent>
                 )}
 

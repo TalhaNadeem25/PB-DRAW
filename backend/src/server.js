@@ -28,6 +28,7 @@ import stripeConnectRoutes from './routes/stripeConnectRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import waitlistRoutes from './routes/waitlistRoutes.js';
 import checkInRoutes from './routes/checkInRoutes.js';
+import aiPlannerRoutes from './routes/aiPlannerRoutes.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
 
 // Initialize Express app
@@ -99,6 +100,7 @@ app.use('/api/payments', paymentLimiter, paymentRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/check-in', checkInRoutes);
+app.use('/api/ai-planner', aiPlannerRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);

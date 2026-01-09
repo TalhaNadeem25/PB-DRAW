@@ -146,6 +146,19 @@ export const tournamentAPI = {
   },
 };
 
+// AI Planner
+export const aiPlannerAPI = {
+  chat: async (tournamentId: string, prompt: string, context?: any) => {
+    const response = await api.post(`/ai-planner/${tournamentId}/chat`, { prompt, context });
+    return response.data;
+  },
+
+  applySuggestions: async (tournamentId: string, action: string, data: any) => {
+    const response = await api.post(`/ai-planner/${tournamentId}/apply`, { action, data });
+    return response.data;
+  },
+};
+
 // Events
 export const eventAPI = {
   getByTournament: async (tournamentId: string) => {
