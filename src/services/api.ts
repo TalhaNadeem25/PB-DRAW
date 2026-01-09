@@ -139,6 +139,11 @@ export const tournamentAPI = {
     const response = await api.put(`/tournaments/${id}/start`);
     return response.data;
   },
+
+  getRegistrations: async (id: string) => {
+    const response = await api.get(`/tournaments/${id}/registrations`);
+    return response.data;
+  },
 };
 
 // Events

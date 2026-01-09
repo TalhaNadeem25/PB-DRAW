@@ -217,6 +217,82 @@ export const startTournament = async (req, res, next) => {
   }
 };
 
+// @desc    Get all registrations for a tournament
+// @route   GET /api/tournaments/:id/registrations
+// @access  Private (Organizer/Admin)
+export const getTournamentRegistrations = async (req, res, next) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+
+    if (!tournament) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tournament not found'
+      });
+    }
+
+    // Check if user is tournament organizer or admin
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view registrations for this tournament'
+      });
+    }
+
+    // Get all events with their teams and registered players
+    const events = await Event.find({ tournament: req.params.id })
+      .populate({
+        path: 'teams',
+        populate: {
+          path: 'players',
+          select: 'name email skillLevel'
+        }
+      })
+      .populate({
+        path: 'registeredPlayers.player',
+        select: 'name email skillLevel'
+      })
+      .select('name format skillLevel entryFee teams registeredPlayers');
+
+    // Format the response data
+    const registrations = events.map(event => ({
+      eventId: event._id,
+      eventName: event.name,
+      format: event.format,
+      skillLevel: event.skillLevel,
+      entryFee: event.entryFee,
+      teams: event.teams.map(team => ({
+        teamId: team._id,
+        teamName: team.name,
+        players: team.players.map(player => ({
+          playerId: player._id,
+          name: player.name,
+          email: player.email,
+          skillLevel: player.skillLevel
+        })),
+        paymentStatus: team.paymentStatus,
+        registeredAt: team.createdAt
+      })),
+      // Singles registrations
+      registeredPlayers: event.registeredPlayers.map(reg => ({
+        playerId: reg.player._id,
+        name: reg.player.name,
+        email: reg.player.email,
+        skillLevel: reg.player.skillLevel,
+        paymentStatus: reg.paymentStatus,
+        registeredAt: reg.registeredAt
+      }))
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: registrations
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Register for tournament
 // @route   POST /api/tournaments/:id/register
 // @access  Private

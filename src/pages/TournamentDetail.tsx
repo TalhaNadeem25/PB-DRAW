@@ -67,6 +67,7 @@ import { toast } from "sonner";
 import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
 import BracketViewer from "@/components/tournament/BracketViewer";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
+import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
 import { cn } from "@/lib/utils";
 
 const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
@@ -489,6 +490,9 @@ const TournamentDetail = () => {
                 <TabsList className="w-full justify-start glass border border-border/50 p-1.5 rounded-xl gap-1">
                   <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Overview</TabsTrigger>
                   <TabsTrigger value="events" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Events</TabsTrigger>
+                  {isOrganizer && (
+                    <TabsTrigger value="players" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Players Registered</TabsTrigger>
+                  )}
                   <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Schedule</TabsTrigger>
                   <TabsTrigger value="brackets" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Brackets</TabsTrigger>
                 </TabsList>
@@ -793,6 +797,12 @@ const TournamentDetail = () => {
                     </div>
                   )}
                 </TabsContent>
+
+                {isOrganizer && (
+                  <TabsContent value="players" className="mt-6">
+                    <RegisteredPlayers tournamentId={id!} />
+                  </TabsContent>
+                )}
 
                 <TabsContent value="schedule" className="mt-6">
                   <TournamentSchedule tournamentId={id!} />
