@@ -24,6 +24,9 @@ import {
   Plus,
   Ticket,
   QrCode,
+  Sparkles,
+  Brain,
+  Zap,
 } from "lucide-react";
 import { tournamentAPI, authAPI, teamAPI, invitationAPI } from "@/services/api";
 import TicketCard from "@/components/check-in/TicketCard";
@@ -260,6 +263,53 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* AI Planner Hero Card */}
+              <Card className="border-0 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-full blur-3xl" />
+                <CardContent className="pt-8 relative z-10">
+                  <div className="flex flex-col md:flex-row items-center gap-8">
+                    <div className="flex-shrink-0">
+                      <div className="w-20 h-20 bg-hero-gradient rounded-2xl flex items-center justify-center shadow-glow">
+                        <Sparkles className="w-10 h-10 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full mb-3">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        <span className="text-xs font-bold text-primary">NEW FEATURE</span>
+                      </div>
+                      <h3 className="font-display font-bold text-2xl mb-2">
+                        Plan Perfect Tournaments with AI
+                      </h3>
+                      <p className="text-muted-foreground mb-6">
+                        Let AI help you calculate court requirements, suggest events, optimize schedules, and more. Get expert recommendations instantly.
+                      </p>
+                      <div className="flex flex-wrap gap-4 mb-6">
+                        <div className="flex items-center gap-2">
+                          <Brain className="w-4 h-4 text-primary" />
+                          <span className="text-sm">Smart Event Suggestions</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-primary" />
+                          <span className="text-sm">Court Calculations</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-primary" />
+                          <span className="text-sm">Schedule Optimization</span>
+                        </div>
+                      </div>
+                      <Button asChild size="lg" className="bg-hero-gradient hover:shadow-glow">
+                        <Link to="/tournament-planner">
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Try AI Planner Now
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Stripe Connect - Payment Setup */}
               <div>

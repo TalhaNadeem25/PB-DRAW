@@ -807,20 +807,22 @@ const TournamentDetail = () => {
                 </TabsContent>
 
                 {isOrganizer && (
-                  <TabsContent value="players" className="mt-6">
-                    <RegisteredPlayers tournamentId={id!} />
-                  </TabsContent>
+                  <>
+                    <TabsContent value="players" className="mt-6">
+                      <RegisteredPlayers tournamentId={id!} />
+                    </TabsContent>
 
-                  <TabsContent value="ai-planner" className="mt-6">
-                    <AIPlannerChat
-                      tournamentId={id!}
-                      onEventsCreated={() => {
-                        queryClient.invalidateQueries({ queryKey: ['tournament', id] });
-                        queryClient.invalidateQueries({ queryKey: ['events', id] });
-                        toast.success("Events created! Check the Events tab.");
-                      }}
-                    />
-                  </TabsContent>
+                    <TabsContent value="ai-planner" className="mt-6">
+                      <AIPlannerChat
+                        tournamentId={id!}
+                        onEventsCreated={() => {
+                          queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+                          queryClient.invalidateQueries({ queryKey: ['events', id] });
+                          toast.success("Events created! Check the Events tab.");
+                        }}
+                      />
+                    </TabsContent>
+                  </>
                 )}
 
                 <TabsContent value="schedule" className="mt-6">

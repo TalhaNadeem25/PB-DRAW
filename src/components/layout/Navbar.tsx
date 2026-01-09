@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -37,6 +37,10 @@ const Navbar = () => {
   const navLinks = [
     { href: "/live", label: "Live", icon: Radio, isLive: true },
     { href: "/tournaments", label: "Find Tournaments", icon: Trophy },
+    ...(user?.role === 'organizer' || user?.role === 'admin'
+      ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkles, isNew: true }]
+      : []
+    ),
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   ];
 
@@ -79,6 +83,7 @@ const Navbar = () => {
               {authenticatedNavLinks.map((link) => {
                 const Icon = link.icon;
                 const isLiveLink = (link as any).isLive;
+                const isNewLink = (link as any).isNew;
                 return (
                   <Link
                     key={link.href}
@@ -96,6 +101,11 @@ const Navbar = () => {
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      </span>
+                    )}
+                    {isNewLink && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary to-purple-600 text-white rounded-full">
+                        NEW
                       </span>
                     )}
                     {isActive(link.href) && (
@@ -230,6 +240,7 @@ const Navbar = () => {
             {authenticatedNavLinks.map((link) => {
               const Icon = link.icon;
               const isLiveLink = (link as any).isLive;
+              const isNewLink = (link as any).isNew;
               return (
                 <Link
                   key={link.href}
@@ -248,6 +259,11 @@ const Navbar = () => {
                     <span className="relative flex h-2 w-2 ml-auto">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                  )}
+                  {isNewLink && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary to-purple-600 text-white rounded-full ml-auto">
+                      NEW
                     </span>
                   )}
                 </Link>

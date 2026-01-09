@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,8 @@ import {
   ArrowRight,
   Check,
   Loader2,
+  Sparkles,
+  Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { tournamentAPI, eventAPI } from "@/services/api";
@@ -289,6 +291,38 @@ const CreateTournament = () => {
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <div className="space-y-8 animate-fade-in">
+                {/* AI Planner Promotion Banner */}
+                <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full blur-2xl" />
+                  <CardContent className="pt-6 relative z-10">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-hero-gradient rounded-xl flex items-center justify-center shadow-md">
+                          <Brain className="w-6 h-6 text-primary-foreground" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-primary/20 rounded-full mb-2">
+                          <Sparkles className="w-3 h-3 text-primary" />
+                          <span className="text-xs font-bold text-primary">AI-POWERED</span>
+                        </div>
+                        <h3 className="font-display font-bold text-lg mb-1">
+                          Not sure where to start? Let AI help you plan!
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Get instant recommendations for events, court requirements, schedules, and pricing
+                        </p>
+                      </div>
+                      <Button asChild variant="outline" className="border-primary/30 hover:bg-primary/10 flex-shrink-0">
+                        <Link to="/tournament-planner">
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Try AI Planner
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
