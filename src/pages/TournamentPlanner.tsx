@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sparkles, Zap, Brain, TrendingUp, ArrowRight, Plus } from "lucide-react";
-import AIPlannerChat from "@/components/tournament/AIPlannerChat";
+import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
 import { tournamentAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";

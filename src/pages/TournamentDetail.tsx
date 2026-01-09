@@ -69,7 +69,7 @@ import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament"
 import BracketViewer from "@/components/tournament/BracketViewer";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
-import AIPlannerChat from "@/components/tournament/AIPlannerChat";
+import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
 import { cn } from "@/lib/utils";
 
 const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
