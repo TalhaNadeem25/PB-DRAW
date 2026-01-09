@@ -249,10 +249,10 @@ What would you like help with today?`,
 
   const renderMarkdown = (content: string) => {
     return (
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-p:leading-relaxed prose-pre:p-0"
-        components={{
+      <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:font-bold prose-p:leading-relaxed prose-pre:p-0">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
@@ -282,10 +282,11 @@ What would you like help with today?`,
               </a>
             );
           },
-        }}
-      >
-        {content}
-      </ReactMarkdown>
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
     );
   };
 
