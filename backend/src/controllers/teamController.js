@@ -214,3 +214,96 @@ export const deleteTeam = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Move team to different event
+// @route   PUT /api/teams/:id/move-event
+// @access  Private (Organizer/Admin)
+export const moveTeamToEvent = async (req, res, next) => {
+  try {
+    const team = await Team.findById(req.params.id).populate({
+      path: 'event',
+      populate: { path: 'tournament' }
+    });
+
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+
+    const { targetEventId } = req.body;
+
+    if (!targetEventId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Target event ID is required'
+      });
+    }
+
+    const targetEvent = await Event.findById(targetEventId).populate('tournament');
+
+    if (!targetEvent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Target event not found'
+      });
+    }
+
+    // Check if user is tournament organizer or admin
+    if (targetEvent.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to move teams'
+      });
+    }
+
+    // Check if same tournament
+    if (team.event.tournament._id.toString() !== targetEvent.tournament._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot move team to event in different tournament'
+      });
+    }
+
+    // Check if target event has space
+    if (targetEvent.currentTeams >= targetEvent.maxTeams) {
+      return res.status(400).json({
+        success: false,
+        message: 'Target event is full'
+      });
+    }
+
+    // Check if formats match
+    if (team.event.format !== targetEvent.format) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot move team between different formats (singles/doubles)'
+      });
+    }
+
+    const oldEvent = await Event.findById(team.event._id);
+
+    // Remove team from old event
+    oldEvent.teams = oldEvent.teams.filter(t => t.toString() !== team._id.toString());
+    oldEvent.currentTeams = Math.max(0, oldEvent.currentTeams - 1);
+    await oldEvent.save();
+
+    // Add team to new event
+    targetEvent.teams.push(team._id);
+    targetEvent.currentTeams += 1;
+    await targetEvent.save();
+
+    // Update team's event reference
+    team.event = targetEventId;
+    await team.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Team moved successfully from "${oldEvent.name}" to "${targetEvent.name}"`,
+      data: team
+    });
+  } catch (error) {
+    next(error);
+  }
+};

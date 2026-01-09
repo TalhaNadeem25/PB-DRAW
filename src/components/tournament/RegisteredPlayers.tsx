@@ -1,8 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { tournamentAPI } from "@/services/api";
-import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { tournamentAPI, teamAPI } from "@/services/api";
+import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -11,6 +14,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 interface RegisteredPlayersProps {
@@ -18,11 +36,48 @@ interface RegisteredPlayersProps {
 }
 
 const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
+  const queryClient = useQueryClient();
+  const [selectedTeam, setSelectedTeam] = useState<any>(null);
+  const [targetEventId, setTargetEventId] = useState<string>("");
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['tournament-registrations', tournamentId],
     queryFn: () => tournamentAPI.getRegistrations(tournamentId),
     enabled: !!tournamentId,
   });
+
+  const moveTeamMutation = useMutation({
+    mutationFn: ({ teamId, targetEventId }: { teamId: string; targetEventId: string }) =>
+      teamAPI.moveToEvent(teamId, targetEventId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tournament-registrations', tournamentId] });
+      setIsMoveDialogOpen(false);
+      setSelectedTeam(null);
+      setTargetEventId("");
+      toast.success(data.message || "Team moved successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to move team");
+    },
+  });
+
+  const handleMoveClick = (team: any, currentEventId: string) => {
+    setSelectedTeam({ ...team, currentEventId });
+    setIsMoveDialogOpen(true);
+  };
+
+  const handleConfirmMove = () => {
+    if (!targetEventId || !selectedTeam) {
+      toast.error("Please select a target event");
+      return;
+    }
+
+    moveTeamMutation.mutate({
+      teamId: selectedTeam.teamId,
+      targetEventId,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -99,6 +154,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                       <TableHead>Skill Level</TableHead>
                       <TableHead>Payment Status</TableHead>
                       <TableHead>Registered</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -133,6 +189,9 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                         <TableCell className="text-muted-foreground text-sm">
                           {player.registeredAt ? format(new Date(player.registeredAt), 'MMM dd, yyyy') : 'N/A'}
                         </TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground italic">Singles - Use Teams Tab</span>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -148,6 +207,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                       <TableHead>Skill Levels</TableHead>
                       <TableHead>Payment Status</TableHead>
                       <TableHead>Registered</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -211,6 +271,17 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                         <TableCell className="text-muted-foreground text-sm">
                           {team.registeredAt ? format(new Date(team.registeredAt), 'MMM dd, yyyy') : 'N/A'}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleMoveClick(team, event.eventId)}
+                            className="flex items-center gap-1"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                            Move
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -220,6 +291,73 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
           </div>
         );
       })}
+
+      {/* Move Team Dialog */}
+      <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move Team to Different Event</DialogTitle>
+            <DialogDescription>
+              Select the event you want to move this team to. Both events must have the same format (singles/doubles).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {selectedTeam && (
+              <div className="mb-4 p-3 bg-muted rounded-lg">
+                <div className="font-semibold">{selectedTeam.teamName}</div>
+                <div className="text-sm text-muted-foreground">
+                  {selectedTeam.players?.map((p: any) => p.name).join(' & ')}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Target Event</label>
+              <Select value={targetEventId} onValueChange={setTargetEventId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an event..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {registrations
+                    .filter((e: any) =>
+                      e.eventId !== selectedTeam?.currentEventId &&
+                      e.format === registrations.find((r: any) => r.eventId === selectedTeam?.currentEventId)?.format
+                    )
+                    .map((event: any) => (
+                      <SelectItem key={event.eventId} value={event.eventId}>
+                        {event.eventName} ({event.skillLevel}+)
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsMoveDialogOpen(false);
+                setSelectedTeam(null);
+                setTargetEventId("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmMove}
+              disabled={!targetEventId || moveTeamMutation.isPending}
+            >
+              {moveTeamMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Moving...
+                </>
+              ) : (
+                "Move Team"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

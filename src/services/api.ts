@@ -220,6 +220,11 @@ export const teamAPI = {
     const response = await api.delete(`/teams/${id}`);
     return response.data;
   },
+
+  moveToEvent: async (teamId: string, targetEventId: string) => {
+    const response = await api.put(`/teams/${teamId}/move-event`, { targetEventId });
+    return response.data;
+  },
 };
 
 // Pools
