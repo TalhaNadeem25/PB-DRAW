@@ -182,6 +182,11 @@ export const eventAPI = {
     const response = await api.put(`/events/${eventId}/remove-player/${playerId}`);
     return response.data;
   },
+
+  movePlayerToEvent: async (eventId: string, playerId: string, targetEventId: string) => {
+    const response = await api.put(`/events/${eventId}/move-player/${playerId}`, { targetEventId });
+    return response.data;
+  },
 };
 
 // Teams

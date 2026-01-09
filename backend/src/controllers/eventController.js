@@ -284,3 +284,102 @@ export const removePlayerFromPool = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Move registered player to different event (for singles)
+// @route   PUT /api/events/:eventId/move-player/:playerId
+// @access  Private (Organizer/Admin)
+export const movePlayerToEvent = async (req, res, next) => {
+  try {
+    const { eventId, playerId } = req.params;
+    const { targetEventId } = req.body;
+
+    if (!targetEventId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Target event ID is required'
+      });
+    }
+
+    const sourceEvent = await Event.findById(eventId).populate('tournament');
+    const targetEvent = await Event.findById(targetEventId).populate('tournament');
+
+    if (!sourceEvent || !targetEvent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    // Check if user is tournament organizer or admin
+    if (sourceEvent.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to move players'
+      });
+    }
+
+    // Check if same tournament
+    if (sourceEvent.tournament._id.toString() !== targetEvent.tournament._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot move player to event in different tournament'
+      });
+    }
+
+    // Check if both events are singles format
+    if (sourceEvent.format !== 'singles' || targetEvent.format !== 'singles') {
+      return res.status(400).json({
+        success: false,
+        message: 'This endpoint is only for singles events. Use move team endpoint for doubles/mixed.'
+      });
+    }
+
+    // Find player in source event
+    const playerIndex = sourceEvent.registeredPlayers.findIndex(
+      reg => reg.player.toString() === playerId
+    );
+
+    if (playerIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Player not registered for this event'
+      });
+    }
+
+    const playerRegistration = sourceEvent.registeredPlayers[playerIndex];
+
+    // Check if target event has space
+    if (targetEvent.currentTeams >= targetEvent.maxTeams) {
+      return res.status(400).json({
+        success: false,
+        message: 'Target event is full'
+      });
+    }
+
+    // Remove from source event
+    sourceEvent.registeredPlayers.splice(playerIndex, 1);
+    sourceEvent.currentTeams = Math.max(0, sourceEvent.currentTeams - 1);
+
+    // Add to target event (preserve payment info)
+    targetEvent.registeredPlayers.push({
+      player: playerRegistration.player,
+      registeredAt: playerRegistration.registeredAt,
+      paymentStatus: playerRegistration.paymentStatus,
+      payment: playerRegistration.payment,
+      pool: null // Reset pool assignment
+    });
+    targetEvent.currentTeams += 1;
+
+    // Save both events
+    await sourceEvent.save();
+    await targetEvent.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Player moved successfully from "${sourceEvent.name}" to "${targetEvent.name}"`,
+      data: targetEvent
+    });
+  } catch (error) {
+    next(error);
+  }
+};

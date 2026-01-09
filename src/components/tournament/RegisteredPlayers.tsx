@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tournamentAPI, teamAPI } from "@/services/api";
+import { tournamentAPI, teamAPI, eventAPI } from "@/services/api";
 import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ interface RegisteredPlayersProps {
 
 const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
   const queryClient = useQueryClient();
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [targetEventId, setTargetEventId] = useState<string>("");
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
 
@@ -53,7 +53,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tournament-registrations', tournamentId] });
       setIsMoveDialogOpen(false);
-      setSelectedTeam(null);
+      setSelectedItem(null);
       setTargetEventId("");
       toast.success(data.message || "Team moved successfully!");
     },
@@ -62,21 +62,44 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
     },
   });
 
-  const handleMoveClick = (team: any, currentEventId: string) => {
-    setSelectedTeam({ ...team, currentEventId });
+  const movePlayerMutation = useMutation({
+    mutationFn: ({ eventId, playerId, targetEventId }: { eventId: string; playerId: string; targetEventId: string }) =>
+      eventAPI.movePlayerToEvent(eventId, playerId, targetEventId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tournament-registrations', tournamentId] });
+      setIsMoveDialogOpen(false);
+      setSelectedItem(null);
+      setTargetEventId("");
+      toast.success(data.message || "Player moved successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to move player");
+    },
+  });
+
+  const handleMoveClick = (item: any, currentEventId: string, type: 'team' | 'player') => {
+    setSelectedItem({ ...item, currentEventId, type });
     setIsMoveDialogOpen(true);
   };
 
   const handleConfirmMove = () => {
-    if (!targetEventId || !selectedTeam) {
+    if (!targetEventId || !selectedItem) {
       toast.error("Please select a target event");
       return;
     }
 
-    moveTeamMutation.mutate({
-      teamId: selectedTeam.teamId,
-      targetEventId,
-    });
+    if (selectedItem.type === 'team') {
+      moveTeamMutation.mutate({
+        teamId: selectedItem.teamId,
+        targetEventId,
+      });
+    } else {
+      movePlayerMutation.mutate({
+        eventId: selectedItem.currentEventId,
+        playerId: selectedItem.playerId,
+        targetEventId,
+      });
+    }
   };
 
   if (isLoading) {
@@ -190,7 +213,15 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                           {player.registeredAt ? format(new Date(player.registeredAt), 'MMM dd, yyyy') : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          <span className="text-xs text-muted-foreground italic">Singles - Use Teams Tab</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleMoveClick(player, event.eventId, 'player')}
+                            className="flex items-center gap-1"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                            Move
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -275,7 +306,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleMoveClick(team, event.eventId)}
+                            onClick={() => handleMoveClick(team, event.eventId, 'team')}
                             className="flex items-center gap-1"
                           >
                             <ArrowRight className="w-3 h-3" />
@@ -292,22 +323,31 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
         );
       })}
 
-      {/* Move Team Dialog */}
+      {/* Move Team/Player Dialog */}
       <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Move Team to Different Event</DialogTitle>
+            <DialogTitle>Move {selectedItem?.type === 'team' ? 'Team' : 'Player'} to Different Event</DialogTitle>
             <DialogDescription>
-              Select the event you want to move this team to. Both events must have the same format (singles/doubles).
+              Select the event you want to move this {selectedItem?.type === 'team' ? 'team' : 'player'} to. Both events must have the same format (singles/doubles).
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            {selectedTeam && (
+            {selectedItem && (
               <div className="mb-4 p-3 bg-muted rounded-lg">
-                <div className="font-semibold">{selectedTeam.teamName}</div>
-                <div className="text-sm text-muted-foreground">
-                  {selectedTeam.players?.map((p: any) => p.name).join(' & ')}
-                </div>
+                {selectedItem.type === 'team' ? (
+                  <>
+                    <div className="font-semibold">{selectedItem.teamName}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {selectedItem.players?.map((p: any) => p.name).join(' & ')}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-semibold">{selectedItem.name}</div>
+                    <div className="text-sm text-muted-foreground">{selectedItem.email}</div>
+                  </>
+                )}
               </div>
             )}
             <div className="space-y-2">
@@ -319,8 +359,8 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                 <SelectContent>
                   {registrations
                     .filter((e: any) =>
-                      e.eventId !== selectedTeam?.currentEventId &&
-                      e.format === registrations.find((r: any) => r.eventId === selectedTeam?.currentEventId)?.format
+                      e.eventId !== selectedItem?.currentEventId &&
+                      e.format === registrations.find((r: any) => r.eventId === selectedItem?.currentEventId)?.format
                     )
                     .map((event: any) => (
                       <SelectItem key={event.eventId} value={event.eventId}>
@@ -336,7 +376,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
               variant="outline"
               onClick={() => {
                 setIsMoveDialogOpen(false);
-                setSelectedTeam(null);
+                setSelectedItem(null);
                 setTargetEventId("");
               }}
             >
@@ -344,15 +384,15 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
             </Button>
             <Button
               onClick={handleConfirmMove}
-              disabled={!targetEventId || moveTeamMutation.isPending}
+              disabled={!targetEventId || moveTeamMutation.isPending || movePlayerMutation.isPending}
             >
-              {moveTeamMutation.isPending ? (
+              {(moveTeamMutation.isPending || movePlayerMutation.isPending) ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Moving...
                 </>
               ) : (
-                "Move Team"
+                `Move ${selectedItem?.type === 'team' ? 'Team' : 'Player'}`
               )}
             </Button>
           </DialogFooter>
