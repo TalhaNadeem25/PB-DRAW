@@ -468,6 +468,34 @@ export const analyticsAPI = {
   },
 };
 
+// Cancellations
+export const cancellationAPI = {
+  requestCancellation: async (eventId: string, reason?: string) => {
+    const response = await api.post(`/cancellations/events/${eventId}/cancel`, { reason });
+    return response.data;
+  },
+
+  getRefundPreview: async (eventId: string) => {
+    const response = await api.get(`/cancellations/events/${eventId}/refund-preview`);
+    return response.data;
+  },
+
+  getMyCancellations: async () => {
+    const response = await api.get('/cancellations/my-cancellations');
+    return response.data;
+  },
+
+  respondToPartnerCancellation: async (cancellationId: string, decision: 'refund' | 'find-partner') => {
+    const response = await api.post(`/cancellations/${cancellationId}/partner-response`, { decision });
+    return response.data;
+  },
+
+  getTournamentCancellations: async (tournamentId: string) => {
+    const response = await api.get(`/cancellations/tournaments/${tournamentId}`);
+    return response.data;
+  },
+};
+
 // Favorites (using localStorage for now, can be moved to backend later)
 export const favoritesAPI = {
   getFavorites: (): string[] => {

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,10 +28,12 @@ import {
   Sparkles,
   Brain,
   Zap,
+  XCircle,
 } from "lucide-react";
 import { tournamentAPI, authAPI, teamAPI, invitationAPI } from "@/services/api";
 import TicketCard from "@/components/check-in/TicketCard";
 import WaitlistStatus from "@/components/registration/WaitlistStatus";
+import CancelRegistrationDialog from "@/components/registration/CancelRegistrationDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
@@ -38,6 +41,14 @@ import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedCancellation, setSelectedCancellation] = useState<{
+    eventId: string;
+    eventName: string;
+    tournamentName: string;
+    isDoubles?: boolean;
+    partnerName?: string;
+  } | null>(null);
 
   // Fetch user stats
   const { data: statsData, isLoading: statsLoading } = useQuery({
@@ -142,6 +153,38 @@ const Dashboard = () => {
   const upcomingTournaments = statsData?.data?.tournaments?.filter((t: any) =>
     t.status === 'open' || t.status === 'upcoming' || t.status === 'in-progress'
   ) || [];
+
+  // Extract individual event registrations from teams
+  const myEventRegistrations = myTeams
+    .filter((team: any) => team.event && team.event.tournament)
+    .map((team: any) => ({
+      eventId: team.event._id,
+      eventName: team.event.name,
+      eventFormat: team.event.format,
+      tournamentId: team.event.tournament._id || team.event.tournament,
+      tournamentName: team.event.tournament.name || 'Tournament',
+      tournamentStartDate: team.event.tournament.startDate,
+      tournamentLocation: team.event.tournament.location || 'TBD',
+      tournamentStatus: team.event.tournament.status || 'upcoming',
+      teamId: team._id,
+      teamName: team.name,
+      isDoubles: team.players?.length > 1,
+      partnerName: team.players?.find((p: any) => p._id !== user._id)?.name,
+      registeredAt: team.createdAt,
+    }))
+    .filter((reg: any) => {
+      // Show all registrations where tournament hasn't finished yet
+      const status = reg.tournamentStatus;
+      return status === 'open' ||
+             status === 'upcoming' ||
+             status === 'in-progress' ||
+             status === 'draft'; // Include draft in case tournaments haven't been published yet
+    })
+    .sort((a: any, b: any) => {
+      const dateA = a.tournamentStartDate ? new Date(a.tournamentStartDate).getTime() : 0;
+      const dateB = b.tournamentStartDate ? new Date(b.tournamentStartDate).getTime() : 0;
+      return dateA - dateB;
+    });
 
   const activeTournaments = myTournaments.filter((t: any) =>
     t.status === 'open' || t.status === 'in-progress'
@@ -507,13 +550,13 @@ const Dashboard = () => {
                 </Card>
               )}
 
-              {/* Upcoming Tournaments */}
+              {/* My Event Registrations */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>My Upcoming Tournaments</CardTitle>
-                      <CardDescription>Tournaments you're registered for</CardDescription>
+                      <CardTitle>My Event Registrations</CardTitle>
+                      <CardDescription>Events you're registered for across all tournaments</CardDescription>
                     </div>
                     <Button variant="outline" size="sm" asChild>
                       <Link to="/profile">
@@ -524,39 +567,86 @@ const Dashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {statsLoading ? (
+                  {teamsLoading ? (
                     <div className="flex justify-center py-8">
                       <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                     </div>
-                  ) : upcomingTournaments.length > 0 ? (
-                    <div className="space-y-4">
-                      {upcomingTournaments.slice(0, 3).map((tournament: any) => (
+                  ) : myEventRegistrations.length > 0 ? (
+                    <div className="space-y-3">
+                      {myEventRegistrations.map((registration: any) => (
                         <div
-                          key={tournament._id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() => navigate(`/tournaments/${tournament._id}`)}
+                          key={registration.eventId}
+                          className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-1">{tournament.name}</h3>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {tournament.location}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {format(new Date(tournament.startDate), 'MMM dd, yyyy')}
-                              </span>
+                          <div className="flex items-start justify-between gap-4">
+                            <div
+                              className="flex-1 cursor-pointer"
+                              onClick={() => navigate(`/tournaments/${registration.tournamentId}`)}
+                            >
+                              {/* Event Name */}
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold text-lg">{registration.eventName}</h3>
+                                <Badge variant="outline" className="text-xs">
+                                  {registration.eventFormat}
+                                </Badge>
+                                {registration.isDoubles && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Users className="w-3 h-3 mr-1" />
+                                    with {registration.partnerName}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Tournament Info */}
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
+                                <Trophy className="w-3 h-3" />
+                                <span className="font-medium">{registration.tournamentName}</span>
+                              </div>
+
+                              {/* Location and Date */}
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {registration.tournamentLocation}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(registration.tournamentStartDate), 'MMM dd, yyyy')}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Cancel Button */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Badge variant="secondary">{registration.tournamentStatus}</Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedCancellation({
+                                    eventId: registration.eventId,
+                                    eventName: registration.eventName,
+                                    tournamentName: registration.tournamentName,
+                                    isDoubles: registration.isDoubles,
+                                    partnerName: registration.partnerName,
+                                  });
+                                  setCancelDialogOpen(true);
+                                }}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Cancel
+                              </Button>
                             </div>
                           </div>
-                          <Badge variant="secondary">{tournament.status}</Badge>
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No upcoming tournaments</p>
+                      <p>No event registrations</p>
                       <Button asChild className="mt-4">
                         <Link to="/discover">Discover Tournaments</Link>
                       </Button>
@@ -739,6 +829,23 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Cancel Registration Dialog */}
+      {selectedCancellation && (
+        <CancelRegistrationDialog
+          eventId={selectedCancellation.eventId}
+          eventName={selectedCancellation.eventName}
+          tournamentName={selectedCancellation.tournamentName}
+          isDoubles={selectedCancellation.isDoubles}
+          partnerName={selectedCancellation.partnerName}
+          open={cancelDialogOpen}
+          onOpenChange={setCancelDialogOpen}
+          onSuccess={() => {
+            // Refresh data after successful cancellation
+            window.location.reload();
+          }}
+        />
+      )}
     </Layout>
   );
 };

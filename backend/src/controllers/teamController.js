@@ -28,7 +28,7 @@ export const getTeams = async (req, res, next) => {
         select: 'name format playFormat skillLevel tournament',
         populate: {
           path: 'tournament',
-          select: 'name location startDate endDate'
+          select: 'name location startDate endDate status'
         }
       })
       .sort({ createdAt: -1 });

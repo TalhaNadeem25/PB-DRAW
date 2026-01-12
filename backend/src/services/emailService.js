@@ -1515,6 +1515,222 @@ export const sendWaitlistExpiredEmail = async ({
   }
 };
 
+/**
+ * Send cancellation confirmation email
+ */
+export const sendCancellationConfirmationEmail = async ({ user, tournament, event, refundAmount }) => {
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: `Cancellation Confirmed - ${tournament.name}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+            .refund-amount { font-size: 32px; font-weight: bold; color: #667eea; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🏓 Cancellation Confirmed</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${user.name},</p>
+
+              <p>Your registration cancellation has been processed successfully.</p>
+
+              <div class="info-box">
+                <h3 style="margin-top: 0;">Cancellation Details</h3>
+                <p><strong>Tournament:</strong> ${tournament.name}</p>
+                <p><strong>Event:</strong> ${event.name}</p>
+                <p><strong>Refund Amount:</strong> <span class="refund-amount">$${refundAmount.toFixed(2)}</span></p>
+              </div>
+
+              <p><strong>What happens next?</strong></p>
+              <ul>
+                <li>Your refund will be processed within 5-10 business days</li>
+                <li>The refund will appear in your original payment method</li>
+                <li>You'll receive a confirmation when the refund is complete</li>
+              </ul>
+
+              <p>We're sorry to see you cancel. If you have any questions or concerns, please don't hesitate to reach out to the tournament organizer.</p>
+
+              <p style="margin-top: 30px;">Best regards,<br>The PicklePlay Team</p>
+            </div>
+            <div class="footer">
+              <p>PicklePlay - Pickleball Tournament Management</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
+  } catch (error) {
+    console.error('Error sending cancellation confirmation email:', error);
+  }
+};
+
+/**
+ * Send partner notification email when one player cancels
+ */
+export const sendPartnerNotificationEmail = async ({ partner, cancelingPlayer, tournament, event, cancellation, deadline }) => {
+  try {
+    const responseLink = `${process.env.CLIENT_URL}/partner-response/${cancellation._id}`;
+
+    await sendEmail({
+      to: partner.email,
+      subject: `Important: Your Partner Has Canceled - ${tournament.name}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .alert-box { background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .options-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .option { padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; transition: all 0.3s; }
+            .cta-button { display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px 5px; }
+            .deadline { color: #dc3545; font-weight: bold; font-size: 18px; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⚠️ Partner Cancellation Notice</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${partner.name},</p>
+
+              <div class="alert-box">
+                <p><strong>Your partner ${cancelingPlayer.name} has requested to cancel their registration for:</strong></p>
+                <p><strong>Tournament:</strong> ${tournament.name}</p>
+                <p><strong>Event:</strong> ${event.name}</p>
+              </div>
+
+              <p>We need to know what you'd like to do. You have <strong class="deadline">72 hours</strong> to make your decision.</p>
+
+              <div class="options-box">
+                <h3 style="margin-top: 0;">Your Options:</h3>
+
+                <div class="option">
+                  <h4>🔍 Option 1: Find a New Partner</h4>
+                  <p>Stay in the tournament and find a new partner to compete with. We'll help you connect with available players.</p>
+                  <ul>
+                    <li>You keep your spot in the event</li>
+                    <li>Your partner gets their refund</li>
+                    <li>You can search for available partners on our platform</li>
+                  </ul>
+                </div>
+
+                <div class="option">
+                  <h4>💰 Option 2: Get a Refund</h4>
+                  <p>Cancel your registration as well and receive a full refund.</p>
+                  <ul>
+                    <li>Both you and your partner receive refunds</li>
+                    <li>Your spot opens up for waitlist players</li>
+                    <li>Refund processed within 5-10 business days</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${responseLink}" class="cta-button">Make Your Decision</a>
+              </div>
+
+              <p><strong>Decision Deadline:</strong> <span class="deadline">${new Date(deadline).toLocaleString()}</span></p>
+
+              <p><em>If you don't respond by the deadline, please contact the tournament organizer directly to discuss your options.</em></p>
+
+              <p style="margin-top: 30px;">Best regards,<br>The PicklePlay Team</p>
+            </div>
+            <div class="footer">
+              <p>PicklePlay - Pickleball Tournament Management</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
+  } catch (error) {
+    console.error('Error sending partner notification email:', error);
+  }
+};
+
+/**
+ * Send partner refund confirmation email
+ */
+export const sendPartnerRefundEmail = async ({ partner, tournament, event, refundAmount }) => {
+  try {
+    await sendEmail({
+      to: partner.email,
+      subject: `Refund Processed - ${tournament.name}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+            .refund-amount { font-size: 32px; font-weight: bold; color: #667eea; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🏓 Refund Confirmed</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${partner.name},</p>
+
+              <p>Your refund request has been processed following your partner's cancellation.</p>
+
+              <div class="info-box">
+                <h3 style="margin-top: 0;">Refund Details</h3>
+                <p><strong>Tournament:</strong> ${tournament.name}</p>
+                <p><strong>Event:</strong> ${event.name}</p>
+                <p><strong>Refund Amount:</strong> <span class="refund-amount">$${refundAmount.toFixed(2)}</span></p>
+              </div>
+
+              <p><strong>What happens next?</strong></p>
+              <ul>
+                <li>Your refund will be processed within 5-10 business days</li>
+                <li>The refund will appear in your original payment method</li>
+                <li>You'll receive a confirmation when the refund is complete</li>
+              </ul>
+
+              <p>We hope to see you at future tournaments!</p>
+
+              <p style="margin-top: 30px;">Best regards,<br>The PicklePlay Team</p>
+            </div>
+            <div class="footer">
+              <p>PicklePlay - Pickleball Tournament Management</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
+  } catch (error) {
+    console.error('Error sending partner refund email:', error);
+  }
+};
+
 export default {
   sendTicketPurchaseEmail,
   sendWelcomeEmail,
@@ -1523,4 +1739,7 @@ export default {
   sendWaitlistJoinedEmail,
   sendWaitlistPromotionEmail,
   sendWaitlistExpiredEmail,
+  sendCancellationConfirmationEmail,
+  sendPartnerNotificationEmail,
+  sendPartnerRefundEmail,
 };

@@ -32,6 +32,7 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import MyTickets from "./pages/MyTickets";
 import OrganizerScanner from "./pages/OrganizerScanner";
 import TournamentPlanner from "./pages/TournamentPlanner";
+import PartnerCancellationResponse from "./pages/PartnerCancellationResponse";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,14 @@ const App = () => (
               }
             />
             <Route path="/tournament-planner" element={<TournamentPlanner />} />
+            <Route
+              path="/partner-response/:cancellationId"
+              element={
+                <ProtectedRoute>
+                  <PartnerCancellationResponse />
+                </ProtectedRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
