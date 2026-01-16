@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,6 +121,9 @@ const Navbar = () => {
             <div className="hidden md:flex items-center gap-3">
               {isAuthenticated ? (
                 <>
+                  {/* Notification Center */}
+                  <NotificationCenter />
+                  
                   {(user?.role === 'organizer' || user?.role === 'admin') && (
                     <Button variant="default" size="sm" className="shadow-md hover:shadow-glow transition-shadow" asChild>
                       <Link to="/create-tournament">
