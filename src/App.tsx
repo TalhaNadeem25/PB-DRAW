@@ -33,6 +33,7 @@ import MyTickets from "./pages/MyTickets";
 import OrganizerScanner from "./pages/OrganizerScanner";
 import TournamentPlanner from "./pages/TournamentPlanner";
 import PartnerCancellationResponse from "./pages/PartnerCancellationResponse";
+import FindPartner from "./pages/FindPartner";
 
 const queryClient = new QueryClient();
 
@@ -133,6 +134,14 @@ const App = () => (
               }
             />
             <Route path="/tournament-planner" element={<TournamentPlanner />} />
+            <Route
+              path="/find-partner"
+              element={
+                <ProtectedRoute>
+                  <FindPartner />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/partner-response/:cancellationId"
               element={

@@ -31,6 +31,7 @@ import checkInRoutes from './routes/checkInRoutes.js';
 import aiPlannerRoutes from './routes/aiPlannerRoutes.js';
 import cancellationRoutes from './routes/cancellationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import partnerRoutes from './routes/partnerRoutes.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
 
 // Initialize Express app
@@ -105,6 +106,7 @@ app.use('/api/check-in', checkInRoutes);
 app.use('/api/ai-planner', aiPlannerRoutes);
 app.use('/api/cancellations', cancellationRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/partners', partnerRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);
