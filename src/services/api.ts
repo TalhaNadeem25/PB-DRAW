@@ -1,6 +1,18 @@
 import axios from 'axios';
+import { Capacitor } from '@capacitor/core';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Determine API URL based on platform
+const getApiUrl = () => {
+  // For native mobile apps, use the computer's IP address
+  if (Capacitor.isNativePlatform()) {
+    // Replace with your computer's IP when developing
+    return 'http://192.168.1.141:5000/api';
+  }
+  // For web, use the environment variable or localhost
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 
 // Create axios instance
 const api = axios.create({

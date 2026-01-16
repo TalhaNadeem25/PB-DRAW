@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <!-- Background -->
+  <rect width="2732" height="2732" fill="#16a34a"/>
+
+  <!-- Pickleball -->
+  <circle cx="1366" cy="1200" r="400" fill="#ffffff"/>
+
+  <!-- Pickleball holes pattern -->
+  <circle cx="1200" cy="1050" r="35" fill="#16a34a"/>
+  <circle cx="1300" cy="1010" r="35" fill="#16a34a"/>
+  <circle cx="1420" cy="1050" r="35" fill="#16a34a"/>
+  <circle cx="1530" cy="1100" r="35" fill="#16a34a"/>
+
+  <circle cx="1150" cy="1160" r="35" fill="#16a34a"/>
+  <circle cx="1260" cy="1130" r="35" fill="#16a34a"/>
+  <circle cx="1380" cy="1140" r="35" fill="#16a34a"/>
+  <circle cx="1500" cy="1180" r="35" fill="#16a34a"/>
+  <circle cx="1580" cy="1220" r="35" fill="#16a34a"/>
+
+  <circle cx="1180" cy="1280" r="35" fill="#16a34a"/>
+  <circle cx="1300" cy="1250" r="35" fill="#16a34a"/>
+  <circle cx="1420" cy="1270" r="35" fill="#16a34a"/>
+  <circle cx="1530" cy="1320" r="35" fill="#16a34a"/>
+
+  <circle cx="1230" cy="1390" r="35" fill="#16a34a"/>
+  <circle cx="1350" cy="1360" r="35" fill="#16a34a"/>
+  <circle cx="1470" cy="1400" r="35" fill="#16a34a"/>
+
+  <circle cx="1300" cy="1500" r="35" fill="#16a34a"/>
+  <circle cx="1420" cy="1530" r="35" fill="#16a34a"/>
+
+  <!-- App Name -->
+  <text x="1366" y="1900" font-family="Arial Black, Arial, sans-serif" font-size="180" font-weight="bold" fill="#ffffff" text-anchor="middle">PICKLE RALLY</text>
+
+  <!-- Tagline -->
+  <text x="1366" y="2050" font-family="Arial, sans-serif" font-size="60" fill="#ffffff" opacity="0.8" text-anchor="middle">Tournament Management Made Easy</text>
+</svg>

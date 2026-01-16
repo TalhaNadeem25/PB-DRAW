@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pickle Rally</string>
+    <string name="title_activity_main">Pickle Rally</string>
+    <string name="package_name">com.picklerally.app</string>
+    <string name="custom_url_scheme">com.picklerally.app</string>
+</resources>
