@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
@@ -38,8 +38,9 @@ const Navbar = () => {
   const navLinks = [
     { href: "/live", label: "Live", icon: Radio, isLive: true },
     { href: "/tournaments", label: "Find Tournaments", icon: Trophy },
+    { href: "/find-partner", label: "Find Partner", icon: Heart, isNew: true },
     ...(user?.role === 'organizer' || user?.role === 'admin'
-      ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkles, isNew: true }]
+      ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkles }]
       : []
     ),
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

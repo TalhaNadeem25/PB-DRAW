@@ -508,6 +508,52 @@ export const cancellationAPI = {
   },
 };
 
+// Partner Matching
+export const partnerAPI = {
+  getAvailablePlayers: async (params?: {
+    skillMin?: number;
+    skillMax?: number;
+    city?: string;
+    state?: string;
+    playingDays?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const response = await api.get('/partners/players', { params });
+    return response.data;
+  },
+
+  sendRequest: async (data: { receiverId: string; eventId?: string; tournamentId?: string; message?: string }) => {
+    const response = await api.post('/partners/requests', data);
+    return response.data;
+  },
+
+  getReceivedRequests: async () => {
+    const response = await api.get('/partners/requests/received');
+    return response.data;
+  },
+
+  getSentRequests: async () => {
+    const response = await api.get('/partners/requests/sent');
+    return response.data;
+  },
+
+  respondToRequest: async (requestId: string, action: 'accept' | 'decline') => {
+    const response = await api.put(`/partners/requests/${requestId}/respond`, { action });
+    return response.data;
+  },
+
+  cancelRequest: async (requestId: string) => {
+    const response = await api.delete(`/partners/requests/${requestId}`);
+    return response.data;
+  },
+
+  updatePreference: async (partnerPreference: 'looking' | 'have-partner' | 'either') => {
+    const response = await api.put('/partners/preference', { partnerPreference });
+    return response.data;
+  },
+};
+
 // Favorites (using localStorage for now, can be moved to backend later)
 export const favoritesAPI = {
   getFavorites: (): string[] => {
