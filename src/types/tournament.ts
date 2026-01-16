@@ -2,7 +2,7 @@
 
 export type SkillLevel = "2.5" | "3.0" | "3.5" | "4.0" | "4.5" | "5.0" | "Open";
 export type GameType = "Singles" | "Doubles" | "Mixed Doubles";
-export type TournamentFormat = "Round-Robin" | "Single Elimination" | "Double Elimination" | "Pool Play" | "Swiss";
+export type TournamentFormat = "Round-Robin" | "Single Elimination" | "Double Elimination" | "Pool Play" | "Swiss" | "Pool+Knockout";
 export type TournamentStatus = "draft" | "open" | "closed" | "in-progress" | "completed";
 export type MatchStatus = "pending" | "in-progress" | "completed";
 

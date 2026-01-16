@@ -70,10 +70,10 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
   };
 
   const MatchCard = ({ match, position }: { match: Match; position: 'left' | 'right' | 'center' }) => {
-    const team1Score = match.score?.team1Score || 0;
-    const team2Score = match.score?.team2Score || 0;
-    const winner = team1Score > team2Score ? match.team1 :
-                   team2Score > team1Score ? match.team2 : null;
+    const matchTeam1Score = match.team1Score || 0;
+    const matchTeam2Score = match.team2Score || 0;
+    const winner = matchTeam1Score > matchTeam2Score ? match.team1 :
+                   matchTeam2Score > matchTeam1Score ? match.team2 : null;
 
     return (
       <div

@@ -34,9 +34,9 @@ export default function WaitlistButton({ eventId, isEventFull }: WaitlistButtonP
       return response.data.data;
     },
     enabled: isEventFull,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Poll more frequently if promoted (every 10 seconds)
-      if (data?.status === 'promoted') return 10000;
+      if (query.state.data?.status === 'promoted') return 10000;
       // Otherwise poll every 30 seconds
       return 30000;
     },

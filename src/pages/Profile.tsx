@@ -372,7 +372,7 @@ const Profile = () => {
                         <Label>Partner Status</Label>
                         <Select
                           value={formData.partnerPreference}
-                          onValueChange={(value) => setFormData({ ...formData, partnerPreference: value })}
+                          onValueChange={(value: 'looking' | 'have-partner' | 'either') => setFormData({ ...formData, partnerPreference: value })}
                         >
                           <SelectTrigger>
                             <SelectValue />

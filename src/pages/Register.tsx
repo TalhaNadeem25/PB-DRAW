@@ -328,7 +328,7 @@ const Register = () => {
     );
   }
 
-  const isRegistered = tournament.participants?.some((p: any) => p._id === user?.id);
+  const isRegistered = tournament.participants?.some((p: any) => p._id === user?._id);
   const isFull = tournament.currentParticipants >= tournament.maxParticipants;
   const canRegister = !isRegistered && !isFull && tournament.status !== 'completed';
 

@@ -106,6 +106,7 @@ export const tournamentAPI = {
     search?: string;
     limit?: number;
     page?: number;
+    organizer?: string;
   }) => {
     const response = await api.get('/tournaments', { params });
     return response.data;
@@ -368,7 +369,7 @@ export const userAPI = {
 
 // Invitations
 export const invitationAPI = {
-  send: async (teamId: string, data: { inviteeEmail: string; inviteeName?: string; message?: string }) => {
+  send: async (teamId: string, data: { inviteeEmail: string; inviteeName?: string; message?: string; sendEmail?: boolean }) => {
     const response = await api.post(`/teams/${teamId}/invitations`, data);
     return response.data;
   },

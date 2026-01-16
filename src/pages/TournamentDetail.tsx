@@ -71,6 +71,7 @@ import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
 import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
 import TournamentPlanner from "@/components/tournament/TournamentPlanner";
+import ExportButtons from "@/components/tournament/ExportButtons";
 import { cn } from "@/lib/utils";
 
 const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
@@ -415,6 +416,13 @@ const TournamentDetail = () => {
                 <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow">
                   <Share2 className="w-5 h-5" />
                 </Button>
+                <ExportButtons 
+                  tournament={tournament}
+                  matches={tournament.matches || []}
+                  teams={tournament.teams || []}
+                  events={tournament.events || []}
+                  variant="outline"
+                />
                 {isOrganizer && (
                   <div className="flex flex-col gap-2">
                     {(tournament.status === 'open' || tournament.status === 'closed') && (

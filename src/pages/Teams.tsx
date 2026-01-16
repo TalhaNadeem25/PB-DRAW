@@ -390,7 +390,7 @@ const Teams = () => {
                                 </span>
                               </div>
                               <span>{player.name}</span>
-                              {player._id === user?.id && (
+                              {player._id === user?._id && (
                                 <Badge variant="outline" className="text-xs">You</Badge>
                               )}
                             </div>
