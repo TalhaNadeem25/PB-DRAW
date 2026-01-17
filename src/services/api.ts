@@ -582,4 +582,83 @@ export const favoritesAPI = {
   },
 };
 
+// Communications API
+export const communicationAPI = {
+  send: async (tournamentId: string, data: {
+    subject: string;
+    message: string;
+    recipientType: string;
+    recipientEventId?: string;
+    template?: string;
+  }) => {
+    const response = await api.post(`/communications/${tournamentId}/send`, data);
+    return response.data;
+  },
+
+  preview: async (tournamentId: string, data: {
+    recipientType: string;
+    recipientEventId?: string;
+  }) => {
+    const response = await api.post(`/communications/${tournamentId}/preview`, data);
+    return response.data;
+  },
+
+  getHistory: async (tournamentId: string, page = 1, limit = 20) => {
+    const response = await api.get(`/communications/${tournamentId}/history`, {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  getTemplates: async () => {
+    const response = await api.get('/communications/templates');
+    return response.data;
+  },
+};
+
+// Court Management API
+export const courtAPI = {
+  getConfiguration: async (tournamentId: string) => {
+    const response = await api.get(`/court-management/${tournamentId}/courts`);
+    return response.data;
+  },
+
+  updateConfiguration: async (tournamentId: string, data: {
+    courts: any[];
+    scheduling: any;
+  }) => {
+    const response = await api.put(`/court-management/${tournamentId}/courts`, data);
+    return response.data;
+  },
+
+  getScheduleGrid: async (tournamentId: string) => {
+    const response = await api.get(`/court-management/${tournamentId}/schedule-grid`);
+    return response.data;
+  },
+
+  assignMatch: async (matchId: string, data: {
+    courtNumber: number;
+    scheduledTime: string;
+    courtName?: string;
+  }) => {
+    const response = await api.put(`/matches/${matchId}/assign-court`, data);
+    return response.data;
+  },
+
+  autoSchedule: async (tournamentId: string, strategy = 'balanced') => {
+    const response = await api.post(`/court-management/${tournamentId}/auto-schedule`, { strategy });
+    return response.data;
+  },
+
+  checkConflicts: async (tournamentId: string) => {
+    const response = await api.post(`/court-management/${tournamentId}/check-conflicts`);
+    return response.data;
+  },
+
+  clearSchedule: async (tournamentId: string) => {
+    const response = await api.delete(`/court-management/${tournamentId}/clear-schedule`);
+    return response.data;
+  },
+};
+
 export default api;

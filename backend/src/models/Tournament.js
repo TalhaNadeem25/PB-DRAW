@@ -156,7 +156,27 @@ const tournamentSchema = new mongoose.Schema({
     type: String,
     enum: ['Recreational', 'Competitive', 'Professional', 'Charity', 'Corporate', 'Youth', 'Senior']
   }],
-  tags: [String]
+  tags: [String],
+  
+  // Court management
+  courts: [{
+    number: { type: Number, required: true },
+    name: { type: String, default: '' },
+    type: { type: String, enum: ['indoor', 'outdoor'], default: 'indoor' },
+    available: { type: Boolean, default: true }
+  }],
+  
+  // Scheduling configuration
+  scheduling: {
+    startTime: { type: String, default: '08:00' },
+    endTime: { type: String, default: '18:00' },
+    slotDuration: { type: Number, default: 30 }, // minutes
+    breakTimes: [{
+      start: String,
+      end: String,
+      label: String
+    }]
+  }
 }, {
   timestamps: true
 });

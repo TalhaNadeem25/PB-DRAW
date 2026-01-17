@@ -32,6 +32,9 @@ import aiPlannerRoutes from './routes/aiPlannerRoutes.js';
 import cancellationRoutes from './routes/cancellationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
+import communicationRoutes from './routes/communicationRoutes.js';
+import courtRoutes from './routes/courtRoutes.js';
+import { assignMatchToCourt } from './controllers/courtController.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
 
 // Initialize Express app
@@ -107,6 +110,8 @@ app.use('/api/ai-planner', aiPlannerRoutes);
 app.use('/api/cancellations', cancellationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/partners', partnerRoutes);
+app.use('/api/communications', communicationRoutes);
+app.use('/api/court-management', courtRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);
@@ -123,6 +128,10 @@ app.use('/api/pools', poolRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/invitations', invitationRoutes);
+
+// Match court assignment (needs special handling)
+import { protect, authorize } from './middleware/auth.js';
+app.put('/api/matches/:id/assign-court', protect, authorize('organizer', 'admin'), assignMatchToCourt);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

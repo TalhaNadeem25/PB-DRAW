@@ -1731,6 +1731,217 @@ export const sendPartnerRefundEmail = async ({ partner, tournament, event, refun
   }
 };
 
+/**
+ * Send bulk communication email to tournament participants
+ */
+export const sendBulkCommunicationEmail = async ({
+  to,
+  recipientName,
+  subject,
+  message,
+  tournamentName,
+  organizerName,
+  template = 'custom'
+}) => {
+  const transport = getTransporter();
+  if (!transport) {
+    console.log('Email not sent - email service disabled or not configured');
+    return { success: false, message: 'Email service not configured' };
+  }
+
+  try {
+    // Convert markdown-style formatting to HTML
+    const formatMessage = (msg) => {
+      return msg
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #16a34a;">$1</a>');
+    };
+
+    const formattedMessage = formatMessage(message);
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+            background: #f9fafb;
+          }
+          .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            padding: 32px 40px;
+            text-align: center;
+          }
+          .logo {
+            font-family: 'Oswald', 'Arial Black', Arial, sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin: 0 0 8px 0;
+          }
+          .tournament-name {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin: 0;
+          }
+          .content {
+            padding: 40px;
+          }
+          .greeting {
+            font-size: 16px;
+            color: #111827;
+            margin: 0 0 24px 0;
+          }
+          .message-content {
+            font-size: 15px;
+            color: #374151;
+            line-height: 1.7;
+          }
+          .message-content p {
+            margin: 0 0 16px 0;
+          }
+          .message-content ul, .message-content ol {
+            margin: 0 0 16px 0;
+            padding-left: 24px;
+          }
+          .message-content li {
+            margin: 8px 0;
+          }
+          .cta-button {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #16a34a;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 24px 0;
+          }
+          .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 32px 0;
+          }
+          .organizer-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+          }
+          .organizer-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 4px 0;
+          }
+          .organizer-name {
+            font-size: 14px;
+            color: #111827;
+            font-weight: 500;
+          }
+          .footer {
+            background: #f9fafb;
+            padding: 24px 40px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+          }
+          .footer-text {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 0;
+          }
+          .footer a {
+            color: #16a34a;
+            text-decoration: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <div class="logo">PickleRally</div>
+            <p class="tournament-name">${tournamentName}</p>
+          </div>
+
+          <div class="content">
+            <p class="greeting">Hi ${recipientName || 'there'},</p>
+            
+            <div class="message-content">
+              <p>${formattedMessage}</p>
+            </div>
+
+            <a href="${process.env.CLIENT_URL}/dashboard" class="cta-button">View Dashboard</a>
+
+            <div class="organizer-section">
+              <p class="organizer-label">Message from</p>
+              <p class="organizer-name">${organizerName} - Tournament Organizer</p>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p class="footer-text">
+              This message was sent regarding your participation in ${tournamentName}.<br>
+              <a href="${process.env.CLIENT_URL}">Visit PickleRally</a>
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const emailText = `
+${tournamentName}
+
+Hi ${recipientName || 'there'},
+
+${message}
+
+---
+Message from: ${organizerName} - Tournament Organizer
+
+Visit your dashboard: ${process.env.CLIENT_URL}/dashboard
+    `;
+
+    const info = await transport.sendMail({
+      from: \`"PickleRally" <\${process.env.EMAIL_FROM || process.env.EMAIL_USER}>\`,
+      to: to,
+      subject: subject,
+      text: emailText,
+      html: emailHtml,
+    });
+
+    console.log('Bulk communication email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending bulk communication email:', error);
+    throw error;
+  }
+};
+
 export default {
   sendTicketPurchaseEmail,
   sendWelcomeEmail,
@@ -1742,4 +1953,5 @@ export default {
   sendCancellationConfirmationEmail,
   sendPartnerNotificationEmail,
   sendPartnerRefundEmail,
+  sendBulkCommunicationEmail,
 };

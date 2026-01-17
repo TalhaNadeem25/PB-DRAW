@@ -34,6 +34,8 @@ import OrganizerScanner from "./pages/OrganizerScanner";
 import TournamentPlanner from "./pages/TournamentPlanner";
 import PartnerCancellationResponse from "./pages/PartnerCancellationResponse";
 import FindPartner from "./pages/FindPartner";
+import TournamentCommunications from "./pages/TournamentCommunications";
+import CourtManager from "./pages/CourtManager";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +136,22 @@ const App = () => (
               }
             />
             <Route path="/tournament-planner" element={<TournamentPlanner />} />
+            <Route
+              path="/tournaments/:id/communications"
+              element={
+                <ProtectedRoute requireRole={['organizer', 'admin']}>
+                  <TournamentCommunications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tournaments/:id/courts"
+              element={
+                <ProtectedRoute requireRole={['organizer', 'admin']}>
+                  <CourtManager />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/find-partner"
               element={
