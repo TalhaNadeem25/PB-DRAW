@@ -51,6 +51,8 @@ import {
   Mail,
   Phone,
   Sparkles,
+  MessageSquare,
+  LayoutGrid,
 } from "lucide-react";
 import {
   Carousel,
@@ -440,6 +442,18 @@ const TournamentDetail = () => {
                       <Link to={`/tournaments/${id}/edit`}>
                         <Settings className="w-4 h-4 mr-2" />
                         Edit Tournament
+                      </Link>
+                    </Button>
+                    <Button variant="default" size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg" asChild>
+                      <Link to={`/tournaments/${id}/communications`}>
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Communications
+                      </Link>
+                    </Button>
+                    <Button variant="default" size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg" asChild>
+                      <Link to={`/tournaments/${id}/courts`}>
+                        <LayoutGrid className="w-4 h-4 mr-2" />
+                        Court Manager
                       </Link>
                     </Button>
                     <Button

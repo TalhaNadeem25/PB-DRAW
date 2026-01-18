@@ -97,6 +97,16 @@ export const authAPI = {
     const response = await api.get('/auth/stats');
     return response.data;
   },
+
+  verifyEmail: async (token: string) => {
+    const response = await api.post(`/auth/verify-email/${token}`);
+    return response;
+  },
+
+  resendVerificationEmail: async () => {
+    const response = await api.post('/auth/resend-verification');
+    return response.data;
+  },
 };
 
 // Tournaments
