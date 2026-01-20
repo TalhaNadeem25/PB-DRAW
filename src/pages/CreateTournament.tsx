@@ -67,7 +67,7 @@ const CreateTournament = () => {
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
-  const [maxPlayers, setMaxPlayers] = useState(128);
+  const [maxPlayers] = useState(9999); // Default high value - actual limits are per event
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [registrationDeadline, setRegistrationDeadline] = useState<Date>();
@@ -213,7 +213,7 @@ const CreateTournament = () => {
 
   const canProceed = () => {
     if (step === 1) {
-      return name && location && address && description && startDate && endDate && registrationDeadline && maxPlayers;
+      return name && location && address && description && startDate && endDate && registrationDeadline;
     }
     if (step === 2) {
       return events.length > 0;
@@ -373,18 +373,6 @@ const CreateTournament = () => {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="maxPlayers">Max Players *</Label>
-                      <Input
-                        id="maxPlayers"
-                        type="number"
-                        min="4"
-                        placeholder="e.g., 128"
-                        value={maxPlayers}
-                        onChange={(e) => setMaxPlayers(parseInt(e.target.value) || 128)}
                       />
                     </div>
 

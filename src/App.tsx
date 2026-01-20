@@ -34,6 +34,11 @@ import OrganizerScanner from "./pages/OrganizerScanner";
 import TournamentPlanner from "./pages/TournamentPlanner";
 import PartnerCancellationResponse from "./pages/PartnerCancellationResponse";
 import FindPartner from "./pages/FindPartner";
+import TournamentCommunications from "./pages/TournamentCommunications";
+import CourtManager from "./pages/CourtManager";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const queryClient = new QueryClient();
 
@@ -135,6 +140,22 @@ const App = () => (
             />
             <Route path="/tournament-planner" element={<TournamentPlanner />} />
             <Route
+              path="/tournaments/:id/communications"
+              element={
+                <ProtectedRoute requireRole={['organizer', 'admin']}>
+                  <TournamentCommunications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tournaments/:id/courts"
+              element={
+                <ProtectedRoute requireRole={['organizer', 'admin']}>
+                  <CourtManager />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/find-partner"
               element={
                 <ProtectedRoute>
@@ -150,6 +171,9 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

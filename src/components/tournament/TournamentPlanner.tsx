@@ -25,7 +25,7 @@ import {
   ChevronRight,
   Info,
 } from 'lucide-react';
-import { format, addMinutes, startOfDay, setHours, setMinutes, isSameDay, parseISO } from 'date-fns';
+import { format, addMinutes, startOfDay, setHours, setMinutes, isSameDay, parseISO, isToday } from 'date-fns';
 import { matchAPI, poolAPI } from '@/services/api';
 import { cn } from '@/lib/utils';
 
@@ -184,6 +184,10 @@ const TournamentPlanner = ({ tournament, events }: TournamentPlannerProps) => {
     setSelectedDate(newDate);
   };
 
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
   if (!events.length) {
     return (
       <Card>
@@ -243,6 +247,14 @@ const TournamentPlanner = ({ tournament, events }: TournamentPlannerProps) => {
             <div className="flex items-center gap-2 ml-auto">
               <Button variant="outline" size="icon" onClick={() => navigateDate('prev')}>
                 <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={isToday(selectedDate) ? "default" : "outline"}
+                size="sm"
+                onClick={goToToday}
+                className="px-3"
+              >
+                Today
               </Button>
               <div className="px-4 py-2 bg-muted rounded-lg font-medium min-w-[180px] text-center">
                 {format(selectedDate, 'EEEE, MMM dd, yyyy')}

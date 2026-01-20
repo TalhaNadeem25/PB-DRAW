@@ -3,21 +3,54 @@ import Event from '../models/Event.js';
 import Team from '../models/Team.js';
 import Match from '../models/Match.js';
 
-// Helper function to generate round-robin matches
+// Helper function to generate round-robin matches using Circle Method
+// This ensures no player plays consecutive matches
 const generateRoundRobinMatches = (teams, poolId, eventId) => {
   const matches = [];
+  const teamList = [...teams];
 
-  for (let i = 0; i < teams.length; i++) {
-    for (let j = i + 1; j < teams.length; j++) {
-      matches.push({
-        pool: poolId,
-        event: eventId,
-        team1: teams[i],
-        team2: teams[j],
-        status: 'scheduled',
-        round: 1
-      });
+  // If odd number of teams, add a "BYE" placeholder
+  const hasBye = teamList.length % 2 !== 0;
+  if (hasBye) {
+    teamList.push(null); // null represents a BYE
+  }
+
+  const numTeams = teamList.length;
+  const numRounds = numTeams - 1;
+  const halfSize = numTeams / 2;
+
+  // Create a copy for rotation (exclude first team which stays fixed)
+  const rotatingTeams = teamList.slice(1);
+
+  for (let round = 0; round < numRounds; round++) {
+    // Build current round's team arrangement
+    // First team is always at position 0 (fixed)
+    const currentArrangement = [teamList[0], ...rotatingTeams];
+
+    // Create matches for this round
+    // Pair teams from opposite ends: [0] vs [n-1], [1] vs [n-2], etc.
+    for (let i = 0; i < halfSize; i++) {
+      const team1 = currentArrangement[i];
+      const team2 = currentArrangement[numTeams - 1 - i];
+
+      // Skip matches involving BYE (null)
+      if (team1 !== null && team2 !== null) {
+        matches.push({
+          pool: poolId,
+          event: eventId,
+          team1: team1,
+          team2: team2,
+          status: 'scheduled',
+          round: round + 1,
+          matchNumber: matches.length + 1
+        });
+      }
     }
+
+    // Rotate: move last element to second position (first stays fixed)
+    // [a, b, c, d, e] -> [a, e, b, c, d]
+    const lastTeam = rotatingTeams.pop();
+    rotatingTeams.unshift(lastTeam);
   }
 
   return matches;

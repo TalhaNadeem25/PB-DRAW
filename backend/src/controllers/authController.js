@@ -3,7 +3,7 @@ import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
 import { generateToken } from '../utils/jwt.js';
-import { sendPasswordResetEmail } from '../services/emailService.js';
+import { sendPasswordResetEmail, sendEmailVerificationEmail } from '../services/emailService.js';
 import crypto from 'crypto';
 
 // @desc    Register a new user
@@ -32,18 +32,117 @@ export const register = async (req, res, next) => {
       phone
     });
 
-    // Generate token
+    // Generate email verification token
+    const verificationToken = user.generateEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Send verification email
+    await sendEmailVerificationEmail({
+      to: user.email,
+      name: user.name,
+      verificationToken
+    });
+
+    // Generate JWT token
     const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'User registered successfully. Please check your email to verify your account.',
       data: {
         user,
         token
       }
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify email address
+// @route   POST /api/auth/verify-email/:token
+// @access  Public
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+
+    // Hash the token from URL to compare with database
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find user with valid verification token
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    // Mark email as verified
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully! You can now access all features.'
+    });
+  } catch (error) {
+    console.error('Error in verifyEmail:', error);
+    next(error);
+  }
+};
+
+// @desc    Resend verification email
+// @route   POST /api/auth/resend-verification
+// @access  Private
+export const resendVerificationEmail = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = user.generateEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Send verification email
+    const emailResult = await sendEmailVerificationEmail({
+      to: user.email,
+      name: user.name,
+      verificationToken
+    });
+
+    if (!emailResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error sending verification email. Please try again later.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Verification email sent successfully'
+    });
+  } catch (error) {
+    console.error('Error in resendVerificationEmail:', error);
     next(error);
   }
 };

@@ -1731,6 +1731,411 @@ export const sendPartnerRefundEmail = async ({ partner, tournament, event, refun
   }
 };
 
+/**
+<<<<<<< Updated upstream
+ * Send bulk communication email to tournament participants
+ */
+export const sendBulkCommunicationEmail = async ({
+  to,
+  recipientName,
+  subject,
+  message,
+  tournamentName,
+  organizerName,
+  template = 'custom'
+}) => {
+  const transport = getTransporter();
+  if (!transport) {
+    console.log('Email not sent - email service disabled or not configured');
+    return { success: false, message: 'Email service not configured' };
+  }
+
+  try {
+    // Convert markdown-style formatting to HTML
+    const formatMessage = (msg) => {
+      return msg
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #16a34a;">$1</a>');
+    };
+
+    const formattedMessage = formatMessage(message);
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+            background: #f9fafb;
+          }
+          .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            padding: 32px 40px;
+            text-align: center;
+          }
+          .logo {
+            font-family: 'Oswald', 'Arial Black', Arial, sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin: 0 0 8px 0;
+          }
+          .tournament-name {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin: 0;
+          }
+          .content {
+            padding: 40px;
+          }
+          .greeting {
+            font-size: 16px;
+            color: #111827;
+            margin: 0 0 24px 0;
+          }
+          .message-content {
+            font-size: 15px;
+            color: #374151;
+            line-height: 1.7;
+          }
+          .message-content p {
+            margin: 0 0 16px 0;
+          }
+          .message-content ul, .message-content ol {
+            margin: 0 0 16px 0;
+            padding-left: 24px;
+          }
+          .message-content li {
+            margin: 8px 0;
+          }
+          .cta-button {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #16a34a;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 24px 0;
+          }
+          .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 32px 0;
+          }
+          .organizer-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+          }
+          .organizer-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 4px 0;
+          }
+          .organizer-name {
+            font-size: 14px;
+            color: #111827;
+            font-weight: 500;
+          }
+          .footer {
+            background: #f9fafb;
+            padding: 24px 40px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+          }
+          .footer-text {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 0;
+          }
+          .footer a {
+            color: #16a34a;
+            text-decoration: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <div class="logo">PickleRally</div>
+            <p class="tournament-name">${tournamentName}</p>
+          </div>
+
+          <div class="content">
+            <p class="greeting">Hi ${recipientName || 'there'},</p>
+
+            <div class="message-content">
+              <p>${formattedMessage}</p>
+            </div>
+
+            <a href="${process.env.CLIENT_URL}/dashboard" class="cta-button">View Dashboard</a>
+
+            <div class="organizer-section">
+              <p class="organizer-label">Message from</p>
+              <p class="organizer-name">${organizerName} - Tournament Organizer</p>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p class="footer-text">
+              This message was sent regarding your participation in ${tournamentName}.<br>
+              <a href="${process.env.CLIENT_URL}">Visit PickleRally</a>
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const emailText = `
+${tournamentName}
+
+Hi ${recipientName || 'there'},
+
+${message}
+
+---
+Message from: ${organizerName} - Tournament Organizer
+
+Visit your dashboard: ${process.env.CLIENT_URL}/dashboard
+    `;
+
+    const info = await transport.sendMail({
+      from: `"PickleRally" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: to,
+      subject: subject,
+      text: emailText,
+      html: emailHtml,
+    });
+
+    console.log('Bulk communication email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending bulk communication email:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send email verification email
+ */
+export const sendEmailVerificationEmail = async ({ to, name, verificationToken }) => {
+  const transport = getTransporter();
+  if (!transport) {
+    console.log('Email not sent - email service disabled or not configured');
+    return { success: false, message: 'Email service not configured' };
+  }
+
+  try {
+    const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+            background: #ffffff;
+          }
+          .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+          }
+          .header {
+            background: linear-gradient(135deg, #16a34a 0%, #12803a 100%);
+            color: white;
+            padding: 48px 40px 32px;
+            text-align: center;
+            border-radius: 12px 12px 0 0;
+          }
+          .logo {
+            font-family: 'Oswald', 'Arial Black', Arial, sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin: 0 0 12px 0;
+          }
+          .logo-accent {
+            color: #f59e0b;
+          }
+          .header-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            margin: 0;
+            font-weight: 500;
+          }
+          .content {
+            background: #ffffff;
+            padding: 48px 40px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+          }
+          .greeting {
+            font-size: 16px;
+            color: #111827;
+            margin: 0 0 24px 0;
+            line-height: 1.6;
+          }
+          .cta-button {
+            display: inline-block;
+            padding: 16px 32px;
+            background: #16a34a;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 6px rgba(22, 163, 74, 0.2);
+          }
+          .info-section {
+            margin: 32px 0;
+            padding: 24px;
+            background: #f9fafb;
+            border-left: 3px solid #16a34a;
+            border-radius: 4px;
+          }
+          .info-text {
+            margin: 0;
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.6;
+          }
+          .footer {
+            background: #f9fafb;
+            padding: 32px 40px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            text-align: center;
+          }
+          .footer-text {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 0 0 8px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <div class="logo">Pickle<span class="logo-accent">Rally</span></div>
+            <p class="header-subtitle">Verify Your Email Address</p>
+          </div>
+
+          <div class="content">
+            <p class="greeting">
+              Hi <strong>${name}</strong>,
+            </p>
+
+            <p class="greeting">
+              Thank you for signing up for Pickle Rally! Please verify your email address to complete your registration and access all features.
+            </p>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${verifyUrl}" class="cta-button">Verify Email Address</a>
+            </div>
+
+            <div class="info-section">
+              <p class="info-text">
+                <strong>Link expires in 24 hours.</strong><br><br>
+                If you didn't create an account on Pickle Rally, you can safely ignore this email.
+              </p>
+            </div>
+
+            <div class="info-section" style="border-left-color: #6b7280;">
+              <p class="info-text">
+                <strong>Having trouble?</strong><br>
+                If the button above doesn't work, copy and paste this URL into your browser:<br>
+                <span style="word-break: break-all; color: #111827; font-family: monospace; font-size: 12px;">${verifyUrl}</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p class="footer-text">
+              This is an automated message, please do not reply to this email.
+            </p>
+            <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
+              © ${new Date().getFullYear()} PickleRally. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const emailText = `
+Pickle Rally - Verify Your Email Address
+
+Hi ${name},
+
+Thank you for signing up for Pickle Rally! Please verify your email address to complete your registration.
+
+Click here to verify: ${verifyUrl}
+
+This link will expire in 24 hours.
+
+If you didn't create an account on Pickle Rally, you can safely ignore this email.
+
+© ${new Date().getFullYear()} Pickle Rally
+    `;
+
+    const info = await transport.sendMail({
+      from: `"Pickle Rally" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: to,
+      subject: 'Verify Your Email - Pickle Rally',
+      text: emailText,
+      html: emailHtml,
+    });
+
+    console.log('Email verification email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending email verification email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 export default {
   sendTicketPurchaseEmail,
   sendWelcomeEmail,
@@ -1742,4 +2147,6 @@ export default {
   sendCancellationConfirmationEmail,
   sendPartnerNotificationEmail,
   sendPartnerRefundEmail,
+  sendBulkCommunicationEmail,
+  sendEmailVerificationEmail,
 };
