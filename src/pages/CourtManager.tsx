@@ -623,7 +623,7 @@ const CourtManager = () => {
                     Add Court
                   </Button>
                 </div>
-                
+
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {courts.map((court, index) => (
                     <div
