@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trophy, Mail, Lock, User, Phone, ArrowRight, Loader2, Eye, EyeOff, CheckCircle2, XCircle, Users, Calendar } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Kept for skill level
+import { Trophy, User, ArrowRight, Loader2, Play, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Signup = () => {
@@ -45,6 +44,11 @@ const Signup = () => {
       setError('Password must be at least 6 characters');
       return;
     }
+    
+    if (!acceptedTerms) {
+        setError('You must accept the terms and conditions');
+        return;
+    }
 
     setIsLoading(true);
 
@@ -60,335 +64,311 @@ const Signup = () => {
       navigate('/tournaments');
     } catch (error) {
       console.error('Signup error:', error);
+      setError('Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Password strength indicator
-  const getPasswordStrength = () => {
-    const password = formData.password;
-    if (password.length === 0) return { strength: 0, label: '', color: '' };
-    if (password.length < 6) return { strength: 25, label: 'Too short', color: 'bg-destructive' };
-    if (password.length < 8) return { strength: 50, label: 'Weak', color: 'bg-warning' };
-    if (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
-      return { strength: 100, label: 'Strong', color: 'bg-success' };
-    }
-    return { strength: 75, label: 'Good', color: 'bg-primary' };
-  };
-
-  const passwordStrength = getPasswordStrength();
-
-  const features = [
-    { icon: Trophy, text: 'Find tournaments near you' },
-    { icon: Calendar, text: 'Track your match history' },
-    { icon: Users, text: 'Connect with other players' },
-    { icon: CheckCircle2, text: 'Compete for prizes' },
-  ];
-
   return (
-    <Layout>
-      <div className="min-h-[calc(100vh-200px)] flex">
-        {/* Left side - Visual */}
-        <div className="hidden lg:flex flex-1 relative overflow-hidden bg-hero-gradient">
-          {/* Floating Orbs */}
-          <div className="absolute inset-0">
-            <div className="absolute top-32 left-20 w-72 h-72 bg-secondary/30 rounded-full blur-3xl animate-float-slow" />
-            <div className="absolute bottom-20 right-20 w-56 h-56 bg-court-green-dark/40 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-            <div className="absolute top-1/3 left-1/3 w-40 h-40 bg-primary-foreground/10 rounded-full blur-2xl animate-float" style={{ animationDelay: "3s" }} />
+    <div className="min-h-screen flex flex-col bg-background font-sans">
+      {/* Top Navigation Bar - Simplified for Auth */}
+      <header className="flex items-center justify-between whitespace-nowrap border-b border-border bg-card px-6 md:px-10 py-4 z-50">
+        <Link to="/" className="flex items-center gap-3 text-foreground group">
+          <div className="size-8 text-primary transition-transform group-hover:scale-110">
+            <Trophy className="w-full h-full fill-current" />
           </div>
-          
-          {/* Court pattern */}
-          <div className="absolute inset-0 court-pattern opacity-10" />
-          
-          {/* Decorative pickleball */}
-          <div className="absolute top-20 left-20 opacity-20">
-            <div className="w-20 h-20 rounded-full bg-secondary border-4 border-secondary-foreground/20" 
-                 style={{ animation: 'bounce-gentle 4s ease-in-out infinite' }} />
-          </div>
-          
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
-            <div className="glass-dark rounded-3xl p-8 max-w-md text-center backdrop-blur-xl border border-primary-foreground/20 hover:border-primary-foreground/30 transition-colors duration-300 shadow-2xl">
-              <div className="w-20 h-20 rounded-2xl bg-secondary/20 flex items-center justify-center mx-auto mb-6 shadow-glow-yellow">
-                <Trophy className="w-10 h-10 text-primary-foreground" />
-              </div>
-              <h2 className="text-2xl font-display font-bold text-primary-foreground mb-4">
-                Join the Community
-              </h2>
-              <p className="text-primary-foreground/80 mb-6">
-                Whether you're a casual player or competitive athlete, find tournaments that match your skill level.
-              </p>
-              <ul className="text-left space-y-4">
-                {features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-primary-foreground/80 group">
-                    <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center group-hover:bg-secondary/30 transition-colors">
-                      <feature.icon className="w-4 h-4 text-secondary" />
-                    </div>
-                    <span className="text-sm">{feature.text}</span>
-                  </li>
-                ))}
-              </ul>
+          <h2 className="text-xl font-display font-bold leading-tight tracking-tight">Pickle Rally</h2>
+        </Link>
+        <div className="flex items-center gap-4">
+          <span className="hidden md:inline text-sm text-muted-foreground">Already have an account?</span>
+          <Link to="/login">
+            <Button variant="ghost" className="bg-primary/10 hover:bg-primary/20 text-primary font-bold">
+              Log In
+            </Button>
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex-1 flex overflow-hidden">
+        {/* Split Layout: Left Panel (Visual) */}
+        <div className="hidden lg:flex flex-1 relative bg-sidebar-primary overflow-hidden">
+            <div className="absolute inset-0 z-0 opacity-40">
+                <div 
+                    className="w-full h-full bg-center bg-cover" 
+                    style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCPkWfPl10QRi6Z1IR8Lj41ZRv6lln8mtc12GGmSkrjbkW7nhmyybA5gq49T9l3pCde6ZBYG7-p-VCy4lSnGllwnc1IrO3BU9j7E_Z3Iou8IKpVCl_ePIH1-TfEtimKvSHYk7t103ofIsHTRpH-kVBU68fjGEuvYzkZOVUGAZDpPgtxFiZ5R7pyA0VfJLA-OS74fhHEYmXtNnhW37pC3GcWER3rw_sO4WHhQw7JRfGcLDCZmpQqnX4uhEaca-oQT3Y6PHj0QeX5OIU')` }}
+                ></div>
             </div>
-          </div>
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-sidebar-primary via-transparent to-transparent z-10"></div>
+            
+            <div className="relative z-20 flex flex-col justify-end p-16 w-full">
+                <h1 className="text-primary-foreground text-5xl font-display font-black leading-tight tracking-tight mb-4">
+                    Elevate Your <br/><span className="text-primary">Pickleball</span> Game.
+                </h1>
+                <p className="text-primary-foreground/80 text-lg max-w-md font-sans">
+                    Join the fastest-growing community of players and organizers. Manage matches, track performance, and dominate the court.
+                </p>
+                <div className="mt-12 flex gap-8">
+                    <div className="flex flex-col">
+                        <span className="text-primary text-3xl font-display font-bold">12k+</span>
+                        <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Players</span>
+                    </div>
+                    <div className="w-px h-12 bg-primary-foreground/20"></div>
+                    <div className="flex flex-col">
+                        <span className="text-primary text-3xl font-display font-bold">450+</span>
+                        <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Clubs</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {/* Right side - Form */}
-        <div className="flex-1 flex items-center justify-center px-4 py-12 overflow-y-auto relative">
-          {/* Subtle background pattern */}
-          <div className="absolute inset-0 court-pattern-subtle opacity-30" />
-          
-          <div className="w-full max-w-md space-y-6 animate-fade-in relative z-10">
-            {/* Logo */}
-            <div className="text-center">
-              <Link to="/" className="inline-flex items-center gap-3 mb-6 group">
-                <div className="w-12 h-12 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow group-hover:shadow-glow-lg transition-shadow duration-300">
-                  <Trophy className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <span className="font-display text-2xl font-bold">
-                  PICKLE<span className="text-primary">PLAY</span>
-                </span>
-              </Link>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                Create Account
-              </h1>
-              <p className="text-muted-foreground">
-                Join PicklePlay and start competing
-              </p>
+        {/* Split Layout: Right Panel (Registration Form) */}
+        <div className="flex-1 bg-background overflow-y-auto">
+          <div className="max-w-[580px] mx-auto px-6 py-12 lg:py-20 flex flex-col">
+            {/* Headline Section */}
+            <div className="mb-10 text-center lg:text-left">
+              <h2 className="text-foreground text-3xl font-display font-bold tracking-tight mb-2">Create Your Account</h2>
+              <p className="text-muted-foreground">Start your journey on the court today.</p>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-sm border border-destructive/20">
-                  <XCircle className="w-4 h-4 shrink-0" />
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-4">
-                {/* Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={(e) => handleChange('name', e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pl-12 h-12 text-base bg-muted/50 focus:shadow-glow transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="john@example.com"
-                      value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pl-12 h-12 text-base bg-muted/50 focus:shadow-glow transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="At least 6 characters"
-                      value={formData.password}
-                      onChange={(e) => handleChange('password', e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pl-12 pr-12 h-12 text-base bg-muted/50 focus:shadow-glow transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            {/* Step Header */}
+            <div className="flex items-center gap-2 mb-8">
+              <div className="h-1 flex-1 bg-primary rounded-full"></div>
+              <div className="h-1 flex-1 bg-muted rounded-full"></div>
+              <span className="ml-2 text-xs font-bold text-muted-foreground uppercase tracking-tighter">Step 1 of 2</span>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                {/* Choose Your Path */}
+                <div>
+                  <h3 className="text-foreground text-base font-bold mb-4 font-display">Choose Your Path</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Player Card */}
+                    <label 
+                        className={cn(
+                            "group relative flex flex-col gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all hover:bg-primary/5",
+                            formData.role === 'player' 
+                                ? "border-primary bg-primary/5 shadow-sm" 
+                                : "border-border bg-card hover:border-primary/50"
+                        )}
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  {formData.password && (
-                    <div className="space-y-1">
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div 
-                          className={cn("h-full transition-all duration-500", passwordStrength.color)} 
-                          style={{ width: `${passwordStrength.strength}%` }}
-                        />
+                      <input 
+                        type="radio" 
+                        name="role" 
+                        value="player" 
+                        checked={formData.role === 'player'}
+                        onChange={() => handleChange('role', 'player')}
+                        className="hidden"
+                      />
+                      <div className="flex justify-between items-start">
+                        <div className={cn(
+                            "size-10 rounded-lg flex items-center justify-center transition-colors",
+                            formData.role === 'player' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
+                        )}>
+                          <User className="size-6" />
+                        </div>
+                        <div className={cn(
+                            "size-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                            formData.role === 'player' ? "border-primary" : "border-muted-foreground/30"
+                        )}>
+                          {formData.role === 'player' && <div className="size-2.5 bg-primary rounded-full"></div>}
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">{passwordStrength.label}</p>
+                      <div>
+                        <p className="text-foreground text-base font-bold font-display">I am a Player</p>
+                        <p className="text-muted-foreground text-sm leading-snug">Join tournaments, track stats, and find games.</p>
+                      </div>
+                    </label>
+
+                    {/* Organizer Card */}
+                    <label 
+                        className={cn(
+                            "group relative flex flex-col gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all hover:bg-primary/5",
+                            formData.role === 'organizer' 
+                                ? "border-primary bg-primary/5 shadow-sm" 
+                                : "border-border bg-card hover:border-primary/50"
+                        )}
+                    >
+                      <input 
+                        type="radio" 
+                        name="role" 
+                        value="organizer" 
+                        checked={formData.role === 'organizer'}
+                        onChange={() => handleChange('role', 'organizer')}
+                        className="hidden"
+                      />
+                      <div className="flex justify-between items-start">
+                        <div className={cn(
+                            "size-10 rounded-lg flex items-center justify-center transition-colors",
+                            formData.role === 'organizer' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
+                        )}>
+                          <Trophy className="size-6" />
+                        </div>
+                        <div className={cn(
+                            "size-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                            formData.role === 'organizer' ? "border-primary" : "border-muted-foreground/30"
+                        )}>
+                          {formData.role === 'organizer' && <div className="size-2.5 bg-primary rounded-full"></div>}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-foreground text-base font-bold font-display">I am an Organizer</p>
+                        <p className="text-muted-foreground text-sm leading-snug">Manage events, handle registrations, and grow your club.</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                    <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium text-center">
+                        {error}
                     </div>
-                  )}
+                )}
+
+                {/* Registration Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-2">
+                        <Label htmlFor="name" className="text-foreground text-sm font-semibold">Full Name</Label>
+                        <Input 
+                            id="name"
+                            value={formData.name} 
+                            onChange={(e) => handleChange('name', e.target.value)}
+                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
+                            placeholder="John Doe" 
+                            required
+                        />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label htmlFor="email" className="text-foreground text-sm font-semibold">Email Address</Label>
+                        <Input 
+                            id="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => handleChange('email', e.target.value)}
+                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
+                            placeholder="john@example.com" 
+                            required
+                        />
+                    </div>
                 </div>
 
-                {/* Confirm Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Re-enter password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pl-12 h-12 text-base bg-muted/50 focus:shadow-glow transition-all"
-                    />
-                    {formData.confirmPassword && formData.password === formData.confirmPassword && (
-                      <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-success" />
-                    )}
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-2">
+                        <Label htmlFor="password" classname="text-foreground text-sm font-semibold">Password</Label>
+                        <div className="relative">
+                            <Input 
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={formData.password}
+                                onChange={(e) => handleChange('password', e.target.value)}
+                                className="h-12 px-4 bg-card focus-visible:ring-primary pr-10" 
+                                placeholder="At least 6 characters" 
+                                required
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                            >
+                                {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label htmlFor="confirmPassword" classname="text-foreground text-sm font-semibold">Confirm Password</Label>
+                        <Input 
+                            id="confirmPassword"
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
+                            placeholder="Re-enter password" 
+                            required
+                        />
+                    </div>
                 </div>
 
-                {/* Role Selection Cards */}
-                <div className="space-y-2">
-                  <Label>I am a...</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleChange('role', 'player')}
-                      className={cn(
-                        "p-4 rounded-xl border-2 transition-all duration-300 text-left",
-                        formData.role === 'player'
-                          ? "border-primary bg-primary/5 shadow-glow"
-                          : "border-border hover:border-primary/50 bg-muted/30"
-                      )}
-                    >
-                      <User className={cn(
-                        "w-6 h-6 mb-2 transition-colors",
-                        formData.role === 'player' ? "text-primary" : "text-muted-foreground"
-                      )} />
-                      <div className="font-medium">Player</div>
-                      <div className="text-xs text-muted-foreground">Join tournaments</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleChange('role', 'organizer')}
-                      className={cn(
-                        "p-4 rounded-xl border-2 transition-all duration-300 text-left",
-                        formData.role === 'organizer'
-                          ? "border-primary bg-primary/5 shadow-glow"
-                          : "border-border hover:border-primary/50 bg-muted/30"
-                      )}
-                    >
-                      <Trophy className={cn(
-                        "w-6 h-6 mb-2 transition-colors",
-                        formData.role === 'organizer' ? "text-primary" : "text-muted-foreground"
-                      )} />
-                      <div className="font-medium">Organizer</div>
-                      <div className="text-xs text-muted-foreground">Host events</div>
-                    </button>
-                  </div>
+                {/* Additional Fields (Skill/Phone) - Keeping functionality but styling simply */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                     <div className="flex flex-col gap-2">
+                        <Label htmlFor="skillLevel" className="text-foreground text-sm font-semibold">Skill Level</Label>
+                        <Select 
+                            value={formData.skillLevel} 
+                            onValueChange={(value) => handleChange('skillLevel', value)}
+                        >
+                            <SelectTrigger className="h-12 bg-card focus:ring-primary">
+                                <SelectValue placeholder="Select skill" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="2.5">2.5 - Beginner</SelectItem>
+                                <SelectItem value="3.0">3.0 - Intermediate</SelectItem>
+                                <SelectItem value="3.5">3.5 - Advanced Intermediate</SelectItem>
+                                <SelectItem value="4.0">4.0 - Advanced</SelectItem>
+                                <SelectItem value="4.5">4.5 - Competitive</SelectItem>
+                                <SelectItem value="5.0">5.0 - Pro</SelectItem>
+                            </SelectContent>
+                        </Select>
+                     </div>
+                     <div className="flex flex-col gap-2">
+                        <Label htmlFor="phone" className="text-foreground text-sm font-semibold">Phone (Optional)</Label>
+                        <Input 
+                            id="phone"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => handleChange('phone', e.target.value)}
+                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
+                            placeholder="555-0123" 
+                        />
+                     </div>
                 </div>
 
-                {/* Skill Level */}
-                <div className="space-y-2">
-                  <Label htmlFor="skillLevel">Skill Level</Label>
-                  <Select
-                    value={formData.skillLevel}
-                    onValueChange={(value) => handleChange('skillLevel', value)}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger className="h-12 bg-muted/50 focus:shadow-glow transition-all">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2.5">2.5 - Beginner</SelectItem>
-                      <SelectItem value="3.0">3.0 - Intermediate</SelectItem>
-                      <SelectItem value="3.5">3.5 - Advanced Intermediate</SelectItem>
-                      <SelectItem value="4.0">4.0 - Advanced</SelectItem>
-                      <SelectItem value="4.5">4.5 - Competitive</SelectItem>
-                      <SelectItem value="5.0">5.0 - Pro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Phone */}
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone (Optional)</Label>
-                  <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="555-0123"
-                      value={formData.phone}
-                      onChange={(e) => handleChange('phone', e.target.value)}
-                      disabled={isLoading}
-                      className="pl-12 h-12 text-base bg-muted/50 focus:shadow-glow transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Terms & Conditions */}
-                <div className="flex items-start space-x-2">
-                  <Checkbox
-                    id="terms"
+                <div className="flex items-start gap-3 py-2">
+                  <Checkbox 
+                    id="terms" 
                     checked={acceptedTerms}
                     onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
-                    className="mt-1"
+                    className="mt-1 border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                   />
-                  <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
-                    I agree to the{' '}
-                    <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
-                    {' '}and{' '}
-                    <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                  <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer font-normal">
+                    I agree to the <Link to="/terms" className="text-foreground font-bold underline underline-offset-2 hover:text-primary">Terms of Service</Link> and <Link to="/privacy" className="text-foreground font-bold underline underline-offset-2 hover:text-primary">Privacy Policy</Link>.
                   </Label>
                 </div>
-              </div>
 
-              <Button
-                type="submit"
-                variant="hero"
-                size="lg"
-                className="w-full h-12 text-base shadow-glow hover:shadow-glow-lg transition-all duration-300 group"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    Creating account...
-                  </>
-                ) : (
-                  <>
-                    Create Account
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </Button>
+                <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full h-14 rounded-xl text-base font-black tracking-wide shadow-md hover:scale-[1.01] active:scale-95 transition-all text-primary-foreground bg-primary hover:bg-primary/90"
+                >
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Creating Account...
+                        </>
+                    ) : (
+                        <>
+                            <span>Continue to Preferences</span>
+                            <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
+                    )}
+                </Button>
             </form>
 
-            {/* Sign in link */}
-            <p className="text-center text-muted-foreground">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
+            <div className="mt-12 text-center">
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em]">
+                    Trusted by 500+ pickleball organizations worldwide
+                </p>
+            </div>
           </div>
         </div>
+      </main>
+
+      {/* Mobile Progress Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 w-full h-1.5 bg-border">
+        <div className="h-full bg-primary w-1/2"></div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

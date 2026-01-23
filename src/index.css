@@ -224,6 +224,15 @@
     box-shadow: var(--shadow-glow);
   }
 
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .shadow-glow-lg {
     box-shadow: var(--shadow-glow-lg);
   }

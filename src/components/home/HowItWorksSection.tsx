@@ -1,102 +1,95 @@
-import { UserPlus, Settings, PlayCircle, Trophy, ArrowRight } from "lucide-react";
-
-const steps = [
-  {
-    icon: UserPlus,
-    step: "01",
-    title: "Create Account",
-    description: "Sign up as an organizer or player in seconds. It's completely free to get started.",
-  },
-  {
-    icon: Settings,
-    step: "02",
-    title: "Set Up Tournament",
-    description: "Define events, skill levels, registration deadlines, and court availability.",
-  },
-  {
-    icon: PlayCircle,
-    step: "03",
-    title: "Manage Competition",
-    description: "Create pools, generate brackets, and enter scores in real-time.",
-  },
-  {
-    icon: Trophy,
-    step: "04",
-    title: "Crown Champions",
-    description: "Automatic advancement and final results published instantly.",
-  },
-];
+import { useState } from "react";
+import { Search, Trophy, TrendingUp, User, Users, Award, BarChart3 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const HowItWorksSection = () => {
-  return (
-    <section className="py-28 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 court-pattern-subtle opacity-30" />
-      
-      {/* Gradient orbs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-secondary/5 blur-3xl" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-20 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-secondary/20 mb-6 animate-fade-in">
-            <PlayCircle className="w-4 h-4 text-secondary" />
-            <span className="text-sm font-medium">Simple Process</span>
-          </div>
-          
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            Four Simple Steps to
-            <br />
-            <span className="text-gradient">Tournament Success</span>
-          </h2>
-          
-          <p className="text-lg text-muted-foreground animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            From setup to championship, we've streamlined every step of the process.
-          </p>
-        </div>
+  const [activeView, setActiveView] = useState<"players" | "organizers">("organizers");
 
-        <div className="relative">
-          {/* Connection line - desktop */}
-          <div className="hidden lg:block absolute top-24 left-[12.5%] right-[12.5%] h-0.5">
-            <div className="w-full h-full bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 rounded-full" />
+  const features = [
+    {
+      icon: Search,
+      bgIcon: Search,
+      title: "Discover",
+      description: "Filter by skill level, location, and prize pool. Find the perfect match for your competitive spirit.",
+    },
+    {
+      icon: Award,
+      bgIcon: Trophy,
+      title: "Compete",
+      description: "Seamless registration, instant bracket updates, and real-time court assignments sent to your phone.",
+    },
+    {
+      icon: BarChart3,
+      bgIcon: TrendingUp,
+      title: "Win",
+      description: "Climb the global rankings. Get detailed match analytics and share your victories with the community.",
+    },
+  ];
+
+  return (
+    <section className="py-24 bg-background-light dark:bg-[#1a1f29]">
+      <div className="max-w-[1200px] mx-auto px-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
+          <div className="max-w-2xl">
+            <h2 className="text-4xl md:text-5xl font-display font-black uppercase italic tracking-tighter mb-4">
+              How It Works
+            </h2>
+            <p className="text-slate-400 text-lg">
+              Streamlining the pickleball experience for everyone. From registration to the final podium.
+            </p>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
-            {steps.map((step, index) => (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveView("players")}
+              className={cn(
+                "p-4 border rounded-lg transition-colors",
+                activeView === "players"
+                  ? "border-primary bg-white/5"
+                  : "border-white/10 hover:border-primary"
+              )}
+            >
+              <User className="w-5 h-5 text-primary" />
+              <span className="block text-[10px] font-bold uppercase mt-1">Players</span>
+            </button>
+            <button
+              onClick={() => setActiveView("organizers")}
+              className={cn(
+                "p-4 border rounded-lg transition-colors",
+                activeView === "organizers"
+                  ? "border-primary bg-white/5"
+                  : "border-white/10 hover:border-primary"
+              )}
+            >
+              <Users className="w-5 h-5 text-primary" />
+              <span className="block text-[10px] font-bold uppercase mt-1">Organizers</span>
+            </button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {features.map((feature, index) => {
+            const BgIcon = feature.bgIcon;
+            return (
               <div
-                key={step.step}
-                className="relative animate-fade-in"
-                style={{ animationDelay: `${index * 0.15}s` }}
+                key={feature.title}
+                className="group p-8 rounded-2xl bg-background-dark border border-white/5 hover:border-primary/50 transition-all relative overflow-hidden"
               >
-                <div className="relative text-center group">
-                  {/* Step number background */}
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-8xl font-display font-bold text-primary/5 select-none transition-colors group-hover:text-primary/10">
-                    {step.step}
-                  </div>
-                  
-                  {/* Icon container */}
-                  <div className="relative z-10 w-20 h-20 mx-auto rounded-2xl bg-hero-gradient flex items-center justify-center mb-8 shadow-glow group-hover:shadow-glow-lg group-hover:scale-105 transition-all duration-300">
-                    <step.icon className="w-10 h-10 text-primary-foreground" />
-                    
-                    {/* Connector arrow - desktop only */}
-                    {index < steps.length - 1 && (
-                      <div className="hidden lg:flex absolute -right-8 top-1/2 -translate-y-1/2 text-primary/40">
-                        <ArrowRight className="w-6 h-6" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Content */}
-                  <h3 className="text-xl font-display font-bold mb-3 group-hover:text-primary transition-colors">
-                    {step.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {step.description}
-                  </p>
+                {/* Background Icon */}
+                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <BgIcon className="w-36 h-36 text-primary" />
                 </div>
+                
+                {/* Icon Container */}
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-8 border border-primary/20">
+                  <feature.icon className="w-7 h-7 text-primary" />
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-2xl font-display font-bold mb-4 uppercase italic">{feature.title}</h3>
+                <p className="text-slate-400 leading-relaxed">{feature.description}</p>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -104,3 +97,4 @@ const HowItWorksSection = () => {
 };
 
 export default HowItWorksSection;
+

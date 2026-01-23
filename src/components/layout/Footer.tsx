@@ -1,87 +1,70 @@
 import { Link } from "react-router-dom";
-import { Trophy, Mail, MapPin, Phone, Github, Twitter, Instagram, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Globe, Mail, ThumbsUp } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="relative bg-foreground text-background overflow-hidden">
-      {/* Gradient top border */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-hero-gradient" />
-      
-      {/* Background mesh effect */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-secondary rounded-full blur-3xl" />
-      </div>
-      
-      <div className="container mx-auto px-4 py-16 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
-          {/* Brand */}
-          <div className="lg:col-span-2 space-y-6">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-glow transition-shadow group-hover:shadow-glow-lg">
-                <Trophy className="w-6 h-6 text-primary-foreground" />
+    <footer className="bg-background-dark border-t border-white/5 pt-24 pb-12">
+      <div className="max-w-[1200px] mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+          {/* Brand Section */}
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="text-primary">
+                <svg className="size-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="currentColor"></path>
+                </svg>
               </div>
-              <span className="font-display text-2xl font-bold">
-                PICKLE<span className="text-primary">PLAY</span>
-              </span>
-            </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
-              The ultimate platform for organizing and participating in pickleball tournaments. 
-              From local club matches to professional championships.
-            </p>
-            
-            {/* Newsletter */}
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Stay updated with the latest tournaments</p>
-              <div className="flex gap-2">
-                <Input 
-                  type="email" 
-                  placeholder="Enter your email" 
-                  className="bg-background/10 border-background/20 text-background placeholder:text-background/50 focus:border-primary"
-                />
-                <Button variant="default" size="default" className="shrink-0">
-                  Subscribe
-                </Button>
-              </div>
+              <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-foreground">
+                Pickle Rally
+              </h2>
             </div>
-            
-            {/* Social Links */}
-            <div className="flex gap-3">
-              {[
-                { icon: Twitter, href: "#", label: "Twitter" },
-                { icon: Instagram, href: "#", label: "Instagram" },
-                { icon: Github, href: "#", label: "GitHub" },
-              ].map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  className="w-10 h-10 rounded-xl bg-background/10 flex items-center justify-center hover:bg-primary hover:shadow-glow transition-all duration-300"
-                  aria-label={social.label}
-                >
-                  <social.icon className="w-5 h-5" />
-                </a>
-              ))}
+            <p className="text-slate-400 text-lg mb-8 max-w-sm">
+              The digital backbone of professional and amateur pickleball worldwide.
+            </p>
+            <div className="flex gap-4">
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
+                aria-label="Website"
+              >
+                <Globe className="w-5 h-5" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
+                aria-label="Email"
+              >
+                <Mail className="w-5 h-5" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
+                aria-label="Social"
+              >
+                <ThumbsUp className="w-5 h-5" />
+              </a>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Platform Links */}
           <div>
-            <h4 className="font-display font-semibold text-lg mb-6 text-background">Quick Links</h4>
-            <ul className="space-y-3 text-sm">
+            <h5 className="text-sm font-display font-black uppercase tracking-widest text-primary mb-8">
+              Platform
+            </h5>
+            <ul className="space-y-4">
               {[
                 { to: "/tournaments", label: "Find Tournaments" },
-                { to: "/live", label: "Live Matches" },
-                { to: "/how-it-works", label: "How It Works" },
-                { to: "/pricing", label: "Pricing" },
+                { to: "/create-tournament", label: "Create Event" },
+                { to: "/dashboard", label: "Ranking System" },
+                { to: "/about", label: "Rulebook" },
               ].map((link) => (
                 <li key={link.to}>
-                  <Link 
-                    to={link.to} 
-                    className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2 group"
+                  <Link
+                    to={link.to}
+                    className="text-slate-400 hover:text-white transition-colors"
                   >
-                    <span className="w-0 h-px bg-primary transition-all duration-300 group-hover:w-3" />
                     {link.label}
                   </Link>
                 </li>
@@ -89,71 +72,33 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* For Organizers */}
+          {/* Newsletter */}
           <div>
-            <h4 className="font-display font-semibold text-lg mb-6 text-background">For Organizers</h4>
-            <ul className="space-y-3 text-sm">
-              {[
-                { to: "/create-tournament", label: "Create Tournament" },
-                { to: "/organizer-guide", label: "Organizer Guide" },
-                { to: "/analytics", label: "Analytics Dashboard" },
-                { to: "/support", label: "Support" },
-              ].map((link) => (
-                <li key={link.to}>
-                  <Link 
-                    to={link.to} 
-                    className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-2 group"
-                  >
-                    <span className="w-0 h-px bg-primary transition-all duration-300 group-hover:w-3" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-display font-semibold text-lg mb-6 text-background">Contact</h4>
-            <ul className="space-y-4 text-sm">
-              <li className="flex items-center gap-3 text-muted-foreground group">
-                <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Mail className="w-4 h-4 text-primary" />
-                </div>
-                <span>support@pickleplay.com</span>
-              </li>
-              <li className="flex items-center gap-3 text-muted-foreground group">
-                <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Phone className="w-4 h-4 text-primary" />
-                </div>
-                <span>(555) 123-4567</span>
-              </li>
-              <li className="flex items-start gap-3 text-muted-foreground group">
-                <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                  <MapPin className="w-4 h-4 text-primary" />
-                </div>
-                <span>123 Pickleball Lane<br />Austin, TX 78701</span>
-              </li>
-            </ul>
+            <h5 className="text-sm font-display font-black uppercase tracking-widest text-primary mb-8">
+              Stay Updated
+            </h5>
+            <p className="text-slate-400 text-sm mb-4">Get the latest tournament drops and news.</p>
+            <div className="flex flex-col gap-2">
+              <Input
+                type="email"
+                placeholder="Email Address"
+                className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-0 text-foreground placeholder:text-slate-500"
+              />
+              <Button className="bg-primary text-primary-foreground font-display font-black uppercase tracking-widest py-3 rounded-lg text-sm hover:brightness-110 transition-all">
+                Subscribe
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Made with</span>
-            <Heart className="w-4 h-4 text-destructive fill-destructive animate-pulse" />
-            <span>for pickleball enthusiasts</span>
-          </div>
-          
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} PicklePlay. All rights reserved.
-          </p>
-          
-          <div className="flex gap-6 text-sm">
-            <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+        {/* Footer Bottom */}
+        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest">
+          <p>© {new Date().getFullYear()} Pickle Rally. All Rights Reserved.</p>
+          <div className="flex gap-8">
+            <Link to="/privacy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link to="/terms" className="hover:text-white transition-colors">
               Terms of Service
             </Link>
           </div>

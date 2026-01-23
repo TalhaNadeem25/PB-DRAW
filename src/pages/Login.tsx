@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import Layout from '@/components/layout/Layout';
+import Navbar from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Trophy, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Chrome, Apple } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Apple, ArrowRight, Chrome, Eye, EyeOff, Loader2, Trophy } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,224 +14,198 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
       await login(email, password);
       navigate('/tournaments');
     } catch (error) {
       console.error('Login error:', error);
+      setError('Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Layout>
-      <div className="min-h-[calc(100vh-200px)] flex">
-        {/* Left side - Form */}
-        <div className="flex-1 flex items-center justify-center px-4 py-16 relative">
-          {/* Subtle background pattern */}
-          <div className="absolute inset-0 court-pattern-subtle opacity-30" />
-          
-          <div className="w-full max-w-md space-y-8 animate-fade-in relative z-10">
-            {/* Logo */}
-            <div className="text-center">
-              <Link to="/" className="inline-flex items-center gap-3 mb-8 group">
-                <div className="w-12 h-12 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow group-hover:shadow-glow-lg transition-shadow duration-300">
-                  <Trophy className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <span className="font-display text-2xl font-bold">
-                  PICKLE<span className="text-primary">PLAY</span>
-                </span>
-              </Link>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                Welcome Back
-              </h1>
-              <p className="text-muted-foreground">
-                Enter your credentials to access your account
-              </p>
+    <>
+    <Navbar />
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans">    
+
+      {/* Left Side: Hero Brand Experience (Hidden on Mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-7/12 relative overflow-hidden items-center justify-center">  
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center" 
+          style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuANcBh8658firenMfbo6Fsqiw6eDQlBp_lX5oMiyvz9HHqM_Jd_VxipHbrbU1coa37yAOe9HF3G9ayWR8yaHeAg0QCWwlV-BZH7y9jlClMKtniLg_5AF446YVkwzmODdPD0qa19WWtMsCo7acHQEFgTloRgospSAWsUBkcocmrTXrrY67dn4YMsPkfoSU7_xTwZ1mywWoHEhSxPLinFMMiozYwuZDW5igU-v51FA5LGwI5nkDtZFeFwilrM1kSGLJejRnHji8ZeaFg')` }}
+        ></div>
+        
+        {/* Branded Overlay */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col justify-end p-20 z-10">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-3 text-primary mb-6 animate-fade-in">
+                <Trophy className="w-10 h-10 fill-current" />
+                <h2 className="text-3xl font-display font-black tracking-tighter text-white">PICKLE RALLY</h2>
             </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="john@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pl-12 h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary/20 focus:shadow-glow transition-all"
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={isLoading}
-                      className="pl-12 pr-12 h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary/20 focus:shadow-glow transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember Me */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  />
-                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                    Remember me for 30 days
-                  </Label>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                variant="hero"
-                size="lg"
-                className="w-full h-12 text-base shadow-glow hover:shadow-glow-lg transition-all duration-300 group"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    Sign In
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </Button>
-
-              {/* Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
-
-              {/* Social Login Buttons (Disabled placeholders) */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 glass border-border/50 hover:bg-muted/50"
-                  disabled
-                >
-                  <Chrome className="w-5 h-5 mr-2" />
-                  Google
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 glass border-border/50 hover:bg-muted/50"
-                  disabled
-                >
-                  <Apple className="w-5 h-5 mr-2" />
-                  Apple
-                </Button>
-              </div>
-              <p className="text-xs text-center text-muted-foreground">
-                Social login coming soon
-              </p>
-            </form>
-
-            {/* Sign up link */}
-            <p className="text-center text-muted-foreground">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-primary hover:underline font-medium">
-                Create one
-              </Link>
+            <h1 className="text-white text-5xl font-display font-black leading-tight mb-4 animate-slide-up">
+                Master the court, <br/>manage the game.
+            </h1>
+            <p className="text-white/80 text-lg font-light max-w-md font-sans animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                The ultimate hub for pickleball enthusiasts. Access your tournaments, track rankings, and join the fastest-growing sports community.
             </p>
           </div>
         </div>
+        
+        {/* Decorative Element */}
+        <div className="absolute top-10 left-10 w-24 h-24 border-l-4 border-t-4 border-primary/50 z-20"></div>
+      </div>
 
-        {/* Right side - Visual */}
-        <div className="hidden lg:flex flex-1 relative overflow-hidden bg-hero-gradient">
-          {/* Floating Orbs */}
-          <div className="absolute inset-0">
-            <div className="absolute top-20 right-20 w-72 h-72 bg-secondary/30 rounded-full blur-3xl animate-float-slow" />
-            <div className="absolute bottom-32 left-20 w-56 h-56 bg-court-green-dark/40 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-            <div className="absolute top-1/2 right-1/3 w-40 h-40 bg-primary-foreground/10 rounded-full blur-2xl animate-float" style={{ animationDelay: "4s" }} />
-          </div>
-          
-          {/* Court pattern */}
-          <div className="absolute inset-0 court-pattern opacity-10" />
-          
-          {/* Decorative pickleball */}
-          <div className="absolute bottom-20 right-20 opacity-20">
-            <div className="w-24 h-24 rounded-full bg-secondary border-4 border-secondary-foreground/20 animate-bounce-slow" 
-                 style={{ animation: 'bounce-gentle 3s ease-in-out infinite' }} />
-          </div>
-          
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
-            <div className="glass-dark rounded-3xl p-8 max-w-md text-center backdrop-blur-xl border border-primary-foreground/20 hover:border-primary-foreground/30 transition-colors duration-300 shadow-2xl">
-              <div className="w-20 h-20 rounded-2xl bg-secondary/20 flex items-center justify-center mx-auto mb-6 shadow-glow-yellow">
-                <Trophy className="w-10 h-10 text-primary-foreground" />
-              </div>
-              <h2 className="text-2xl font-display font-bold text-primary-foreground mb-4">
-                Ready to Play?
-              </h2>
-              <p className="text-primary-foreground/80 mb-6">
-                Join thousands of pickleball enthusiasts competing in tournaments across the country.
-              </p>
-              <div className="flex justify-center gap-8 text-sm text-primary-foreground/60">
-                <div className="text-center">
-                  <div className="text-3xl font-display font-bold text-primary-foreground mb-1">500+</div>
-                  <div className="text-xs uppercase tracking-wider">Tournaments</div>
-                </div>
-                <div className="h-12 w-px bg-primary-foreground/20" />
-                <div className="text-center">
-                  <div className="text-3xl font-display font-bold text-primary-foreground mb-1">15K+</div>
-                  <div className="text-xs uppercase tracking-wider">Players</div>
-                </div>
-              </div>
+      {/* Right Side: Login Interface */}
+      <div className="flex w-full flex-col lg:w-1/2 xl:w-5/12 bg-background px-6 py-10 sm:px-16 lg:px-20 xl:px-24 justify-center overflow-y-auto">
+        <div className="w-full max-w-md mx-auto">
+            {/* Mobile Logo (Hidden on desktop) */}
+            <div className="lg:hidden flex items-center gap-2 mb-10 text-primary">
+                <Trophy className="w-8 h-8 fill-current" />
+                <span className="text-xl font-bold font-display text-foreground">Pickle Rally</span>
             </div>
-          </div>
+
+            <div className="mb-10 text-center lg:text-left">
+                <h2 className="text-3xl font-display font-bold text-foreground mb-2">Welcome back</h2>
+                <p className="text-muted-foreground">Enter your credentials to access the rally.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Error Message */}
+                {error && (
+                    <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">
+                        {error}
+                    </div>
+                )}
+
+                {/* Email Field */}
+                <div className="flex flex-col gap-2">
+                    <Label htmlFor="email" className="text-foreground text-sm font-semibold">Email Address</Label>
+                    <div className="relative">
+                        <Input 
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="h-12 px-4 bg-transparent border-input focus:border-primary focus:ring-primary/20" 
+                            placeholder="name@example.com" 
+                            required 
+                            disabled={isLoading}
+                        />
+                    </div>
+                </div>
+
+                {/* Password Field */}
+                <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="password" className="text-foreground text-sm font-semibold">Password</Label>
+                        <Link to="/forgot-password" className="text-xs font-bold text-primary hover:underline">Forgot Password?</Link>
+                    </div>
+                    <div className="relative flex items-center">
+                        <Input 
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="h-12 px-4 pr-12 bg-transparent border-input focus:border-primary focus:ring-primary/20" 
+                            placeholder="••••••••" 
+                            required 
+                            disabled={isLoading}
+                        />
+                        <button 
+                            type="button" 
+                            className="absolute right-4 text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Remember Me */}
+                <div className="flex items-center gap-3">
+                    <Checkbox 
+                        id="remember" 
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground border-input"
+                    />
+                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer group-hover:text-foreground transition-colors font-normal">
+                        Remember me on this device
+                    </Label>
+                </div>
+
+                {/* Sign In Button */}
+                <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-lg hover:brightness-110 active:scale-[0.98] transition-all shadow-md shadow-primary/20"
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            Signing In...
+                        </>
+                    ) : (
+                        <>
+                            <span>Sign In</span>
+                            <ArrowRight className="w-5 h-5 ml-2" />
+                        </>
+                    )}
+                </Button>
+            </form>
+
+            {/* Social Login */}
+            <div className="mt-10">
+                <div className="relative flex items-center mb-8">
+                    <div className="flex-grow border-t border-border"></div>
+                    <span className="flex-shrink mx-4 text-xs font-medium text-muted-foreground uppercase tracking-widest">Or continue with</span>
+                    <div className="flex-grow border-t border-border"></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <button className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <Chrome className="w-5 h-5" />
+                        <span className="text-sm font-semibold text-foreground">Google</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <Apple className="w-5 h-5 text-foreground" />
+                        <span className="text-sm font-semibold text-foreground">Apple</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Footer Sign Up */}
+            <div className="mt-12 text-center">
+                <p className="text-muted-foreground text-sm">
+                    New to the court? 
+                    <Link to="/signup" className="text-primary font-bold ml-1 hover:underline">Create an account</Link>
+                </p>
+            </div>
+            
+            {/* Bottom Disclaimer */}
+            <div className="mt-auto pt-10 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">
+                    By logging in, you agree to Pickle Rally's <br/>
+                    <Link to="/terms" className="hover:text-primary underline">Terms of Service</Link> and <Link to="/privacy" className="hover:text-primary underline">Privacy Policy</Link>
+                </p>
+            </div>
         </div>
       </div>
-    </Layout>
+    </div>
+
+    </>
+     
   );
 };
 

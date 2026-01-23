@@ -169,7 +169,11 @@ const CourtManager = () => {
       }),
     onSuccess: () => {
       toast.success("Match scheduled");
+      // Invalidate all related queries so schedule shows up everywhere
       queryClient.invalidateQueries({ queryKey: ['schedule-grid', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+      queryClient.invalidateQueries({ queryKey: ['pools'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to schedule match");
@@ -181,7 +185,11 @@ const CourtManager = () => {
     mutationFn: () => courtAPI.autoSchedule(id!),
     onSuccess: (data) => {
       toast.success(data.message || "Matches auto-scheduled");
+      // Invalidate all related queries so schedule shows up everywhere
       queryClient.invalidateQueries({ queryKey: ['schedule-grid', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+      queryClient.invalidateQueries({ queryKey: ['pools'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to auto-schedule");
@@ -193,7 +201,11 @@ const CourtManager = () => {
     mutationFn: () => courtAPI.clearSchedule(id!),
     onSuccess: () => {
       toast.success("Schedule cleared");
+      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['schedule-grid', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
+      queryClient.invalidateQueries({ queryKey: ['pools'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to clear schedule");

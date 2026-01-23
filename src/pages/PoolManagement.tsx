@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ const PoolManagement = () => {
   const [editScores, setEditScores] = useState({ team1Score: 0, team2Score: 0 });
   const [schedulingMatch, setSchedulingMatch] = useState<string | null>(null);
   const [scheduleData, setScheduleData] = useState({ scheduledTime: "", courtNumber: 1 });
+  const [activeTab, setActiveTab] = useState<string>("standings");
 
   // Fetch event data with teams and pools
   const { data: eventData, isLoading: eventLoading } = useQuery({
@@ -252,8 +254,12 @@ const PoolManagement = () => {
   const updateMatchScheduleMutation = useMutation({
     mutationFn: ({ matchId, data }: any) => matchAPI.update(matchId, data),
     onSuccess: () => {
+      // Invalidate all related queries so schedule shows up everywhere
       queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
       queryClient.invalidateQueries({ queryKey: ['playoffs', eventId, selectedPoolId] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
+      queryClient.invalidateQueries({ queryKey: ['schedule-grid', id] });
+      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
       setSchedulingMatch(null);
       toast.success("Match scheduled successfully");
     },
@@ -548,312 +554,328 @@ const PoolManagement = () => {
             <div className="lg:col-span-3">
               {selectedPool ? (
                 <div className="space-y-6">
-                  {/* Generate Playoffs Button */}
-                  {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
-                        disabled={generatePlayoffsMutation.isPending}
-                        size="lg"
-                      >
-                        {generatePlayoffsMutation.isPending ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Generating Playoffs...
-                          </>
-                        ) : (
-                          <>
-                            <Trophy className="w-4 h-4 mr-2" />
-                            Generate Playoffs
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
+                  {/* Tabbed Navigation */}
+                  <Card className="glass-card">
+                    <CardContent className="p-0">
+                      {(() => {
+                        const matches = selectedPool.matches || [];
+                        const rounds = [...new Set(matches.map((m: any) => m.round || 1))].sort((a: number, b: number) => a - b);
 
-                  {/* Standings */}
-                  <PoolStandings
-                    teams={getPoolMembers(selectedPool)}
-                    poolName={selectedPool.name}
-                    showPlayoffIndicators={event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin'}
-                    onRemoveTeam={(teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
-                    isRemoving={removeTeamFromPoolMutation.isPending}
-                  />
-
-                  {/* Game Format Info */}
-                  <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                          <Trophy className="w-6 h-6 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-display font-bold text-lg">
-                              {event.playFormat ? event.playFormat.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Round Robin'}
-                            </h3>
-                            <Badge variant="secondary" className="capitalize">
-                              {event.format.replace('-', ' ')} Game
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {event.playFormat === 'round-robin' && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
-                            {event.playFormat === 'single-elimination' && "Single elimination bracket - lose once and you're out. Winner advances to the next round."}
-                            {event.playFormat === 'double-elimination' && "Teams must lose twice to be eliminated. Includes a winners bracket and a losers bracket."}
-                            {event.playFormat === 'pool-play' && "Pool play followed by playoffs. Top teams from each pool advance to elimination rounds."}
-                            {event.playFormat === 'swiss' && "Swiss system - teams are paired based on their current record. No elimination until final rounds."}
-                            {!event.playFormat && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Matches */}
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>Matches</CardTitle>
-                          <CardDescription>
-                            {event.playFormat === 'round-robin' || !event.playFormat
-                              ? "All teams play each other once in pool play"
-                              : event.playFormat === 'single-elimination'
-                              ? "Bracket matches - win to advance"
-                              : event.playFormat === 'double-elimination'
-                              ? "Winners and losers bracket matches"
-                              : "Matches based on current standings"}
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {selectedPool.matches && selectedPool.matches.length > 0 ? (
-                        <div className="space-y-4">
-                          {selectedPool.matches.map((match: any, index: number) => {
-                            const isSingles = event.format === 'singles';
-                            const isCompleted = match.status === 'completed';
-                            const playFormat = event.playFormat || 'round-robin';
-
-                            return (
-                              <div
-                                key={match._id}
-                                className={`p-4 rounded-lg border-2 transition-colors ${
-                                  isCompleted
-                                    ? 'bg-muted/50 border-muted'
-                                    : 'bg-card border-border hover:border-primary/50'
-                                }`}
-                              >
-                                {/* Match Header */}
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    {playFormat === 'single-elimination' || playFormat === 'double-elimination' ? (
-                                      <>
-                                        <Badge variant="secondary">
-                                          {match.bracket ? `${match.bracket.charAt(0).toUpperCase() + match.bracket.slice(1)} Bracket` : `Round ${match.round || 1}`}
-                                        </Badge>
-                                        <Badge variant="outline">Match #{match.matchNumber || index + 1}</Badge>
-                                      </>
-                                    ) : playFormat === 'swiss' ? (
-                                      <Badge variant="secondary">Round {match.round || 1} - Match {index + 1}</Badge>
-                                    ) : (
-                                      <Badge variant="secondary">Match {index + 1}</Badge>
-                                    )}
-                                    {isCompleted && (
-                                      <Badge variant="default" className="bg-green-500">Completed</Badge>
-                                    )}
-                                    {match.scheduledTime && (
-                                      <Badge variant="outline" className="gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        {new Date(match.scheduledTime).toLocaleDateString()} {new Date(match.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        return (
+                          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                            <div className="border-b px-4 pt-4">
+                              <TabsList className="w-full justify-start flex-wrap h-auto gap-1 bg-muted/50 p-1">
+                                <TabsTrigger value="standings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                  Standings
+                                </TabsTrigger>
+                                {rounds.map((round: number) => {
+                                  const roundMatches = matches.filter((m: any) => (m.round || 1) === round);
+                                  const completedCount = roundMatches.filter((m: any) => m.status === 'completed').length;
+                                  return (
+                                    <TabsTrigger
+                                      key={round}
+                                      value={`round-${round}`}
+                                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                                    >
+                                      Round {round}
+                                      <Badge variant="secondary" className="ml-2 text-[10px]">
+                                        {completedCount}/{roundMatches.length}
                                       </Badge>
-                                    )}
-                                    {match.courtNumber && (
-                                      <Badge variant="outline">Court {match.courtNumber}</Badge>
-                                    )}
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setSchedulingMatch(match._id);
-                                      setScheduleData({
-                                        scheduledTime: match.scheduledTime ? new Date(match.scheduledTime).toISOString().slice(0, 16) : "",
-                                        courtNumber: match.courtNumber || 1,
-                                      });
-                                    }}
+                                    </TabsTrigger>
+                                  );
+                                })}
+                                {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
+                                  <TabsTrigger
+                                    value="playoffs"
+                                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                                   >
-                                    <Clock className="w-4 h-4 mr-1" />
-                                    Schedule
+                                    <Trophy className="w-4 h-4 mr-1" />
+                                    Playoffs
+                                  </TabsTrigger>
+                                )}
+                              </TabsList>
+                            </div>
+
+                            {/* Standings Tab */}
+                            <TabsContent value="standings" className="p-6 space-y-6">
+                              <PoolStandings
+                                teams={getPoolMembers(selectedPool)}
+                                poolName={selectedPool.name}
+                                showPlayoffIndicators={event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin'}
+                                onRemoveTeam={(teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
+                                isRemoving={removeTeamFromPoolMutation.isPending}
+                              />
+
+                              {/* Game Format Info */}
+                              <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+                                <CardContent className="pt-6">
+                                  <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                      <Trophy className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <h3 className="font-display font-bold text-lg">
+                                          {event.playFormat ? event.playFormat.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Round Robin'}
+                                        </h3>
+                                        <Badge variant="secondary" className="capitalize">
+                                          {event.format.replace('-', ' ')} Game
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">
+                                        {event.playFormat === 'round-robin' && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
+                                        {event.playFormat === 'single-elimination' && "Single elimination bracket - lose once and you're out. Winner advances to the next round."}
+                                        {event.playFormat === 'double-elimination' && "Teams must lose twice to be eliminated. Includes a winners bracket and a losers bracket."}
+                                        {event.playFormat === 'pool-play' && "Pool play followed by playoffs. Top teams from each pool advance to elimination rounds."}
+                                        {event.playFormat === 'swiss' && "Swiss system - teams are paired based on their current record. No elimination until final rounds."}
+                                        {!event.playFormat && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </TabsContent>
+
+                            {/* Round Tabs */}
+                            {rounds.map((round: number) => {
+                              const roundMatches = matches.filter((m: any) => (m.round || 1) === round);
+                              return (
+                                <TabsContent key={round} value={`round-${round}`} className="p-6">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-lg">Round {round} Matches</h3>
+                                    <Badge variant="outline">
+                                      {roundMatches.filter((m: any) => m.status === 'completed').length} of {roundMatches.length} completed
+                                    </Badge>
+                                  </div>
+                                  {roundMatches.length > 0 ? (
+                                    <div className="space-y-4">
+                                      {roundMatches.map((match: any, index: number) => {
+                                        const isSinglesMatch = event.format === 'singles';
+                                        const isCompleted = match.status === 'completed';
+
+                                        return (
+                                          <div
+                                            key={match._id}
+                                            className={`p-4 rounded-lg border-2 transition-colors ${
+                                              isCompleted
+                                                ? 'bg-muted/50 border-muted'
+                                                : 'bg-card border-border hover:border-primary/50'
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between mb-3">
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <Badge variant="secondary">Match {index + 1}</Badge>
+                                                {isCompleted && (
+                                                  <Badge variant="default" className="bg-green-500">Completed</Badge>
+                                                )}
+                                                {match.scheduledTime && (
+                                                  <Badge variant="outline" className="gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {new Date(match.scheduledTime).toLocaleDateString()} {new Date(match.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                  </Badge>
+                                                )}
+                                                {match.courtNumber && (
+                                                  <Badge variant="outline">Court {match.courtNumber}</Badge>
+                                                )}
+                                              </div>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                  setSchedulingMatch(match._id);
+                                                  setScheduleData({
+                                                    scheduledTime: match.scheduledTime ? new Date(match.scheduledTime).toISOString().slice(0, 16) : "",
+                                                    courtNumber: match.courtNumber || 1,
+                                                  });
+                                                }}
+                                              >
+                                                <Clock className="w-4 h-4 mr-1" />
+                                                Schedule
+                                              </Button>
+                                            </div>
+
+                                            <div className="grid grid-cols-[2fr_1fr_2fr] gap-4 items-center">
+                                              <div className="text-right">
+                                                <div className="font-bold text-lg mb-1">
+                                                  {match.team1?.name || "Team 1"}
+                                                </div>
+                                                {!isSinglesMatch && match.team1?.players && (
+                                                  <div className="text-sm text-muted-foreground">
+                                                    {match.team1.players.map((p: any, i: number) => (
+                                                      <div key={i}>{p.name || `Player ${i + 1}`}</div>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+
+                                              <div className="flex flex-col items-center gap-2">
+                                                {editingMatch === match._id ? (
+                                                  <div className="flex items-center gap-2">
+                                                    <Input
+                                                      type="number"
+                                                      className="w-16 text-center text-xl font-bold"
+                                                      value={editScores.team1Score}
+                                                      onChange={(e) =>
+                                                        setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })
+                                                      }
+                                                      min="0"
+                                                    />
+                                                    <span className="text-lg font-bold">-</span>
+                                                    <Input
+                                                      type="number"
+                                                      className="w-16 text-center text-xl font-bold"
+                                                      value={editScores.team2Score}
+                                                      onChange={(e) =>
+                                                        setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })
+                                                      }
+                                                      min="0"
+                                                    />
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex items-center gap-3">
+                                                    <span className={`text-3xl font-bold ${
+                                                      isCompleted && match.score?.team1Score > match.score?.team2Score
+                                                        ? 'text-green-600'
+                                                        : ''
+                                                    }`}>
+                                                      {match.score?.team1Score ?? "-"}
+                                                    </span>
+                                                    <span className="text-2xl text-muted-foreground">-</span>
+                                                    <span className={`text-3xl font-bold ${
+                                                      isCompleted && match.score?.team2Score > match.score?.team1Score
+                                                        ? 'text-green-600'
+                                                        : ''
+                                                    }`}>
+                                                      {match.score?.team2Score ?? "-"}
+                                                    </span>
+                                                  </div>
+                                                )}
+
+                                                <div className="flex gap-2">
+                                                  {editingMatch === match._id ? (
+                                                    <>
+                                                      <Button
+                                                        size="sm"
+                                                        onClick={() => saveScore(match._id)}
+                                                        disabled={updateMatchScoreMutation.isPending}
+                                                      >
+                                                        <Check className="w-4 h-4 mr-1" />
+                                                        Save
+                                                      </Button>
+                                                      <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => setEditingMatch(null)}
+                                                      >
+                                                        <X className="w-4 h-4 mr-1" />
+                                                        Cancel
+                                                      </Button>
+                                                    </>
+                                                  ) : (
+                                                    <Button
+                                                      size="sm"
+                                                      variant="outline"
+                                                      onClick={() => {
+                                                        setEditingMatch(match._id);
+                                                        setEditScores({
+                                                          team1Score: match.score?.team1Score || 0,
+                                                          team2Score: match.score?.team2Score || 0,
+                                                        });
+                                                      }}
+                                                    >
+                                                      <Edit2 className="w-4 h-4 mr-1" />
+                                                      {isCompleted ? 'Edit Score' : 'Enter Score'}
+                                                    </Button>
+                                                  )}
+                                                </div>
+                                              </div>
+
+                                              <div className="text-left">
+                                                <div className="font-bold text-lg mb-1">
+                                                  {match.team2?.name || "Team 2"}
+                                                </div>
+                                                {!isSinglesMatch && match.team2?.players && (
+                                                  <div className="text-sm text-muted-foreground">
+                                                    {match.team2.players.map((p: any, i: number) => (
+                                                      <div key={i}>{p.name || `Player ${i + 1}`}</div>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <p className="text-muted-foreground text-center py-8">
+                                      No matches in this round
+                                    </p>
+                                  )}
+                                </TabsContent>
+                              );
+                            })}
+
+                            {/* Playoffs Tab */}
+                            {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
+                              <TabsContent value="playoffs" className="p-6 space-y-6">
+                                <div className="flex items-center justify-between mb-4">
+                                  <h3 className="font-bold text-lg">Playoff Bracket</h3>
+                                  <Button
+                                    onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
+                                    disabled={generatePlayoffsMutation.isPending}
+                                  >
+                                    {generatePlayoffsMutation.isPending ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Generating...
+                                      </>
+                                    ) : playoffs.length > 0 ? (
+                                      "Regenerate Playoffs"
+                                    ) : (
+                                      <>
+                                        <Trophy className="w-4 h-4 mr-2" />
+                                        Generate Playoffs
+                                      </>
+                                    )}
                                   </Button>
                                 </div>
 
-                                {/* Match Content */}
-                                <div className="grid grid-cols-[2fr_1fr_2fr] gap-4 items-center">
-                                  {/* Team 1 */}
-                                  <div className="text-right">
-                                    <div className="font-bold text-lg mb-1">
-                                      {match.team1?.name || "Team 1"}
-                                    </div>
-                                    {!isSingles && match.team1?.players && (
-                                      <div className="text-sm text-muted-foreground">
-                                        {match.team1.players.map((p: any, i: number) => (
-                                          <div key={i}>{p.name || `Player ${i + 1}`}</div>
-                                        ))}
-                                      </div>
-                                    )}
+                                {playoffs.length > 0 ? (
+                                  <>
+                                    <PlayoffBracket
+                                      matches={playoffs}
+                                      onUpdateScore={(matchId, team1Score, team2Score) => {
+                                        updateMatchScoreMutation.mutate({
+                                          matchId,
+                                          scores: { team1Score, team2Score }
+                                        });
+                                      }}
+                                      isUpdating={updateMatchScoreMutation.isPending}
+                                    />
+                                    <PlayoffResults
+                                      eventId={eventId!}
+                                      poolId={selectedPoolId!}
+                                      poolName={selectedPool.name}
+                                      eventName={event.name}
+                                    />
+                                  </>
+                                ) : (
+                                  <div className="text-center py-12">
+                                    <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                                    <h3 className="text-xl font-bold mb-2">No Playoff Bracket Yet</h3>
+                                    <p className="text-muted-foreground">
+                                      Generate the playoff bracket once pool play matches are complete
+                                    </p>
                                   </div>
-
-                                  {/* Score */}
-                                  <div className="flex flex-col items-center gap-2">
-                                    {editingMatch === match._id ? (
-                                      <div className="flex items-center gap-2">
-                                        <Input
-                                          type="number"
-                                          className="w-16 text-center text-xl font-bold"
-                                          value={editScores.team1Score}
-                                          onChange={(e) =>
-                                            setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })
-                                          }
-                                          min="0"
-                                          max="21"
-                                        />
-                                        <span className="text-lg font-bold">-</span>
-                                        <Input
-                                          type="number"
-                                          className="w-16 text-center text-xl font-bold"
-                                          value={editScores.team2Score}
-                                          onChange={(e) =>
-                                            setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })
-                                          }
-                                          min="0"
-                                          max="21"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center gap-3">
-                                        <span className={`text-3xl font-bold ${
-                                          isCompleted && match.score?.team1Score > match.score?.team2Score
-                                            ? 'text-green-600'
-                                            : ''
-                                        }`}>
-                                          {match.score?.team1Score ?? "-"}
-                                        </span>
-                                        <span className="text-2xl text-muted-foreground">-</span>
-                                        <span className={`text-3xl font-bold ${
-                                          isCompleted && match.score?.team2Score > match.score?.team1Score
-                                            ? 'text-green-600'
-                                            : ''
-                                        }`}>
-                                          {match.score?.team2Score ?? "-"}
-                                        </span>
-                                      </div>
-                                    )}
-
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2">
-                                      {editingMatch === match._id ? (
-                                        <>
-                                          <Button
-                                            size="sm"
-                                            onClick={() => saveScore(match._id)}
-                                            disabled={updateMatchScoreMutation.isPending}
-                                          >
-                                            <Check className="w-4 h-4 mr-1" />
-                                            Save
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => setEditingMatch(null)}
-                                          >
-                                            <X className="w-4 h-4 mr-1" />
-                                            Cancel
-                                          </Button>
-                                        </>
-                                      ) : (
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => {
-                                            setEditingMatch(match._id);
-                                            setEditScores({
-                                              team1Score: match.score?.team1Score || 0,
-                                              team2Score: match.score?.team2Score || 0,
-                                            });
-                                          }}
-                                        >
-                                          <Edit2 className="w-4 h-4 mr-1" />
-                                          {isCompleted ? 'Edit Score' : 'Enter Score'}
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Team 2 */}
-                                  <div className="text-left">
-                                    <div className="font-bold text-lg mb-1">
-                                      {match.team2?.name || "Team 2"}
-                                    </div>
-                                    {!isSingles && match.team2?.players && (
-                                      <div className="text-sm text-muted-foreground">
-                                        {match.team2.players.map((p: any, i: number) => (
-                                          <div key={i}>{p.name || `Player ${i + 1}`}</div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground text-center py-8">
-                          {getPoolMemberCount(selectedPool) < 2
-                            ? `Add at least 2 ${isSingles ? 'players' : 'teams'} to generate matches`
-                            : "No matches generated yet"}
-                        </p>
-                      )}
+                                )}
+                              </TabsContent>
+                            )}
+                          </Tabs>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
-
-                  {/* Playoff Bracket for this Pool */}
-                  {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && playoffs.length > 0 && (
-                    <>
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-3">
-                            <Trophy className="w-6 h-6 text-primary" />
-                            <div>
-                              <CardTitle>Playoff Bracket - {selectedPool.name}</CardTitle>
-                              <CardDescription>Top 3 teams advancing to elimination rounds</CardDescription>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <PlayoffBracket
-                            matches={playoffs}
-                            onUpdateScore={(matchId, team1Score, team2Score) => {
-                              updateMatchScoreMutation.mutate({
-                                matchId,
-                                scores: { team1Score, team2Score }
-                              });
-                            }}
-                            isUpdating={updateMatchScoreMutation.isPending}
-                          />
-                        </CardContent>
-                      </Card>
-
-                      {/* Final Results */}
-                      <PlayoffResults
-                        eventId={eventId!}
-                        poolId={selectedPoolId!}
-                        poolName={selectedPool.name}
-                        eventName={event.name}
-                      />
-                    </>
-                  )}
                 </div>
               ) : (
                 <Card className="h-full flex items-center justify-center">

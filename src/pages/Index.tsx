@@ -1,18 +1,16 @@
 import Layout from "@/components/layout/Layout";
 import HeroSection from "@/components/home/HeroSection";
-import FeaturesSection from "@/components/home/FeaturesSection";
-import AIPlannerSection from "@/components/home/AIPlannerSection";
+import LogoStripSection from "@/components/home/LogoStripSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
-import CTASection from "@/components/home/CTASection";
+import FeaturedTournamentsSection from "@/components/home/FeaturedTournamentsSection";
 
 const Index = () => {
   return (
     <Layout>
       <HeroSection />
-      <FeaturesSection />
-      <AIPlannerSection />
+      <LogoStripSection />
       <HowItWorksSection />
-      <CTASection />
+      <FeaturedTournamentsSection />
     </Layout>
   );
 };
