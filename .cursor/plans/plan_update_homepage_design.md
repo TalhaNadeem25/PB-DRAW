@@ -1,4 +1,4 @@
----
+ ---
 name: "Plan: Update Homepage Design with Modern Layout"
 overview: "Update the homepage to match the provided modern design while preserving existing color palette (HSL-based court green/yellow) and fonts (Oswald/Inter)"
 todos:

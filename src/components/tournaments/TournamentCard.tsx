@@ -3,6 +3,7 @@ import { Calendar, MapPin, Heart, Share2, Signal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TournamentCardProps {
   id: string;
@@ -18,6 +19,7 @@ interface TournamentCardProps {
   entryFee?: number;
   skillLevel?: string;
   imageUrl?: string;
+  organizerId?: string;
 }
 
 const TournamentCard = ({
@@ -34,7 +36,10 @@ const TournamentCard = ({
   entryFee,
   skillLevel,
   imageUrl,
+  organizerId,
 }: TournamentCardProps) => {
+  const { user } = useAuth();
+  const isOwner = user?._id === organizerId || user?.role === 'admin';
   const isLive = status === "in-progress";
 
   // Extract city/state from location
@@ -121,8 +126,14 @@ const TournamentCard = ({
             className="flex-1 font-display text-sm h-10 shadow-sm"
             asChild
           >
-            <Link to={status === "open" ? `/events/${id}/register` : `/tournaments/${id}`}>
-              {status === "open" ? "Register Now" : status === "in-progress" ? "Watch Live" : "View Details"}
+            <Link to={isOwner ? `/tournaments/${id}` : status === "open" ? `/tournaments/${id}/register` : `/tournaments/${id}`}>
+              {isOwner
+                ? "View Details"
+                : status === "open"
+                  ? "Register Now"
+                  : status === "in-progress"
+                    ? "Watch Live"
+                    : "View Details"}
             </Link>
           </Button>
           <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">

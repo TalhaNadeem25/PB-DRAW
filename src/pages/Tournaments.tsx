@@ -66,6 +66,7 @@ const Tournaments = () => {
     entryFee: tournament.entryFee || 0,
     skillLevel: tournament.skillLevel || "All Levels",
     imageUrl: tournament.imageUrl || "",
+    organizerId: typeof tournament.organizer === 'string' ? tournament.organizer : tournament.organizer?._id,
   }));
 
   const activeFiltersCount = [locationFilter, skillFilter].filter(Boolean).length;
