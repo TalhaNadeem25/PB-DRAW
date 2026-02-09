@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, Heart } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, Heart, ChevronRight, CreditCard, Settings, Grid3X3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
@@ -144,54 +144,111 @@ const Navbar = () => {
                         <span className="max-w-[100px] truncate hidden lg:inline">{user?.name}</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 glass-card">
-                      <DropdownMenuLabel>
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium">{user?.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {user?.role} • {user?.skillLevel} skill
+                    <DropdownMenuContent align="end" sideOffset={8} className="w-[320px] p-0 bg-card border border-border/60 shadow-lg rounded-2xl overflow-hidden z-50">
+                      {/* User Profile Header */}
+                      <div className="p-5 bg-accent/30 border-b border-border/40">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-hero-gradient flex items-center justify-center shadow-md shrink-0">
+                            <span className="text-lg font-bold text-primary-foreground">
+                              {user?.name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-base font-display font-bold text-foreground truncate">{user?.name}</p>
+                            <p className="text-xs font-display font-semibold text-primary flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-primary inline-block" />
+                              {user?.role?.toUpperCase()} • {String(user?.skillLevel || '3.5').toUpperCase()} SKILL
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Stats Row */}
+                      <div className="grid grid-cols-2 gap-3 p-4 border-b border-border/40">
+                        <div className="bg-muted/50 rounded-xl p-3">
+                          <p className="text-[10px] font-display font-bold tracking-wider text-muted-foreground uppercase mb-0.5">
+                            Skill Level
+                          </p>
+                          <p className="text-2xl font-display font-bold text-foreground leading-tight">
+                            {user?.skillLevel || '3.5'}
+                          </p>
+                          <p className="text-xs text-primary font-semibold mt-0.5">↗ +0.05</p>
+                        </div>
+                        <div className="bg-muted/50 rounded-xl p-3">
+                          <p className="text-[10px] font-display font-bold tracking-wider text-muted-foreground uppercase mb-0.5">
+                            Tournaments
+                          </p>
+                          <p className="text-2xl font-display font-bold text-foreground leading-tight">
+                            12
+                          </p>
+                          <p className="text-xs text-muted-foreground font-medium mt-0.5 flex items-center gap-1">
+                            <Trophy className="w-3 h-3" />
+                            {user?.role === 'organizer' ? 'ORGANIZER' : 'PLAYER'}
                           </p>
                         </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link to="/">
-                          <Home className="w-4 h-4 mr-2" />
-                          Home
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link to="/dashboard">
-                          <LayoutDashboard className="w-4 h-4 mr-2" />
-                          Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link to="/teams">
-                          <Users className="w-4 h-4 mr-2" />
-                          My Teams
-                        </Link>
-                      </DropdownMenuItem>
-                      {(user?.role === 'organizer' || user?.role === 'admin') && (
-                        <DropdownMenuItem asChild className="cursor-pointer">
-                          <Link to="/analytics">
-                            <BarChart className="w-4 h-4 mr-2" />
-                            Analytics
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="p-2 space-y-0.5">
+                        <DropdownMenuItem asChild className="cursor-pointer rounded-xl p-3 focus:bg-accent/50">
+                          <Link to="/dashboard" className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                              <LayoutDashboard className="w-4 h-4 text-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-foreground">Player Hub</p>
+                              <p className="text-xs text-muted-foreground">Manage your matches & rankings</p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                           </Link>
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link to="/profile">
-                          <UserCircle className="w-4 h-4 mr-2" />
-                          Profile
+
+                        {(user?.role === 'organizer' || user?.role === 'admin') && (
+                          <DropdownMenuItem asChild className="cursor-pointer rounded-xl p-3 focus:bg-accent/50">
+                            <Link to="/analytics" className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                <Grid3X3 className="w-4 h-4 text-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-foreground">Organizer Dashboard</p>
+                                <p className="text-xs text-muted-foreground">Manage hosted tournaments</p>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuItem asChild className="cursor-pointer rounded-xl p-3 focus:bg-accent/50">
+                          <Link to="/my-tickets" className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                              <CreditCard className="w-4 h-4 text-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-foreground">Payment History</p>
+                              <p className="text-xs text-muted-foreground">View receipts and dues</p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          </Link>
+                        </DropdownMenuItem>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between px-5 py-3 border-t border-border/40">
+                        <Link
+                          to="/profile"
+                          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Settings
                         </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Log Out
-                      </DropdownMenuItem>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-1.5 text-sm text-destructive hover:text-destructive/80 transition-colors font-semibold"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </>
