@@ -256,7 +256,7 @@ const Signup = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="flex flex-col gap-2">
-                        <Label htmlFor="password" classname="text-foreground text-sm font-semibold">Password</Label>
+                        <Label htmlFor="password" className="text-foreground text-sm font-semibold">Password</Label>
                         <div className="relative">
                             <Input 
                                 id="password"
@@ -277,7 +277,7 @@ const Signup = () => {
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Label htmlFor="confirmPassword" classname="text-foreground text-sm font-semibold">Confirm Password</Label>
+                        <Label htmlFor="confirmPassword" className="text-foreground text-sm font-semibold">Confirm Password</Label>
                         <Input 
                             id="confirmPassword"
                             type="password"
