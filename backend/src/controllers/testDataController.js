@@ -3,7 +3,6 @@ import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 import Payment from '../models/Payment.js';
 import Tournament from '../models/Tournament.js';
-import bcrypt from 'bcryptjs';
 
 const TEST_EMAIL_DOMAIN = '@test.pickleplay.local';
 
@@ -54,7 +53,6 @@ export const generateTestData = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Event not found' });
     }
 
-    const hashedPassword = await bcrypt.hash('testpassword123', 10);
     const isSingles = event.format === 'singles';
     const timestamp = Date.now();
     let created = 0;
@@ -71,7 +69,7 @@ export const generateTestData = async (req, res, next) => {
         const user = await User.create({
           name,
           email,
-          password: hashedPassword,
+          password: 'TestPass123!',
           role: 'player',
           skillLevel,
           isActive: true,
@@ -123,7 +121,7 @@ export const generateTestData = async (req, res, next) => {
           const user = await User.create({
             name,
             email,
-            password: hashedPassword,
+            password: 'TestPass123!',
             role: 'player',
             skillLevel,
             isActive: true,
@@ -184,7 +182,11 @@ export const generateTestData = async (req, res, next) => {
     });
   } catch (error) {
     console.error('Error generating test data:', error);
-    next(error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to generate test data',
+      errors: error.errors ? Object.keys(error.errors).map(k => `${k}: ${error.errors[k].message}`) : undefined,
+    });
   }
 };
 
