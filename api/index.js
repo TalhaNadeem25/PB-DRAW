@@ -21,6 +21,15 @@ import invitationRoutes from '../backend/src/routes/invitationRoutes.js';
 import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
 import stripeConnectRoutes from '../backend/src/routes/stripeConnectRoutes.js';
 import analyticsRoutes from '../backend/src/routes/analyticsRoutes.js';
+import waitlistRoutes from '../backend/src/routes/waitlistRoutes.js';
+import checkInRoutes from '../backend/src/routes/checkInRoutes.js';
+import aiPlannerRoutes from '../backend/src/routes/aiPlannerRoutes.js';
+import cancellationRoutes from '../backend/src/routes/cancellationRoutes.js';
+import notificationRoutes from '../backend/src/routes/notificationRoutes.js';
+import partnerRoutes from '../backend/src/routes/partnerRoutes.js';
+import communicationRoutes from '../backend/src/routes/communicationRoutes.js';
+import courtRoutes from '../backend/src/routes/courtRoutes.js';
+import testDataRoutes from '../backend/src/routes/testDataRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -74,12 +83,21 @@ app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/payments', paymentLimiter, paymentRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/check-in', checkInRoutes);
+app.use('/api/ai-planner', aiPlannerRoutes);
+app.use('/api/cancellations', cancellationRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/partners', partnerRoutes);
+app.use('/api/communications', communicationRoutes);
+app.use('/api/court-management', courtRoutes);
+app.use('/api', testDataRoutes);
 
 // Nested routes (must come before standalone routes)
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);
 app.use('/api/events/:eventId/pools', poolRoutes);
 app.use('/api/events/:eventId/teams', teamRoutes);
 app.use('/api/events/:eventId/playoffs', playoffRoutes);
+app.use('/api/events/:eventId/waitlist', waitlistRoutes);
 app.use('/api/pools/:poolId/matches', matchRoutes);
 app.use('/api/teams/:teamId/invitations', invitationRoutes);
 
