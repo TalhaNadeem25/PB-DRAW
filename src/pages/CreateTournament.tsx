@@ -224,29 +224,29 @@ const CreateTournament = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
+        {/* Compact top bar — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
             </button>
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground animate-fade-in">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
               Create Tournament
             </h1>
-            <p className="text-lg text-primary-foreground/80 mt-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <p className="text-muted-foreground text-sm mt-1">
               Set up your pickleball tournament in minutes
             </p>
           </div>
         </div>
 
         {/* Progress Steps */}
-        <div className="container mx-auto px-4 -mt-6 relative z-10">
-          <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
-            <div className="flex items-center justify-between max-w-2xl mx-auto">
+        <div className="container mx-auto px-4 sm:px-6 py-6">
+          <div className="glass-card rounded-2xl p-4 sm:p-6 animate-fade-in overflow-x-auto">
+            <div className="flex items-center justify-between max-w-2xl mx-auto min-w-[280px]">
               {[
                 { num: 1, label: "Basic Info" },
                 { num: 2, label: "Events" },
@@ -286,7 +286,7 @@ const CreateTournament = () => {
         </div>
 
         {/* Form Content */}
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <div className="max-w-4xl mx-auto">
             {/* Step 1: Basic Info */}
             {step === 1 && (

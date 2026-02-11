@@ -193,31 +193,31 @@ const EditTournament = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
+        {/* Compact top bar — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             <Button
               variant="ghost"
               onClick={() => navigate(`/tournaments/${id}`)}
-              className="mb-6 text-primary-foreground/80 hover:text-primary-foreground"
+              className="mb-4 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Tournament
             </Button>
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-2">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
               Edit Tournament
             </h1>
-            <p className="text-lg text-primary-foreground/80">
+            <p className="text-muted-foreground text-sm">
               Update tournament information
             </p>
           </div>
         </div>
 
         {/* Form */}
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="max-w-4xl mx-auto">
             <form onSubmit={handleSubmit} className="space-y-8">
-              <Card>
+              <Card className="glass-card rounded-2xl border-border/50">
                 <CardHeader>
                   <CardTitle>Tournament Details</CardTitle>
                   <CardDescription>

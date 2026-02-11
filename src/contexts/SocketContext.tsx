@@ -27,9 +27,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // VITE_API_URL may include a path like /api — strip it for Socket.IO
+    // which interprets paths as namespaces
+    const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const url = new URL(rawUrl);
+    const SOCKET_URL = url.origin; // e.g. http://localhost:5000
 
-    const socketInstance = io(API_URL, {
+    const socketInstance = io(SOCKET_URL, {
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,

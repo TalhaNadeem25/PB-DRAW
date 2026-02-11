@@ -4,7 +4,9 @@ import {
   respondToPartnerCancellation,
   getMyCancellations,
   calculateRefundPreview,
-  getTournamentCancellations
+  getTournamentCancellations,
+  organizerRefundPayment,
+  bulkRefundTournament,
 } from '../controllers/cancellationController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -16,7 +18,9 @@ router.get('/events/:eventId/refund-preview', protect, calculateRefundPreview);
 router.get('/my-cancellations', protect, getMyCancellations);
 router.post('/:cancellationId/partner-response', protect, respondToPartnerCancellation);
 
-// Admin routes
+// Organizer/Admin routes
 router.get('/tournaments/:tournamentId', protect, authorize('organizer', 'admin'), getTournamentCancellations);
+router.post('/organizer-refund/:paymentId', protect, authorize('organizer', 'admin'), organizerRefundPayment);
+router.post('/tournaments/:tournamentId/bulk-refund', protect, authorize('organizer', 'admin'), bulkRefundTournament);
 
 export default router;

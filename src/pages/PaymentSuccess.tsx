@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Home, Trophy, Calendar, Users, Sparkles } from "lucide-react";
 
@@ -18,7 +17,7 @@ const PaymentSuccess = () => {
   }, [paymentIntent]);
 
   return (
-    <Layout>
+    <Layout variant="auth">
       <div className="min-h-screen bg-mesh-gradient flex items-center justify-center p-4 relative overflow-hidden">
         {/* Floating decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -46,30 +45,24 @@ const PaymentSuccess = () => {
           </div>
         )}
 
-        <Card className="max-w-lg w-full glass border-0 shadow-float relative z-10 animate-scale-in">
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 rounded-2xl blur-xl opacity-50" />
-          
-          <CardHeader className="text-center relative z-10 pt-10">
-            {/* Animated success icon */}
+        <div className="max-w-lg w-full glass-card rounded-2xl p-8 relative z-10 animate-fade-in overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-hero-gradient" />
+          <div className="relative z-10 pt-6 text-center">
             <div className="relative mx-auto mb-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-glow animate-pulse-glow">
+              <div className="w-24 h-24 rounded-full bg-hero-gradient flex items-center justify-center shadow-glow animate-pulse-glow">
                 <CheckCircle2 className="w-14 h-14 text-primary-foreground" />
               </div>
               <div className="absolute -top-2 -right-2">
                 <Sparkles className="w-8 h-8 text-secondary animate-bounce" />
               </div>
             </div>
-            
-            <CardTitle className="text-3xl md:text-4xl font-display bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-gradient mb-2">
               Payment Successful!
-            </CardTitle>
-            <CardDescription className="text-lg mt-2">
-              You're all set for the tournament
-            </CardDescription>
-          </CardHeader>
+            </h1>
+            <p className="text-lg text-muted-foreground">You're all set for the tournament</p>
+          </div>
 
-          <CardContent className="space-y-8 relative z-10 pb-10">
+          <div className="space-y-8 relative z-10 pb-10 mt-8">
             {/* Success message */}
             <div className="bg-primary/5 border border-primary/20 p-6 rounded-xl space-y-3">
               <div className="flex items-center gap-3 text-primary">
@@ -125,8 +118,8 @@ const PaymentSuccess = () => {
                 View Dashboard
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </Layout>
   );

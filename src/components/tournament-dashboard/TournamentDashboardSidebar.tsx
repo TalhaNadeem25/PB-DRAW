@@ -9,6 +9,8 @@ import {
   GitBranch,
   BarChart3,
   Settings,
+  RefreshCcw,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +21,9 @@ export type DashboardSection =
   | "planner"
   | "ai-planner"
   | "schedule"
-  | "brackets";
+  | "brackets"
+  | "refunds"
+  | "test";
 
 interface SidebarItem {
   id: DashboardSection;
@@ -35,6 +39,8 @@ const sidebarItems: SidebarItem[] = [
   { id: "ai-planner", label: "AI Planner", icon: Sparkles },
   { id: "schedule", label: "Schedule", icon: Clock },
   { id: "brackets", label: "Brackets", icon: GitBranch },
+  { id: "refunds", label: "Refunds", icon: RefreshCcw },
+  { id: "test", label: "Test Data", icon: FlaskConical },
 ];
 
 interface TournamentDashboardSidebarProps {

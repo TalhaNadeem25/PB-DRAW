@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tournamentAPI, teamAPI, eventAPI } from "@/services/api";
-import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
+import { tournamentAPI, teamAPI, eventAPI, cancellationAPI } from "@/services/api";
+import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight, DollarSign, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -29,6 +29,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 interface RegisteredPlayersProps {
@@ -40,6 +42,10 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [targetEventId, setTargetEventId] = useState<string>("");
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [refundTarget, setRefundTarget] = useState<any>(null);
+  const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+  const [refundConfirmStep, setRefundConfirmStep] = useState<"form" | "confirm">("form");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['tournament-registrations', tournamentId],
@@ -76,6 +82,38 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
       toast.error(error.response?.data?.message || "Failed to move player");
     },
   });
+
+  const refundMutation = useMutation({
+    mutationFn: ({ paymentId, reason }: { paymentId: string; reason: string }) =>
+      cancellationAPI.organizerRefund(paymentId, { reason, removeFromEvent: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tournament-registrations', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-cancellations', tournamentId] });
+      setIsRefundDialogOpen(false);
+      setRefundTarget(null);
+      setRefundReason("");
+      setRefundConfirmStep("form");
+      toast.success("Refund processed successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to process refund");
+      setRefundConfirmStep("form");
+    },
+  });
+
+  const handleRefundClick = (item: any, type: 'team' | 'player') => {
+    setRefundTarget({ ...item, type });
+    setIsRefundDialogOpen(true);
+  };
+
+  const handleConfirmRefund = () => {
+    if (refundConfirmStep === "form") {
+      setRefundConfirmStep("confirm");
+      return;
+    }
+    if (!refundTarget?.paymentId || !refundReason.trim()) return;
+    refundMutation.mutate({ paymentId: refundTarget.paymentId, reason: refundReason });
+  };
 
   const handleMoveClick = (item: any, currentEventId: string, type: 'team' | 'player') => {
     setSelectedItem({ ...item, currentEventId, type });
@@ -166,10 +204,10 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
               </div>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-6 overflow-x-auto">
               {event.format === 'singles' ? (
                 // Singles Format - Show individual players
-                <Table>
+                <Table className="min-w-[640px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Player Name</TableHead>
@@ -213,15 +251,28 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                           {player.registeredAt ? format(new Date(player.registeredAt), 'MMM dd, yyyy') : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleMoveClick(player, event.eventId, 'player')}
-                            className="flex items-center gap-1"
-                          >
-                            <ArrowRight className="w-3 h-3" />
-                            Move
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMoveClick(player, event.eventId, 'player')}
+                              className="flex items-center gap-1"
+                            >
+                              <ArrowRight className="w-3 h-3" />
+                              Move
+                            </Button>
+                            {player.paymentStatus === 'paid' && player.paymentId && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRefundClick(player, 'player')}
+                                className="flex items-center gap-1 border-destructive/30 text-destructive hover:bg-destructive/10"
+                              >
+                                <DollarSign className="w-3 h-3" />
+                                Refund
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -229,7 +280,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                 </Table>
               ) : (
                 // Doubles/Mixed Format - Show teams with partners
-                <Table>
+                <Table className="min-w-[720px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Team Name</TableHead>
@@ -303,15 +354,28 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                           {team.registeredAt ? format(new Date(team.registeredAt), 'MMM dd, yyyy') : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleMoveClick(team, event.eventId, 'team')}
-                            className="flex items-center gap-1"
-                          >
-                            <ArrowRight className="w-3 h-3" />
-                            Move
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMoveClick(team, event.eventId, 'team')}
+                              className="flex items-center gap-1"
+                            >
+                              <ArrowRight className="w-3 h-3" />
+                              Move
+                            </Button>
+                            {team.paymentStatus === 'paid' && team.paymentId && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRefundClick(team, 'team')}
+                                className="flex items-center gap-1 border-destructive/30 text-destructive hover:bg-destructive/10"
+                              >
+                                <DollarSign className="w-3 h-3" />
+                                Refund
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -393,6 +457,104 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                 </>
               ) : (
                 `Move ${selectedItem?.type === 'team' ? 'Team' : 'Player'}`
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Dialog */}
+      <Dialog
+        open={isRefundDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsRefundDialogOpen(false);
+            setRefundTarget(null);
+            setRefundReason("");
+            setRefundConfirmStep("form");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-destructive" />
+              Issue Refund
+            </DialogTitle>
+            <DialogDescription>
+              Process a full refund and remove this {refundTarget?.type === 'team' ? 'team' : 'player'} from the event.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {refundTarget && (
+              <div className="p-3 bg-muted rounded-lg">
+                {refundTarget.type === 'team' ? (
+                  <>
+                    <div className="font-semibold">{refundTarget.teamName}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {refundTarget.players?.map((p: any) => p.name).join(' & ')}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-semibold">{refundTarget.name}</div>
+                    <div className="text-sm text-muted-foreground">{refundTarget.email}</div>
+                  </>
+                )}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label className="font-display font-semibold text-sm">
+                Reason <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                placeholder="Reason for issuing this refund..."
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                rows={2}
+                className="resize-none"
+              />
+            </div>
+            {refundConfirmStep === "confirm" && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-fade-in">
+                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <p className="text-sm text-destructive font-medium">
+                  Are you sure? This will process a full refund via Stripe and remove the {refundTarget?.type === 'team' ? 'team' : 'player'} from the event. This action cannot be undone.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (refundConfirmStep === "confirm") {
+                  setRefundConfirmStep("form");
+                } else {
+                  setIsRefundDialogOpen(false);
+                  setRefundTarget(null);
+                  setRefundReason("");
+                  setRefundConfirmStep("form");
+                }
+              }}
+              disabled={refundMutation.isPending}
+            >
+              {refundConfirmStep === "confirm" ? "Go Back" : "Cancel"}
+            </Button>
+            <Button
+              variant={refundConfirmStep === "confirm" ? "destructive" : "default"}
+              onClick={handleConfirmRefund}
+              disabled={!refundReason.trim() || refundMutation.isPending}
+            >
+              {refundMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : refundConfirmStep === "confirm" ? (
+                "Confirm Refund"
+              ) : (
+                "Issue Refund"
               )}
             </Button>
           </DialogFooter>

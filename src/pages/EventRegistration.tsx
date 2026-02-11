@@ -226,50 +226,37 @@ const EventRegistration = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-12 relative overflow-hidden">
-          {/* Floating Orbs */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-10 right-[15%] w-56 h-56 bg-secondary/20 rounded-full blur-3xl animate-float-slow" />
-            <div className="absolute bottom-5 left-[10%] w-40 h-40 bg-court-green-dark/30 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-            <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl animate-float" style={{ animationDelay: "3s" }} />
-          </div>
-          
-          {/* Court pattern */}
-          <div className="absolute inset-0 court-pattern opacity-5 pointer-events-none" />
-          
-          <div className="container mx-auto px-4 relative z-10">
+        {/* Compact top bar — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             <Link
               to={`/tournaments/${tournamentId}/register`}
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors group"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft className="w-4 h-4" />
               Back to Tournament Registration
             </Link>
-
-            <div className="animate-fade-in">
-              {/* Step indicator */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step === "team-details" ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/20 text-primary-foreground"}`}>
-                  <span className="w-6 h-6 rounded-full bg-current/20 flex items-center justify-center text-xs">1</span>
-                  Team Details
-                </div>
-                <div className="w-8 h-px bg-primary-foreground/30" />
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step === "payment" ? "bg-secondary text-secondary-foreground" : "bg-primary-foreground/20 text-primary-foreground/60"}`}>
-                  <span className="w-6 h-6 rounded-full bg-current/20 flex items-center justify-center text-xs">2</span>
-                  Payment
-                </div>
+            {/* Step indicator */}
+            <div className="flex items-center gap-3 mb-2">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${step === "team-details" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                <span className="w-5 h-5 rounded-full bg-current/20 flex items-center justify-center text-xs">1</span>
+                Team Details
               </div>
-              <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-2">
-                {event.name}
-              </h1>
-              <p className="text-xl text-primary-foreground/80">{tournament.name}</p>
+              <div className="w-6 h-px bg-border" />
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${step === "payment" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                <span className="w-5 h-5 rounded-full bg-current/20 flex items-center justify-center text-xs">2</span>
+                Payment
+              </div>
             </div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
+              {event.name}
+            </h1>
+            <p className="text-muted-foreground text-sm">{tournament.name}</p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="max-w-4xl mx-auto">
             {step === "team-details" ? (
               <div className="grid lg:grid-cols-3 gap-8">
@@ -318,7 +305,7 @@ const EventRegistration = () => {
                     <CardContent className="space-y-6">
                       {/* Player Info */}
                       <div className="glass rounded-xl p-5 border border-border/50">
-                        <Label className="text-sm font-medium mb-3 block flex items-center gap-2">
+                        <Label className="text-sm font-medium mb-3 flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-primary" />
                           Your Information
                         </Label>

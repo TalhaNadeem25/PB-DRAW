@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,25 +72,9 @@ const Signup = () => {
   };
 
   return (
+    <Layout variant="auth">
     <div className="min-h-screen flex flex-col bg-background font-sans">
-      {/* Top Navigation Bar - Simplified for Auth */}
-      <header className="flex items-center justify-between whitespace-nowrap border-b border-border bg-card px-6 md:px-10 py-4 z-50">
-        <Link to="/" className="flex items-center gap-3 text-foreground group">
-          <div className="size-8 text-primary transition-transform group-hover:scale-110">
-            <Trophy className="w-full h-full fill-current" />
-          </div>
-          <h2 className="text-xl font-display font-bold leading-tight tracking-tight">Pickle Rally</h2>
-        </Link>
-        <div className="flex items-center gap-4">
-          <span className="hidden md:inline text-sm text-muted-foreground">Already have an account?</span>
-          <Link to="/login">
-            <Button variant="ghost" className="bg-primary/10 hover:bg-primary/20 text-primary font-bold">
-              Log In
-            </Button>
-          </Link>
-        </div>
-      </header>
-
+      <div className="h-6" />
       <main className="flex-1 flex overflow-hidden">
         {/* Split Layout: Left Panel (Visual) */}
         <div className="hidden lg:flex flex-1 relative bg-sidebar-primary overflow-hidden">
@@ -366,9 +351,10 @@ const Signup = () => {
 
       {/* Mobile Progress Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full h-1.5 bg-border">
-        <div className="h-full bg-primary w-1/2"></div>
+        <div className="h-full bg-hero-gradient w-1/2"></div>
       </div>
     </div>
+    </Layout>
   );
 };
 

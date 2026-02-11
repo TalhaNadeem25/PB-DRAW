@@ -517,6 +517,16 @@ export const cancellationAPI = {
     const response = await api.get(`/cancellations/tournaments/${tournamentId}`);
     return response.data;
   },
+
+  organizerRefund: async (paymentId: string, data: { refundAmount?: number; reason: string; removeFromEvent?: boolean }) => {
+    const response = await api.post(`/cancellations/organizer-refund/${paymentId}`, data);
+    return response.data;
+  },
+
+  bulkRefundTournament: async (tournamentId: string, reason: string) => {
+    const response = await api.post(`/cancellations/tournaments/${tournamentId}/bulk-refund`, { reason });
+    return response.data;
+  },
 };
 
 // Partner Matching
@@ -667,6 +677,19 @@ export const courtAPI = {
 
   clearSchedule: async (tournamentId: string) => {
     const response = await api.delete(`/court-management/${tournamentId}/clear-schedule`);
+    return response.data;
+  },
+};
+
+// Test Data
+export const testDataAPI = {
+  generate: async (tournamentId: string, data: { eventId: string; count: number }) => {
+    const response = await api.post(`/tournaments/${tournamentId}/test-data`, data);
+    return response.data;
+  },
+
+  clear: async (tournamentId: string) => {
+    const response = await api.delete(`/tournaments/${tournamentId}/test-data`);
     return response.data;
   },
 };

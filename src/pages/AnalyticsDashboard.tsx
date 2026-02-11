@@ -107,9 +107,12 @@ const AnalyticsDashboard = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container mx-auto py-8">
-          <div className="flex items-center justify-center h-96">
-            <div className="text-lg">Loading analytics...</div>
+        <div className="min-h-screen bg-background">
+          <div className="flex items-center justify-center py-24">
+            <div className="glass-card rounded-2xl p-8 text-center">
+              <BarChart className="w-10 h-10 text-primary mx-auto mb-4 animate-pulse" />
+              <p className="text-muted-foreground">Loading analytics...</p>
+            </div>
           </div>
         </div>
       </Layout>
@@ -118,22 +121,36 @@ const AnalyticsDashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-        <div className="container mx-auto py-8 px-4">
-          {/* Hero Header */}
-          <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-8 mb-8 text-white shadow-lg">
-            <h1 className="text-4xl font-bold mb-2">Analytics Dashboard</h1>
-            <p className="text-lg opacity-90">Track your tournament performance and revenue</p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 sm:px-6 py-6">
+          {/* Compact top bar — no green hero */}
+          <div className="border-b border-border/60 bg-card/50 -mx-4 px-4 py-6 mb-8 rounded-b-none">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Analytics Dashboard</h1>
+                <p className="text-muted-foreground text-sm mt-1">Track your tournament performance and revenue</p>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleExportCSV} variant="outline" size="sm">
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  CSV
+                </Button>
+                <Button onClick={handleExportPDF} variant="outline" size="sm">
+                  <FileText className="w-4 h-4 mr-2" />
+                  PDF
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Filters Section */}
-          <Card className="mb-8 shadow-card">
+          <Card className="mb-8 glass-card rounded-2xl border-border/50">
             <CardHeader>
               <CardTitle>Filters</CardTitle>
               <CardDescription>Customize your analytics view</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Tournament</label>
                   <Select value={selectedTournament} onValueChange={setSelectedTournament}>
@@ -170,27 +187,16 @@ const AnalyticsDashboard = () => {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
-
-                <div className="flex items-end gap-2">
-                  <Button onClick={handleExportCSV} variant="outline" className="flex-1">
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    CSV
-                  </Button>
-                  <Button onClick={handleExportPDF} variant="outline" className="flex-1">
-                    <FileText className="w-4 h-4 mr-2" />
-                    PDF
-                  </Button>
-                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="shadow-card hover:shadow-lg transition-shadow">
+            <Card className="glass-card-hover rounded-2xl border-border/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-5 w-5 text-green-600" />
+                <DollarSign className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -205,10 +211,10 @@ const AnalyticsDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card hover:shadow-lg transition-shadow">
+            <Card className="glass-card-hover rounded-2xl border-border/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Tournaments</CardTitle>
-                <Trophy className="h-5 w-5 text-yellow-600" />
+                <Trophy className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -220,10 +226,10 @@ const AnalyticsDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card hover:shadow-lg transition-shadow">
+            <Card className="glass-card-hover rounded-2xl border-border/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Participants</CardTitle>
-                <Users className="h-5 w-5 text-blue-600" />
+                <Users className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -235,10 +241,10 @@ const AnalyticsDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card hover:shadow-lg transition-shadow">
+            <Card className="glass-card-hover rounded-2xl border-border/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Avg Fill Rate</CardTitle>
-                <TrendingUp className="h-5 w-5 text-purple-600" />
+                <TrendingUp className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">

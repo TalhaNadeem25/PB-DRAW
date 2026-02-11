@@ -5,7 +5,7 @@ import Payment from '../models/Payment.js';
 import Tournament from '../models/Tournament.js';
 import Waitlist from '../models/Waitlist.js';
 import stripe from '../config/stripe.js';
-import { sendCancellationConfirmationEmail, sendPartnerNotificationEmail, sendPartnerRefundEmail, sendWaitlistPromotionEmail } from '../services/emailService.js';
+import { sendCancellationConfirmationEmail, sendPartnerNotificationEmail, sendPartnerRefundEmail, sendWaitlistPromotionEmail, sendOrganizerRefundEmail, sendTournamentCancelledEmail } from '../services/emailService.js';
 
 /**
  * Calculate refund percentage based on days until tournament
@@ -87,10 +87,14 @@ export const requestCancellation = async (req, res, next) => {
       // Determine if both players or just one is canceling
       cancellationType = team.players.length === 1 ? 'doubles-full-team' : 'doubles-one-player';
 
-      // Find payment
+      // Find payment for this team (either payer or partner can cancel)
       payment = await Payment.findOne({
-        user: req.user.id,
-        'eventRegistrations.teamId': team._id
+        status: 'completed',
+        $or: [
+          { team: team._id },
+          { teams: team._id },
+          { 'eventBreakdown.teamId': team._id }
+        ]
       });
     }
 
@@ -436,14 +440,21 @@ export const calculateRefundPreview = async (req, res, next) => {
         payment = await Payment.findById(registration.payment);
       }
     } else {
+      // Doubles/mixed: user must be on a team for this event
       const team = await Team.findOne({
         event: eventId,
         players: req.user.id
       });
       if (team) {
+        // Find the payment for this team (either payer or partner can view refund)
+        // Payment may have user = payer; partner flow has user = invitee only, so don't filter by user
         payment = await Payment.findOne({
-          user: req.user.id,
-          'eventRegistrations.teamId': team._id
+          status: 'completed',
+          $or: [
+            { team: team._id },
+            { teams: team._id },
+            { 'eventBreakdown.teamId': team._id }
+          ]
         });
       }
     }
@@ -451,7 +462,7 @@ export const calculateRefundPreview = async (req, res, next) => {
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: 'Payment not found'
+        message: 'No completed payment found for this registration'
       });
     }
 
@@ -522,10 +533,276 @@ export const getTournamentCancellations = async (req, res, next) => {
   }
 };
 
+/**
+ * Organizer-initiated refund for a specific payment
+ */
+export const organizerRefundPayment = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    const { refundAmount: requestedAmount, reason, removeFromEvent = true } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ success: false, message: 'Reason is required' });
+    }
+
+    // Find payment and populate references
+    const payment = await Payment.findById(paymentId).populate('user', 'name email');
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment not found' });
+    }
+
+    if (payment.status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Only completed payments can be refunded' });
+    }
+
+    // Find event and tournament for this payment
+    const eventId = payment.event || payment.events?.[0];
+    const event = await Event.findById(eventId).populate('tournament');
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Associated event not found' });
+    }
+
+    const tournament = event.tournament;
+
+    // Verify organizer authorization
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    // Calculate refund amount (default full, cap at payment amount)
+    const refundAmount = requestedAmount
+      ? Math.min(Math.round(requestedAmount * 100), payment.amount) // Convert dollars to cents if needed
+      : payment.amount;
+
+    // Process Stripe refund
+    let refundId = null;
+    if (refundAmount > 0 && payment.stripePaymentIntentId) {
+      try {
+        const refund = await stripe.refunds.create({
+          payment_intent: payment.stripePaymentIntentId,
+          amount: refundAmount,
+        });
+        refundId = refund.id;
+      } catch (stripeErr) {
+        return res.status(400).json({
+          success: false,
+          message: `Stripe refund failed: ${stripeErr.message}`,
+        });
+      }
+    }
+
+    // Create cancellation record for audit trail
+    const cancellation = await Cancellation.create({
+      user: payment.user._id,
+      tournament: tournament._id,
+      event: event._id,
+      team: payment.team || payment.teams?.[0],
+      payment: payment._id,
+      cancellationType: 'organizer-initiated',
+      requestedBy: req.user.id,
+      refundAmount,
+      refundPercentage: Math.round((refundAmount / payment.amount) * 100),
+      stripeFeeDeducted: 0,
+      refundProcessed: !!refundId,
+      refundId,
+      status: 'processed',
+      reason,
+      adminNotes: `Organizer-initiated refund`,
+      processedAt: new Date(),
+      processedBy: req.user.id,
+    });
+
+    // Update payment status
+    payment.status = 'refunded';
+    payment.refundedAt = new Date();
+    payment.refundReason = reason;
+    await payment.save();
+
+    // Remove from event if requested
+    if (removeFromEvent) {
+      if (event.format === 'singles') {
+        event.registeredPlayers = event.registeredPlayers.filter(
+          (reg) => reg.player.toString() !== payment.user._id.toString()
+        );
+      } else {
+        const teamId = payment.team || payment.teams?.[0];
+        if (teamId) {
+          event.teams = (event.teams || []).filter((t) => t.toString() !== teamId.toString());
+          await Team.findByIdAndDelete(teamId);
+        }
+      }
+      event.currentTeams = Math.max(0, (event.currentTeams || 1) - 1);
+      await event.save();
+
+      // Promote from waitlist
+      await promoteFromWaitlist(event._id);
+    }
+
+    // Send email to player
+    try {
+      await sendOrganizerRefundEmail({
+        user: payment.user,
+        tournament,
+        event,
+        refundAmount: refundAmount / 100,
+        reason,
+        organizerName: req.user.name || 'Tournament Organizer',
+      });
+    } catch (emailErr) {
+      console.error('Failed to send refund email:', emailErr);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Refund processed successfully',
+      data: {
+        cancellation,
+        refundAmount: refundAmount / 100,
+        playerName: payment.user.name,
+        playerEmail: payment.user.email,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Bulk refund all payments for a tournament (tournament cancellation)
+ */
+export const bulkRefundTournament = async (req, res, next) => {
+  try {
+    const { tournamentId } = req.params;
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ success: false, message: 'Reason is required' });
+    }
+
+    const tournament = await Tournament.findById(tournamentId);
+    if (!tournament) {
+      return res.status(404).json({ success: false, message: 'Tournament not found' });
+    }
+
+    // Verify organizer authorization
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    if (tournament.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Tournament is already cancelled' });
+    }
+
+    // Find all events for this tournament
+    const events = await Event.find({ tournament: tournamentId });
+    const eventIds = events.map((e) => e._id);
+
+    // Find all completed payments for these events
+    const payments = await Payment.find({
+      $or: [
+        { event: { $in: eventIds }, status: 'completed' },
+        { events: { $elemMatch: { $in: eventIds } }, status: 'completed' },
+      ],
+    }).populate('user', 'name email');
+
+    let totalRefunded = 0;
+    let paymentsProcessed = 0;
+    let failedCount = 0;
+    const results = [];
+
+    for (const payment of payments) {
+      try {
+        let refundId = null;
+        if (payment.amount > 0 && payment.stripePaymentIntentId) {
+          const refund = await stripe.refunds.create({
+            payment_intent: payment.stripePaymentIntentId,
+            amount: payment.amount,
+          });
+          refundId = refund.id;
+        }
+
+        // Create cancellation record
+        await Cancellation.create({
+          user: payment.user._id,
+          tournament: tournamentId,
+          event: payment.event || payment.events?.[0],
+          team: payment.team || payment.teams?.[0],
+          payment: payment._id,
+          cancellationType: 'tournament-cancelled',
+          requestedBy: req.user.id,
+          refundAmount: payment.amount,
+          refundPercentage: 100,
+          stripeFeeDeducted: 0,
+          refundProcessed: !!refundId,
+          refundId,
+          status: 'processed',
+          reason,
+          adminNotes: 'Tournament cancelled by organizer',
+          processedAt: new Date(),
+          processedBy: req.user.id,
+        });
+
+        payment.status = 'refunded';
+        payment.refundedAt = new Date();
+        payment.refundReason = reason;
+        await payment.save();
+
+        totalRefunded += payment.amount;
+        paymentsProcessed++;
+
+        // Send email
+        try {
+          await sendTournamentCancelledEmail({
+            user: payment.user,
+            tournament,
+            refundAmount: payment.amount / 100,
+            reason,
+          });
+        } catch (emailErr) {
+          console.error(`Failed to send cancellation email to ${payment.user.email}:`, emailErr);
+        }
+
+        results.push({ paymentId: payment._id, status: 'refunded', amount: payment.amount / 100 });
+      } catch (err) {
+        failedCount++;
+        results.push({ paymentId: payment._id, status: 'failed', error: err.message });
+        console.error(`Failed to refund payment ${payment._id}:`, err);
+      }
+    }
+
+    // Clear all event registrations
+    for (const event of events) {
+      event.registeredPlayers = [];
+      event.teams = [];
+      event.currentTeams = 0;
+      await event.save();
+    }
+
+    // Update tournament status
+    tournament.status = 'cancelled';
+    await tournament.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Tournament cancelled. ${paymentsProcessed} refund(s) processed.`,
+      data: {
+        totalRefunded: totalRefunded / 100,
+        paymentsProcessed,
+        failedCount,
+        results,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   requestCancellation,
   respondToPartnerCancellation,
   getMyCancellations,
   calculateRefundPreview,
-  getTournamentCancellations
+  getTournamentCancellations,
+  organizerRefundPayment,
+  bulkRefundTournament,
 };

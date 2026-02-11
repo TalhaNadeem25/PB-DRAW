@@ -34,6 +34,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
 import communicationRoutes from './routes/communicationRoutes.js';
 import courtRoutes from './routes/courtRoutes.js';
+import testDataRoutes from './routes/testDataRoutes.js';
 import { assignMatchToCourt } from './controllers/courtController.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
 
@@ -112,6 +113,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/communications', communicationRoutes);
 app.use('/api/court-management', courtRoutes);
+app.use('/api', testDataRoutes);
 
 // Nested routes
 app.use('/api/tournaments/:tournamentId/events', eventRoutes);

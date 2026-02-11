@@ -76,10 +76,10 @@ const Tournaments = () => {
       <div className="min-h-screen bg-background">
         {/* Search Section */}
         <div className="border-b border-border/60 bg-card/50">
-          <div className="container mx-auto px-4 py-6">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             {/* Search Bar Row */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 relative">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+              <div className="flex-1 min-w-0 relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Search by tournament name or venue"
@@ -96,14 +96,14 @@ const Tournaments = () => {
                   </button>
                 )}
               </div>
-              <Button className="h-12 px-6 font-display text-sm gap-2 rounded-xl shadow-sm">
+              <Button className="h-12 px-4 sm:px-6 font-display text-sm gap-2 rounded-xl shadow-sm shrink-0">
                 <MapPin className="w-4 h-4" />
                 Nearby
               </Button>
             </div>
 
             {/* Filter Chips Row */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Location */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -187,7 +187,7 @@ const Tournaments = () => {
               </DropdownMenu>
 
               {/* Sort */}
-              <div className="ml-auto flex items-center gap-2">
+              <div className="w-full sm:w-auto sm:ml-auto flex items-center gap-2 mt-2 sm:mt-0">
                 <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
                   Sort by:
                 </span>
@@ -231,7 +231,7 @@ const Tournaments = () => {
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 animate-pulse">
@@ -251,9 +251,9 @@ const Tournaments = () => {
               <Button onClick={() => window.location.reload()}>Retry</Button>
             </div>
           ) : (
-            <div className="flex gap-6 items-start">
+            <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:items-start">
               {/* Left: Tournament Grid */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 w-full">
                 {/* Section Header */}
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-display font-bold text-foreground">

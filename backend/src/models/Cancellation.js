@@ -27,7 +27,7 @@ const cancellationSchema = new mongoose.Schema({
   },
   cancellationType: {
     type: String,
-    enum: ['singles', 'doubles-full-team', 'doubles-one-player'],
+    enum: ['singles', 'doubles-full-team', 'doubles-one-player', 'organizer-initiated', 'tournament-cancelled'],
     required: true
   },
   requestedBy: {

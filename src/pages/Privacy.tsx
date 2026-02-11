@@ -1,5 +1,4 @@
 import Layout from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -17,13 +16,12 @@ const Privacy = () => {
             Back to Home
           </Link>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-3xl font-display">Privacy Policy</CardTitle>
+          <div className="glass-card-hover rounded-2xl p-8 animate-fade-in">
+            <div className="mb-6">
+              <h1 className="text-3xl font-display font-bold">Privacy Policy</h1>
               <p className="text-muted-foreground">Last updated: January 2025</p>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[70vh] pr-4">
+            </div>
+            <ScrollArea className="h-[70vh] pr-4">
                 <div className="space-y-6 text-sm leading-relaxed">
                   <section>
                     <h2 className="text-xl font-semibold mb-3">1. Introduction</h2>
@@ -225,8 +223,7 @@ const Privacy = () => {
                   </section>
                 </div>
               </ScrollArea>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     </Layout>

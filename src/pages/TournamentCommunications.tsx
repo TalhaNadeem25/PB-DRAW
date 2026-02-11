@@ -228,25 +228,25 @@ const TournamentCommunications = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-8">
-          <div className="container mx-auto px-4">
+        {/* Compact top bar — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             <Link
               to={`/tournaments/${id}`}
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Tournament
             </Link>
-            <h1 className="text-3xl font-display font-bold text-primary-foreground">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
               Communications
             </h1>
-            <p className="text-primary-foreground/70 mt-1">{tournament.name}</p>
+            <p className="text-muted-foreground text-sm mt-1">{tournament.name}</p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <Tabs defaultValue="compose" className="space-y-6">
             <TabsList className="glass-card p-1">
               <TabsTrigger value="compose" className="flex items-center gap-2">

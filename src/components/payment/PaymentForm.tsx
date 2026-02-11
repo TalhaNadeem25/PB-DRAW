@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, CreditCard, AlertCircle, CheckCircle2, Lock } from "lucide-react";
 import { paymentAPI } from "@/services/api";
 import { toast } from "sonner";
 
@@ -27,6 +27,9 @@ interface PaymentFormProps {
   amount: number;
   onSuccess: () => void;
   onCancel?: () => void;
+
+  /** When true, renders compact layout for two-panel checkout modal (no summary, secure CTA, Stripe branding) */
+  checkoutModal?: boolean;
 }
 
 const PaymentForm = ({
@@ -39,6 +42,7 @@ const PaymentForm = ({
   amount,
   onSuccess,
   onCancel,
+  checkoutModal = false,
 }: PaymentFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -94,6 +98,60 @@ const PaymentForm = ({
     }
   };
 
+  if (checkoutModal) {
+    return (
+      <div className="flex flex-col h-full">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="mb-6">
+            <PaymentElement />
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="mb-4">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="font-display font-bold text-foreground">Total Amount</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Includes court fees & registration</p>
+              </div>
+              <span className="font-display font-bold text-2xl text-foreground">
+                ${amount.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={!stripe || isProcessing}
+            className="w-full h-12 font-display font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Processing…
+              </>
+            ) : (
+              <>
+                <Lock className="w-5 h-5 mr-2" />
+                Complete Secure Payment
+              </>
+            )}
+          </Button>
+        </form>
+
+        <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <span>Powered by</span>
+          <span className="font-semibold text-foreground/80">Stripe</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Payment Summary */}
@@ -104,7 +162,6 @@ const PaymentForm = ({
         </div>
 
         {eventBreakdown && eventBreakdown.length > 1 ? (
-          // Multi-event breakdown
           <>
             <div className="text-sm font-medium mt-2 mb-1">Events:</div>
             {eventBreakdown.map((item, idx) => (
@@ -115,7 +172,6 @@ const PaymentForm = ({
             ))}
           </>
         ) : (
-          // Single event
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Event</span>
             <span className="font-medium">{eventName}</span>
@@ -132,7 +188,6 @@ const PaymentForm = ({
         </div>
       </div>
 
-      {/* Payment Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-4">
@@ -181,7 +236,6 @@ const PaymentForm = ({
         </div>
       </form>
 
-      {/* Security Notice */}
       <div className="text-xs text-center text-muted-foreground">
         <p>Secure payment powered by Stripe</p>
         <p>Your payment information is encrypted and secure</p>

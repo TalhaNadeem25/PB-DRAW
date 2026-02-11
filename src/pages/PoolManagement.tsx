@@ -358,41 +358,32 @@ const PoolManagement = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-12 relative overflow-hidden">
-          {/* Floating Orbs */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-10 right-[10%] w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-float-slow" />
-            <div className="absolute bottom-10 left-[5%] w-48 h-48 bg-court-green-dark/30 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-          </div>
-          
-          {/* Court pattern */}
-          <div className="absolute inset-0 court-pattern opacity-5 pointer-events-none" />
-          
-          <div className="container mx-auto px-4 relative z-10">
+        {/* Compact top bar — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             <Link
               to={`/tournaments/${id}`}
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-6 transition-colors group"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft className="w-4 h-4" />
               Back to Tournament
             </Link>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="animate-fade-in">
-                <Badge className="bg-secondary text-secondary-foreground mb-2 shadow-glow-yellow">
+              <div>
+                <Badge variant="secondary" className="mb-2">
                   Pool Play
                 </Badge>
-                <h1 className="text-4xl font-display font-bold text-primary-foreground">
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
                   {event.name}
                 </h1>
-                <p className="text-primary-foreground/80 mt-1">
+                <p className="text-muted-foreground text-sm mt-1">
                   Manage pools, matches, and scores
                 </p>
               </div>
-              <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="flex gap-3">
                 <Dialog open={isCreatePoolOpen} onOpenChange={setIsCreatePoolOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="glass" className="hover:shadow-glow transition-shadow">
+                    <Button variant="default" size="sm">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Pool
                     </Button>
@@ -424,7 +415,7 @@ const PoolManagement = () => {
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Pools List */}
             <div className="space-y-4">

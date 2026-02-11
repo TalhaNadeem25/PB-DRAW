@@ -13,6 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,8 +42,8 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/live", label: "Live", icon: Radio, isLive: true },
-    { href: "/tournaments", label: "Find Tournaments", icon: Trophy },
-    { href: "/find-partner", label: "Find Partner", icon: Heart, isNew: true },
+    { href: "/tournaments", label: "Tournaments", icon: Trophy },
+    { href: "/find-partner", label: "Partner", icon: Heart, isNew: true },
     ...(user?.role === 'organizer' || user?.role === 'admin'
       ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkles }]
       : []
@@ -59,89 +64,100 @@ const Navbar = () => {
     <>
       <nav 
         className={cn(
-          "fixed top-4 left-4 right-4 z-50 transition-all duration-300 rounded-2xl",
+          "fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-2xl",
           scrolled 
             ? "bg-card/80 backdrop-blur-xl shadow-float border border-border/50" 
             : "bg-card/60 backdrop-blur-lg border border-border/30"
         )}
       >
-        <div className="px-4 md:px-6">
-          <div className="flex items-center justify-between h-16">
+        <div className="px-3 sm:px-4 md:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
+            <Link to="/" className="flex items-center gap-3 group shrink-0">
               <div className="relative">
                 <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center shadow-md group-hover:shadow-glow transition-all duration-300">
                   <Trophy className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div className="absolute inset-0 rounded-xl bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
-              <span className="font-display text-xl font-bold text-foreground tracking-wide">
+              <span className="font-display text-lg sm:text-xl font-bold text-foreground tracking-wide whitespace-nowrap">
                 PICKLE<span className="text-primary">PLAY</span>
               </span>
             </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-1">
+            {/* Desktop Nav — icon-only, spread evenly between logo and actions */}
+            <div className="hidden lg:flex flex-1 items-center justify-evenly min-w-0 px-4 md:px-6">
               {authenticatedNavLinks.map((link) => {
                 const Icon = link.icon;
                 const isLiveLink = (link as any).isLive;
                 const isNewLink = (link as any).isNew;
-                return (
+                const navLink = (
                   <Link
                     key={link.href}
                     to={link.href}
                     className={cn(
-                      "relative flex items-center gap-2 text-sm font-medium transition-all duration-200 px-4 py-2 rounded-xl",
+                      "relative flex items-center justify-center gap-1.5 text-sm font-medium transition-all duration-200 p-2.5 rounded-xl min-w-[40px]",
                       isActive(link.href)
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     )}
                   >
-                    <Icon className="w-4 h-4" />
-                    {link.label}
+                    <Icon className="w-5 h-5 shrink-0" />
                     {isLiveLink && (
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      <span className="absolute top-1.5 right-1.5 flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
                       </span>
                     )}
                     {isNewLink && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary to-purple-600 text-white rounded-full">
-                        NEW
-                      </span>
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" title="New" />
                     )}
                     {isActive(link.href) && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
                     )}
                   </Link>
+                );
+                return (
+                  <Tooltip key={link.href} delayDuration={200}>
+                    <TooltipTrigger asChild>{navLink}</TooltipTrigger>
+                    <TooltipContent side="bottom" className="font-medium">
+                      {link.label}
+                    </TooltipContent>
+                  </Tooltip>
                 );
               })}
             </div>
 
             {/* Desktop Actions */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3 shrink-0">
               {isAuthenticated ? (
                 <>
                   {/* Notification Center */}
                   <NotificationCenter />
                   
                   {(user?.role === 'organizer' || user?.role === 'admin') && (
-                    <Button variant="default" size="sm" className="shadow-md hover:shadow-glow transition-shadow" asChild>
-                      <Link to="/create-tournament">
-                        <Trophy className="w-4 h-4 mr-1.5" />
-                        Create Tournament
-                      </Link>
-                    </Button>
+                    <Tooltip delayDuration={200}>
+                      <TooltipTrigger asChild>
+                        <Button variant="default" size="sm" className="shadow-md hover:shadow-glow transition-shadow gap-1.5 px-3 xl:px-4" asChild>
+                          <Link to="/create-tournament">
+                            <Trophy className="w-4 h-4 shrink-0" />
+                            <span className="hidden xl:inline">Create Tournament</span>
+                            <span className="xl:hidden">Create</span>
+                          </Link>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Create Tournament</TooltipContent>
+                    </Tooltip>
                   )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="gap-2 hover:bg-accent/50">
-                        <div className="w-8 h-8 rounded-full bg-hero-gradient flex items-center justify-center">
+                      <Button variant="ghost" size="sm" className="gap-2 hover:bg-accent/50 p-1.5 pr-2">
+                        <div className="w-8 h-8 rounded-full bg-hero-gradient flex items-center justify-center shrink-0">
                           <span className="text-xs font-bold text-primary-foreground">
                             {user?.name?.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <span className="max-w-[100px] truncate hidden lg:inline">{user?.name}</span>
+                        <span className="max-w-[120px] truncate hidden xl:inline text-sm">{user?.name}</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" sideOffset={8} className="w-[320px] p-0 bg-card border border-border/60 shadow-lg rounded-2xl overflow-hidden z-50">
@@ -423,8 +439,8 @@ const Navbar = () => {
         />
       )}
 
-      {/* Spacer for fixed navbar */}
-      <div className="h-24" />
+      {/* Spacer for fixed navbar (responsive to nav height) */}
+      <div className="h-16 sm:h-[5rem]" />
     </>
   );
 };

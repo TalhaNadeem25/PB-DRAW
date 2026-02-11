@@ -45,6 +45,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
 import BracketViewer from "@/components/tournament/BracketViewer";
+import RefundsPanel from "@/components/tournament-dashboard/RefundsPanel";
+import TestDataPanel from "@/components/tournament-dashboard/TestDataPanel";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
 import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
@@ -269,7 +271,7 @@ const TournamentDetail = () => {
   /* ─── Loading / Error ─── */
   if (isLoading) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
@@ -282,7 +284,7 @@ const TournamentDetail = () => {
 
   if (error || !tournament) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
@@ -406,18 +408,19 @@ const TournamentDetail = () => {
           return <TournamentSchedule tournamentId={id!} />;
         case "brackets":
           return <BracketViewer tournamentId={id!} />;
+        case "refunds":
+          return <RefundsPanel tournamentId={id!} tournamentName={tournament.name} />;
+        case "test":
+          return <TestDataPanel tournamentId={id!} />;
         default:
           return <DashboardOverview tournament={tournament} recentActivities={recentActivities} />;
       }
     };
 
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="min-h-screen bg-background">
-          {/* Spacer for fixed navbar */}
-          <div className="h-24" />
-
-          <div className="container mx-auto px-4 py-6">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             {/* Top Bar */}
             <DashboardTopBar
               tournament={tournament}
@@ -431,7 +434,7 @@ const TournamentDetail = () => {
             <MobileDashboardNav activeSection={activeSection} onSectionChange={setActiveSection} />
 
             {/* Main layout: sidebar + content */}
-            <div className="flex gap-8">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               <TournamentDashboardSidebar
                 activeSection={activeSection}
                 onSectionChange={setActiveSection}
@@ -452,7 +455,7 @@ const TournamentDetail = () => {
      PLAYER VIEW — Public Layout
   ═══════════════════════════════════════════ */
   return (
-    <Layout>
+    <Layout variant="minimal">
       <div className="min-h-screen bg-background">
         {/* Compact Hero Header */}
         <div className="bg-hero-gradient py-10 relative overflow-hidden">
@@ -506,7 +509,7 @@ const TournamentDetail = () => {
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {/* Photo Gallery */}
           {tournament.image && (
             <div className="glass-card-hover rounded-2xl overflow-hidden mb-8 animate-fade-in">
@@ -531,9 +534,9 @@ const TournamentDetail = () => {
             </div>
           )}
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-6 lg:space-y-8 min-w-0">
               <Tabs defaultValue="overview" className="animate-fade-in">
                 <TabsList className="w-full justify-start glass border border-border/50 p-1.5 rounded-xl gap-1">
                   <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Overview</TabsTrigger>

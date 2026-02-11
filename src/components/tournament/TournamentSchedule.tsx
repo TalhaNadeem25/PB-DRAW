@@ -22,7 +22,7 @@ const TournamentSchedule = ({ tournamentId }: TournamentScheduleProps) => {
   const events = eventsData?.data || [];
 
   // Fetch all pools and their matches for the tournament
-  const { data: allMatchesData, isLoading: matchesLoading } = useQuery({
+  const { data: allData, isLoading: matchesLoading } = useQuery({
     queryKey: ['tournament-matches', tournamentId, selectedEventId],
     queryFn: async () => {
       const eventsToFetch = selectedEventId === "all"
@@ -30,6 +30,7 @@ const TournamentSchedule = ({ tournamentId }: TournamentScheduleProps) => {
         : events.filter((e: any) => e._id === selectedEventId);
 
       const allMatches: any[] = [];
+      const allPools: any[] = [];
 
       for (const event of eventsToFetch) {
         try {
@@ -37,8 +38,10 @@ const TournamentSchedule = ({ tournamentId }: TournamentScheduleProps) => {
           const poolsResponse = await poolAPI.getByEvent(event._id);
           const pools = poolsResponse.data || [];
 
-          // Fetch matches for each pool
           for (const pool of pools) {
+            // Collect pool info
+            allPools.push({ _id: pool._id, name: pool.name, event: { _id: event._id, name: event.name } });
+
             try {
               const matchesResponse = await matchAPI.getByPool(pool._id);
               const matches = matchesResponse.data || [];
@@ -60,7 +63,7 @@ const TournamentSchedule = ({ tournamentId }: TournamentScheduleProps) => {
         }
       }
 
-      return allMatches;
+      return { matches: allMatches, pools: allPools };
     },
     enabled: !!tournamentId && events.length > 0,
   });
@@ -92,11 +95,14 @@ const TournamentSchedule = ({ tournamentId }: TournamentScheduleProps) => {
     );
   }
 
-  const matches = allMatchesData || [];
+  const matches = allData?.matches || [];
+  const pools = allData?.pools || [];
 
   return (
     <MatchSchedule
+      tournamentId={tournamentId}
       matches={matches}
+      pools={pools}
       events={events}
       selectedEventId={selectedEventId}
       onEventChange={setSelectedEventId}

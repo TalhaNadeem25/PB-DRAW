@@ -1,5 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
+import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Home, Search, Trophy, HelpCircle } from "lucide-react";
 
@@ -11,7 +12,9 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-mesh-gradient flex items-center justify-center p-4 relative overflow-hidden">
+    <Layout>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="h-24" />
       {/* Floating decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-float" />
@@ -22,7 +25,7 @@ const NotFound = () => {
       <div className="text-center relative z-10 max-w-lg mx-auto">
         {/* Animated 404 */}
         <div className="relative mb-8">
-          <h1 className="text-[180px] md:text-[220px] font-display font-bold leading-none bg-gradient-to-br from-primary via-primary/60 to-secondary bg-clip-text text-transparent animate-pulse-glow">
+          <h1 className="text-[120px] sm:text-[180px] md:text-[220px] font-display font-bold leading-none bg-gradient-to-br from-primary via-primary/60 to-secondary bg-clip-text text-transparent animate-pulse-glow">
             404
           </h1>
           {/* Bouncing pickleball */}
@@ -34,7 +37,7 @@ const NotFound = () => {
         </div>
 
         {/* Message */}
-        <div className="glass rounded-2xl p-8 mb-8 shadow-float">
+        <div className="glass-card-hover rounded-2xl p-8 mb-8 animate-fade-in">
           <h2 className="text-2xl md:text-3xl font-display font-bold mb-3">
             Oops! Page Not Found
           </h2>
@@ -78,6 +81,7 @@ const NotFound = () => {
         </div>
       </div>
     </div>
+    </Layout>
   );
 };
 

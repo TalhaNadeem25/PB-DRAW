@@ -217,22 +217,20 @@ const Teams = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
-            <div className="animate-fade-in">
-              <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-4">
-                My Teams
-              </h1>
-              <p className="text-primary-foreground/80 text-lg max-w-2xl">
-                Manage your teams and view your tournament registrations
-              </p>
-            </div>
+        {/* Compact top bar — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
+              My Teams
+            </h1>
+            <p className="text-muted-foreground text-sm max-w-2xl">
+              Manage your teams and view your tournament registrations
+            </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8 space-y-6">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
           {/* Pending Invitations */}
           {invitations.length > 0 && (
             <Card className="border-primary/50 bg-primary/5">

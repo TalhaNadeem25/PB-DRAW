@@ -93,22 +93,17 @@ const Discover = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-16 relative overflow-hidden">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-10 right-20 w-40 h-40 bg-secondary/20 rounded-full blur-3xl animate-float" />
-            <div className="absolute bottom-10 left-20 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl animate-float" style={{ animationDelay: "1s" }} />
-          </div>
-
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="flex items-center gap-3 mb-4 animate-fade-in">
-              <Sparkles className="w-8 h-8 text-secondary" />
-              <Badge variant="secondary" className="px-3 py-1">Discover</Badge>
+        {/* Compact header — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex items-center gap-3 mb-2">
+              <Sparkles className="w-6 h-6 text-primary" />
+              <Badge variant="secondary" className="px-2.5 py-0.5">Discover</Badge>
             </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-4 animate-fade-in">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
               Find Your Next Tournament
             </h1>
-            <p className="text-lg text-primary-foreground/80 max-w-2xl animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <p className="text-muted-foreground mt-1 max-w-2xl">
               Browse and join pickleball tournaments near you. Find the perfect competition for your skill level.
             </p>
           </div>
@@ -116,7 +111,7 @@ const Discover = () => {
 
         {/* Filters - Sticky */}
         <div className="sticky top-16 z-30 border-b bg-background/80 backdrop-blur-xl shadow-sm">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-4 sm:px-6 py-4">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
               <div className="flex-1 relative">
@@ -166,7 +161,7 @@ const Discover = () => {
         </div>
 
         {/* Tournament Grid */}
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {isLoading ? (
             <div className="flex justify-center items-center py-20">
               <div className="glass p-8 rounded-2xl text-center">

@@ -124,7 +124,12 @@ export const NotificationCenter = () => {
     if (!socket) return;
 
     const handleNewNotification = (notification: Notification) => {
-      setNotifications(prev => [notification, ...prev].slice(0, 20));
+      // Ensure createdAt is always set for real-time notifications
+      const enriched = {
+        ...notification,
+        createdAt: notification.createdAt || new Date().toISOString(),
+      };
+      setNotifications(prev => [enriched, ...prev].slice(0, 20));
       setUnreadCount(prev => prev + 1);
     };
 
@@ -266,7 +271,9 @@ export const NotificationCenter = () => {
                           {notification.message}
                         </p>
                         <p className="text-xs text-muted-foreground/70 mt-1">
-                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                          {notification.createdAt && !isNaN(new Date(notification.createdAt).getTime())
+                            ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })
+                            : 'Just now'}
                         </p>
                       </div>
                       {!notification.read && (

@@ -17,31 +17,35 @@ export const getMatches = async (req, res, next) => {
       });
     }
 
+    // Use refPath-aware populate: team1/team2 can be Team or User
     const matches = await Match.find({ pool: poolId })
       .populate({
         path: 'team1',
-        select: 'name players',
-        populate: { 
-          path: 'players', 
-          select: 'name',
-          model: 'User'
-        }
+        select: 'name players email',
       })
       .populate({
         path: 'team2',
-        select: 'name players',
-        populate: { 
-          path: 'players', 
-          select: 'name',
-          model: 'User'
-        }
+        select: 'name players email',
       })
       .populate({
         path: 'winner',
         select: 'name',
-        model: 'Team'
       })
       .sort({ scheduledTime: 1, createdAt: 1 });
+
+    // Nested-populate players for matches where team refs are Team documents
+    await Match.populate(matches, [
+      {
+        path: 'team1.players',
+        select: 'name',
+        model: 'User',
+      },
+      {
+        path: 'team2.players',
+        select: 'name',
+        model: 'User',
+      },
+    ]);
 
     res.status(200).json({
       success: true,
@@ -62,15 +66,23 @@ export const getMatch = async (req, res, next) => {
     const match = await Match.findById(req.params.id)
       .populate({
         path: 'team1',
-        populate: { path: 'players', select: 'name email' }
+        select: 'name players email',
       })
       .populate({
         path: 'team2',
-        populate: { path: 'players', select: 'name email' }
+        select: 'name players email',
       })
       .populate('winner', 'name')
       .populate('pool', 'name')
       .populate('event', 'name tournament');
+
+    // Nested-populate players for Team documents
+    if (match) {
+      await Match.populate(match, [
+        { path: 'team1.players', select: 'name email', model: 'User' },
+        { path: 'team2.players', select: 'name email', model: 'User' },
+      ]);
+    }
 
     if (!match) {
       return res.status(404).json({
@@ -188,8 +200,8 @@ export const updateMatchScore = async (req, res, next) => {
       completedAt: match.completedAt
     });
 
-    // If match completed, notify players
-    if (match.status === 'completed') {
+    // If match completed, notify players (only for Team-based matches)
+    if (match.status === 'completed' && team1 && team2) {
       const winnerTeam = team1Score > team2Score ? team1 : team2;
       const loserTeam = team1Score > team2Score ? team2 : team1;
 

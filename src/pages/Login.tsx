@@ -1,4 +1,4 @@
-import Navbar from '@/components/layout/Navbar';
+import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -35,9 +35,9 @@ const Login = () => {
   };
 
   return (
-    <>
-    <Navbar />
-    <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans">    
+    <Layout variant="auth">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans">
+      <div className="h-6" />
 
       {/* Left Side: Hero Brand Experience (Hidden on Mobile) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-7/12 relative overflow-hidden items-center justify-center">  
@@ -67,9 +67,10 @@ const Login = () => {
         <div className="absolute top-10 left-10 w-24 h-24 border-l-4 border-t-4 border-primary/50 z-20"></div>
       </div>
 
-      {/* Right Side: Login Interface */}
+      {/* Right Side: Login Interface — Pattern E */}
       <div className="flex w-full flex-col lg:w-1/2 xl:w-5/12 bg-background px-6 py-10 sm:px-16 lg:px-20 xl:px-24 justify-center overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
+          <div className="glass-card rounded-2xl p-8 animate-fade-in">
             {/* Mobile Logo (Hidden on desktop) */}
             <div className="lg:hidden flex items-center gap-2 mb-10 text-primary">
                 <Trophy className="w-8 h-8 fill-current" />
@@ -149,7 +150,9 @@ const Login = () => {
                 {/* Sign In Button */}
                 <Button 
                     type="submit" 
-                    className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-lg hover:brightness-110 active:scale-[0.98] transition-all shadow-md shadow-primary/20"
+                    variant="default"
+                    size="lg"
+                    className="w-full h-12 font-display font-bold rounded-xl shadow-glow hover:shadow-glow-lg transition-all"
                     disabled={isLoading}
                 >
                     {isLoading ? (
@@ -200,12 +203,11 @@ const Login = () => {
                     <Link to="/terms" className="hover:text-primary underline">Terms of Service</Link> and <Link to="/privacy" className="hover:text-primary underline">Privacy Policy</Link>
                 </p>
             </div>
+          </div>
         </div>
       </div>
     </div>
-
-    </>
-     
+    </Layout>
   );
 };
 

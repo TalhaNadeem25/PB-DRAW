@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -7,42 +7,106 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { User, Save, Loader2, Mail, Phone, Award, MapPin, Calendar, Trophy, Target, Medal } from "lucide-react";
+  User,
+  Save,
+  Loader2,
+  Mail,
+  MapPin,
+  Calendar,
+  Trophy,
+  Target,
+  Lock,
+  Pencil,
+  Sun,
+  Moon,
+  CalendarDays,
+  Zap,
+  ChevronUp,
+  RefreshCw,
+} from "lucide-react";
 import { authAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const AVAILABILITY_OPTIONS = [
+  { id: "morning", label: "Morning", icon: Sun },
+  { id: "afternoon", label: "Afternoon", icon: Sun },
+  { id: "evening", label: "Evening", icon: Moon },
+  { id: "weekends", label: "Weekends", icon: CalendarDays },
+];
+
+const PREFERRED_SIDE_OPTIONS = ["Left", "Right", "Both"] as const;
+
+const SKILL_ASSESSMENT = [
+  { label: "Soft Game / Dinking", value: 85 },
+  { label: "Power / Drives", value: 70 },
+  { label: "Court Mobility", value: 92 },
+];
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    skillLevel: user?.skillLevel?.toString() || "3.0",
-    bio: user?.bio || "",
-    city: user?.location?.city || "",
-    state: user?.location?.state || "",
-    playingDays: user?.preferences?.playingDays || [],
-    partnerPreference: user?.preferences?.partnerPreference || "either",
+    name: "",
+    email: "",
+    phone: "",
+    skillLevel: "3.0",
+    bio: "",
+    city: "",
+    state: "",
+    playingDays: [] as string[],
+    partnerPreference: "either" as "looking" | "have-partner" | "either",
+    preferredSide: "Left" as "Left" | "Right" | "Both",
+    primaryPaddle: "",
+    availability: [] as string[],
   });
 
-  // Fetch user stats
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name ?? "",
+        email: user.email ?? "",
+        phone: user.phone ?? "",
+        skillLevel: user.skillLevel?.toString() ?? "3.0",
+        bio: user.bio ?? "",
+        city: user.location?.city ?? "",
+        state: user.location?.state ?? "",
+        playingDays: user.preferences?.playingDays ?? [],
+        partnerPreference: user.preferences?.partnerPreference ?? "either",
+        preferredSide: "Left",
+        primaryPaddle: "",
+        availability: [],
+      });
+    }
+  }, [user]);
+
+  const initialData = {
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    phone: user?.phone ?? "",
+    skillLevel: user?.skillLevel?.toString() ?? "3.0",
+    bio: user?.bio ?? "",
+    city: user?.location?.city ?? "",
+    state: user?.location?.state ?? "",
+    playingDays: user?.preferences?.playingDays ?? [],
+    partnerPreference: user?.preferences?.partnerPreference ?? "either",
+  };
+  const hasUnsavedChanges =
+    formData.name !== initialData.name ||
+    formData.phone !== initialData.phone ||
+    formData.skillLevel !== initialData.skillLevel ||
+    formData.bio !== initialData.bio ||
+    formData.city !== initialData.city ||
+    formData.state !== initialData.state ||
+    JSON.stringify(formData.playingDays) !== JSON.stringify(initialData.playingDays) ||
+    formData.partnerPreference !== initialData.partnerPreference;
+
   const { data: statsData, isLoading: statsLoading } = useQuery({
-    queryKey: ['user-stats'],
+    queryKey: ["user-stats"],
     queryFn: () => authAPI.getStats(),
     enabled: !!user,
   });
@@ -51,8 +115,7 @@ const Profile = () => {
     mutationFn: (data: any) => authAPI.updateProfile(data),
     onSuccess: (response) => {
       updateUser(response.data);
-      setIsEditing(false);
-      queryClient.invalidateQueries({ queryKey: ['user-stats'] });
+      queryClient.invalidateQueries({ queryKey: ["user-stats"] });
       toast.success("Profile updated successfully");
     },
     onError: (error: any) => {
@@ -78,22 +141,42 @@ const Profile = () => {
     });
   };
 
-  const toggleDay = (day: string) => {
-    setFormData(prev => ({
+  const toggleAvailability = (id: string) => {
+    setFormData((prev) => ({
       ...prev,
-      playingDays: prev.playingDays.includes(day)
-        ? prev.playingDays.filter(d => d !== day)
-        : [...prev.playingDays, day]
+      availability: prev.availability.includes(id)
+        ? prev.availability.filter((a) => a !== id)
+        : [...prev.availability, id],
     }));
+  };
+
+  const discardChanges = () => {
+    if (user) {
+      setFormData({
+        name: user.name ?? "",
+        email: user.email ?? "",
+        phone: user.phone ?? "",
+        skillLevel: user.skillLevel?.toString() ?? "3.0",
+        bio: user.bio ?? "",
+        city: user.location?.city ?? "",
+        state: user.location?.state ?? "",
+        playingDays: user.preferences?.playingDays ?? [],
+        partnerPreference: user.preferences?.partnerPreference ?? "either",
+        preferredSide: formData.preferredSide,
+        primaryPaddle: formData.primaryPaddle,
+        availability: formData.availability,
+      });
+      toast.success("Changes discarded");
+    }
   };
 
   if (!user) {
     return (
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md glass-card rounded-2xl">
             <CardContent className="pt-6 text-center">
-              <h2 className="text-xl font-bold mb-2">Please log in</h2>
+              <h2 className="text-xl font-display font-bold mb-2">Please log in</h2>
               <p className="text-muted-foreground">You need to be logged in to view your profile.</p>
             </CardContent>
           </Card>
@@ -110,401 +193,397 @@ const Profile = () => {
     silverMedals: 0,
     bronzeMedals: 0,
   };
-
-  const winRate = stats.matchesPlayed > 0
-    ? ((stats.matchesWon / stats.matchesPlayed) * 100).toFixed(1)
-    : 0;
-
   const tournaments = statsData?.data?.tournaments || [];
 
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-12">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <User className="w-12 h-12 text-primary-foreground" />
+        {/* Hero: cover + avatar + name */}
+        <div className="relative">
+          {/* Cover */}
+          <div className="h-40 sm:h-52 bg-muted border-b border-border relative overflow-hidden">
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-90"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200')`,
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute bottom-3 right-3 rounded-lg gap-1.5 bg-card/90 border border-border shadow-sm"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit Cover
+            </Button>
+          </div>
+
+          {/* Avatar + name (overlapping cover) */}
+          <div className="container mx-auto px-4 -mt-14 sm:-mt-16 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="relative shrink-0">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-background bg-card shadow-float flex items-center justify-center overflow-hidden">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-14 h-14 sm:w-16 sm:h-16 text-muted-foreground" />
+                  )}
+                </div>
+                <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
               </div>
-              <div>
-                <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-2">
+              <div className="pb-1">
+                <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
                   {user.name}
                 </h1>
-                <div className="flex items-center gap-4 text-primary-foreground/80">
-                  <span className="capitalize">{user.role}</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Award className="w-4 h-4" />
-                    Skill Level {user.skillLevel}
+                <div className="flex flex-wrap items-center gap-2 mt-1 text-sm">
+                  <span className="font-display font-semibold text-primary uppercase tracking-wider">
+                    {user.role === "player" ? "Verified Player" : user.role === "organizer" ? "Organizer" : "Admin"}
                   </span>
-                  {user.location?.city && (
-                    <>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {user.location.city}{user.location.state && `, ${user.location.state}`}
-                      </span>
-                    </>
-                  )}
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <span className="text-muted-foreground">Member</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 py-12">
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="edit">Edit Profile</TabsTrigger>
-              <TabsTrigger value="history">Tournament History</TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
-              {/* Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Match Record</CardTitle>
-                    <Target className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.matchesWon} - {stats.matchesPlayed - stats.matchesWon}</div>
-                    <p className="text-xs text-muted-foreground">
-                      {winRate}% win rate
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Tournaments</CardTitle>
-                    <Trophy className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.tournamentsPlayed}</div>
-                    <p className="text-xs text-muted-foreground">
-                      tournaments played
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Medals</CardTitle>
-                    <Medal className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-3">
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-yellow-600">{stats.goldMedals}</div>
-                        <div className="text-xs text-muted-foreground">Gold</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-gray-400">{stats.silverMedals}</div>
-                        <div className="text-xs text-muted-foreground">Silver</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-orange-600">{stats.bronzeMedals}</div>
-                        <div className="text-xs text-muted-foreground">Bronze</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Bio & Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>About</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {user.bio ? (
-                      <p className="text-muted-foreground">{user.bio}</p>
-                    ) : (
-                      <p className="text-muted-foreground italic">No bio yet</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Preferences</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium">Partner Status</Label>
-                      <p className="text-muted-foreground capitalize">
-                        {user.preferences?.partnerPreference === 'looking' && 'Looking for partner'}
-                        {user.preferences?.partnerPreference === 'have-partner' && 'Have partner'}
-                        {user.preferences?.partnerPreference === 'either' && 'Open to either'}
-                      </p>
-                    </div>
-                    {user.preferences?.playingDays && user.preferences.playingDays.length > 0 && (
-                      <div>
-                        <Label className="text-sm font-medium">Preferred Playing Days</Label>
-                        <p className="text-muted-foreground">
-                          {user.preferences.playingDays.join(', ')}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Edit Profile Tab */}
-            <TabsContent value="edit">
-              <Card>
+        {/* Two-column content */}
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left column */}
+            <div className="space-y-6">
+              {/* Personal Information */}
+              <Card className="glass-card rounded-2xl border-border/50 overflow-hidden">
+                <div className="h-1 bg-primary/20" />
                 <CardHeader>
-                  <CardTitle>Edit Profile</CardTitle>
-                  <CardDescription>Update your personal information and preferences</CardDescription>
+                  <CardTitle className="flex items-center gap-2 font-display font-bold text-foreground">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
+                    </div>
+                    Personal Information
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Basic Info */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Basic Information</h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Full Name *</Label>
-                          <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            value={formData.email}
-                            disabled
-                            className="bg-muted"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Phone Number</Label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            placeholder="555-0123"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="skillLevel">Skill Level *</Label>
-                          <Select
-                            value={formData.skillLevel}
-                            onValueChange={(value) => setFormData({ ...formData, skillLevel: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="2.5">2.5</SelectItem>
-                              <SelectItem value="3.0">3.0</SelectItem>
-                              <SelectItem value="3.5">3.5</SelectItem>
-                              <SelectItem value="4.0">4.0</SelectItem>
-                              <SelectItem value="4.5">4.5</SelectItem>
-                              <SelectItem value="5.0">5.0</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={formData.bio}
-                          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                          placeholder="Tell others about yourself..."
-                          rows={4}
-                          maxLength={500}
-                        />
-                        <p className="text-xs text-muted-foreground">{formData.bio.length}/500 characters</p>
-                      </div>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                      Full Name
+                    </Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="bg-muted/50 border-border rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                      Email Address
+                    </Label>
+                    <Input
+                      value={formData.email}
+                      disabled
+                      className="bg-muted/50 border-border rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-primary" />
+                      Location
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        placeholder="City"
+                        className="bg-muted/50 border-border rounded-lg"
+                      />
+                      <Input
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        placeholder="State"
+                        maxLength={2}
+                        className="bg-muted/50 border-border rounded-lg"
+                      />
                     </div>
-
-                    {/* Location */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Location</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="city">City</Label>
-                          <Input
-                            id="city"
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            placeholder="Dallas"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="state">State</Label>
-                          <Input
-                            id="state"
-                            value={formData.state}
-                            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                            placeholder="TX"
-                            maxLength={2}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Preferences */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Preferences</h3>
-
-                      <div className="space-y-2">
-                        <Label>Partner Status</Label>
-                        <Select
-                          value={formData.partnerPreference}
-                          onValueChange={(value: 'looking' | 'have-partner' | 'either') => setFormData({ ...formData, partnerPreference: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="looking">Looking for partner</SelectItem>
-                            <SelectItem value="have-partner">Have partner</SelectItem>
-                            <SelectItem value="either">Open to either</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Preferred Playing Days</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {DAYS_OF_WEEK.map(day => (
-                            <div key={day} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`day-${day}`}
-                                checked={formData.playingDays.includes(day)}
-                                onCheckedChange={() => toggleDay(day)}
-                              />
-                              <label
-                                htmlFor={`day-${day}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                              >
-                                {day.substring(0, 3)}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4">
-                      <Button
-                        type="submit"
-                        disabled={updateMutation.isPending}
-                      >
-                        {updateMutation.isPending ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-4 h-4 mr-2" />
-                            Save Changes
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setFormData({
-                            name: user?.name || "",
-                            email: user?.email || "",
-                            phone: user?.phone || "",
-                            skillLevel: user?.skillLevel?.toString() || "3.0",
-                            bio: user?.bio || "",
-                            city: user?.location?.city || "",
-                            state: user?.location?.state || "",
-                            playingDays: user?.preferences?.playingDays || [],
-                            partnerPreference: user?.preferences?.partnerPreference || "either",
-                          });
-                        }}
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                  </form>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                      Short Bio
+                    </Label>
+                    <Textarea
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      placeholder="Tell others about yourself and your pickleball goals..."
+                      rows={4}
+                      maxLength={500}
+                      className="bg-muted/50 border-border rounded-lg resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground">{formData.bio.length}/500</p>
+                  </div>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            {/* Tournament History Tab */}
-            <TabsContent value="history">
-              <Card>
+              {/* Playing Preferences */}
+              <Card className="glass-card rounded-2xl border-border/50 overflow-hidden">
+                <div className="h-1 bg-primary/20" />
                 <CardHeader>
-                  <CardTitle>Tournament History</CardTitle>
-                  <CardDescription>Your past tournaments and performances</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {statsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  <CardTitle className="flex items-center gap-2 font-display font-bold text-foreground">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Trophy className="w-5 h-5 text-primary" />
                     </div>
-                  ) : tournaments.length > 0 ? (
-                    <div className="space-y-4">
-                      {tournaments.map((tournament: any) => (
-                        <div
-                          key={tournament._id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() => navigate(`/tournaments/${tournament._id}`)}
+                    Playing Preferences
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                      Preferred Side
+                    </Label>
+                    <div className="flex gap-2 p-1 rounded-lg bg-muted/50 border border-border w-fit">
+                      {PREFERRED_SIDE_OPTIONS.map((side) => (
+                        <button
+                          key={side}
+                          type="button"
+                          onClick={() =>
+                            setFormData({ ...formData, preferredSide: side })
+                          }
+                          className={cn(
+                            "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                            formData.preferredSide === side
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          )}
                         >
-                          <div>
-                            <h3 className="font-semibold">{tournament.name}</h3>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {new Date(tournament.startDate).toLocaleDateString()}
-                              </span>
-                              {tournament.location && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" />
-                                  {tournament.location}
-                                </span>
-                              )}
-                            </div>
+                          {side}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                      Primary Paddle
+                    </Label>
+                    <Input
+                      value={formData.primaryPaddle}
+                      onChange={(e) =>
+                        setFormData({ ...formData, primaryPaddle: e.target.value })
+                      }
+                      placeholder="e.g. Selkirk Vanguard Control"
+                      className="bg-muted/50 border-border rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                      Typical Availability
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {AVAILABILITY_OPTIONS.map((opt) => {
+                        const Icon = opt.icon;
+                        const isSelected = formData.availability.includes(opt.id);
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => toggleAvailability(opt.id)}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border",
+                              isSelected
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                            )}
+                          >
+                            <Icon className="w-4 h-4" />
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right column */}
+            <div className="space-y-6">
+              {/* Pickleball Stats */}
+              <Card className="glass-card rounded-2xl border-border/50 overflow-hidden">
+                <div className="h-1 bg-primary/20" />
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-display font-bold text-foreground">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-primary" />
+                    </div>
+                    Pickleball Stats
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                        Self-Rating
+                      </span>
+                      <span className="font-display font-bold text-2xl text-foreground">
+                        {formData.skillLevel}
+                        <ChevronUp className="w-5 h-5 text-primary inline-block ml-0.5" />
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Skill level</p>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                        Experience
+                      </span>
+                      <span className="font-display font-bold text-xl text-foreground">
+                        {stats.tournamentsPlayed > 0 ? "Active" : "New"} Player
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {stats.tournamentsPlayed} tournaments played
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase block mb-3">
+                      Skill Assessment
+                    </Label>
+                    <div className="space-y-4">
+                      {SKILL_ASSESSMENT.map((item) => (
+                        <div key={item.label} className="space-y-1.5">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-foreground">{item.label}</span>
+                            <span className="font-display font-bold text-primary">{item.value}%</span>
                           </div>
-                          <div className={`px-3 py-1 rounded-full text-xs font-medium capitalize
-                            ${tournament.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}
-                          `}>
-                            {tournament.status}
-                          </div>
+                          <Progress value={item.value} className="h-2 bg-muted" />
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No tournament history yet</p>
-                      <p className="text-sm mt-1">Join a tournament to get started!</p>
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+
+              {/* Account Security */}
+              <Card className="glass-card rounded-2xl border-border/50 overflow-hidden">
+                <div className="h-1 bg-primary/20" />
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-display font-bold text-foreground">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-primary" />
+                    </div>
+                    Account Security
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Update your password or manage two-factor authentication settings.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="link"
+                    className="text-primary font-display font-semibold p-0 h-auto underline"
+                    onClick={() => toast.info("Security settings coming soon")}
+                  >
+                    Security Dashboard
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Tournament History (full width below) */}
+          <Card className="glass-card rounded-2xl border-border/50 mt-8 overflow-hidden">
+            <div className="h-1 bg-primary/20" />
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display font-bold text-foreground">
+                <Calendar className="w-5 h-5 text-primary" />
+                Tournament History
+              </CardTitle>
+              <CardDescription>Your past tournaments and performances</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : tournaments.length > 0 ? (
+                <div className="space-y-3">
+                  {tournaments.slice(0, 10).map((tournament: any) => (
+                    <div
+                      key={tournament._id}
+                      className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/tournaments/${tournament._id}`)}
+                    >
+                      <div>
+                        <h3 className="font-display font-bold text-foreground">{tournament.name}</h3>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(tournament.startDate).toLocaleDateString()}
+                          </span>
+                          {tournament.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {tournament.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span
+                        className={cn(
+                          "px-3 py-1 rounded-full text-xs font-display font-semibold capitalize",
+                          tournament.status === "completed"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-secondary/20 text-foreground"
+                        )}
+                      >
+                        {tournament.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-display font-bold text-foreground">No tournament history yet</p>
+                  <p className="text-sm mt-1">Join a tournament to get started!</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Bottom action bar */}
+        {hasUnsavedChanges && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-float">
+            <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                You have unsaved changes in Personal Information
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={discardChanges}>
+                  Discard
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={updateMutation.isPending}
+                  className="bg-primary text-primary-foreground hover:shadow-glow"
+                >
+                  {updateMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {hasUnsavedChanges && <div className="h-20" />}
       </div>
     </Layout>
   );

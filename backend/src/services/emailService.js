@@ -1732,7 +1732,6 @@ export const sendPartnerRefundEmail = async ({ partner, tournament, event, refun
 };
 
 /**
-<<<<<<< Updated upstream
  * Send bulk communication email to tournament participants
  */
 export const sendBulkCommunicationEmail = async ({
@@ -2136,6 +2135,144 @@ If you didn't create an account on Pickle Rally, you can safely ignore this emai
   }
 };
 
+/**
+ * Send email when organizer issues a refund
+ */
+export const sendOrganizerRefundEmail = async ({ user, tournament, event, refundAmount, reason, organizerName }) => {
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: `Refund Issued - ${tournament.name}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+            .refund-amount { font-size: 32px; font-weight: bold; color: #667eea; }
+            .reason-box { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Refund Issued</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${user.name},</p>
+
+              <p>The tournament organizer has issued a refund for your registration.</p>
+
+              <div class="info-box">
+                <h3 style="margin-top: 0;">Refund Details</h3>
+                <p><strong>Tournament:</strong> ${tournament.name}</p>
+                <p><strong>Event:</strong> ${event.name}</p>
+                <p><strong>Refund Amount:</strong> <span class="refund-amount">$${refundAmount.toFixed(2)}</span></p>
+                <p><strong>Issued By:</strong> ${organizerName}</p>
+              </div>
+
+              ${reason ? `
+              <div class="reason-box">
+                <p style="margin: 0;"><strong>Reason:</strong> ${reason}</p>
+              </div>
+              ` : ''}
+
+              <p><strong>What happens next?</strong></p>
+              <ul>
+                <li>Your refund will be processed within 5-10 business days</li>
+                <li>The refund will appear in your original payment method</li>
+              </ul>
+
+              <p>If you have any questions, please contact the tournament organizer directly.</p>
+
+              <p style="margin-top: 30px;">Best regards,<br>The Pickle Rally Team</p>
+            </div>
+            <div class="footer">
+              <p>Pickle Rally - Pickleball Tournament Management</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
+  } catch (error) {
+    console.error('Error sending organizer refund email:', error);
+  }
+};
+
+/**
+ * Send email when tournament is cancelled and refund issued
+ */
+export const sendTournamentCancelledEmail = async ({ user, tournament, refundAmount, reason }) => {
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: `Tournament Cancelled - ${tournament.name}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745; }
+            .refund-amount { font-size: 32px; font-weight: bold; color: #28a745; }
+            .reason-box { background: #f8d7da; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Tournament Cancelled</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${user.name},</p>
+
+              <p>We regret to inform you that <strong>${tournament.name}</strong> has been cancelled by the organizer.</p>
+
+              ${reason ? `
+              <div class="reason-box">
+                <p style="margin: 0;"><strong>Reason:</strong> ${reason}</p>
+              </div>
+              ` : ''}
+
+              <div class="info-box">
+                <h3 style="margin-top: 0;">Full Refund Issued</h3>
+                <p><strong>Tournament:</strong> ${tournament.name}</p>
+                <p><strong>Refund Amount:</strong> <span class="refund-amount">$${refundAmount.toFixed(2)}</span></p>
+              </div>
+
+              <p><strong>What happens next?</strong></p>
+              <ul>
+                <li>A full refund has been issued to your original payment method</li>
+                <li>The refund will appear within 5-10 business days</li>
+              </ul>
+
+              <p>We apologize for the inconvenience and hope to see you at future tournaments!</p>
+
+              <p style="margin-top: 30px;">Best regards,<br>The Pickle Rally Team</p>
+            </div>
+            <div class="footer">
+              <p>Pickle Rally - Pickleball Tournament Management</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
+  } catch (error) {
+    console.error('Error sending tournament cancelled email:', error);
+  }
+};
+
 export default {
   sendTicketPurchaseEmail,
   sendWelcomeEmail,
@@ -2149,4 +2286,6 @@ export default {
   sendPartnerRefundEmail,
   sendBulkCommunicationEmail,
   sendEmailVerificationEmail,
+  sendOrganizerRefundEmail,
+  sendTournamentCancelledEmail,
 };

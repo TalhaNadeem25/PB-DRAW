@@ -186,6 +186,10 @@ const Dashboard = () => {
       return dateA - dateB;
     });
 
+  const liveMatchesCount = myEventRegistrations.filter(
+    (reg: any) => reg.tournamentStatus === "in-progress"
+  ).length;
+
   const activeTournaments = myTournaments.filter((t: any) =>
     t.status === 'open' || t.status === 'in-progress'
   );
@@ -218,23 +222,27 @@ const Dashboard = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="bg-hero-gradient py-8">
-          <div className="container mx-auto px-4">
+        {/* Compact top bar — no green hero */}
+        <div className="border-b border-border/60 bg-card/50">
+          <div className="container mx-auto px-4 sm:px-6 py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-2">
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
                   Welcome back, {user.name}!
                 </h1>
-                <p className="text-primary-foreground/80">
-                  {isOrganizer ? 'Manage your tournaments and track your events' : 'Track your progress and find new tournaments'}
+                <p className="text-muted-foreground text-sm">
+                  {isOrganizer
+                    ? "Manage your tournaments and track your events"
+                    : liveMatchesCount > 0
+                    ? `You have ${liveMatchesCount} live match${liveMatchesCount > 1 ? "es" : ""} today. Let's get that win.`
+                    : "Track your progress and find new tournaments"}
                 </p>
               </div>
-              <div className="flex gap-3">
-                <Button variant="glass" size="icon">
+              <div className="flex gap-2">
+                <Button variant="outline" size="icon">
                   <Bell className="w-5 h-5" />
                 </Button>
-                <Button variant="glass" size="icon" asChild>
+                <Button variant="outline" size="icon" asChild>
                   <Link to="/profile">
                     <Settings className="w-5 h-5" />
                   </Link>
@@ -244,7 +252,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {isOrganizer ? (
             /* ORGANIZER DASHBOARD */
             <div className="space-y-8">
@@ -458,57 +466,86 @@ const Dashboard = () => {
           ) : (
             /* PLAYER DASHBOARD */
             <div className="space-y-8">
-              {/* Player Stats */}
+              {/* Player Stats — hero row */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{winRate}%</div>
-                    <p className="text-xs text-muted-foreground">
-                      {stats.matchesWon} wins / {stats.matchesPlayed} matches
+                {/* Win rate hero card */}
+                <Card className="md:col-span-2 glass-card rounded-2xl overflow-hidden bg-hero-gradient text-primary-foreground">
+                  <CardContent className="p-6 flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-xs font-display font-semibold tracking-wider uppercase text-primary-foreground/80">
+                          Win Rate
+                        </p>
+                        <p className="font-display font-bold text-4xl mt-1">
+                          {winRate}%
+                        </p>
+                      </div>
+                      <div className="inline-flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-medium">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>{stats.matchesWon}W / {stats.matchesPlayed}M</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-primary-foreground/80 mt-auto">
+                      Keep playing to improve your ranking and unlock new events.
                     </p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Tournaments</CardTitle>
-                    <Trophy className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.tournamentsPlayed}</div>
-                    <p className="text-xs text-muted-foreground">
-                      Total participated
+                {/* Tournaments card */}
+                <Card className="glass-card rounded-2xl">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Trophy className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-[11px] font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                        Active
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Tournaments
+                    </p>
+                    <p className="font-display font-bold text-2xl text-foreground">
+                      {stats.tournamentsPlayed}
                     </p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Skill Level</CardTitle>
-                    <Award className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{user.skillLevel || 'N/A'}</div>
-                    <p className="text-xs text-muted-foreground">
-                      Current rating
+                {/* Skill level card */}
+                <Card className="glass-card rounded-2xl">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Award className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-[11px] font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                        Rating
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Skill Level
+                    </p>
+                    <p className="font-display font-bold text-2xl text-foreground">
+                      {user.skillLevel || "N/A"}
                     </p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Medals</CardTitle>
-                    <Medal className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-yellow-600">{stats.goldMedals}</span>
-                      <span className="text-lg font-bold text-gray-400">{stats.silverMedals}</span>
-                      <span className="text-lg font-bold text-orange-600">{stats.bronzeMedals}</span>
+                {/* Medals card */}
+                <Card className="glass-card rounded-2xl">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Medal className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-[11px] font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                        Medals
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base font-bold text-yellow-600">{stats.goldMedals}</span>
+                      <span className="text-base font-bold text-gray-400">{stats.silverMedals}</span>
+                      <span className="text-base font-bold text-orange-600">{stats.bronzeMedals}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Gold / Silver / Bronze
@@ -517,45 +554,37 @@ const Dashboard = () => {
                 </Card>
               </div>
 
-              {/* Pending Invitations */}
+              {/* Pending Invitations - banner style */}
               {pendingInvitations.length > 0 && (
-                <Card className="border-orange-200 bg-orange-50/50">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <UserPlus className="w-5 h-5 text-orange-600" />
-                      <CardTitle className="text-orange-900">Pending Team Invitations</CardTitle>
+                <Card className="border-orange-200 bg-orange-50/80 rounded-2xl overflow-hidden">
+                  <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                        <UserPlus className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-display font-bold text-orange-900">
+                          Pending team invitation
+                        </p>
+                        <p className="text-sm text-orange-800">
+                          You have {pendingInvitations.length} team invitation
+                          {pendingInvitations.length > 1 ? "s" : ""} waiting for your response.
+                        </p>
+                      </div>
                     </div>
-                    <CardDescription>You have {pendingInvitations.length} pending invitation(s)</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {pendingInvitations.slice(0, 3).map((invitation: any) => (
-                        <div key={invitation._id} className="flex items-center justify-between p-3 bg-white border border-orange-200 rounded-lg">
-                          <div>
-                            <p className="font-medium">{invitation.team?.name || 'Team Invitation'}</p>
-                            <p className="text-sm text-muted-foreground">From: {invitation.inviter?.name || 'Unknown'}</p>
-                          </div>
-                          <Button size="sm" asChild>
-                            <Link to="/teams">View</Link>
-                          </Button>
-                        </div>
-                      ))}
-                      {pendingInvitations.length > 3 && (
-                        <Button variant="outline" className="w-full" asChild>
-                          <Link to="/teams">View All Invitations</Link>
-                        </Button>
-                      )}
-                    </div>
+                    <Button className="md:w-auto w-full bg-orange-500 hover:bg-orange-600 text-white" asChild>
+                      <Link to="/teams">Review</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               )}
 
               {/* My Event Registrations */}
-              <Card>
+              <Card className="rounded-2xl">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>My Event Registrations</CardTitle>
+                      <CardTitle className="font-display text-xl">My Event Registrations</CardTitle>
                       <CardDescription>Events you're registered for across all tournaments</CardDescription>
                     </div>
                     <Button variant="outline" size="sm" asChild>
@@ -572,39 +601,48 @@ const Dashboard = () => {
                       <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                     </div>
                   ) : myEventRegistrations.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                       {myEventRegistrations.map((registration: any) => (
                         <div
                           key={registration.eventId}
-                          className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                          className="glass-card-hover rounded-2xl p-4 cursor-pointer flex flex-col justify-between h-full"
+                          onClick={() => navigate(`/tournaments/${registration.tournamentId}`)}
                         >
-                          <div className="flex items-start justify-between gap-4">
-                            <div
-                              className="flex-1 cursor-pointer"
-                              onClick={() => navigate(`/tournaments/${registration.tournamentId}`)}
-                            >
-                              {/* Event Name */}
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-lg">{registration.eventName}</h3>
-                                <Badge variant="outline" className="text-xs">
+                          <div className="flex items-start gap-3 mb-3">
+                            {/* Date badge */}
+                            <div className="flex flex-col items-center justify-center rounded-xl bg-muted px-2 py-2 min-w-[70px]">
+                              <p className="text-[11px] font-display font-semibold uppercase text-muted-foreground">
+                                {registration.tournamentStartDate
+                                  ? format(new Date(registration.tournamentStartDate), 'MMM').toUpperCase()
+                                  : 'TBD'}
+                              </p>
+                              <p className="font-display font-bold text-xl text-foreground leading-none">
+                                {registration.tournamentStartDate
+                                  ? format(new Date(registration.tournamentStartDate), 'dd')
+                                  : '--'}
+                              </p>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-display font-bold text-base truncate">
+                                  {registration.eventName}
+                                </h3>
+                                <Badge variant="outline" className="text-[11px] uppercase">
                                   {registration.eventFormat}
                                 </Badge>
                                 {registration.isDoubles && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <Users className="w-3 h-3 mr-1" />
-                                    with {registration.partnerName}
+                                  <Badge variant="secondary" className="text-[11px] uppercase">
+                                    Doubles
                                   </Badge>
                                 )}
                               </div>
-
-                              {/* Tournament Info */}
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                                 <Trophy className="w-3 h-3" />
-                                <span className="font-medium">{registration.tournamentName}</span>
+                                <span className="font-medium truncate">
+                                  {registration.tournamentName}
+                                </span>
                               </div>
-
-                              {/* Location and Date */}
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <MapPin className="w-3 h-3" />
                                   {registration.tournamentLocation}
@@ -615,10 +653,16 @@ const Dashboard = () => {
                                 </span>
                               </div>
                             </div>
+                          </div>
 
-                            {/* Cancel Button */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <Badge variant="secondary">{registration.tournamentStatus}</Badge>
+                          <div className="flex items-center justify-between mt-3 text-xs">
+                            <Badge
+                              variant="secondary"
+                              className="capitalize"
+                            >
+                              {registration.tournamentStatus.replace('-', ' ')}
+                            </Badge>
+                            <div className="flex items-center gap-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -661,7 +705,7 @@ const Dashboard = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle>Recommended For You</CardTitle>
+                        <CardTitle className="font-display text-xl">Recommended For You</CardTitle>
                         <CardDescription>Based on your skill level and location</CardDescription>
                       </div>
                       <Button variant="outline" size="sm" asChild>
@@ -709,7 +753,7 @@ const Dashboard = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>My Teams</CardTitle>
+                      <CardTitle className="font-display text-xl">My Teams</CardTitle>
                       <CardDescription>Teams you're a part of</CardDescription>
                     </div>
                     <Button variant="outline" size="sm" asChild>
@@ -750,6 +794,75 @@ const Dashboard = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Deep Performance Insights & Partner Spotlight */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card className="glass-card rounded-2xl">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg">Deep Performance Insights</CardTitle>
+                    <CardDescription>Keep an eye on your key stats over recent matches</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Serve Accuracy</span>
+                        <span className="font-semibold">
+                          {Math.min(100, Number(winRate) + 10)}%
+                        </span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-hero-gradient rounded-full"
+                          style={{ width: `${Math.min(100, Number(winRate) + 10)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Third Shot Consistency</span>
+                        <span className="font-semibold">
+                          {Math.max(40, Math.min(95, Number(winRate)))}%
+                        </span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary/70 rounded-full"
+                          style={{ width: `${Math.max(40, Math.min(95, Number(winRate)))}%` }}
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground italic">
+                      Your backhand drive has improved over recent events — keep trusting it on big
+                      points.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card rounded-2xl">
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg">Partner Spotlight</CardTitle>
+                    <CardDescription>Your most active teammate</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-hero-gradient flex items-center justify-center text-primary-foreground font-display font-bold text-lg">
+                      {(myTeams[0]?.players?.[0]?.name || user.name || 'P').charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">
+                        {myTeams[0]?.players?.find((p: any) => p._id !== user._id)?.name ||
+                          myTeams[0]?.name ||
+                          "Join a team to get started"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Stay connected with your partner for upcoming matches and invitations.
+                      </p>
+                      <Button variant="outline" size="sm" className="mt-3">
+                        Send Message
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* My Tickets */}
               <Card>

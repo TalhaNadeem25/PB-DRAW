@@ -16,7 +16,7 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background-dark/40 via-background-dark/60 to-background-dark/95" />
       </div>
       
-      <div className="max-w-[1200px] mx-auto px-6 relative z-10 w-full">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10 w-full">
         <div className="max-w-3xl">
           {/* Live Badge */}
           <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-1.5 rounded-full mb-8 border border-primary/30">
@@ -28,7 +28,7 @@ const HeroSection = () => {
           </div>
           
           {/* Headline */}
-          <h1 className="text-white text-6xl md:text-8xl font-display font-black leading-[0.9] tracking-tighter mb-8 uppercase italic">
+          <h1 className="text-white text-4xl sm:text-6xl md:text-8xl font-display font-black leading-[0.9] tracking-tighter mb-6 sm:mb-8 uppercase italic">
             Your Tournament, <br/>
             <span className="text-primary underline decoration-4 underline-offset-8">Perfected.</span>
           </h1>

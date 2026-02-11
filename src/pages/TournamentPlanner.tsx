@@ -80,11 +80,23 @@ const TournamentPlanner = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background">
         {!showPlanner ? (
-          // Landing Section
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            {/* Hero Section */}
+          <>
+            {/* Compact top bar — no green hero */}
+            <div className="border-b border-border/60 bg-card/50">
+              <div className="container mx-auto px-4 py-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">AI-Powered Planning</span>
+                </div>
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
+                  AI Tournament Planner
+                </h1>
+              </div>
+            </div>
+            {/* Landing Section */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="text-center mb-16 animate-fade-in">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6">
                 <Sparkles className="w-4 h-4 text-primary animate-pulse" />
@@ -128,7 +140,8 @@ const TournamentPlanner = () => {
                       <Button
                         onClick={handleStartPlanning}
                         disabled={!selectedTournamentId}
-                        className="flex-1 bg-hero-gradient hover:shadow-glow"
+                        className="flex-1"
+                        variant="default"
                         size="lg"
                       >
                         <Sparkles className="w-5 h-5 mr-2" />
@@ -153,7 +166,7 @@ const TournamentPlanner = () => {
                     </p>
                     <Button
                       onClick={() => navigate('/login')}
-                      className="bg-hero-gradient hover:shadow-glow"
+                      variant="default"
                       size="lg"
                     >
                       Login as Organizer
@@ -166,10 +179,10 @@ const TournamentPlanner = () => {
               {/* Features Grid */}
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
                 {features.map((feature, idx) => (
-                  <Card key={idx} className="glass-card-hover border-0 group animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
+                  <Card key={idx} className="glass-card-hover rounded-2xl border-border/50 group animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
                     <CardContent className="p-6 text-center">
-                      <div className="w-14 h-14 bg-hero-gradient rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:shadow-glow transition-all duration-300">
-                        <feature.icon className="w-7 h-7 text-primary-foreground" />
+                      <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:shadow-glow transition-all duration-300">
+                        <feature.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground" />
                       </div>
                       <h3 className="font-display font-bold text-lg mb-2">{feature.title}</h3>
                       <p className="text-sm text-muted-foreground">{feature.description}</p>
@@ -199,31 +212,34 @@ const TournamentPlanner = () => {
               </div>
             </div>
           </div>
+          </>
         ) : (
-          // Planner Interface
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="font-display font-bold text-4xl mb-2">AI Tournament Planner</h1>
-                <p className="text-muted-foreground">
-                  Planning: {myTournaments.find((t: any) => t._id === selectedTournamentId)?.name}
-                </p>
+          // Planner Interface — compact top bar
+          <>
+            <div className="border-b border-border/60 bg-card/50">
+              <div className="container mx-auto px-4 py-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">AI Tournament Planner</h1>
+                    <p className="text-muted-foreground text-sm">
+                      Planning: {myTournaments.find((t: any) => t._id === selectedTournamentId)?.name}
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setShowPlanner(false)}>
+                    Change Tournament
+                  </Button>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowPlanner(false)}
-              >
-                Change Tournament
-              </Button>
             </div>
-
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <AIPlannerChat
               tournamentId={selectedTournamentId}
               onEventsCreated={() => {
                 toast.success("Events created! Visit your tournament to see them.");
               }}
             />
-          </div>
+            </div>
+          </>
         )}
       </div>
     </Layout>

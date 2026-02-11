@@ -50,7 +50,7 @@ export default function CancelRegistrationDialog({
   const [confirmStep, setConfirmStep] = useState<'preview' | 'confirm'>('preview');
 
   // Fetch refund preview
-  const { data: refundPreview, isLoading: loadingPreview } = useQuery<RefundPreview>({
+  const { data: refundPreview, isLoading: loadingPreview, error: refundPreviewError } = useQuery<RefundPreview>({
     queryKey: ['refund-preview', eventId],
     queryFn: async () => {
       const response = await cancellationAPI.getRefundPreview(eventId);
@@ -238,7 +238,9 @@ export default function CancelRegistrationDialog({
           <Alert variant="destructive">
             <AlertTriangle className="w-4 h-4" />
             <AlertDescription>
-              Unable to load refund preview. Please try again or contact support.
+              {refundPreviewError && (refundPreviewError as any)?.response?.data?.message
+                ? (refundPreviewError as any).response.data.message
+                : 'Unable to load refund preview. Please try again or contact support.'}
             </AlertDescription>
           </Alert>
         )}

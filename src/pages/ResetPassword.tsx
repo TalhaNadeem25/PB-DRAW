@@ -84,11 +84,12 @@ const ResetPassword = () => {
   };
 
   return (
-    <Layout>
-      <div className="min-h-[calc(100vh-200px)] flex">
+    <Layout variant="auth">
+      <div className="min-h-screen flex">
         {/* Left side - Form */}
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="w-full max-w-md space-y-8 animate-fade-in">
+            <div className="glass-card rounded-2xl p-8">
             {/* Logo */}
             <div className="text-center">
               <Link to="/" className="inline-flex items-center gap-3 mb-8">
@@ -192,8 +193,8 @@ const ResetPassword = () => {
               </>
             ) : (
               <div className="text-center space-y-6">
-                <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-                  <Check className="w-10 h-10 text-green-500" />
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <Check className="w-10 h-10 text-primary" />
                 </div>
 
                 <div className="space-y-2">
@@ -217,33 +218,24 @@ const ResetPassword = () => {
                 </Button>
               </div>
             )}
+            </div>
           </div>
         </div>
 
-        {/* Right side - Visual */}
-        <div className="hidden lg:flex flex-1 relative overflow-hidden bg-hero-gradient">
-          {/* Mesh overlay */}
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-20 right-20 w-72 h-72 bg-secondary/30 rounded-full blur-3xl animate-float-slow" />
-            <div className="absolute bottom-32 left-20 w-56 h-56 bg-court-green-dark/40 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-          </div>
-
-          {/* Court pattern */}
-          <div className="absolute inset-0 court-pattern opacity-10" />
-
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
-            <div className="glass-dark rounded-3xl p-8 max-w-md text-center backdrop-blur-xl border border-primary-foreground/10">
-              <div className="w-20 h-20 rounded-2xl bg-secondary/20 flex items-center justify-center mx-auto mb-6">
-                <Lock className="w-10 h-10 text-primary-foreground" />
+        {/* Right side - Visual (neutral, no green hero) */}
+        <div className="hidden lg:flex flex-1 relative overflow-hidden bg-muted/50 border-l border-border">
+          <div className="flex flex-col items-center justify-center w-full p-12">
+            <div className="rounded-3xl p-8 max-w-md text-center border border-border bg-card shadow-sm">
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <Lock className="w-10 h-10 text-primary" />
               </div>
-              <h2 className="text-2xl font-display font-bold text-primary-foreground mb-4">
+              <h2 className="text-2xl font-display font-bold text-foreground mb-4">
                 Secure Password Reset
               </h2>
-              <p className="text-primary-foreground/80 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Choose a strong password that you haven't used before. Your account security is important to us.
               </p>
-              <div className="text-sm text-primary-foreground/60 space-y-2">
+              <div className="text-sm text-muted-foreground space-y-2">
                 <p>Use at least 6 characters</p>
                 <p>Include letters and numbers</p>
               </div>

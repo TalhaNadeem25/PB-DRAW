@@ -6,8 +6,8 @@ import { Globe, Mail, ThumbsUp } from "lucide-react";
 const Footer = () => {
   return (
     <footer className="bg-background-dark border-t border-white/5 pt-24 pb-12">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-20">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-3 mb-8">
@@ -92,7 +92,7 @@ const Footer = () => {
         </div>
 
         {/* Footer Bottom */}
-        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest">
+        <div className="pt-8 sm:pt-12 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest text-center sm:text-left">
           <p>© {new Date().getFullYear()} Pickle Rally. All Rights Reserved.</p>
           <div className="flex gap-8">
             <Link to="/privacy" className="hover:text-white transition-colors">
