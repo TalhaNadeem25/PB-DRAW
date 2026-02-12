@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Search,
   Zap,
   Check,
@@ -18,8 +19,33 @@ import {
   Inbox,
   Plus,
   GripVertical,
+  ArrowRightLeft,
+  XCircle,
+  Trash2,
+  Loader2,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, startOfDay, endOfDay, isWithinInterval, addDays, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -74,6 +100,13 @@ const EVENT_DOT_COLORS = [
   "bg-amber-500",
 ];
 
+const EVENT_BORDER_COLORS = [
+  "border-primary",
+  "border-secondary",
+  "border-blue-500",
+  "border-amber-500",
+];
+
 const MatchSchedule = ({
   matches,
   pools = [],
@@ -86,7 +119,6 @@ const MatchSchedule = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [poolFilter, setPoolFilter] = useState("");
-  const [activeTab, setActiveTab] = useState<"scheduler" | "live" | "auto">("scheduler");
   const [conflictCount, setConflictCount] = useState<number | null>(null);
   const [showConflictBanner, setShowConflictBanner] = useState(true);
   const [draggedMatch, setDraggedMatch] = useState<Match | null>(null);
@@ -95,6 +127,15 @@ const MatchSchedule = ({
   const courtsScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // New states for click-to-assign, dialogs, onboarding
+  const [selectedPoolMatch, setSelectedPoolMatch] = useState<Match | null>(null);
+  const [matchToRemove, setMatchToRemove] = useState<Match | null>(null);
+  const [showAutoScheduleDialog, setShowAutoScheduleDialog] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [isAutoScheduling, setIsAutoScheduling] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const updateScrollButtons = useCallback(() => {
     const el = courtsScrollRef.current;
@@ -129,6 +170,11 @@ const MatchSchedule = ({
   const eventColor = (eventId: string) => {
     const idx = events.findIndex((e) => e._id === eventId);
     return EVENT_DOT_COLORS[idx % EVENT_DOT_COLORS.length];
+  };
+
+  const eventBorderColor = (eventId: string) => {
+    const idx = events.findIndex((e) => e._id === eventId);
+    return EVENT_BORDER_COLORS[idx % EVENT_BORDER_COLORS.length];
   };
 
   // Unscheduled matches (match pool)
@@ -239,12 +285,24 @@ const MatchSchedule = ({
     e.preventDefault();
   };
 
+  const getNextScheduleTime = (courtNumber: number) => {
+    const courtMatches = matchesByCourt[courtNumber] ?? [];
+    const scheduleTime = new Date(selectedDate);
+    const lastMatch = courtMatches[courtMatches.length - 1];
+    if (lastMatch?.scheduledTime) {
+      const lastTime = new Date(lastMatch.scheduledTime);
+      lastTime.setMinutes(lastTime.getMinutes() + 45);
+      scheduleTime.setHours(lastTime.getHours(), lastTime.getMinutes(), 0, 0);
+    } else {
+      scheduleTime.setHours(9, 0, 0, 0);
+    }
+    return scheduleTime;
+  };
+
   const handleDropOnCourt = async (courtNumber: number) => {
     if (!draggedMatch) return;
     try {
-      // Use selectedDate with a default time for scheduling
-      const scheduleTime = new Date(selectedDate);
-      scheduleTime.setHours(9, 0, 0, 0); // Default to 9 AM
+      const scheduleTime = getNextScheduleTime(courtNumber);
       await courtAPI.assignMatch(draggedMatch._id, {
         courtNumber,
         scheduledTime: scheduleTime.toISOString(),
@@ -256,6 +314,84 @@ const MatchSchedule = ({
       toast.error(e.response?.data?.message || "Failed to assign match");
     }
     setDraggedMatch(null);
+  };
+
+  // ── Click-to-assign handler ──
+  const handleClickAssign = async (match: Match, courtNumber: number) => {
+    try {
+      const scheduleTime = getNextScheduleTime(courtNumber);
+      await courtAPI.assignMatch(match._id, {
+        courtNumber,
+        scheduledTime: scheduleTime.toISOString(),
+        courtName: `Court ${courtNumber}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
+      toast.success(`Match assigned to Court ${String(courtNumber).padStart(2, "0")}`);
+      setSelectedPoolMatch(null);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to assign match");
+    }
+  };
+
+  // ── Move match between courts ──
+  const handleMoveMatch = async (match: Match, targetCourt: number) => {
+    try {
+      await courtAPI.assignMatch(match._id, {
+        courtNumber: targetCourt,
+        scheduledTime: match.scheduledTime || new Date(selectedDate).toISOString(),
+        courtName: `Court ${targetCourt}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
+      toast.success(`Match moved to Court ${String(targetCourt).padStart(2, "0")}`);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to move match");
+    }
+  };
+
+  // ── Remove match from schedule ──
+  const handleRemoveFromSchedule = async (match: Match) => {
+    try {
+      await courtAPI.assignMatch(match._id, {
+        courtNumber: 0,
+        scheduledTime: "",
+        courtName: "",
+      });
+      queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
+      toast.success("Match removed from schedule");
+      setMatchToRemove(null);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to remove match");
+    }
+  };
+
+  // ── Reorder matches within a court ──
+  const handleReorderMatch = async (
+    match: Match,
+    courtMatchList: Match[],
+    currentIndex: number,
+    direction: "up" | "down"
+  ) => {
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= courtMatchList.length) return;
+    const other = courtMatchList[targetIndex];
+    try {
+      await Promise.all([
+        courtAPI.assignMatch(match._id, {
+          courtNumber: match.courtNumber!,
+          scheduledTime: other.scheduledTime!,
+          courtName: `Court ${match.courtNumber}`,
+        }),
+        courtAPI.assignMatch(other._id, {
+          courtNumber: other.courtNumber!,
+          scheduledTime: match.scheduledTime!,
+          courtName: `Court ${other.courtNumber}`,
+        }),
+      ]);
+      queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
+      toast.success("Match order updated");
+    } catch {
+      toast.error("Failed to reorder matches");
+    }
   };
 
   // ── Add Court handler ──
@@ -283,21 +419,6 @@ const MatchSchedule = ({
     }
   };
 
-  const handleAutoSchedule = async () => {
-    if (!tournamentId) {
-      toast.error("Tournament context required for auto-schedule");
-      return;
-    }
-    try {
-      await courtAPI.autoSchedule(tournamentId, "balanced");
-      queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
-      queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
-      toast.success("Schedule generated. Review and publish when ready.");
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Auto-schedule failed");
-    }
-  };
-
   const handleCheckConflicts = async () => {
     if (!tournamentId) return;
     try {
@@ -317,20 +438,25 @@ const MatchSchedule = ({
       toast.error("Resolve conflicts before publishing");
       return;
     }
-    toast.success("Changes published");
+    toast.success("Schedule published");
   };
 
   // —— Match card (pool and court) ——
   const MatchCard = ({
     match,
     variant = "pool",
+    courtMatchList,
+    matchIndex,
   }: {
     match: Match;
     variant?: "pool" | "court";
+    courtMatchList?: Match[];
+    matchIndex?: number;
   }) => {
     const label = getMatchLabel(match);
     const eventId = match.event?._id ?? "";
     const dotClass = eventColor(eventId);
+    const borderClass = eventBorderColor(eventId);
     const isLive = match.status === "in-progress" || match.status === "in_progress";
     const isCompleted = match.status === "completed";
     const isWarmUp = match.status === "warm-up" || match.status === "warm_up";
@@ -342,18 +468,21 @@ const MatchSchedule = ({
       ? format(new Date(match.scheduledTime), "h:mm a")
       : null;
 
-    return (
+    const cardContent = (
       <div
         draggable={variant === "pool"}
         onDragStart={variant === "pool" ? () => handleDragStart(match) : undefined}
         onDragEnd={variant === "pool" ? handleDragEnd : undefined}
         className={cn(
-          "glass-card-hover rounded-xl p-3 space-y-2 transition-all duration-200",
-          isLive && "ring-1 ring-destructive/30",
-          variant === "pool" && "cursor-grab active:cursor-grabbing"
+          "rounded-xl p-3 space-y-2 transition-all duration-200",
+          variant === "pool" && "glass-card-hover border-l-4 cursor-pointer active:scale-[0.98]",
+          variant === "pool" && borderClass,
+          variant === "court" && "bg-card/60 border border-border/40",
+          isLive && "ring-1 ring-destructive/30 bg-destructive/5",
+          isCompleted && variant === "court" && "opacity-70"
         )}
       >
-        {/* Top row: label + status */}
+        {/* Top row: label + status/actions */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5">
             {variant === "pool" && (
@@ -370,6 +499,29 @@ const MatchSchedule = ({
           </div>
           {variant === "court" && (
             <div className="flex items-center gap-1">
+              {/* Reorder arrows */}
+              {courtMatchList && courtMatchList.length > 1 && matchIndex != null && (
+                <div className="flex items-center gap-0.5 mr-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md"
+                    disabled={matchIndex === 0}
+                    onClick={() => handleReorderMatch(match, courtMatchList, matchIndex, "up")}
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md"
+                    disabled={matchIndex === courtMatchList.length - 1}
+                    onClick={() => handleReorderMatch(match, courtMatchList, matchIndex, "down")}
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
               {isLive && (
                 <Badge variant="destructive" className="text-xs gap-1 animate-pulse">
                   <Radio className="w-3 h-3" />
@@ -385,9 +537,43 @@ const MatchSchedule = ({
               {isCompleted && (
                 <Badge variant="secondary" className="text-xs">Done</Badge>
               )}
-              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
-                <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
+                    <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel className="text-xs">Match Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <ArrowRightLeft className="w-3.5 h-3.5 mr-2" />
+                      Move to Court
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {allCourtNumbers
+                        .filter((c) => c !== match.courtNumber)
+                        .map((courtNum) => (
+                          <DropdownMenuItem
+                            key={courtNum}
+                            onClick={() => handleMoveMatch(match, courtNum)}
+                          >
+                            Court {String(courtNum).padStart(2, "0")}
+                          </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setMatchToRemove(match)}
+                  >
+                    <XCircle className="w-3.5 h-3.5 mr-2" />
+                    Remove from Schedule
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
           {variant === "pool" && (
@@ -403,9 +589,7 @@ const MatchSchedule = ({
         {/* Pool info / Court info */}
         {variant === "pool" && (
           <p className="text-xs text-muted-foreground">
-            {match.status === "pending"
-              ? "Awaiting assignment"
-              : match.pool?.name ?? "Match pool"}
+            {match.pool?.name ?? "Awaiting assignment"}
           </p>
         )}
         {variant === "court" && (
@@ -415,7 +599,7 @@ const MatchSchedule = ({
             )}
             {timeStr && (
               <p className="text-xs text-muted-foreground">
-                Est. {timeStr} END
+                {timeStr}
               </p>
             )}
             {isWarmUp && !scoreStr && (
@@ -425,13 +609,53 @@ const MatchSchedule = ({
         )}
       </div>
     );
+
+    // Pool variant: wrap in Popover for click-to-assign
+    if (variant === "pool") {
+      return (
+        <Popover
+          open={selectedPoolMatch?._id === match._id}
+          onOpenChange={(open) => { if (!open) setSelectedPoolMatch(null); }}
+        >
+          <PopoverTrigger asChild>
+            <div onClick={() => setSelectedPoolMatch(match)}>
+              {cardContent}
+            </div>
+          </PopoverTrigger>
+          <PopoverContent side="right" align="start" className="w-56 p-3">
+            <p className="font-display font-bold text-sm mb-2">Assign to Court</p>
+            <div className="grid grid-cols-2 gap-2">
+              {allCourtNumbers.map((courtNum) => {
+                const count = (matchesByCourt[courtNum] ?? []).length;
+                return (
+                  <Button
+                    key={courtNum}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl text-sm font-display justify-between"
+                    onClick={() => handleClickAssign(match, courtNum)}
+                  >
+                    <span>Court {String(courtNum).padStart(2, "0")}</span>
+                    <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 ml-1">
+                      {count}
+                    </Badge>
+                  </Button>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+      );
+    }
+
+    return cardContent;
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* ── Control Panel ── */}
       <div className="glass-card rounded-2xl p-5 space-y-4">
-        {/* Row 1: Date nav + Event filters + Mode tabs */}
+        {/* Row 1: Date nav + Event filters */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Date Navigator */}
           <div className="flex items-center gap-2">
@@ -490,29 +714,6 @@ const MatchSchedule = ({
               ))}
             </div>
           )}
-
-          {/* Mode Tabs */}
-          <Tabs
-            value={activeTab}
-            onValueChange={(v: any) => setActiveTab(v)}
-            className="shrink-0"
-          >
-            <TabsList className="bg-muted/50 border border-border/50 p-1 rounded-xl">
-              <TabsTrigger
-                value="scheduler"
-                className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-sm"
-              >
-                Scheduler
-              </TabsTrigger>
-              <TabsTrigger value="live" className="rounded-lg text-sm">
-                Live View
-              </TabsTrigger>
-              <TabsTrigger value="auto" className="rounded-lg gap-1.5 text-sm">
-                <Zap className="w-3.5 h-3.5" />
-                Auto
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
 
         {/* Row 2: Search + Actions */}
@@ -526,14 +727,14 @@ const MatchSchedule = ({
               className="pl-9 h-9 glass rounded-xl text-sm"
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {tournamentId && (
               <>
                 <Button
                   variant="outline"
                   size="sm"
                   className="rounded-xl gap-1.5 text-sm"
-                  onClick={handleAutoSchedule}
+                  onClick={() => setShowAutoScheduleDialog(true)}
                 >
                   <Zap className="w-3.5 h-3.5" />
                   Auto-Schedule
@@ -545,7 +746,16 @@ const MatchSchedule = ({
                   onClick={handleCheckConflicts}
                 >
                   <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
-                  Check Conflicts
+                  Conflicts
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl text-sm text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => setShowClearDialog(true)}
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  Clear All
                 </Button>
               </>
             )}
@@ -591,10 +801,36 @@ const MatchSchedule = ({
         </div>
       )}
 
+      {/* ── Onboarding Banner ── */}
+      {showOnboarding && scheduledMatches.length === 0 && unscheduledMatches.length > 0 && (
+        <div className="glass-card rounded-2xl overflow-hidden">
+          <div className="h-1 bg-hero-gradient" />
+          <div className="flex items-start gap-4 px-5 py-4">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Zap className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-display font-bold text-sm text-foreground mb-1">
+                Getting Started
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Click any match in the pool on the left to pick a court, or drag it onto a court column.
+                Use <strong className="text-foreground">Auto-Schedule</strong> to assign all matches automatically.
+              </p>
+            </div>
+            <Button variant="ghost" size="icon" className="rounded-xl shrink-0"
+              onClick={() => setShowOnboarding(false)}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ── Main Board: Match Pool + Courts ── */}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 min-h-[400px] lg:min-h-[480px]">
         {/* Left: Match Pool — grouped by pool */}
         <div className="w-full lg:max-w-[300px] lg:shrink-0 flex flex-col glass-card rounded-2xl overflow-hidden max-h-[320px] lg:max-h-none min-h-0">
+          <div className="h-1 bg-hero-gradient" />
           <div className="px-4 py-3 border-b border-border/40">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h3 className="font-display font-bold text-sm uppercase tracking-wider text-foreground">
@@ -617,9 +853,26 @@ const MatchSchedule = ({
           <ScrollArea className="flex-1 min-h-0">
             <div className="p-3 space-y-1 pr-1">
               {filteredPoolMatches.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  <Inbox className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">No matches in pool</p>
+                <div className="text-center py-10 px-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    {unscheduledMatches.length === 0 ? (
+                      <Check className="w-6 h-6 text-primary" />
+                    ) : (
+                      <Inbox className="w-6 h-6 text-muted-foreground opacity-60" />
+                    )}
+                  </div>
+                  <p className="font-display font-bold text-sm text-foreground mb-1">
+                    {unscheduledMatches.length === 0
+                      ? "All Matches Scheduled"
+                      : "No Matches Found"}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {unscheduledMatches.length === 0
+                      ? "Every match has been assigned to a court. Use the Publish button when ready."
+                      : searchQuery || poolFilter
+                        ? "Try adjusting your search or filter."
+                        : "Create events and pools first, then generate matches to start scheduling."}
+                  </p>
                 </div>
               ) : (
                 poolGroups.map(({ poolId, poolName, matches: groupMatches }) => {
@@ -686,88 +939,261 @@ const MatchSchedule = ({
             </button>
           )}
           <div ref={courtsScrollRef} className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide min-h-[280px]">
-          {allCourtNumbers.map((courtNum) => {
-            const courtMatches = matchesByCourt[courtNum] ?? [];
-            const isDropTarget = !!draggedMatch;
-            return (
-              <div
-                key={courtNum}
-                className={cn(
-                  "w-[280px] shrink-0 flex flex-col glass-card rounded-2xl overflow-hidden transition-all duration-200",
-                  isDropTarget && "ring-2 ring-primary/30 ring-dashed"
-                )}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDropOnCourt(courtNum)}
-              >
-                <div className="px-4 py-3 border-b border-border/40">
-                  <h3 className="font-display font-bold text-foreground">
-                    Court {String(courtNum).padStart(2, "0")}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {courtMatches.length} match{courtMatches.length !== 1 ? "es" : ""}
-                  </p>
-                </div>
+            {allCourtNumbers.map((courtNum) => {
+              const courtMatches = matchesByCourt[courtNum] ?? [];
+              const isDropTarget = !!draggedMatch;
+              const completedCount = courtMatches.filter((m) => m.status === "completed").length;
+              const liveCount = courtMatches.filter(
+                (m) => m.status === "in-progress" || m.status === "in_progress"
+              ).length;
+              return (
                 <div
+                  key={courtNum}
                   className={cn(
-                    "flex-1 p-3 space-y-3 overflow-y-auto min-h-[200px] transition-colors duration-200",
-                    isDropTarget && "bg-primary/5"
+                    "w-[280px] shrink-0 flex flex-col glass-card rounded-2xl overflow-hidden transition-all duration-200",
+                    isDropTarget && "ring-2 ring-primary/30"
                   )}
+                  onDragOver={handleDragOver}
+                  onDrop={() => handleDropOnCourt(courtNum)}
                 >
-                  {courtMatches.map((match) => (
-                    <MatchCard key={match._id} match={match} variant="court" />
-                  ))}
-                  {/* Drop zone placeholder */}
+                  <div className="h-1 bg-hero-gradient opacity-60" />
+                  <div className="px-4 py-3 border-b border-border/40 bg-accent/20">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-display font-bold text-foreground">
+                        Court {String(courtNum).padStart(2, "0")}
+                      </h3>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-xs font-display font-bold",
+                          courtMatches.length > 0 && "bg-primary/10 text-primary border-primary/20"
+                        )}
+                      >
+                        {courtMatches.length}
+                      </Badge>
+                    </div>
+                    {courtMatches.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {completedCount > 0 && `${completedCount} completed`}
+                        {completedCount > 0 && liveCount > 0 && ", "}
+                        {liveCount > 0 && `${liveCount} live`}
+                        {completedCount === 0 && liveCount === 0 && `${courtMatches.length} pending`}
+                      </p>
+                    )}
+                    {courtMatches.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-0.5">Empty</p>
+                    )}
+                  </div>
                   <div
                     className={cn(
-                      "w-full rounded-xl border-2 border-dashed",
-                      "flex flex-col items-center justify-center py-8 px-4",
-                      "transition-all duration-200",
-                      isDropTarget
-                        ? "border-primary/40 bg-primary/10"
-                        : "border-border/50 hover:border-primary/30 hover:bg-primary/5 group"
+                      "flex-1 p-3 space-y-3 overflow-y-auto min-h-[200px] transition-colors duration-200",
+                      isDropTarget && "bg-primary/5"
                     )}
                   >
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors",
-                      isDropTarget ? "bg-primary/20" : "bg-muted/60 group-hover:bg-primary/10"
-                    )}>
-                      <Plus className={cn(
-                        "w-5 h-5 transition-colors",
-                        isDropTarget ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                      )} />
-                    </div>
-                    <span className={cn(
-                      "text-sm font-medium transition-colors",
-                      isDropTarget ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                    )}>
-                      {isDropTarget ? "Drop here" : "Queue Match"}
-                    </span>
+                    {courtMatches.length === 0 && !isDropTarget ? (
+                      <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                        <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                          <Inbox className="w-6 h-6 text-muted-foreground/50" />
+                        </div>
+                        <p className="font-display font-bold text-sm text-muted-foreground mb-1">No matches yet</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed max-w-[200px]">
+                          Click a match in the pool, or drag one here
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {courtMatches.map((match, idx) => (
+                          <MatchCard
+                            key={match._id}
+                            match={match}
+                            variant="court"
+                            courtMatchList={courtMatches}
+                            matchIndex={idx}
+                          />
+                        ))}
+                        {/* Drop zone */}
+                        <div
+                          className={cn(
+                            "w-full rounded-xl border-2 border-dashed flex flex-col items-center justify-center py-6 px-4 transition-all duration-200",
+                            isDropTarget
+                              ? "border-primary/40 bg-primary/10"
+                              : "border-border/50 hover:border-primary/30 hover:bg-primary/5 group"
+                          )}
+                        >
+                          <Plus className={cn(
+                            "w-5 h-5 mb-1 transition-colors",
+                            isDropTarget ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                          )} />
+                          <span className={cn(
+                            "text-xs font-medium transition-colors",
+                            isDropTarget ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                          )}>
+                            {isDropTarget ? "Drop here" : "Add match"}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Add Court button */}
-          <button
-            type="button"
-            onClick={handleAddCourt}
-            className={cn(
-              "w-[200px] shrink-0 flex flex-col items-center justify-center",
-              "glass-card rounded-2xl border-2 border-dashed border-border/40",
-              "hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 group"
-            )}
-          >
-            <div className="w-12 h-12 rounded-xl bg-muted/60 group-hover:bg-primary/10 flex items-center justify-center mb-3 transition-colors">
-              <Plus className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-            <span className="font-display font-bold text-sm text-muted-foreground group-hover:text-primary transition-colors">
-              Add Court
-            </span>
-          </button>
+            {/* Add Court button */}
+            <button
+              type="button"
+              onClick={handleAddCourt}
+              className={cn(
+                "w-[200px] shrink-0 flex flex-col items-center justify-center",
+                "glass-card rounded-2xl border-2 border-dashed border-border/40",
+                "hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 group"
+              )}
+            >
+              <div className="w-12 h-12 rounded-xl bg-muted/60 group-hover:bg-primary/10 flex items-center justify-center mb-3 transition-colors">
+                <Plus className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <span className="font-display font-bold text-sm text-muted-foreground group-hover:text-primary transition-colors">
+                Add Court
+              </span>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* ── Remove Match Confirmation ── */}
+      <AlertDialog open={!!matchToRemove} onOpenChange={(open) => { if (!open) setMatchToRemove(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from Schedule</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move the match back to the Match Pool. It can be reassigned later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => matchToRemove && handleRemoveFromSchedule(matchToRemove)}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Auto-Schedule Confirmation ── */}
+      <AlertDialog open={showAutoScheduleDialog} onOpenChange={setShowAutoScheduleDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auto-Schedule Matches</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Automatically assign all unscheduled matches to available courts using a balanced distribution.</p>
+                <div className="glass-card rounded-xl p-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Unscheduled matches</span>
+                    <span className="font-display font-bold">{unscheduledMatches.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Available courts</span>
+                    <span className="font-display font-bold">{allCourtNumbers.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Already scheduled</span>
+                    <span className="font-display font-bold">{scheduledMatches.length}</span>
+                  </div>
+                </div>
+                {scheduledMatches.length > 0 && (
+                  <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    Existing assignments will be preserved.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isAutoScheduling}
+              onClick={async (e) => {
+                e.preventDefault();
+                setIsAutoScheduling(true);
+                try {
+                  await courtAPI.autoSchedule(tournamentId!, "balanced");
+                  queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
+                  queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+                  toast.success("Schedule generated successfully");
+                  setShowAutoScheduleDialog(false);
+                } catch (err: any) {
+                  toast.error(err.response?.data?.message || "Auto-schedule failed");
+                } finally {
+                  setIsAutoScheduling(false);
+                }
+              }}
+            >
+              {isAutoScheduling ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4 mr-2" />
+              )}
+              {isAutoScheduling ? "Scheduling..." : "Auto-Schedule"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Clear Schedule Confirmation ── */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Entire Schedule</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>This will remove all court assignments and move every match back to the pool.</p>
+                <div className="glass-card rounded-xl p-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Matches to unschedule</span>
+                    <span className="font-display font-bold text-destructive">{scheduledMatches.length}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-destructive flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  This action cannot be undone.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isClearing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                setIsClearing(true);
+                try {
+                  await courtAPI.clearSchedule(tournamentId!);
+                  queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
+                  queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+                  toast.success("Schedule cleared");
+                  setShowClearDialog(false);
+                } catch (err: any) {
+                  toast.error(err.response?.data?.message || "Failed to clear schedule");
+                } finally {
+                  setIsClearing(false);
+                }
+              }}
+            >
+              {isClearing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              {isClearing ? "Clearing..." : "Clear All"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
