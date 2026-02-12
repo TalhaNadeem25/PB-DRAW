@@ -243,11 +243,11 @@ const MatchSchedule = ({
     new Set(scheduledMatches.map((m) => m.courtNumber).filter(Boolean))
   ) as number[];
 
-  // Merge scheduled court numbers with manually added courts
+  // Merge scheduled court numbers with manually added courts (always include 1 & 2 as defaults)
   const allCourtNumbers = Array.from(new Set([
+    1, 2,
     ...courtNumbers,
     ...addedCourts,
-    ...(courtNumbers.length === 0 && addedCourts.length === 0 ? [1, 2] : []),
   ])).sort((a, b) => a - b);
 
   useEffect(() => {
@@ -917,27 +917,39 @@ const MatchSchedule = ({
         </div>
 
         {/* Right: Court columns */}
-        <div className="flex-1 min-w-0 relative">
-          {/* Left scroll arrow */}
-          {canScrollLeft && (
-            <button
-              type="button"
-              onClick={() => scrollCourts("left")}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-background/90 border border-border/60 shadow-lg flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-200"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
-          {/* Right scroll arrow */}
-          {canScrollRight && (
-            <button
-              type="button"
-              onClick={() => scrollCourts("right")}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-background/90 border border-border/60 shadow-lg flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-200"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          )}
+        <div className="flex-1 min-w-0 relative flex flex-col">
+          {/* Court navigation header */}
+          <div className="flex items-center justify-between gap-3 mb-3 px-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-display font-bold text-sm uppercase tracking-wider text-foreground">
+                Courts
+              </h3>
+              <Badge variant="secondary" className="text-xs font-display font-bold">
+                {allCourtNumbers.length}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-xl"
+                onClick={() => scrollCourts("left")}
+                disabled={!canScrollLeft}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-xl"
+                onClick={() => scrollCourts("right")}
+                disabled={!canScrollRight}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="relative flex-1 min-h-0">
           <div ref={courtsScrollRef} className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide min-h-[280px]">
             {allCourtNumbers.map((courtNum) => {
               const courtMatches = matchesByCourt[courtNum] ?? [];
@@ -1055,6 +1067,7 @@ const MatchSchedule = ({
                 Add Court
               </span>
             </button>
+          </div>
           </div>
         </div>
       </div>
