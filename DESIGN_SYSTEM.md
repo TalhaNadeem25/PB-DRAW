@@ -374,3 +374,8 @@ Use shadcn Dialog or AlertDialog. Content: `max-w-2xl max-h-[90vh] overflow-y-au
 | EventRegistration.tsx | Updated | — |
 | TournamentPlanner.tsx | Updated | — |
 | TournamentCommunications.tsx | Updated | B |
+
+
+
+
+In TournamentDetails page -> registration tab -> when organizer remove it should also do refund as well. (Not completed)

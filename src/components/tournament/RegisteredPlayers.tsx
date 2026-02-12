@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { tournamentAPI, teamAPI, eventAPI, cancellationAPI } from "@/services/api";
-import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight, DollarSign, AlertTriangle } from "lucide-react";
+import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight, DollarSign, AlertTriangle, User, Info, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -14,6 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -46,6 +54,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
   const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refundConfirmStep, setRefundConfirmStep] = useState<"form" | "confirm">("form");
+  const [infoTarget, setInfoTarget] = useState<{ type: "player" | "team"; data: any; eventName: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['tournament-registrations', tournamentId],
@@ -221,7 +230,45 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                   <TableBody>
                     {event.registeredPlayers.map((player: any, idx: number) => (
                       <TableRow key={player.playerId} className={cn(idx % 2 === 0 && "bg-muted/30")}>
-                        <TableCell className="font-semibold">{player.name}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="font-semibold text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+                              >
+                                {player.name}
+                                <ChevronDown className="w-3 h-3 opacity-70" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-52">
+                              <DropdownMenuItem asChild>
+                                <Link to={`/profile?userId=${player.playerId}`} className="flex items-center gap-2">
+                                  <User className="w-4 h-4" />
+                                  View profile
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setInfoTarget({ type: "player", data: player, eventName: event.eventName })}>
+                                <Info className="w-4 h-4" />
+                                View info
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleMoveClick(player, event.eventId, "player")}>
+                                <ArrowRight className="w-4 h-4" />
+                                Move to event
+                              </DropdownMenuItem>
+                              {player.paymentStatus === "paid" && player.paymentId && (
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleRefundClick(player, "player")}
+                                >
+                                  <DollarSign className="w-4 h-4" />
+                                  Refund & remove
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                         <TableCell>
                           <a href={`mailto:${player.email}`} className="text-primary hover:underline flex items-center gap-1">
                             <Mail className="w-3 h-3" />
@@ -295,12 +342,66 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                   <TableBody>
                     {event.teams.map((team: any, idx: number) => (
                       <TableRow key={team.teamId} className={cn(idx % 2 === 0 && "bg-muted/30")}>
-                        <TableCell className="font-semibold">{team.teamName}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="font-semibold text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+                              >
+                                {team.teamName}
+                                <ChevronDown className="w-3 h-3 opacity-70" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-52">
+                              <DropdownMenuItem onClick={() => setInfoTarget({ type: "team", data: team, eventName: event.eventName })}>
+                                <Info className="w-4 h-4" />
+                                View info
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleMoveClick(team, event.eventId, "team")}>
+                                <ArrowRight className="w-4 h-4" />
+                                Move to event
+                              </DropdownMenuItem>
+                              {team.paymentStatus === "paid" && team.paymentId && (
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleRefundClick(team, "team")}
+                                >
+                                  <DollarSign className="w-4 h-4" />
+                                  Refund & remove
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                         <TableCell>
                           {team.players[0] ? (
                             <div>
-                              <div className="font-medium">{team.players[0].name}</div>
-                              <a href={`mailto:${team.players[0].email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="font-medium text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded text-left"
+                                  >
+                                    {team.players[0].name}
+                                    <ChevronDown className="w-3 h-3 opacity-70" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="w-52">
+                                  <DropdownMenuItem asChild>
+                                    <Link to={`/profile?userId=${team.players[0].playerId}`} className="flex items-center gap-2">
+                                      <User className="w-4 h-4" />
+                                      View profile
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setInfoTarget({ type: "player", data: team.players[0], eventName: event.eventName })}>
+                                    <Info className="w-4 h-4" />
+                                    View info
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              <a href={`mailto:${team.players[0].email}`} className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5">
                                 <Mail className="w-3 h-3" />
                                 {team.players[0].email}
                               </a>
@@ -312,8 +413,30 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                         <TableCell>
                           {team.players[1] ? (
                             <div>
-                              <div className="font-medium">{team.players[1].name}</div>
-                              <a href={`mailto:${team.players[1].email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="font-medium text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded text-left"
+                                  >
+                                    {team.players[1].name}
+                                    <ChevronDown className="w-3 h-3 opacity-70" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="w-52">
+                                  <DropdownMenuItem asChild>
+                                    <Link to={`/profile?userId=${team.players[1].playerId}`} className="flex items-center gap-2">
+                                      <User className="w-4 h-4" />
+                                      View profile
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setInfoTarget({ type: "player", data: team.players[1], eventName: event.eventName })}>
+                                    <Info className="w-4 h-4" />
+                                    View info
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              <a href={`mailto:${team.players[1].email}`} className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5">
                                 <Mail className="w-3 h-3" />
                                 {team.players[1].email}
                               </a>
@@ -386,6 +509,86 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
           </div>
         );
       })}
+
+      {/* View Info Dialog */}
+      <Dialog open={!!infoTarget} onOpenChange={(open) => !open && setInfoTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{infoTarget?.type === "team" ? "Team info" : "Player info"}</DialogTitle>
+            <DialogDescription>
+              {infoTarget?.eventName && <span className="text-muted-foreground">Event: {infoTarget.eventName}</span>}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 space-y-4">
+            {infoTarget?.type === "player" && infoTarget.data && (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Name</div>
+                  <div className="font-semibold">{infoTarget.data.name}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Email</div>
+                  <a href={`mailto:${infoTarget.data.email}`} className="text-primary hover:underline">
+                    {infoTarget.data.email}
+                  </a>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Skill level</div>
+                  <Badge variant="secondary">{infoTarget.data.skillLevel || "N/A"}</Badge>
+                </div>
+                {infoTarget.data.registeredAt && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Registered</div>
+                    <div>{format(new Date(infoTarget.data.registeredAt), "MMM dd, yyyy")}</div>
+                  </div>
+                )}
+                {infoTarget.data.paymentStatus && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Payment</div>
+                    <Badge variant={infoTarget.data.paymentStatus === "paid" ? "default" : "destructive"} className="bg-court-green">
+                      {infoTarget.data.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            )}
+            {infoTarget?.type === "team" && infoTarget.data && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Team name</div>
+                  <div className="font-semibold">{infoTarget.data.teamName}</div>
+                </div>
+                {infoTarget.data.registeredAt && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Registered</div>
+                    <div>{format(new Date(infoTarget.data.registeredAt), "MMM dd, yyyy")}</div>
+                  </div>
+                )}
+                {infoTarget.data.paymentStatus && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Payment</div>
+                    <Badge variant={infoTarget.data.paymentStatus === "paid" ? "default" : "destructive"} className="bg-court-green">
+                      {infoTarget.data.paymentStatus === "paid" ? "Paid" : infoTarget.data.paymentStatus === "partially_paid" ? "Partial" : "Unpaid"}
+                    </Badge>
+                  </div>
+                )}
+                <div className="border-t pt-3 space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">Players</div>
+                  {infoTarget.data.players?.map((p: any, i: number) => (
+                    <div key={i} className="p-3 rounded-lg bg-muted/50 space-y-1">
+                      <div className="font-medium">{p.name}</div>
+                      <a href={`mailto:${p.email}`} className="text-sm text-primary hover:underline block">
+                        {p.email}
+                      </a>
+                      {p.skillLevel && <Badge variant="secondary" className="text-xs">{p.skillLevel}</Badge>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Move Team/Player Dialog */}
       <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
