@@ -8,6 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -39,6 +49,7 @@ const PoolManagement = () => {
   const [schedulingMatch, setSchedulingMatch] = useState<string | null>(null);
   const [scheduleData, setScheduleData] = useState({ scheduledTime: "", courtNumber: 1 });
   const [activeTab, setActiveTab] = useState<string>("standings");
+  const [poolToRemove, setPoolToRemove] = useState<string | null>(null);
 
   // Fetch event data with teams and pools
   const { data: eventData, isLoading: eventLoading } = useQuery({
@@ -129,6 +140,23 @@ const PoolManagement = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to create pool");
+    },
+  });
+
+  // Delete pool mutation
+  const deletePoolMutation = useMutation({
+    mutationFn: (poolId: string) => poolAPI.delete(poolId),
+    onSuccess: (_, poolId) => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['teams', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      if (selectedPoolId === poolId) setSelectedPoolId(null);
+      setPoolToRemove(null);
+      toast.success("Pool removed successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to remove pool");
+      setPoolToRemove(null);
     },
   });
 
@@ -432,17 +460,34 @@ const PoolManagement = () => {
                   ) : (
                     <div className="space-y-2">
                       {pools.map((pool: any) => (
-                        <Button
+                        <div
                           key={pool._id}
-                          variant={selectedPoolId === pool._id ? "default" : "outline"}
-                          className={`w-full justify-start transition-all ${selectedPoolId === pool._id ? 'shadow-glow' : 'hover:border-primary/50'}`}
-                          onClick={() => setSelectedPoolId(pool._id)}
+                          className="flex items-center gap-1 w-full group"
                         >
-                          {pool.name}
-                          <Badge variant="secondary" className="ml-auto">
-                            {getPoolMemberCount(pool)} {isSingles ? 'players' : 'teams'}
-                          </Badge>
-                        </Button>
+                          <Button
+                            variant={selectedPoolId === pool._id ? "default" : "outline"}
+                            className={`flex-1 justify-start transition-all min-w-0 ${selectedPoolId === pool._id ? 'shadow-glow' : 'hover:border-primary/50'}`}
+                            onClick={() => setSelectedPoolId(pool._id)}
+                          >
+                            {pool.name}
+                            <Badge variant="secondary" className="ml-auto shrink-0">
+                              {getPoolMemberCount(pool)} {isSingles ? 'players' : 'teams'}
+                            </Badge>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPoolToRemove(pool._id);
+                            }}
+                            title="Remove pool"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -938,6 +983,36 @@ const PoolManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Remove pool confirmation */}
+      <AlertDialog open={!!poolToRemove} onOpenChange={(open) => !open && setPoolToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove pool?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Removing &quot;{pools.find((p: any) => p._id === poolToRemove)?.name || 'this pool'}&quot; will
+              unassign all {isSingles ? 'players' : 'teams'} and remove its matches. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => poolToRemove && deletePoolMutation.mutate(poolToRemove)}
+              disabled={deletePoolMutation.isPending}
+            >
+              {deletePoolMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Removing…
+                </>
+              ) : (
+                'Remove pool'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };
