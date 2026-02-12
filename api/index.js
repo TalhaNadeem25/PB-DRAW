@@ -30,6 +30,8 @@ import partnerRoutes from '../backend/src/routes/partnerRoutes.js';
 import communicationRoutes from '../backend/src/routes/communicationRoutes.js';
 import courtRoutes from '../backend/src/routes/courtRoutes.js';
 import testDataRoutes from '../backend/src/routes/testDataRoutes.js';
+import { protect, authorize } from '../backend/src/middleware/auth.js';
+import { assignMatchToCourt } from '../backend/src/controllers/courtController.js';
 
 // Load environment variables
 dotenv.config();
@@ -107,6 +109,9 @@ app.use('/api/pools', poolRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/invitations', invitationRoutes);
+
+// Match court assignment
+app.put('/api/matches/:id/assign-court', protect, authorize('organizer', 'admin'), assignMatchToCourt);
 
 // Error handlers
 app.use(notFound);
