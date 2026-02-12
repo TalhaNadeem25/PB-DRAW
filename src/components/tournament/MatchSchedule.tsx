@@ -103,19 +103,6 @@ const MatchSchedule = ({
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   }, []);
 
-  useEffect(() => {
-    const el = courtsScrollRef.current;
-    if (!el) return;
-    updateScrollButtons();
-    el.addEventListener("scroll", updateScrollButtons);
-    const ro = new ResizeObserver(updateScrollButtons);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", updateScrollButtons);
-      ro.disconnect();
-    };
-  }, [updateScrollButtons, allCourtNumbers.length]);
-
   const scrollCourts = (direction: "left" | "right") => {
     const el = courtsScrollRef.current;
     if (!el) return;
@@ -216,6 +203,19 @@ const MatchSchedule = ({
     ...addedCourts,
     ...(courtNumbers.length === 0 && addedCourts.length === 0 ? [1, 2] : []),
   ])).sort((a, b) => a - b);
+
+  useEffect(() => {
+    const el = courtsScrollRef.current;
+    if (!el) return;
+    updateScrollButtons();
+    el.addEventListener("scroll", updateScrollButtons);
+    const ro = new ResizeObserver(updateScrollButtons);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateScrollButtons);
+      ro.disconnect();
+    };
+  }, [updateScrollButtons, allCourtNumbers.length]);
 
   const togglePoolCollapse = (poolId: string) => {
     setCollapsedPools((prev) => {
