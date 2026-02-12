@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +92,35 @@ const MatchSchedule = ({
   const [draggedMatch, setDraggedMatch] = useState<Match | null>(null);
   const [addedCourts, setAddedCourts] = useState<number[]>([]);
   const [collapsedPools, setCollapsedPools] = useState<Set<string>>(new Set());
+  const courtsScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = courtsScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = courtsScrollRef.current;
+    if (!el) return;
+    updateScrollButtons();
+    el.addEventListener("scroll", updateScrollButtons);
+    const ro = new ResizeObserver(updateScrollButtons);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateScrollButtons);
+      ro.disconnect();
+    };
+  }, [updateScrollButtons, allCourtNumbers.length]);
+
+  const scrollCourts = (direction: "left" | "right") => {
+    const el = courtsScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction === "left" ? -300 : 300, behavior: "smooth" });
+  };
 
   const getTeamName = (team: Match["team1"]) => {
     if (team.name) return team.name;
@@ -635,7 +664,28 @@ const MatchSchedule = ({
         </div>
 
         {/* Right: Court columns */}
-        <div className="flex-1 min-w-0 flex gap-5 overflow-x-auto pb-2 scrollbar-hide min-h-[280px]">
+        <div className="flex-1 min-w-0 relative">
+          {/* Left scroll arrow */}
+          {canScrollLeft && (
+            <button
+              type="button"
+              onClick={() => scrollCourts("left")}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-background/90 border border-border/60 shadow-lg flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
+          {/* Right scroll arrow */}
+          {canScrollRight && (
+            <button
+              type="button"
+              onClick={() => scrollCourts("right")}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-background/90 border border-border/60 shadow-lg flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+          <div ref={courtsScrollRef} className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide min-h-[280px]">
           {allCourtNumbers.map((courtNum) => {
             const courtMatches = matchesByCourt[courtNum] ?? [];
             const isDropTarget = !!draggedMatch;
@@ -715,6 +765,7 @@ const MatchSchedule = ({
               Add Court
             </span>
           </button>
+          </div>
         </div>
       </div>
     </div>
