@@ -406,7 +406,12 @@ const TournamentDetail = () => {
             />
           );
         case "schedule":
-          return <TournamentSchedule tournamentId={id!} />;
+          return (
+            <TournamentSchedule
+              tournamentId={id!}
+              tournamentStartDate={tournament.startDate}
+            />
+          );
         case "brackets":
           return <BracketViewer tournamentId={id!} />;
         case "scores":
@@ -703,7 +708,10 @@ const TournamentDetail = () => {
 
                 {/* Schedule Tab */}
                 <TabsContent value="schedule" className="mt-6">
-                  <TournamentSchedule tournamentId={id!} />
+                  <TournamentSchedule
+                    tournamentId={id!}
+                    tournamentStartDate={tournament.startDate}
+                  />
                 </TabsContent>
 
                 {/* Brackets Tab */}

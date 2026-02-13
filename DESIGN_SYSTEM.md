@@ -379,3 +379,4 @@ Use shadcn Dialog or AlertDialog. Content: `max-w-2xl max-h-[90vh] overflow-y-au
 
 
 In TournamentDetails page -> registration tab -> when organizer remove it should also do refund as well. (Not completed)
+If event is full let user join the waitlist, if approved then email them to pay and join the evnets. 

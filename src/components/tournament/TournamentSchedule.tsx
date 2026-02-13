@@ -7,9 +7,11 @@ import MatchSchedule from "./MatchSchedule";
 
 interface TournamentScheduleProps {
   tournamentId: string;
+  /** Tournament start date – used so after auto-schedule the court view shows the correct day */
+  tournamentStartDate?: string;
 }
 
-const TournamentSchedule = ({ tournamentId }: TournamentScheduleProps) => {
+const TournamentSchedule = ({ tournamentId, tournamentStartDate }: TournamentScheduleProps) => {
   const [selectedEventId, setSelectedEventId] = useState<string>("all");
 
   // Fetch events for the tournament
@@ -101,6 +103,7 @@ const TournamentSchedule = ({ tournamentId }: TournamentScheduleProps) => {
   return (
     <MatchSchedule
       tournamentId={tournamentId}
+      tournamentStartDate={tournamentStartDate}
       matches={matches}
       pools={pools}
       events={events}

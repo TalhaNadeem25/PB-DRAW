@@ -91,6 +91,8 @@ interface MatchScheduleProps {
   selectedEventId?: string;
   onEventChange?: (eventId: string) => void;
   tournamentId?: string;
+  /** Tournament start date – after auto-schedule we show this day so courts display the scheduled matches */
+  tournamentStartDate?: string;
 }
 
 const EVENT_DOT_COLORS = [
@@ -111,6 +113,7 @@ const MatchSchedule = ({
   matches,
   pools = [],
   events = [],
+  tournamentStartDate,
   selectedEventId = "all",
   onEventChange,
   tournamentId,
@@ -1190,6 +1193,11 @@ const MatchSchedule = ({
                   await courtAPI.autoSchedule(tournamentId!, "balanced");
                   queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
                   queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+                  queryClient.invalidateQueries({ queryKey: ["schedule-grid", tournamentId] });
+                  await queryClient.refetchQueries({ queryKey: ["tournament-matches", tournamentId] });
+                  if (tournamentStartDate) {
+                    setSelectedDate(startOfDay(new Date(tournamentStartDate)));
+                  }
                   toast.success("Schedule generated successfully");
                   setShowAutoScheduleDialog(false);
                 } catch (err: any) {
