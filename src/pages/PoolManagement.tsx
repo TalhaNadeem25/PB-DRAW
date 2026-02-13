@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Plus, Users, Trophy, Shuffle, Loader2, AlertCircle, Edit2, Check, X, Trash2, Calendar, Clock } from "lucide-react";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { eventAPI, poolAPI, teamAPI, matchAPI, playoffAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -386,68 +387,78 @@ const PoolManagement = () => {
   return (
     <Layout variant="minimal">
       <div className="min-h-screen bg-background">
-        {/* Top bar — hero style to match tournament dashboard */}
-        <div className="bg-hero-gradient py-6 sm:py-8 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/20 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
-          </div>
-          <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
-            <Link
-              to={`/tournaments/${id}`}
-              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Tournament
-            </Link>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <Badge variant="outline" className="mb-2 border-primary-foreground/30 text-primary-foreground bg-primary-foreground/10">
-                  Pool Play
-                </Badge>
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-primary-foreground">
-                  {event.name}
-                </h1>
-                <p className="text-primary-foreground/80 text-sm mt-1">
-                  Manage pools, matches, and scores
-                </p>
+        {/* Top bar — same structure as TournamentDetail organizer (DashboardTopBar) */}
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col gap-4 mb-6 animate-fade-in">
+            <div className="flex items-start gap-3 min-w-0">
+              <Link
+                to={`/tournaments/${id}`}
+                className="shrink-0 w-10 h-10 rounded-xl glass flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all mt-0.5"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-display font-bold text-xl sm:text-2xl truncate max-w-[200px] sm:max-w-none">
+                    {event.name}
+                  </h1>
+                  <Badge variant="outline" className="font-medium border shrink-0 text-xs bg-primary/10 text-primary border-primary/20">
+                    <span className="w-2 h-2 rounded-full mr-1.5 bg-primary" />
+                    Pool Play
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mt-1">
+                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">
+                    {event.startDate && event.endDate
+                      ? `${format(new Date(event.startDate), "MMM dd, yyyy")} – ${format(new Date(event.endDate), "MMM dd, yyyy")}`
+                      : "Manage pools, matches, and scores"}
+                  </span>
+                </div>
               </div>
-              <div className="flex gap-3">
-                <Dialog open={isCreatePoolOpen} onOpenChange={setIsCreatePoolOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="secondary" size="sm" className="bg-primary-foreground/20 text-primary-foreground border-0 hover:bg-primary-foreground/30 shadow-glow">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Pool
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+              <Dialog open={isCreatePoolOpen} onOpenChange={setIsCreatePoolOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="bg-court-green text-white hover:bg-court-green-dark shadow-lg shrink-0"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    <span className="whitespace-nowrap">Create Pool</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="glass-card rounded-2xl border border-border/50">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Create New Pool</DialogTitle>
+                    <DialogDescription>Enter a name for the new pool</DialogDescription>
+                  </DialogHeader>
+                  <Input
+                    placeholder="e.g., Pool A"
+                    value={newPoolName}
+                    onChange={(e) => setNewPoolName(e.target.value)}
+                    className="focus:shadow-glow transition-shadow rounded-xl"
+                  />
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsCreatePoolOpen(false)}>
+                      Cancel
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="glass-card rounded-2xl border border-border/50">
-                    <DialogHeader>
-                      <DialogTitle className="font-display">Create New Pool</DialogTitle>
-                      <DialogDescription>Enter a name for the new pool</DialogDescription>
-                    </DialogHeader>
-                    <Input
-                      placeholder="e.g., Pool A"
-                      value={newPoolName}
-                      onChange={(e) => setNewPoolName(e.target.value)}
-                      className="focus:shadow-glow transition-shadow rounded-xl"
-                    />
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsCreatePoolOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={createPool} disabled={createPoolMutation.isPending} className="bg-hero-gradient text-primary-foreground shadow-glow hover:opacity-90">
-                        {createPoolMutation.isPending ? "Creating..." : "Create"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                    <Button
+                      onClick={createPool}
+                      disabled={createPoolMutation.isPending}
+                      className="bg-court-green text-white hover:bg-court-green-dark shadow-lg"
+                    >
+                      {createPoolMutation.isPending ? "Creating..." : "Create"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
 
         {/* Content — full width */}
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-0 sm:py-2">
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Pools List */}
             <div className="space-y-4">
@@ -868,7 +879,8 @@ const PoolManagement = () => {
                                   <Button
                                     onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
                                     disabled={generatePlayoffsMutation.isPending}
-                                    className="bg-hero-gradient text-primary-foreground shadow-glow hover:opacity-90 rounded-xl"
+                                    size="sm"
+                                    className="bg-court-green text-white hover:bg-court-green-dark shadow-lg shrink-0 rounded-xl"
                                   >
                                     {generatePlayoffsMutation.isPending ? (
                                       <>
@@ -983,7 +995,7 @@ const PoolManagement = () => {
             <Button
               onClick={() => saveSchedule(schedulingMatch!)}
               disabled={updateMatchScheduleMutation.isPending}
-              className="bg-hero-gradient text-primary-foreground shadow-glow hover:opacity-90 rounded-xl"
+              className="bg-court-green text-white hover:bg-court-green-dark shadow-lg rounded-xl"
             >
               {updateMatchScheduleMutation.isPending ? (
                 <>
