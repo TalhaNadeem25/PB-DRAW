@@ -380,7 +380,7 @@ const LiveTournamentDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {Object.entries(matchesByEvent).map(([eventId, matches]) => {
+                  {Object.entries(matchesByEvent).map(([eventId, matches]: [string, any]) => {
                     const event = events.find((e: any) => e._id === eventId);
                     const eventName = event?.name || "Event";
 
