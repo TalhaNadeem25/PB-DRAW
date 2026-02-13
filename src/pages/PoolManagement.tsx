@@ -353,7 +353,7 @@ const PoolManagement = () => {
 
   if (eventLoading) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
@@ -366,7 +366,7 @@ const PoolManagement = () => {
 
   if (!event) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
@@ -384,54 +384,58 @@ const PoolManagement = () => {
   const selectedPool = pools.find((p: any) => p._id === selectedPoolId);
 
   return (
-    <Layout>
+    <Layout variant="minimal">
       <div className="min-h-screen bg-background">
-        {/* Compact top bar — no green hero */}
-        <div className="border-b border-border/60 bg-card/50">
-          <div className="container mx-auto px-4 sm:px-6 py-6">
+        {/* Top bar — hero style to match tournament dashboard */}
+        <div className="bg-hero-gradient py-6 sm:py-8 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+          </div>
+          <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
             <Link
               to={`/tournaments/${id}`}
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
+              className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Tournament
             </Link>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <Badge variant="secondary" className="mb-2">
+                <Badge variant="outline" className="mb-2 border-primary-foreground/30 text-primary-foreground bg-primary-foreground/10">
                   Pool Play
                 </Badge>
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-primary-foreground">
                   {event.name}
                 </h1>
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-primary-foreground/80 text-sm mt-1">
                   Manage pools, matches, and scores
                 </p>
               </div>
               <div className="flex gap-3">
                 <Dialog open={isCreatePoolOpen} onOpenChange={setIsCreatePoolOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="default" size="sm">
+                    <Button variant="secondary" size="sm" className="bg-primary-foreground/20 text-primary-foreground border-0 hover:bg-primary-foreground/30 shadow-glow">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Pool
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="glass-card">
+                  <DialogContent className="glass-card rounded-2xl border border-border/50">
                     <DialogHeader>
-                      <DialogTitle>Create New Pool</DialogTitle>
+                      <DialogTitle className="font-display">Create New Pool</DialogTitle>
                       <DialogDescription>Enter a name for the new pool</DialogDescription>
                     </DialogHeader>
                     <Input
                       placeholder="e.g., Pool A"
                       value={newPoolName}
                       onChange={(e) => setNewPoolName(e.target.value)}
-                      className="focus:shadow-glow transition-shadow"
+                      className="focus:shadow-glow transition-shadow rounded-xl"
                     />
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsCreatePoolOpen(false)}>
                         Cancel
                       </Button>
-                      <Button onClick={createPool} disabled={createPoolMutation.isPending} variant="hero">
+                      <Button onClick={createPool} disabled={createPoolMutation.isPending} className="bg-hero-gradient text-primary-foreground shadow-glow hover:opacity-90">
                         {createPoolMutation.isPending ? "Creating..." : "Create"}
                       </Button>
                     </DialogFooter>
@@ -442,15 +446,17 @@ const PoolManagement = () => {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Content — full width */}
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Pools List */}
             <div className="space-y-4">
-              <Card className="glass-card border-border/50 shadow-lg">
+              <Card className="glass-card-hover rounded-2xl border border-border/50 shadow-float">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 font-display">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Trophy className="w-5 h-5 text-primary" />
+                    </div>
                     Pools ({pools.length})
                   </CardTitle>
                 </CardHeader>
@@ -466,7 +472,7 @@ const PoolManagement = () => {
                         >
                           <Button
                             variant={selectedPoolId === pool._id ? "default" : "outline"}
-                            className={`flex-1 justify-start transition-all min-w-0 ${selectedPoolId === pool._id ? 'shadow-glow' : 'hover:border-primary/50'}`}
+                            className={`flex-1 justify-start transition-all min-w-0 rounded-xl ${selectedPoolId === pool._id ? 'bg-hero-gradient text-primary-foreground shadow-glow border-0' : 'hover:border-primary/50 hover:bg-primary/5'}`}
                             onClick={() => setSelectedPoolId(pool._id)}
                           >
                             {pool.name}
@@ -494,10 +500,12 @@ const PoolManagement = () => {
                 </CardContent>
               </Card>
 
-              <Card className="glass-card border-border/50">
+              <Card className="glass-card-hover rounded-2xl border border-border/50 shadow-float">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 font-display">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
                     {isSingles
                       ? `Unassigned Players (${unassignedPlayers.length})`
                       : `Unassigned Teams (${unassignedTeams.length})`
@@ -519,7 +527,7 @@ const PoolManagement = () => {
                         unassignedPlayers.map((player: any) => (
                           <div
                             key={player._id}
-                            className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border"
+                            className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-xl border border-border/60 hover:border-primary/30 transition-colors"
                           >
                             <div className="flex-1">
                               <span className="font-medium text-sm">{player.name}</span>
@@ -555,7 +563,7 @@ const PoolManagement = () => {
                         unassignedTeams.map((team: any) => (
                           <div
                             key={team._id}
-                            className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border"
+                            className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-xl border border-border/60 hover:border-primary/30 transition-colors"
                           >
                             <span className="font-medium text-sm flex-1">{team.name}</span>
                             {pools.length > 0 ? (
@@ -591,7 +599,7 @@ const PoolManagement = () => {
               {selectedPool ? (
                 <div className="space-y-6">
                   {/* Tabbed Navigation */}
-                  <Card className="glass-card">
+                  <Card className="glass-card rounded-2xl border border-border/50 shadow-float">
                     <CardContent className="p-0">
                       {(() => {
                         const matches = selectedPool.matches || [];
@@ -599,9 +607,9 @@ const PoolManagement = () => {
 
                         return (
                           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <div className="border-b px-4 pt-4">
-                              <TabsList className="w-full justify-start flex-wrap h-auto gap-1 bg-muted/50 p-1">
-                                <TabsTrigger value="standings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <div className="border-b border-border/40 px-4 pt-4">
+                              <TabsList className="w-full justify-start flex-wrap h-auto gap-1.5 glass border border-border/50 p-1.5 rounded-xl">
+                                <TabsTrigger value="standings" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">
                                   Standings
                                 </TabsTrigger>
                                 {rounds.map((round: number) => {
@@ -611,7 +619,7 @@ const PoolManagement = () => {
                                     <TabsTrigger
                                       key={round}
                                       value={`round-${round}`}
-                                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                                      className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all"
                                     >
                                       Round {round}
                                       <Badge variant="secondary" className="ml-2 text-[10px]">
@@ -623,7 +631,7 @@ const PoolManagement = () => {
                                 {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
                                   <TabsTrigger
                                     value="playoffs"
-                                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                                    className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all"
                                   >
                                     <Trophy className="w-4 h-4 mr-1" />
                                     Playoffs
@@ -643,10 +651,10 @@ const PoolManagement = () => {
                               />
 
                               {/* Game Format Info */}
-                              <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+                              <Card className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 shadow-float">
                                 <CardContent className="pt-6">
                                   <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
                                       <Trophy className="w-6 h-6 text-primary" />
                                     </div>
                                     <div className="flex-1">
@@ -678,8 +686,8 @@ const PoolManagement = () => {
                               return (
                                 <TabsContent key={round} value={`round-${round}`} className="p-6">
                                   <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-bold text-lg">Round {round} Matches</h3>
-                                    <Badge variant="outline">
+                                    <h3 className="font-display font-bold text-lg">Round {round} Matches</h3>
+                                    <Badge variant="outline" className="rounded-lg">
                                       {roundMatches.filter((m: any) => m.status === 'completed').length} of {roundMatches.length} completed
                                     </Badge>
                                   </div>
@@ -692,17 +700,17 @@ const PoolManagement = () => {
                                         return (
                                           <div
                                             key={match._id}
-                                            className={`p-4 rounded-lg border-2 transition-colors ${
+                                            className={`p-4 rounded-2xl border-2 transition-all ${
                                               isCompleted
-                                                ? 'bg-muted/50 border-muted'
-                                                : 'bg-card border-border hover:border-primary/50'
+                                                ? 'bg-muted/40 border-primary/20'
+                                                : 'bg-card border-border/60 hover:border-primary/40 hover:shadow-float'
                                             }`}
                                           >
                                             <div className="flex items-center justify-between mb-3">
                                               <div className="flex items-center gap-2 flex-wrap">
-                                                <Badge variant="secondary">Match {index + 1}</Badge>
+                                                <Badge variant="secondary" className="rounded-lg">Match {index + 1}</Badge>
                                                 {isCompleted && (
-                                                  <Badge variant="default" className="bg-green-500">Completed</Badge>
+                                                  <Badge className="bg-primary text-primary-foreground border-0 rounded-lg">Completed</Badge>
                                                 )}
                                                 {match.scheduledTime && (
                                                   <Badge variant="outline" className="gap-1">
@@ -769,17 +777,17 @@ const PoolManagement = () => {
                                                   </div>
                                                 ) : (
                                                   <div className="flex items-center gap-3">
-                                                    <span className={`text-3xl font-bold ${
+                                                    <span className={`text-3xl font-bold font-display ${
                                                       isCompleted && match.score?.team1Score > match.score?.team2Score
-                                                        ? 'text-green-600'
+                                                        ? 'text-primary'
                                                         : ''
                                                     }`}>
                                                       {match.score?.team1Score ?? "-"}
                                                     </span>
                                                     <span className="text-2xl text-muted-foreground">-</span>
-                                                    <span className={`text-3xl font-bold ${
+                                                    <span className={`text-3xl font-bold font-display ${
                                                       isCompleted && match.score?.team2Score > match.score?.team1Score
-                                                        ? 'text-green-600'
+                                                        ? 'text-primary'
                                                         : ''
                                                     }`}>
                                                       {match.score?.team2Score ?? "-"}
@@ -856,10 +864,11 @@ const PoolManagement = () => {
                             {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
                               <TabsContent value="playoffs" className="p-6 space-y-6">
                                 <div className="flex items-center justify-between mb-4">
-                                  <h3 className="font-bold text-lg">Playoff Bracket</h3>
+                                  <h3 className="font-display font-bold text-lg">Playoff Bracket</h3>
                                   <Button
                                     onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
                                     disabled={generatePlayoffsMutation.isPending}
+                                    className="bg-hero-gradient text-primary-foreground shadow-glow hover:opacity-90 rounded-xl"
                                   >
                                     {generatePlayoffsMutation.isPending ? (
                                       <>
@@ -897,9 +906,11 @@ const PoolManagement = () => {
                                     />
                                   </>
                                 ) : (
-                                  <div className="text-center py-12">
-                                    <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                                    <h3 className="text-xl font-bold mb-2">No Playoff Bracket Yet</h3>
+                                  <div className="text-center py-12 rounded-2xl bg-muted/30 border border-border/40">
+                                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                                      <Trophy className="w-8 h-8 text-primary" />
+                                    </div>
+                                    <h3 className="text-xl font-display font-bold mb-2">No Playoff Bracket Yet</h3>
                                     <p className="text-muted-foreground">
                                       Generate the playoff bracket once pool play matches are complete
                                     </p>
@@ -914,11 +925,13 @@ const PoolManagement = () => {
                   </Card>
                 </div>
               ) : (
-                <Card className="h-full flex items-center justify-center">
-                  <CardContent className="text-center py-12">
-                    <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <h3 className="text-xl font-bold mb-2">Select a Pool</h3>
-                    <p className="text-muted-foreground">
+                <Card className="h-full flex items-center justify-center glass-card rounded-2xl border border-border/50 shadow-float">
+                  <CardContent className="text-center py-16">
+                    <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <Trophy className="w-10 h-10 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-display font-bold mb-2">Select a Pool</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">
                       Choose a pool from the left to view standings and manage matches
                     </p>
                   </CardContent>
@@ -931,9 +944,9 @@ const PoolManagement = () => {
 
       {/* Schedule Match Dialog */}
       <Dialog open={!!schedulingMatch} onOpenChange={(open) => !open && setSchedulingMatch(null)}>
-        <DialogContent>
+        <DialogContent className="glass-card rounded-2xl border border-border/50">
           <DialogHeader>
-            <DialogTitle>Schedule Match</DialogTitle>
+            <DialogTitle className="font-display">Schedule Match</DialogTitle>
             <DialogDescription>
               Set the date, time, and court for this match
             </DialogDescription>
@@ -970,6 +983,7 @@ const PoolManagement = () => {
             <Button
               onClick={() => saveSchedule(schedulingMatch!)}
               disabled={updateMatchScheduleMutation.isPending}
+              className="bg-hero-gradient text-primary-foreground shadow-glow hover:opacity-90 rounded-xl"
             >
               {updateMatchScheduleMutation.isPending ? (
                 <>
