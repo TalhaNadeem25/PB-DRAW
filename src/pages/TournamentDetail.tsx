@@ -47,6 +47,7 @@ import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament"
 import BracketViewer from "@/components/tournament/BracketViewer";
 import RefundsPanel from "@/components/tournament-dashboard/RefundsPanel";
 import TestDataPanel from "@/components/tournament-dashboard/TestDataPanel";
+import ScoresPanel from "@/components/tournament-dashboard/ScoresPanel";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
 import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
@@ -408,6 +409,13 @@ const TournamentDetail = () => {
           return <TournamentSchedule tournamentId={id!} />;
         case "brackets":
           return <BracketViewer tournamentId={id!} />;
+        case "scores":
+          return (
+            <ScoresPanel
+              tournamentId={id!}
+              events={tournament.events || []}
+            />
+          );
         case "refunds":
           return <RefundsPanel tournamentId={id!} tournamentName={tournament.name} />;
         case "test":

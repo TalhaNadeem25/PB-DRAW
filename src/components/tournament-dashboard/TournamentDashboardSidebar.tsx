@@ -7,6 +7,7 @@ import {
   Sparkles,
   Clock,
   GitBranch,
+  ClipboardList,
   BarChart3,
   Settings,
   RefreshCcw,
@@ -22,6 +23,7 @@ export type DashboardSection =
   | "ai-planner"
   | "schedule"
   | "brackets"
+  | "scores"
   | "refunds"
   | "test";
 
@@ -39,6 +41,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "ai-planner", label: "AI Planner", icon: Sparkles },
   { id: "schedule", label: "Schedule", icon: Clock },
   { id: "brackets", label: "Brackets", icon: GitBranch },
+  { id: "scores", label: "Scores", icon: ClipboardList },
   { id: "refunds", label: "Refunds", icon: RefreshCcw },
   { id: "test", label: "Test Data", icon: FlaskConical },
 ];
