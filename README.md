@@ -1,73 +1,117 @@
-# Welcome to your Lovable project
+# Pickle Rally
 
-## Project info
+A full-stack tournament management platform for pickleball. Organizers can create tournaments, manage events, schedule matches across courts, handle payments, and run live scoring — all from one dashboard. Players can discover tournaments, register, find partners, and follow live results.
 
-**URL**: https://lovable.dev/projects/75afc9a9-9dd2-4ed9-bc42-8eb3795fe3b0
+**Live**: [pickletournaments.vercel.app](https://pickletournaments.vercel.app)
 
-## How can I edit this code?
+## Tech Stack
 
-There are several ways of editing your application.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Backend | Node.js, Express.js, MongoDB/Mongoose, Socket.IO |
+| Payments | Stripe (Connect for organizer payouts) |
+| Deployment | Vercel (frontend + serverless API) |
+| File Uploads | Cloudinary |
 
-**Use Lovable**
+## Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/75afc9a9-9dd2-4ed9-bc42-8eb3795fe3b0) and start prompting.
+### For Organizers
+- Create and manage tournaments with multiple events (singles, doubles, mixed)
+- Drag-and-drop and click-to-assign match scheduler with auto-schedule
+- Court management with real-time match tracking
+- Pool play and playoff bracket generation
+- Player check-in via QR code scanning
+- Stripe Connect integration for collecting entry fees
+- AI-powered tournament planner
+- Analytics dashboard with registration and revenue insights
+- Email communications to registered players
+- Test data generator for development/demo purposes
 
-Changes made via Lovable will be committed automatically to this repo.
+### For Players
+- Browse and discover upcoming tournaments
+- Register and pay for events online
+- Find and invite doubles partners
+- View live scores and match updates via Socket.IO
+- Digital tickets with QR codes
+- Waitlist support for full events
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
+- Node.js 18+
+- MongoDB (local or Atlas)
+- Stripe account (for payments)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+```bash
+# Clone the repo
+git clone https://github.com/TalhaNadeem25/pickle-rally.git
+cd pickle-rally
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install frontend dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install backend dependencies
+cd backend && npm install && cd ..
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Environment Variables
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Copy the example files and fill in your values:
+
+```bash
+# Frontend
+cp .env.example .env
+
+# Backend
+cp backend/.env.example backend/.env
+```
+
+See `.env.example` and `backend/.env.example` for all available configuration options.
+
+### Running Locally
+
+```bash
+# Start the backend (from project root)
+cd backend && npm run dev
+
+# Start the frontend (from project root, in a separate terminal)
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The frontend runs on `http://localhost:8080` and the backend API on `http://localhost:5000`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Project Structure
 
-**Use GitHub Codespaces**
+```
+pickle-rally/
+├── src/                    # React frontend
+│   ├── components/         # UI components (layout, tournament, dashboard)
+│   ├── pages/              # Route pages
+│   ├── services/           # API client and utilities
+│   ├── contexts/           # React context providers (Auth, Socket)
+│   └── hooks/              # Custom React hooks
+├── backend/
+│   ├── src/
+│   │   ├── controllers/    # Route handlers
+│   │   ├── models/         # Mongoose schemas
+│   │   ├── routes/         # Express route definitions
+│   │   ├── middleware/     # Auth, rate limiting, error handling
+│   │   └── config/         # Database and service configs
+│   └── server.js           # Local dev entry point
+├── api/
+│   └── index.js            # Vercel serverless entry point
+└── vercel.json             # Vercel deployment config
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Deployment
 
-## What technologies are used for this project?
+The app deploys to Vercel. Push to `main` to trigger automatic deployment.
 
-This project is built with:
+**Important**: The backend has two entry points — `backend/src/server.js` for local development and `api/index.js` for Vercel serverless. When adding new API routes, update both files.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## License
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/75afc9a9-9dd2-4ed9-bc42-8eb3795fe3b0) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT
