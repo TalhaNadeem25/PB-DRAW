@@ -27,13 +27,25 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // VITE_API_URL may include a path like /api — strip it for Socket.IO
-    // which interprets paths as namespaces
-    const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const url = new URL(rawUrl);
-    const SOCKET_URL = url.origin; // e.g. http://localhost:5000
+    // VITE_SOCKET_URL overrides; otherwise derive from VITE_API_URL (strip /api path for Socket.IO)
+    const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const socketOrigin = import.meta.env.VITE_SOCKET_URL
+      ? new URL(import.meta.env.VITE_SOCKET_URL).origin
+      : new URL(rawApiUrl).origin;
 
-    const socketInstance = io(SOCKET_URL, {
+    // Skip Socket.IO when the socket URL is the same host as the app (e.g. Vercel frontend).
+    // Serverless hosts don't run a persistent Socket.IO server, so connecting would 404 and retry forever.
+    const sameOrigin =
+      typeof window !== 'undefined' &&
+      window.location.origin !== undefined &&
+      new URL(socketOrigin).origin === window.location.origin;
+    if (sameOrigin) {
+      setSocket(null);
+      setConnected(false);
+      return;
+    }
+
+    const socketInstance = io(socketOrigin, {
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
