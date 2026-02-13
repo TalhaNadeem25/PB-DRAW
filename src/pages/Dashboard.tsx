@@ -225,9 +225,9 @@ const Dashboard = () => {
         {/* Compact top bar — no green hero */}
         <div className="border-b border-border/60 bg-card/50">
           <div className="container mx-auto px-4 sm:px-6 py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start sm:items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-foreground mb-1 break-words">
                   Welcome back, {user.name}!
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -238,13 +238,13 @@ const Dashboard = () => {
                     : "Track your progress and find new tournaments"}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon">
-                  <Bell className="w-5 h-5" />
+              <div className="flex gap-2 shrink-0">
+                <Button variant="outline" size="icon" className="w-9 h-9 sm:w-10 sm:h-10">
+                  <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
-                <Button variant="outline" size="icon" asChild>
+                <Button variant="outline" size="icon" className="w-9 h-9 sm:w-10 sm:h-10" asChild>
                   <Link to="/profile">
-                    <Settings className="w-5 h-5" />
+                    <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Link>
                 </Button>
               </div>
@@ -257,7 +257,7 @@ const Dashboard = () => {
             /* ORGANIZER DASHBOARD */
             <div className="space-y-8">
               {/* Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Tournaments</CardTitle>
@@ -374,7 +374,7 @@ const Dashboard = () => {
                   <CardTitle>Quick Actions</CardTitle>
                   <CardDescription>Manage your tournaments efficiently</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Button asChild className="h-auto py-6 flex-col gap-2">
                     <Link to="/create-tournament">
                       <Plus className="w-6 h-6" />
@@ -432,17 +432,17 @@ const Dashboard = () => {
                                 {tournament.status}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {tournament.location}
+                                <MapPin className="w-3 h-3 shrink-0" />
+                                <span className="truncate max-w-[120px] sm:max-w-none">{tournament.location}</span>
                               </span>
                               <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
+                                <Calendar className="w-3 h-3 shrink-0" />
                                 {format(new Date(tournament.startDate), 'MMM dd, yyyy')}
                               </span>
                               <span className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />
+                                <Users className="w-3 h-3 shrink-0" />
                                 {tournament.currentPlayers || 0} players
                               </span>
                             </div>
@@ -467,7 +467,7 @@ const Dashboard = () => {
             /* PLAYER DASHBOARD */
             <div className="space-y-8">
               {/* Player Stats — hero row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                 {/* Win rate hero card */}
                 <Card className="md:col-span-2 glass-card rounded-2xl overflow-hidden bg-hero-gradient text-primary-foreground">
                   <CardContent className="p-6 flex flex-col h-full">
