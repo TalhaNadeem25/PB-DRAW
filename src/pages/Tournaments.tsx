@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
 import TournamentCard from "@/components/tournaments/TournamentCard";
-import TournamentSidebar from "@/components/tournaments/TournamentSidebar";
+import TournamentSidebar, { RatingWidget, NextMatchWidget, PartnerRequestsWidget, NearbyCourtsWidget } from "@/components/tournaments/TournamentSidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -304,7 +304,15 @@ const Tournaments = () => {
                 )}
               </div>
 
-              {/* Right: Sidebar */}
+              {/* Right: Sidebar — sticky on desktop, horizontal scroll on mobile */}
+              <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 px-4">
+                <div className="flex gap-4 min-w-max">
+                  <div className="w-[280px] shrink-0"><RatingWidget /></div>
+                  <div className="w-[280px] shrink-0"><NextMatchWidget /></div>
+                  <div className="w-[280px] shrink-0"><PartnerRequestsWidget /></div>
+                  <div className="w-[280px] shrink-0"><NearbyCourtsWidget /></div>
+                </div>
+              </div>
               <div className="hidden lg:block w-[320px] shrink-0 sticky top-24">
                 <TournamentSidebar />
               </div>

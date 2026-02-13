@@ -471,13 +471,13 @@ const TournamentDetail = () => {
               Back to Tournaments
             </Link>
 
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 overflow-hidden">
               <div className="animate-fade-in">
                 <Badge variant="outline" className={cn("font-medium border mb-3 backdrop-blur-sm", statusInfo.className)}>
                   <span className={cn("w-2 h-2 rounded-full mr-2", statusInfo.dotClass)} />
                   {statusInfo.label}
                 </Badge>
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-3">{tournament.name}</h1>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-3 break-words">{tournament.name}</h1>
                 <div className="flex flex-wrap gap-3 text-primary-foreground/80">
                   <div className="flex items-center gap-2 glass-dark px-3 py-1.5 rounded-full text-sm">
                     <MapPin className="w-4 h-4" />
@@ -490,16 +490,16 @@ const TournamentDetail = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow" onClick={handleToggleFavorite}>
-                  <Heart className={cn("w-5 h-5 transition-colors", isFavorite && "fill-red-500 text-red-500")} />
+              <div className="flex flex-wrap gap-2 sm:gap-3 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+                <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow w-9 h-9 sm:w-10 sm:h-10" onClick={handleToggleFavorite}>
+                  <Heart className={cn("w-4 h-4 sm:w-5 sm:h-5 transition-colors", isFavorite && "fill-red-500 text-red-500")} />
                 </Button>
-                <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow">
-                  <Share2 className="w-5 h-5" />
+                <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow w-9 h-9 sm:w-10 sm:h-10">
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
                 <ExportButtons tournament={tournament} matches={tournament.matches || []} teams={tournament.teams || []} events={tournament.events || []} variant="outline" />
                 {tournament.status === "open" && (
-                  <Button variant="accent" size="lg" className="shadow-glow-yellow hover:shadow-glow-lg transition-shadow" asChild>
+                  <Button variant="accent" size="default" className="shadow-glow-yellow hover:shadow-glow-lg transition-shadow text-sm sm:text-base" asChild>
                     <Link to={`/tournaments/${id}/register`}>Register Now</Link>
                   </Button>
                 )}
@@ -538,11 +538,11 @@ const TournamentDetail = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6 lg:space-y-8 min-w-0">
               <Tabs defaultValue="overview" className="animate-fade-in">
-                <TabsList className="w-full justify-start glass border border-border/50 p-1.5 rounded-xl gap-1">
-                  <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Overview</TabsTrigger>
-                  <TabsTrigger value="events" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Events</TabsTrigger>
-                  <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Schedule</TabsTrigger>
-                  <TabsTrigger value="brackets" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">Brackets</TabsTrigger>
+                <TabsList className="w-full justify-start glass border border-border/50 p-1.5 rounded-xl gap-1 overflow-x-auto scrollbar-hide">
+                  <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Overview</TabsTrigger>
+                  <TabsTrigger value="events" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Events</TabsTrigger>
+                  <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Schedule</TabsTrigger>
+                  <TabsTrigger value="brackets" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Brackets</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
