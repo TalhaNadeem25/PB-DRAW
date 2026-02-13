@@ -420,7 +420,7 @@ const TournamentDetail = () => {
     return (
       <Layout variant="minimal">
         <div className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 sm:px-6 py-6">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
             {/* Top Bar */}
             <DashboardTopBar
               tournament={tournament}
