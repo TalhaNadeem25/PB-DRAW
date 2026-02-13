@@ -120,6 +120,13 @@ const MatchSchedule = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [poolFilter, setPoolFilter] = useState("");
   const [conflictCount, setConflictCount] = useState<number | null>(null);
+  const [conflictList, setConflictList] = useState<Array<{
+    type: string;
+    team?: string;
+    court?: string;
+    time: string;
+    matches: string[];
+  }>>([]);
   const [showConflictBanner, setShowConflictBanner] = useState(true);
   const [draggedMatch, setDraggedMatch] = useState<Match | null>(null);
   const [addedCourts, setAddedCourts] = useState<number[]>([]);
@@ -423,19 +430,38 @@ const MatchSchedule = ({
     if (!tournamentId) return;
     try {
       const result = await courtAPI.checkConflicts(tournamentId);
-      const count = result?.data?.conflicts?.length ?? result?.conflicts?.length ?? 0;
+      const list = result?.data?.conflicts ?? result?.conflicts ?? [];
+      const count = list.length;
       setConflictCount(count);
+      setConflictList(
+        list.map((c: any) => ({
+          type: c.type,
+          team: c.team,
+          court: c.court,
+          time: c.time ? new Date(c.time).toISOString() : "",
+          matches: c.matches?.map((id: any) => String(id)) ?? [],
+        }))
+      );
       setShowConflictBanner(true);
-      if (count > 0) toast.warning(`${count} scheduling conflict(s) found`);
+      if (count > 0) toast.warning(`${count} scheduling conflict(s) found — see details below`);
       else toast.success("No conflicts found");
     } catch {
       setConflictCount(0);
+      setConflictList([]);
     }
   };
 
   const handlePublish = () => {
-    if (conflictCount && conflictCount > 0) {
-      toast.error("Resolve conflicts before publishing");
+    if (conflictCount != null && conflictCount > 0) {
+      setShowConflictBanner(true);
+      const first = conflictList[0];
+      const where =
+        first?.type === "team-overlap"
+          ? `Team "${first.team}" has 2 matches at ${first.time ? format(new Date(first.time), "MMM d, h:mm a") : "same time"}`
+          : first?.type === "court-double-booked"
+            ? `${first.court || "Court"} double-booked at ${first.time ? format(new Date(first.time), "MMM d, h:mm a") : "same time"}`
+            : `${conflictCount} conflict(s)`;
+      toast.error(`Resolve conflicts before publishing. Example: ${where}. See full list below.`);
       return;
     }
     toast.success("Schedule published");
@@ -771,32 +797,61 @@ const MatchSchedule = ({
         </div>
       </div>
 
-      {/* ── Conflict Banner ── */}
+      {/* ── Conflict Banner (with details) ── */}
       {showConflictBanner && conflictCount != null && conflictCount > 0 && (
         <div className="glass-card rounded-2xl overflow-hidden">
           <div className="h-1 bg-destructive" />
-          <div className="flex items-center justify-between gap-4 px-5 py-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
+          <div className="px-5 py-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                </div>
+                <div>
+                  <p className="font-display font-bold text-sm text-destructive">
+                    {conflictCount} Scheduling Conflict{conflictCount !== 1 ? "s" : ""} Found
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Resolve the following before publishing:
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-display font-bold text-sm text-destructive">
-                  {conflictCount} Scheduling Conflict{conflictCount !== 1 ? "s" : ""} Found
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Resolve before publishing
-                </p>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:bg-destructive/10 rounded-xl shrink-0"
+                onClick={() => setShowConflictBanner(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive hover:bg-destructive/10 rounded-xl"
-              onClick={() => setShowConflictBanner(false)}
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            <ul className="mt-3 space-y-2 pl-12 sm:pl-0 sm:ml-12">
+              {conflictList.map((c, i) => (
+                <li
+                  key={i}
+                  className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2"
+                >
+                  <span className="text-destructive shrink-0">•</span>
+                  {c.type === "team-overlap" ? (
+                    <span>
+                      <strong className="text-foreground">{c.team}</strong> has two matches at{" "}
+                      <strong className="text-foreground">
+                        {c.time ? format(new Date(c.time), "MMM d, h:mm a") : "same time"}
+                      </strong>
+                    </span>
+                  ) : c.type === "court-double-booked" ? (
+                    <span>
+                      <strong className="text-foreground">{c.court || "Court"}</strong> is double-booked at{" "}
+                      <strong className="text-foreground">
+                        {c.time ? format(new Date(c.time), "MMM d, h:mm a") : "same time"}
+                      </strong>
+                    </span>
+                  ) : (
+                    <span>Conflict at {c.time ? format(new Date(c.time), "MMM d, h:mm a") : "scheduled time"}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
