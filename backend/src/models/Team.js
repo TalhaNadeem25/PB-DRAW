@@ -86,6 +86,10 @@ const teamSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Indexes for listing teams by event and by pool (very common)
+teamSchema.index({ event: 1 });
+teamSchema.index({ pool: 1 });
+
 // Validate number of players based on event format
 teamSchema.pre('save', async function(next) {
   if (this.isModified('players')) {

@@ -184,6 +184,8 @@ const tournamentSchema = new mongoose.Schema({
 // Index for searching tournaments
 tournamentSchema.index({ name: 'text', location: 'text', description: 'text' });
 tournamentSchema.index({ startDate: 1, status: 1 });
+// List tournaments by organizer (dashboard, auth checks)
+tournamentSchema.index({ organizer: 1 });
 
 const Tournament = mongoose.model('Tournament', tournamentSchema);
 

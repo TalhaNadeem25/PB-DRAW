@@ -394,3 +394,6 @@ game to 21 win by 1 an d2
 Single Elim - must have (Not Complete)
 
 Asking user if they want playoffs or not (Partial/complete)
+
+Scores tab - filter by round 
+Add how many court user have when creating a tournament and then use the same input and show them in the schedule and planner

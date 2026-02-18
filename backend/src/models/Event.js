@@ -100,6 +100,9 @@ const eventSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Index for listing events by tournament (very common)
+eventSchema.index({ tournament: 1 });
+
 const Event = mongoose.model('Event', eventSchema);
 
 export default Event;

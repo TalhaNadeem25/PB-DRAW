@@ -66,6 +66,9 @@ const poolSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Index for listing pools by event (very common in pool management)
+poolSchema.index({ event: 1 });
+
 const Pool = mongoose.model('Pool', poolSchema);
 
 export default Pool;

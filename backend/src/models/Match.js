@@ -175,6 +175,12 @@ matchSchema.pre('save', function(next) {
   next();
 });
 
+// Indexes for common queries (pool management, playoffs)
+matchSchema.index({ pool: 1 });
+matchSchema.index({ event: 1 });
+matchSchema.index({ pool: 1, bracket: 1 });
+matchSchema.index({ pool: 1, round: 1 });
+
 const Match = mongoose.model('Match', matchSchema);
 
 export default Match;
