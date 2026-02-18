@@ -1,6 +1,26 @@
 // Tournament and Pool Management Types
 
 export type SkillLevel = "2.5" | "3.0" | "3.5" | "4.0" | "4.5" | "5.0" | "Open";
+
+/** Skill level range for events (e.g. "3.5-4.0"). Stored as single string on Event. */
+export const SKILL_LEVEL_RANGES = [
+  "2.5-3.0",
+  "3.0-3.5",
+  "3.5-4.0",
+  "4.0-4.5",
+  "4.5-5.0",
+  "5.0+",
+  "Open",
+] as const;
+export type SkillLevelRange = (typeof SKILL_LEVEL_RANGES)[number];
+
+/** Format event skill level for display (range as-is, single value with +) */
+export function formatEventSkillLevel(skillLevel: string | undefined): string {
+  if (!skillLevel) return "—";
+  if (skillLevel === "Open") return "Open";
+  if (skillLevel.includes("-")) return skillLevel;
+  return `${skillLevel}+`;
+}
 export type GameType = "Singles" | "Doubles" | "Mixed Doubles";
 export type TournamentFormat = "Round-Robin" | "Single Elimination" | "Double Elimination" | "Pool Play" | "Swiss" | "Pool+Knockout";
 export type TournamentStatus = "draft" | "open" | "closed" | "in-progress" | "completed";
@@ -11,7 +31,8 @@ export interface TournamentEvent {
   name: string;
   gameType: GameType;
   format: TournamentFormat;
-  skillLevel: SkillLevel;
+  /** Single value (e.g. "4.0+") or range (e.g. "3.5-4.0") or "Open" */
+  skillLevel: string;
   maxPlayers: number;
   entryFee: number;
   registeredPlayers: number;

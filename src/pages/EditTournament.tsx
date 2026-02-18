@@ -20,7 +20,9 @@ import {
   ArrowLeft,
   Loader2,
   Save,
+  Users,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { tournamentAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,6 +55,7 @@ const EditTournament = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [allowWaitlist, setAllowWaitlist] = useState(false);
 
   // Populate form when tournament data loads
   useEffect(() => {
@@ -67,6 +70,7 @@ const EditTournament = () => {
       setRegistrationDeadline(tournament.registrationDeadline ? new Date(tournament.registrationDeadline) : undefined);
       setStatus(tournament.status || "open");
       setCurrentImage(tournament.image || null);
+      setAllowWaitlist(tournament.settings?.allowWaitlist === true);
     }
   }, [tournament]);
 
@@ -130,6 +134,10 @@ const EditTournament = () => {
       registrationDeadline: registrationDeadline?.toISOString(),
       maxPlayers,
       status,
+      settings: {
+        ...(tournament?.settings || {}),
+        allowWaitlist,
+      },
     });
   };
 
@@ -278,20 +286,37 @@ const EditTournament = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <select
-                        id="status"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="open">Open</option>
-                        <option value="closed">Closed</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                      </select>
+                    <Label htmlFor="status">Status</Label>
+                    <select
+                      id="status"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="open">Open</option>
+                      <option value="closed">Closed</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                    <div className="flex items-center gap-3">
+                      <Users className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <Label htmlFor="allowWaitlist" className="text-base font-medium cursor-pointer">Allow waitlist</Label>
+                        <p className="text-sm text-muted-foreground">
+                          When an event is full, players can join a waitlist. You can approve them to send a payment link.
+                        </p>
+                      </div>
                     </div>
+                    <Switch
+                      id="allowWaitlist"
+                      checked={allowWaitlist}
+                      onCheckedChange={setAllowWaitlist}
+                    />
                   </div>
 
                   <div className="space-y-2">

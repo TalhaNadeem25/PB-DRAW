@@ -10,7 +10,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      className="toaster group pointer-events-none [&_[data-sonner-toast]]:pointer-events-auto"
       position="bottom-right"
       expand={false}
       offset="1.5rem"
@@ -20,7 +20,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: cn(
-            "group toast backdrop-blur-xl border shadow-lg",
+            "group toast backdrop-blur-xl border shadow-lg pointer-events-auto",
             "rounded-2xl px-4 py-3 min-w-[280px] max-w-[380px]",
             "font-sans text-foreground",
             "bg-card/90 border-border/60",

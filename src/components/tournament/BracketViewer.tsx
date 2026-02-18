@@ -12,6 +12,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Trophy, AlertCircle, Info } from "lucide-react";
 import { eventAPI, poolAPI, playoffAPI } from "@/services/api";
+import { formatEventSkillLevel } from "@/types/tournament";
 import PlayoffBracket from "./PlayoffBracket";
 import PoolStandings from "./PoolStandings";
 import PlayoffResults from "./PlayoffResults";
@@ -109,7 +110,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
               <SelectContent>
                 {events.map((event: any) => (
                   <SelectItem key={event._id} value={event._id}>
-                    {event.name} - {event.format} ({event.skillLevel}+)
+                    {event.name} - {event.format} ({formatEventSkillLevel(event.skillLevel)})
                   </SelectItem>
                 ))}
               </SelectContent>

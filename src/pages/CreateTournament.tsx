@@ -44,12 +44,12 @@ import {
   Sparkles,
   Brain,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { tournamentAPI, eventAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
-import type { TournamentEvent, GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
-
-const skillLevels: SkillLevel[] = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "Open"];
+import type { TournamentEvent, GameType, TournamentFormat } from "@/types/tournament";
+import { SKILL_LEVEL_RANGES, formatEventSkillLevel } from "@/types/tournament";
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
 const tournamentFormats: TournamentFormat[] = ["Round-Robin", "Single Elimination", "Double Elimination", "Pool Play", "Swiss"];
 
@@ -73,6 +73,7 @@ const CreateTournament = () => {
   const [registrationDeadline, setRegistrationDeadline] = useState<Date>();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [allowWaitlist, setAllowWaitlist] = useState(false);
 
   // Events state
   const [events, setEvents] = useState<Omit<TournamentEvent, "id" | "registeredPlayers">[]>([]);
@@ -80,7 +81,7 @@ const CreateTournament = () => {
     name: "",
     gameType: "Singles" as GameType,
     format: "Round-Robin" as TournamentFormat,
-    skillLevel: "4.0" as SkillLevel,
+    skillLevel: "3.5-4.0",
     maxPlayers: 32,
     entryFee: 50,
   });
@@ -162,7 +163,7 @@ const CreateTournament = () => {
       name: "",
       gameType: "Singles",
       format: "Round-Robin",
-      skillLevel: "4.0",
+      skillLevel: "3.5-4.0",
       maxPlayers: 32,
       entryFee: 50,
     });
@@ -208,6 +209,7 @@ const CreateTournament = () => {
       registrationDeadline: registrationDeadline.toISOString(),
       maxPlayers,
       status: 'open',
+      settings: { allowWaitlist },
     });
   };
 
@@ -373,6 +375,23 @@ const CreateTournament = () => {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
+                      <div className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <Label htmlFor="allowWaitlist" className="text-base font-medium cursor-pointer">Allow waitlist</Label>
+                          <p className="text-sm text-muted-foreground">
+                            When an event is full, players can join a waitlist. You can approve them to send a payment link.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="allowWaitlist"
+                        checked={allowWaitlist}
+                        onCheckedChange={setAllowWaitlist}
                       />
                     </div>
 
@@ -566,37 +585,48 @@ const CreateTournament = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Skill Level</Label>
+                        <Label>Skill Level Range</Label>
                         <Select
                           value={newEvent.skillLevel}
-                          onValueChange={(v: SkillLevel) =>
+                          onValueChange={(v) =>
                             setNewEvent({ ...newEvent, skillLevel: v })
                           }
                         >
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="e.g. 3.5-4.0" />
                           </SelectTrigger>
                           <SelectContent>
-                            {skillLevels.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {s}+
+                            {SKILL_LEVEL_RANGES.map((range) => (
+                              <SelectItem key={range} value={range}>
+                                {range}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Choose the skill range for this event (e.g. 3.5-4.0)
+                        </p>
                       </div>
                       <div className="space-y-2">
-                        <Label>Max Players</Label>
+                        <Label>
+                          {newEvent.gameType === "Singles" ? "Max Players" : "Max Teams"}
+                        </Label>
                         <Input
                           type="number"
+                          min={2}
                           value={newEvent.maxPlayers}
                           onChange={(e) =>
                             setNewEvent({
                               ...newEvent,
-                              maxPlayers: parseInt(e.target.value) || 32,
+                              maxPlayers: parseInt(e.target.value) || (newEvent.gameType === "Singles" ? 32 : 16),
                             })
                           }
                         />
+                        <p className="text-xs text-muted-foreground">
+                          {newEvent.gameType === "Singles"
+                            ? "Maximum number of players in this event"
+                            : "Maximum number of teams (pairs) in this event"}
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label>Entry Fee ($)</Label>
@@ -652,7 +682,7 @@ const CreateTournament = () => {
                                 <div className="flex gap-2 mt-1">
                                   <Badge variant="outline">{event.gameType}</Badge>
                                   <Badge variant="secondary">{event.format}</Badge>
-                                  <Badge variant="accent">{event.skillLevel}+</Badge>
+                                  <Badge variant="accent">{formatEventSkillLevel(event.skillLevel)}</Badge>
                                 </div>
                               </div>
                             </div>
@@ -660,7 +690,7 @@ const CreateTournament = () => {
                               <div className="text-right hidden sm:block">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Users className="w-4 h-4" />
-                                  {event.maxPlayers} players
+                                  {event.maxPlayers} {event.gameType === "Singles" ? "players" : "teams"}
                                 </div>
                                 <div className="flex items-center gap-1 text-sm font-medium text-primary">
                                   <DollarSign className="w-4 h-4" />
@@ -765,7 +795,7 @@ const CreateTournament = () => {
                                   {event.format}
                                 </Badge>
                                 <Badge variant="accent" className="text-xs">
-                                  {event.skillLevel}+
+                                  {formatEventSkillLevel(event.skillLevel)}
                                 </Badge>
                               </div>
                             </div>

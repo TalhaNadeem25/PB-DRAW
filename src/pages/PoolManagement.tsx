@@ -35,6 +35,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import PlayoffBracket from "@/components/tournament/PlayoffBracket";
 import PoolStandings from "@/components/tournament/PoolStandings";
 import PlayoffResults from "@/components/tournament/PlayoffResults";
+import { MATCH_FORMAT_LABELS, formatMatchFormatShort } from "@/constants/matchFormat";
 
 const PoolManagement = () => {
   const { id, eventId } = useParams();
@@ -43,6 +44,7 @@ const PoolManagement = () => {
   const { user } = useAuth();
 
   const [newPoolName, setNewPoolName] = useState("");
+  const [newPoolMatchFormat, setNewPoolMatchFormat] = useState<string>(MATCH_FORMAT_LABELS[0]);
   const [isCreatePoolOpen, setIsCreatePoolOpen] = useState(false);
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
   const [editingMatch, setEditingMatch] = useState<string | null>(null);
@@ -136,6 +138,7 @@ const PoolManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
       setNewPoolName("");
+      setNewPoolMatchFormat(MATCH_FORMAT_LABELS[0]);
       setIsCreatePoolOpen(false);
       toast.success("Pool created successfully");
     },
@@ -317,6 +320,7 @@ const PoolManagement = () => {
 
     createPoolMutation.mutate({
       name: newPoolName,
+      matchFormat: newPoolMatchFormat || undefined,
       teamIds: [],
     });
   };
@@ -431,14 +435,41 @@ const PoolManagement = () => {
                 <DialogContent className="glass-card rounded-2xl border border-border/50">
                   <DialogHeader>
                     <DialogTitle className="font-display">Create New Pool</DialogTitle>
-                    <DialogDescription>Enter a name for the new pool</DialogDescription>
+                    <DialogDescription>Enter a name and select the match format for this pool</DialogDescription>
                   </DialogHeader>
-                  <Input
-                    placeholder="e.g., Pool A"
-                    value={newPoolName}
-                    onChange={(e) => setNewPoolName(e.target.value)}
-                    className="focus:shadow-glow transition-shadow rounded-xl"
-                  />
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pool-name">Pool Name</Label>
+                      <Input
+                        id="pool-name"
+                        placeholder="e.g., Pool A"
+                        value={newPoolName}
+                        onChange={(e) => setNewPoolName(e.target.value)}
+                        className="focus:shadow-glow transition-shadow rounded-xl"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pool-match-format">Pool Match Format</Label>
+                      <Select
+                        value={newPoolMatchFormat}
+                        onValueChange={setNewPoolMatchFormat}
+                      >
+                        <SelectTrigger id="pool-match-format" className="rounded-xl">
+                          <SelectValue placeholder="Select match format" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MATCH_FORMAT_LABELS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Scoring format for matches in this pool
+                      </p>
+                    </div>
+                  </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsCreatePoolOpen(false)}>
                       Cancel
@@ -486,7 +517,14 @@ const PoolManagement = () => {
                             className={`flex-1 justify-start transition-all min-w-0 rounded-xl ${selectedPoolId === pool._id ? 'bg-hero-gradient text-primary-foreground shadow-glow border-0' : 'hover:border-primary/50 hover:bg-primary/5'}`}
                             onClick={() => setSelectedPoolId(pool._id)}
                           >
-                            {pool.name}
+                            <span className="flex flex-col items-start text-left min-w-0 flex-1">
+                              <span className="font-semibold truncate w-full">{pool.name}</span>
+                              {pool.matchFormat && (
+                                <span className={`text-xs truncate w-full ${selectedPoolId === pool._id ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                                  {formatMatchFormatShort(pool.matchFormat)}
+                                </span>
+                              )}
+                            </span>
                             <Badge variant="secondary" className="ml-auto shrink-0">
                               {getPoolMemberCount(pool)} {isSingles ? 'players' : 'teams'}
                             </Badge>
@@ -651,6 +689,42 @@ const PoolManagement = () => {
                               </TabsList>
                             </div>
 
+                            {/* Pool format description – visible for organizer on every tab (Standings, Rounds, Playoffs) */}
+                            <div className="px-4 pt-2 pb-1">
+                              <Card className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 shadow-float">
+                                <CardContent className="pt-6">
+                                  <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                      <Trophy className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                        <h3 className="font-display font-bold text-lg">
+                                          {event?.playFormat ? event.playFormat.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Round Robin'}
+                                        </h3>
+                                        <Badge variant="secondary" className="capitalize">
+                                          {event?.format?.replace('-', ' ') ?? '—'} Game
+                                        </Badge>
+                                        {selectedPool?.matchFormat && (
+                                          <Badge variant="outline" className="text-xs">
+                                            {formatMatchFormatShort(selectedPool.matchFormat)}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">
+                                        {event?.playFormat === 'round-robin' && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
+                                        {event?.playFormat === 'single-elimination' && "Single elimination bracket - lose once and you're out. Winner advances to the next round."}
+                                        {event?.playFormat === 'double-elimination' && "Teams must lose twice to be eliminated. Includes a winners bracket and a losers bracket."}
+                                        {event?.playFormat === 'pool-play' && "Pool play followed by playoffs. Top teams from each pool advance to elimination rounds."}
+                                        {event?.playFormat === 'swiss' && "Swiss system - teams are paired based on their current record. No elimination until final rounds."}
+                                        {!event?.playFormat && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </div>
+
                             {/* Standings Tab */}
                             <TabsContent value="standings" className="p-6 space-y-6">
                               <PoolStandings
@@ -660,35 +734,6 @@ const PoolManagement = () => {
                                 onRemoveTeam={(teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
                                 isRemoving={removeTeamFromPoolMutation.isPending}
                               />
-
-                              {/* Game Format Info */}
-                              <Card className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 shadow-float">
-                                <CardContent className="pt-6">
-                                  <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                                      <Trophy className="w-6 h-6 text-primary" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-2">
-                                        <h3 className="font-display font-bold text-lg">
-                                          {event.playFormat ? event.playFormat.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Round Robin'}
-                                        </h3>
-                                        <Badge variant="secondary" className="capitalize">
-                                          {event.format.replace('-', ' ')} Game
-                                        </Badge>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground">
-                                        {event.playFormat === 'round-robin' && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
-                                        {event.playFormat === 'single-elimination' && "Single elimination bracket - lose once and you're out. Winner advances to the next round."}
-                                        {event.playFormat === 'double-elimination' && "Teams must lose twice to be eliminated. Includes a winners bracket and a losers bracket."}
-                                        {event.playFormat === 'pool-play' && "Pool play followed by playoffs. Top teams from each pool advance to elimination rounds."}
-                                        {event.playFormat === 'swiss' && "Swiss system - teams are paired based on their current record. No elimination until final rounds."}
-                                        {!event.playFormat && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
                             </TabsContent>
 
                             {/* Round Tabs */}

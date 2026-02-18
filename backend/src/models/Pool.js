@@ -29,6 +29,20 @@ const poolSchema = new mongoose.Schema({
     enum: ['round-robin', 'single-elimination', 'double-elimination', 'pool-play', 'swiss'],
     default: 'round-robin'
   },
+  /** Pool match format label for display */
+  matchFormat: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  /** Structured config for game/match end logic */
+  matchFormatConfig: {
+    games_to_win: { type: Number, default: null },
+    max_games: { type: Number, default: null },
+    points_to_win: { type: Number, default: null },
+    win_by: { type: Number, default: null },
+    hard_cap: { type: Number, default: null }
+  },
   bracketGenerated: {
     type: Boolean,
     default: false

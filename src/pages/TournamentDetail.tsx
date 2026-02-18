@@ -29,6 +29,8 @@ import {
   Mail,
   Phone,
   Image as ImageIcon,
+  Layers,
+  ChevronRight,
 } from "lucide-react";
 import {
   Carousel,
@@ -43,7 +45,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSocket } from "@/contexts/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { GameType, TournamentFormat, SkillLevel } from "@/types/tournament";
+import type { GameType, TournamentFormat } from "@/types/tournament";
+import { formatEventSkillLevel } from "@/types/tournament";
 import BracketViewer from "@/components/tournament/BracketViewer";
 import RefundsPanel from "@/components/tournament-dashboard/RefundsPanel";
 import TestDataPanel from "@/components/tournament-dashboard/TestDataPanel";
@@ -124,7 +127,7 @@ const TournamentDetail = () => {
     name: "",
     gameType: "Singles" as GameType,
     format: "Round-Robin" as TournamentFormat,
-    skillLevel: "4.0" as SkillLevel,
+    skillLevel: "3.5-4.0",
     maxPlayers: 32,
     entryFee: 50,
   });
@@ -144,7 +147,7 @@ const TournamentDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tournament", id] });
       setIsCreateEventOpen(false);
-      setNewEvent({ name: "", gameType: "Singles", format: "Round-Robin", skillLevel: "4.0", maxPlayers: 32, entryFee: 50 });
+      setNewEvent({ name: "", gameType: "Singles", format: "Round-Robin", skillLevel: "3.5-4.0", maxPlayers: 32, entryFee: 50 });
       toast.success("Event created successfully!");
     },
     onError: (err: any) => toast.error(err.response?.data?.message || "Failed to create event"),
@@ -380,6 +383,7 @@ const TournamentDetail = () => {
           return (
             <OrganizerEventsPanel
               tournamentId={id!}
+              tournament={tournament}
               events={tournament.events || []}
               isCreateEventOpen={isCreateEventOpen}
               setIsCreateEventOpen={setIsCreateEventOpen}
@@ -389,6 +393,64 @@ const TournamentDetail = () => {
               createEventPending={createEventMutation.isPending}
               onDeleteEvent={handleDeleteClick}
             />
+          );
+        case "pools":
+          return (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+                  <Layers className="w-6 h-6 text-primary" />
+                  Pools
+                </h2>
+                <p className="text-muted-foreground mt-1">
+                  Manage pools, standings, and matches for each event. Select an event to create pools, assign teams, and run pool play or playoffs.
+                </p>
+              </div>
+              {(tournament.events?.length ?? 0) > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {(tournament.events || []).map((event: any) => (
+                    <div
+                      key={event._id}
+                      className="glass-card rounded-2xl border border-border/50 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-primary/30 hover:shadow-float transition-all"
+                    >
+                      <div className="min-w-0">
+                        <h3 className="font-display font-semibold text-lg truncate">{event.name}</h3>
+                        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                          <Badge variant="secondary" className="capitalize text-xs">
+                            {event.format?.replace("-", " ") ?? "—"}
+                          </Badge>
+                          <span>
+                            {(event.currentTeams || 0)} / {event.maxTeams || "—"} {(event.format || "").toLowerCase() === "singles" ? "players" : "teams"}
+                          </span>
+                        </div>
+                      </div>
+                      <Button asChild className="shrink-0">
+                        <Link to={`/tournaments/${id}/events/${event._id}/pools`}>
+                          Manage pools
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Link>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
+                  <Layers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground font-medium">No events yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Add events in the Events tab, then come back here to manage pools for each event.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setActiveSection("events")}
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Go to Events
+                  </Button>
+                </div>
+              )}
+            </div>
           );
         case "registrations":
           return <RegisteredPlayers tournamentId={id!} />;
@@ -678,12 +740,14 @@ const TournamentDetail = () => {
                               <h4 className="font-display font-bold text-lg">{event.name}</h4>
                               <div className="flex flex-wrap gap-2 mt-2">
                                 <Badge variant="outline" className="capitalize">{(event.format || "").replace("-", " ")}</Badge>
-                                <Badge variant="accent">{event.skillLevel}+</Badge>
+                                <Badge variant="accent">{formatEventSkillLevel(event.skillLevel)}</Badge>
                               </div>
                             </div>
                             <div className="flex items-center gap-4">
                               <div className="text-right">
-                                <div className="text-sm text-muted-foreground">Teams</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {(event.format || "").toLowerCase() === "singles" ? "Players" : "Teams"}
+                                </div>
                                 <div className="font-semibold">{event.currentTeams || 0}/{event.maxTeams}</div>
                               </div>
                               <div className="text-right">

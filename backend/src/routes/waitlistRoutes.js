@@ -4,7 +4,8 @@ import {
   joinWaitlist,
   getWaitlistPosition,
   leaveWaitlist,
-  getEventWaitlist
+  getEventWaitlist,
+  approveWaitlistEntry
 } from '../controllers/waitlistController.js';
 
 const router = express.Router({ mergeParams: true }); // mergeParams to access :eventId
@@ -14,7 +15,8 @@ router.post('/', protect, joinWaitlist);
 router.get('/my-position', protect, getWaitlistPosition);
 router.delete('/', protect, leaveWaitlist);
 
-// Admin/Organizer route to view all waitlist entries
+// Admin/Organizer routes
 router.get('/all', protect, authorize('organizer', 'admin'), getEventWaitlist);
+router.post('/:waitlistId/approve', protect, authorize('organizer', 'admin'), approveWaitlistEntry);
 
 export default router;

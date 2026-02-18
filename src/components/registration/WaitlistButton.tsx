@@ -1,16 +1,20 @@
-import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Clock, Users, CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, Users, CheckCircle, XCircle, Loader2, AlertCircle, CreditCard } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { useToast } from '../../hooks/use-toast';
+import { waitlistAPI } from '../../services/api';
 
 interface WaitlistButtonProps {
   eventId: string;
   isEventFull: boolean;
+  /** Pass when used on event registration page so "Pay Now" can fallback to registration URL */
+  tournamentId?: string;
+  /** When provided, Pay Now button calls this instead of navigating (e.g. switch to payment step on same page) */
+  onPayNow?: () => void;
 }
 
 interface WaitlistPosition {
@@ -22,32 +26,34 @@ interface WaitlistPosition {
   paymentLink?: string;
 }
 
-export default function WaitlistButton({ eventId, isEventFull }: WaitlistButtonProps) {
+export default function WaitlistButton({ eventId, isEventFull, tournamentId, onPayNow }: WaitlistButtonProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  // Fetch current waitlist position
-  const { data: waitlistPosition, isLoading: loadingPosition } = useQuery<WaitlistPosition>({
+  // Fetch current waitlist position (never return undefined: use null when not on waitlist or API missing)
+  const { data: waitlistPosition, isLoading: loadingPosition } = useQuery<WaitlistPosition | null>({
     queryKey: ['waitlist-position', eventId],
-    queryFn: async () => {
-      const response = await axios.get(`/api/events/${eventId}/waitlist/my-position`);
-      return response.data.data;
+    queryFn: async (): Promise<WaitlistPosition | null> => {
+      try {
+        const res = await waitlistAPI.getMyPosition(eventId);
+        const data = res?.data ?? res;
+        return data ?? null;
+      } catch {
+        return null;
+      }
     },
     enabled: isEventFull,
+    retry: false,
     refetchInterval: (query) => {
-      // Poll more frequently if promoted (every 10 seconds)
       if (query.state.data?.status === 'promoted') return 10000;
-      // Otherwise poll every 30 seconds
       return 30000;
     },
   });
 
   // Join waitlist mutation
   const joinWaitlist = useMutation({
-    mutationFn: async () => {
-      const response = await axios.post(`/api/events/${eventId}/waitlist`);
-      return response.data;
-    },
+    mutationFn: () => waitlistAPI.join(eventId),
     onSuccess: () => {
       toast({
         title: 'Joined Waitlist',
@@ -66,10 +72,7 @@ export default function WaitlistButton({ eventId, isEventFull }: WaitlistButtonP
 
   // Leave waitlist mutation
   const leaveWaitlist = useMutation({
-    mutationFn: async () => {
-      const response = await axios.delete(`/api/events/${eventId}/waitlist`);
-      return response.data;
-    },
+    mutationFn: () => waitlistAPI.leave(eventId),
     onSuccess: () => {
       toast({
         title: 'Left Waitlist',
@@ -195,15 +198,26 @@ export default function WaitlistButton({ eventId, isEventFull }: WaitlistButtonP
               </AlertDescription>
             </Alert>
 
-            {waitlistPosition.paymentLink && (
-              <Button
-                onClick={() => window.location.href = waitlistPosition.paymentLink!}
-                className="w-full bg-green-600 hover:bg-green-700"
-                size="lg"
-              >
-                Complete Registration Now
-              </Button>
-            )}
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md hover:shadow-lg"
+              size="lg"
+              onClick={() => {
+                if (waitlistPosition.paymentLink) {
+                  window.location.href = waitlistPosition.paymentLink;
+                  return;
+                }
+                if (onPayNow) {
+                  onPayNow();
+                  return;
+                }
+                if (tournamentId) {
+                  navigate(`/tournaments/${tournamentId}/register/${eventId}`);
+                }
+              }}
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Pay Now
+            </Button>
 
             {waitlistPosition.promotionExpiresAt && (
               <div className="text-center">

@@ -169,7 +169,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
             <Badge variant="outline" className="capitalize">
               {selectedEvent.format?.replace("-", " ")}
             </Badge>
-            <Badge variant="outline">{selectedEvent.skillLevel}+</Badge>
+            <Badge variant="outline">{selectedEvent.skillLevel?.includes("-") ? selectedEvent.skillLevel : `${selectedEvent.skillLevel ?? ""}+`}</Badge>
             <span className="text-muted-foreground">
               Currently: {selectedEvent.currentTeams || 0}
               {selectedEvent.maxTeams ? ` / ${selectedEvent.maxTeams}` : ""}{" "}

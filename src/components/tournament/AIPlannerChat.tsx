@@ -140,7 +140,7 @@ const AIPlannerChat = ({ tournamentId, onEventsCreated }: AIPlannerChatProps) =>
                         <Badge variant="outline" className="capitalize">
                           {event.format.replace("-", " ")}
                         </Badge>
-                        <Badge variant="secondary">{event.skillLevel}+</Badge>
+                        <Badge variant="secondary">{event.skillLevel?.includes("-") ? event.skillLevel : `${event.skillLevel ?? ""}+`}</Badge>
                         <Badge variant="default">${event.entryFee}</Badge>
                       </div>
                     </div>

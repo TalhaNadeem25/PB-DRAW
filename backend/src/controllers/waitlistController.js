@@ -246,9 +246,10 @@ export const promoteNextWaitlist = async (eventId, reason = 'spot-available') =>
     // Get event and tournament details
     const event = await Event.findById(eventId).populate('tournament');
     const tournament = await Tournament.findById(event.tournament);
+    const tournamentId = tournament._id?.toString?.() || tournament.toString();
 
-    // Generate payment URL (assumes frontend payment page)
-    const paymentUrl = `${process.env.CLIENT_URL}/events/${eventId}/register`;
+    // Generate payment URL (event registration page with tournament context)
+    const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register/${eventId}`;
 
     // Send promotion email
     try {
@@ -341,8 +342,8 @@ export const convertWaitlistToRegistration = async (waitlistId, paymentId) => {
 };
 
 /**
- * Get event waitlist (admin only)
- * @route   GET /api/events/:eventId/waitlist
+ * Get event waitlist (organizer/admin only)
+ * @route   GET /api/events/:eventId/waitlist/all
  * @access  Private (Organizer/Admin)
  */
 export const getEventWaitlist = async (req, res, next) => {
@@ -377,6 +378,89 @@ export const getEventWaitlist = async (req, res, next) => {
       success: true,
       count: waitlistEntries.length,
       data: waitlistEntries
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Organizer approves a waitlist entry — sends "pay and join" email to the user
+ * @route   POST /api/events/:eventId/waitlist/:waitlistId/approve
+ * @access  Private (Organizer/Admin)
+ */
+export const approveWaitlistEntry = async (req, res, next) => {
+  try {
+    const { eventId, waitlistId } = req.params;
+
+    const entry = await Waitlist.findById(waitlistId)
+      .populate('user', 'name email')
+      .populate({ path: 'event', populate: { path: 'tournament' } });
+
+    if (!entry) {
+      return res.status(404).json({
+        success: false,
+        message: 'Waitlist entry not found'
+      });
+    }
+
+    if (entry.event._id.toString() !== eventId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Waitlist entry does not belong to this event'
+      });
+    }
+
+    if (entry.status !== 'waiting') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot approve: entry status is "${entry.status}". Only "waiting" entries can be approved.`
+      });
+    }
+
+    const tournament = await Tournament.findById(entry.event.tournament._id || entry.event.tournament);
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to approve waitlist entries for this event'
+      });
+    }
+
+    entry.status = 'promoted';
+    entry.promotedAt = new Date();
+    entry.promotionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await entry.save();
+
+    const tournamentId = tournament._id.toString();
+    const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register/${eventId}`;
+
+    try {
+      await sendWaitlistPromotionEmail({
+        to: entry.user.email,
+        playerName: entry.user.name,
+        tournamentName: tournament.name,
+        eventName: entry.event.name,
+        paymentUrl,
+        expiresAt: entry.promotionExpiresAt,
+        deadline: '24 hours'
+      });
+    } catch (emailError) {
+      console.error('Failed to send waitlist promotion email:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Entry approved but failed to send email. User can still be notified manually.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Waitlist entry approved. User has been emailed to pay and complete registration.',
+      data: {
+        waitlistId: entry._id,
+        position: entry.position,
+        user: { name: entry.user.name, email: entry.user.email },
+        promotionExpiresAt: entry.promotionExpiresAt
+      }
     });
   } catch (error) {
     next(error);

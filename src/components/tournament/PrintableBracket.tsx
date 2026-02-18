@@ -169,7 +169,7 @@ const PrintableBracket = ({ tournament, event, matches, bracketType = 'single-el
               <div className="header">
                 <h1>{tournament.name}</h1>
                 {event && (
-                  <div className="event-name">{event.name} - {event.gameType} ({event.skillLevel})</div>
+                  <div className="event-name">{event.name} - {event.gameType} ({event.skillLevel?.includes("-") ? event.skillLevel : `${event.skillLevel ?? ""}+`})</div>
                 )}
                 <p>
                   📍 {tournament.location} • 📅 {format(new Date(tournament.startDate), 'MMM d, yyyy')}

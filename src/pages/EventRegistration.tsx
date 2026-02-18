@@ -30,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import PaymentForm from "@/components/payment/PaymentForm";
 import WaitlistButton from "@/components/registration/WaitlistButton";
+import { formatEventSkillLevel } from "@/types/tournament";
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
@@ -264,7 +265,12 @@ const EventRegistration = () => {
                 <div className="lg:col-span-2 space-y-6">
                   {/* Check if event is full and show waitlist */}
                   {event.currentTeams >= event.maxTeams && tournament?.settings?.allowWaitlist ? (
-                    <WaitlistButton eventId={event._id} isEventFull={true} />
+                    <WaitlistButton
+                    eventId={event._id}
+                    isEventFull={true}
+                    tournamentId={tournamentId}
+                    onPayNow={() => setStep('payment')}
+                  />
                   ) : event.currentTeams >= event.maxTeams ? (
                     <Card className="border-red-500 bg-red-50">
                       <CardHeader>
@@ -433,12 +439,14 @@ const EventRegistration = () => {
                         <Label className="text-muted-foreground text-xs">Skill Level</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <Target className="w-4 h-4 text-primary" />
-                          <span className="font-medium">{event.skillLevel}+</span>
+                          <span className="font-medium">{formatEventSkillLevel(event.skillLevel)}</span>
                         </div>
                       </div>
 
                       <div>
-                        <Label className="text-muted-foreground text-xs">Teams Registered</Label>
+                        <Label className="text-muted-foreground text-xs">
+                          {(event.format || "").toLowerCase() === "singles" ? "Players" : "Teams"} Registered
+                        </Label>
                         <div className="flex items-center gap-2 mt-1">
                           <Users className="w-4 h-4 text-primary" />
                           <span className="font-medium">
@@ -538,6 +546,16 @@ const EventRegistration = () => {
                         onCancel={handlePaymentCancel}
                       />
                     </Elements>
+                  ) : !createdTeam ? (
+                    <div className="text-center py-8 space-y-4">
+                      <p className="text-muted-foreground">
+                        Complete your team details first, or use the payment link from your email if you received one.
+                      </p>
+                      <Button variant="outline" onClick={() => setStep('team-details')}>
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to registration
+                      </Button>
+                    </div>
                   ) : (
                     <div className="text-center py-12">
                       <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />

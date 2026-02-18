@@ -182,7 +182,7 @@ const PrintableCheckIn = ({ tournament, teams, events = [], onClose }: Printable
                 return (
                   <div key={eventId} className="event-section">
                     <div className="event-title">
-                      {event ? `${event.name} - ${event.gameType} (${event.skillLevel})` : 'General'}
+                      {event ? `${event.name} - ${event.gameType} (${event.skillLevel?.includes("-") ? event.skillLevel : `${event.skillLevel ?? ""}+`})` : 'General'}
                       <span style={{ float: 'right', fontWeight: 'normal', fontSize: '14px' }}>
                         {eventTeams.length} teams
                       </span>

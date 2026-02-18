@@ -333,7 +333,7 @@ What would you like help with today?`,
                       <Badge variant="outline" className="text-xs capitalize">
                         {event.format.replace("-", " ")}
                       </Badge>
-                      <Badge variant="secondary" className="text-xs">{event.skillLevel}+</Badge>
+                      <Badge variant="secondary" className="text-xs">{event.skillLevel?.includes("-") ? event.skillLevel : `${event.skillLevel ?? ""}+`}</Badge>
                       <Badge variant="default" className="text-xs">${event.entryFee}</Badge>
                     </div>
                   </div>

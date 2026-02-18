@@ -5,6 +5,7 @@ import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { formatEventSkillLevel } from "@/types/tournament";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -198,7 +199,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                       {event.format.replace('-', ' ')}
                     </Badge>
                     <Badge variant="outline" className="border-primary-foreground/30 text-primary-foreground">
-                      {event.skillLevel}+
+                      {formatEventSkillLevel(event.skillLevel)}
                     </Badge>
                   </div>
                 </div>
@@ -631,7 +632,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                     )
                     .map((event: any) => (
                       <SelectItem key={event.eventId} value={event.eventId}>
-                        {event.eventName} ({event.skillLevel}+)
+                        {event.eventName} ({formatEventSkillLevel(event.skillLevel)})
                       </SelectItem>
                     ))}
                 </SelectContent>

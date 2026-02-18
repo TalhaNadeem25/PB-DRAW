@@ -7,6 +7,7 @@ import {
   Sparkles,
   Clock,
   GitBranch,
+  Layers,
   ClipboardList,
   BarChart3,
   Settings,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 export type DashboardSection =
   | "dashboard"
   | "events"
+  | "pools"
   | "registrations"
   | "planner"
   | "ai-planner"
@@ -36,6 +38,7 @@ interface SidebarItem {
 const sidebarItems: SidebarItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "events", label: "Events", icon: Trophy },
+  { id: "pools", label: "Pools", icon: Layers },
   { id: "registrations", label: "Registrations", icon: Users },
   { id: "planner", label: "Planner", icon: Calendar },
   { id: "ai-planner", label: "AI Planner", icon: Sparkles },

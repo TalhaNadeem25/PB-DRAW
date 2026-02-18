@@ -1,6 +1,7 @@
 import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
+import Waitlist from '../models/Waitlist.js';
 import { joinWaitlist } from './waitlistController.js';
 
 // @desc    Get all teams for an event OR for current user
@@ -85,25 +86,44 @@ export const createTeam = async (req, res, next) => {
 
     // Check if event is full
     if (event.currentTeams >= event.maxTeams) {
-      // Check if tournament allows waitlist
       const tournament = await Tournament.findById(event.tournament._id || event.tournament);
 
-      if (tournament && tournament.settings && tournament.settings.allowWaitlist) {
-        // Create unpaid team first for waitlist tracking
+      // If user was approved from waitlist (promoted), allow them to register
+      const promotedEntry = await Waitlist.findOne({
+        event: req.params.eventId,
+        user: req.user.id,
+        status: 'promoted',
+        promotionExpiresAt: { $gt: new Date() }
+      });
+      if (promotedEntry) {
         req.body.event = req.params.eventId;
-        req.body.paymentStatus = 'pending'; // Mark as pending
         const team = await Team.create(req.body);
+        event.teams.push(team._id);
+        event.currentTeams += 1;
+        await event.save();
+        promotedEntry.status = 'converted';
+        promotedEntry.convertedAt = new Date();
+        promotedEntry.teamId = team._id;
+        await promotedEntry.save();
+        return res.status(201).json({
+          success: true,
+          message: 'Team created successfully (from waitlist approval)',
+          data: team
+        });
+      }
 
-        // Join waitlist instead of failing
+      // Not promoted — check if tournament allows waitlist and add to waitlist
+      if (tournament && tournament.settings && tournament.settings.allowWaitlist) {
+        req.body.event = req.params.eventId;
+        req.body.paymentStatus = 'pending';
+        const team = await Team.create(req.body);
         req.body.teamId = team._id;
         req.body.teamName = team.name;
         req.body.partnerName = req.body.partnerName || '';
         req.body.partnerEmail = req.body.partnerEmail || '';
-
         return await joinWaitlist(req, res, next);
       }
 
-      // No waitlist enabled - hard stop
       return res.status(400).json({
         success: false,
         message: 'Event is full and waitlist is not available'

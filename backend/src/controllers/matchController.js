@@ -1,7 +1,9 @@
 import Match from '../models/Match.js';
+import Pool from '../models/Pool.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
 import { emitMatchScoreUpdate, notifyTeamPlayers } from '../utils/socket.js';
+import { validateSingleGameScore } from '../utils/matchFormatUtils.js';
 
 // @desc    Get all matches for a pool
 // @route   GET /api/pools/:poolId/matches
@@ -127,6 +129,21 @@ export const updateMatchScore = async (req, res, next) => {
     }
 
     const { team1Score, team2Score, status } = req.body;
+
+    // Validate score against pool's match format (single-game formats only)
+    if (match.pool && (status === 'completed' || (team1Score !== undefined && team2Score !== undefined))) {
+      const pool = await Pool.findById(match.pool).select('matchFormatConfig').lean();
+      const config = pool?.matchFormatConfig;
+      if (config && config.games_to_win === 1) {
+        const validation = validateSingleGameScore(team1Score ?? match.score?.team1Score ?? 0, team2Score ?? match.score?.team2Score ?? 0, config);
+        if (!validation.valid) {
+          return res.status(400).json({
+            success: false,
+            message: validation.message || 'Invalid score for this pool\'s match format'
+          });
+        }
+      }
+    }
 
     // Update match
     match.score.team1Score = team1Score;

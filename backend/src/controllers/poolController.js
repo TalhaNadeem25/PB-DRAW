@@ -2,6 +2,7 @@ import Pool from '../models/Pool.js';
 import Event from '../models/Event.js';
 import Team from '../models/Team.js';
 import Match from '../models/Match.js';
+import { getMatchFormatConfig } from '../constants/matchFormatConfig.js';
 
 // Helper function to generate round-robin matches using Circle Method
 // This ensures no player plays consecutive matches
@@ -287,6 +288,18 @@ export const createPool = async (req, res, next) => {
     }
 
     req.body.event = req.params.eventId;
+    if (req.body.matchFormat) {
+      const config = getMatchFormatConfig(req.body.matchFormat);
+      if (config) {
+        req.body.matchFormatConfig = {
+          games_to_win: config.games_to_win,
+          max_games: config.max_games,
+          points_to_win: config.points_to_win,
+          win_by: config.win_by,
+          hard_cap: config.hard_cap
+        };
+      }
+    }
     const pool = await Pool.create(req.body);
 
     // Add pool to event

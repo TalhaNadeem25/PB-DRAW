@@ -164,7 +164,7 @@ const PrintableSchedule = ({ tournament, matches, events = [], onClose }: Printa
                 return (
                   <div key={eventId} className="event-section">
                     <div className="event-title">
-                      {event ? `${event.name} - ${event.gameType} (${event.skillLevel})` : 'All Matches'}
+                      {event ? `${event.name} - ${event.gameType} (${event.skillLevel?.includes("-") ? event.skillLevel : `${event.skillLevel ?? ""}+`})` : 'All Matches'}
                     </div>
                     <table className="matches-table">
                       <thead>

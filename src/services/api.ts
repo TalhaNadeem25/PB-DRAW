@@ -225,6 +225,31 @@ export const eventAPI = {
   },
 };
 
+// Waitlist (organizer: get event waitlist, approve entry; player: my position, join, leave)
+export const waitlistAPI = {
+  getEventWaitlist: async (eventId: string) => {
+    const response = await api.get(`/events/${eventId}/waitlist/all`);
+    return response.data;
+  },
+  approveEntry: async (eventId: string, waitlistId: string) => {
+    const response = await api.post(`/events/${eventId}/waitlist/${waitlistId}/approve`);
+    return response.data;
+  },
+  /** Get current user's waitlist position for an event. Returns null if not on waitlist or endpoint missing. */
+  getMyPosition: async (eventId: string) => {
+    const response = await api.get(`/events/${eventId}/waitlist/my-position`);
+    return response.data;
+  },
+  join: async (eventId: string) => {
+    const response = await api.post(`/events/${eventId}/waitlist`);
+    return response.data;
+  },
+  leave: async (eventId: string) => {
+    const response = await api.delete(`/events/${eventId}/waitlist`);
+    return response.data;
+  },
+};
+
 // Teams
 export const teamAPI = {
   getByEvent: async (eventId: string) => {

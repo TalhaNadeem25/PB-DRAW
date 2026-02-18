@@ -378,5 +378,17 @@ Use shadcn Dialog or AlertDialog. Content: `max-w-2xl max-h-[90vh] overflow-y-au
 
 
 
-In TournamentDetails page -> registration tab -> when organizer remove it should also do refund as well. (Not completed)
-If event is full let user join the waitlist, if approved then email them to pay and join the evnets. 
+In TournamentDetails page -> registration tab -> when organizer remove it should also do refund as well. (Not completed) 
+If event is full let user join the waitlist, if approved by organizerthen email them to pay and join the evnets.  (Partial Complete)
+
+skill level should be in evnets 3.5-4.0 etc  (Complete)
+new event: max player should be teams or player based on game type (Complete)
+
+create new pool type : format of pool matches: game to 11 win by 2 .... (Partial complete)
+minimim game to 11 win by 1 annd 2 
+game to 15 win by 1 and 2 
+game to 21 win by 1 an d2 
+2 of 3 all game 
+
+
+Single Elim - must have (Not Complete)

@@ -49,6 +49,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import PaymentForm from "@/components/payment/PaymentForm";
 import { cn } from "@/lib/utils";
+import { formatEventSkillLevel } from "@/types/tournament";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -569,7 +570,7 @@ const Register = () => {
                                 <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">
                                   <span className="flex items-center gap-1">
                                     <Trophy className="w-4 h-4" />
-                                    Skill: {event.skillLevel}+
+                                    Skill: {formatEventSkillLevel(event.skillLevel)}
                                   </span>
                                   {isFull ? (
                                     <Badge variant="destructive" className="text-xs">
@@ -580,10 +581,10 @@ const Register = () => {
                                       Payment Pending
                                     </Badge>
                                   ) : (
-                                    <span className="flex items-center gap-1">
-                                      <UserPlus className="w-4 h-4" />
-                                      {spotsLeft} spots left
-                                    </span>
+<span className="flex items-center gap-1">
+                                    <UserPlus className="w-4 h-4" />
+                                    {spotsLeft} {(event.format || "").toLowerCase() === "singles" ? (spotsLeft === 1 ? "player spot" : "player spots") : (spotsLeft === 1 ? "team spot" : "team spots")} left
+                                  </span>
                                   )}
                                   <span className="flex items-center gap-1">
                                     <Clock className="w-4 h-4" />
@@ -636,9 +637,26 @@ const Register = () => {
                                   </span>
                                 )}
                                 {isFull && !isAlreadyRegistered && (
-                                  <span className="text-xs text-destructive font-semibold">
-                                    Waitlist open
-                                  </span>
+                                  <div className="flex flex-col items-end gap-1 mt-1">
+                                    {tournament?.settings?.allowWaitlist ? (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-primary bg-transparent text-primary hover:bg-primary/10 hover:text-primary hover:border-primary"
+                                        asChild
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <Link to={`/tournaments/${id}/register/${event._id}`}>
+                                          <UserPlus className="w-4 h-4 mr-1" />
+                                          Join Waitlist
+                                        </Link>
+                                      </Button>
+                                    ) : (
+                                      <span className="text-xs text-destructive font-semibold">
+                                        Event full
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
