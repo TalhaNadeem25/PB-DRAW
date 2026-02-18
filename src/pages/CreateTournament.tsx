@@ -51,7 +51,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { TournamentEvent, GameType, TournamentFormat } from "@/types/tournament";
 import { SKILL_LEVEL_RANGES, formatEventSkillLevel } from "@/types/tournament";
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
-const tournamentFormats: TournamentFormat[] = ["Round-Robin", "Single Elimination", "Double Elimination", "Pool Play", "Swiss"];
+const tournamentFormats: TournamentFormat[] = ["Round Robin", "Single Elimination", "Double Elimination", "Pools + Playoffs"];
 
 const CreateTournament = () => {
   const navigate = useNavigate();
@@ -80,10 +80,11 @@ const CreateTournament = () => {
   const [newEvent, setNewEvent] = useState({
     name: "",
     gameType: "Singles" as GameType,
-    format: "Round-Robin" as TournamentFormat,
+    format: "Round Robin" as TournamentFormat,
     skillLevel: "3.5-4.0",
     maxPlayers: 32,
     entryFee: 50,
+    addPlayoffStage: false,
   });
 
   // Mutation for creating tournament
@@ -96,14 +97,16 @@ const CreateTournament = () => {
       // Create events for the tournament
       for (const event of events) {
         try {
+          const playFormat = event.format === "Pools + Playoffs" ? "pool-play" : event.format.toLowerCase().replace(/ /g, "-");
           await eventAPI.create(tournament._id, {
             name: event.name,
-            format: event.gameType.toLowerCase().replace(/ /g, '-'),
-            playFormat: event.format.toLowerCase().replace(/ /g, '-'),
+            format: event.gameType.toLowerCase().replace(/ /g, "-"),
+            playFormat,
+            addPlayoffStage: !!(event as TournamentEvent).addPlayoffStage,
             skillLevel: event.skillLevel,
             maxTeams: event.maxPlayers,
             entryFee: event.entryFee,
-            status: 'upcoming',
+            status: "upcoming",
           });
         } catch (error) {
           console.error('Error creating event:', error);
@@ -162,10 +165,11 @@ const CreateTournament = () => {
     setNewEvent({
       name: "",
       gameType: "Singles",
-      format: "Round-Robin",
+      format: "Round Robin",
       skillLevel: "3.5-4.0",
       maxPlayers: 32,
       entryFee: 50,
+      addPlayoffStage: false,
     });
     toast.success("Event added");
   };
@@ -583,6 +587,34 @@ const CreateTournament = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Add Playoff Stage?</Label>
+                        <div className="flex gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="addPlayoffStage"
+                              checked={newEvent.addPlayoffStage === true}
+                              onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: true })}
+                              className="rounded-full border-primary text-primary"
+                            />
+                            <span>Yes</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="addPlayoffStage"
+                              checked={newEvent.addPlayoffStage === false}
+                              onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: false })}
+                              className="rounded-full border-primary text-primary"
+                            />
+                            <span>No</span>
+                          </label>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Enable or disable a playoff bracket for this event (semifinals/final after pool or initial rounds).
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label>Skill Level Range</Label>

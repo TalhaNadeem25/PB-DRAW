@@ -22,7 +22,7 @@ export function formatEventSkillLevel(skillLevel: string | undefined): string {
   return `${skillLevel}+`;
 }
 export type GameType = "Singles" | "Doubles" | "Mixed Doubles";
-export type TournamentFormat = "Round-Robin" | "Single Elimination" | "Double Elimination" | "Pool Play" | "Swiss" | "Pool+Knockout";
+export type TournamentFormat = "Round Robin" | "Single Elimination" | "Double Elimination" | "Pools + Playoffs";
 export type TournamentStatus = "draft" | "open" | "closed" | "in-progress" | "completed";
 export type MatchStatus = "pending" | "in-progress" | "completed";
 
@@ -31,6 +31,8 @@ export interface TournamentEvent {
   name: string;
   gameType: GameType;
   format: TournamentFormat;
+  /** When format is Round Robin: if true, event has an optional playoff stage. */
+  addPlayoffStage?: boolean;
   /** Single value (e.g. "4.0+") or range (e.g. "3.5-4.0") or "Open" */
   skillLevel: string;
   maxPlayers: number;

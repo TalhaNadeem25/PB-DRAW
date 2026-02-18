@@ -126,10 +126,11 @@ const TournamentDetail = () => {
   const [newEvent, setNewEvent] = useState({
     name: "",
     gameType: "Singles" as GameType,
-    format: "Round-Robin" as TournamentFormat,
+    format: "Round Robin" as TournamentFormat,
     skillLevel: "3.5-4.0",
     maxPlayers: 32,
     entryFee: 50,
+    addPlayoffStage: false,
   });
 
   const isFavorite = id ? favoritesAPI.isFavorite(id) : false;
@@ -147,7 +148,7 @@ const TournamentDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tournament", id] });
       setIsCreateEventOpen(false);
-      setNewEvent({ name: "", gameType: "Singles", format: "Round-Robin", skillLevel: "3.5-4.0", maxPlayers: 32, entryFee: 50 });
+      setNewEvent({ name: "", gameType: "Singles", format: "Round Robin", skillLevel: "3.5-4.0", maxPlayers: 32, entryFee: 50, addPlayoffStage: false });
       toast.success("Event created successfully!");
     },
     onError: (err: any) => toast.error(err.response?.data?.message || "Failed to create event"),
@@ -251,10 +252,12 @@ const TournamentDetail = () => {
 
   const handleCreateEvent = () => {
     if (!newEvent.name) { toast.error("Please enter an event name"); return; }
+    const playFormat = newEvent.format === "Pools + Playoffs" ? "pool-play" : newEvent.format.toLowerCase().replace(/ /g, "-");
     createEventMutation.mutate({
       name: newEvent.name,
       format: newEvent.gameType.toLowerCase().replace(" ", "-"),
-      playFormat: newEvent.format.toLowerCase().replace(/ /g, "-"),
+      playFormat,
+      addPlayoffStage: !!newEvent.addPlayoffStage,
       skillLevel: newEvent.skillLevel,
       maxTeams: newEvent.maxPlayers,
       entryFee: newEvent.entryFee,

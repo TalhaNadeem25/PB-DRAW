@@ -384,7 +384,7 @@ If event is full let user join the waitlist, if approved by organizerthen email 
 skill level should be in evnets 3.5-4.0 etc  (Complete)
 new event: max player should be teams or player based on game type (Complete)
 
-create new pool type : format of pool matches: game to 11 win by 2 .... (Partial complete)
+create new pool type : format of pool matches: game to 11 win by 2 .... (Full complete)
 minimim game to 11 win by 1 annd 2 
 game to 15 win by 1 and 2 
 game to 21 win by 1 an d2 
@@ -392,3 +392,5 @@ game to 21 win by 1 an d2
 
 
 Single Elim - must have (Not Complete)
+
+Asking user if they want playoffs or not (Partial/complete)

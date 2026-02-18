@@ -22,6 +22,11 @@ const eventSchema = new mongoose.Schema({
     default: 'round-robin',
     required: [true, 'Play format is required']
   },
+  /** When playFormat is round-robin: if true, show Playoffs tab and allow generating playoffs. */
+  addPlayoffStage: {
+    type: Boolean,
+    default: false
+  },
   skillLevel: {
     type: String,
     required: [true, 'Skill level is required'],

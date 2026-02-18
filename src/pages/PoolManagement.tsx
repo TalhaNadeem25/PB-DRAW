@@ -677,7 +677,7 @@ const PoolManagement = () => {
                                     </TabsTrigger>
                                   );
                                 })}
-                                {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
+                                {event?.addPlayoffStage && (
                                   <TabsTrigger
                                     value="playoffs"
                                     className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all"
@@ -712,7 +712,7 @@ const PoolManagement = () => {
                                         )}
                                       </div>
                                       <p className="text-sm text-muted-foreground">
-                                        {event?.playFormat === 'round-robin' && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential."}
+                                        {event?.playFormat === 'round-robin' && "Each team plays every other team in their pool once. Teams are ranked by wins, then point differential. Top teams can advance to playoffs."}
                                         {event?.playFormat === 'single-elimination' && "Single elimination bracket - lose once and you're out. Winner advances to the next round."}
                                         {event?.playFormat === 'double-elimination' && "Teams must lose twice to be eliminated. Includes a winners bracket and a losers bracket."}
                                         {event?.playFormat === 'pool-play' && "Pool play followed by playoffs. Top teams from each pool advance to elimination rounds."}
@@ -730,7 +730,7 @@ const PoolManagement = () => {
                               <PoolStandings
                                 teams={getPoolMembers(selectedPool)}
                                 poolName={selectedPool.name}
-                                showPlayoffIndicators={event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin'}
+                                showPlayoffIndicators={!!event?.addPlayoffStage}
                                 onRemoveTeam={(teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
                                 isRemoving={removeTeamFromPoolMutation.isPending}
                               />
@@ -917,7 +917,7 @@ const PoolManagement = () => {
                             })}
 
                             {/* Playoffs Tab */}
-                            {(event?.playFormat === 'pool-play' || event?.playFormat === 'round-robin') && (
+                            {event?.addPlayoffStage && (
                               <TabsContent value="playoffs" className="p-6 space-y-6">
                                 <div className="flex items-center justify-between mb-4">
                                   <h3 className="font-display font-bold text-lg">Playoff Bracket</h3>

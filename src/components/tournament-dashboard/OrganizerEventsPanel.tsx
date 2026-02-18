@@ -29,35 +29,33 @@ import type { GameType, TournamentFormat } from "@/types/tournament";
 import { SKILL_LEVEL_RANGES, formatEventSkillLevel } from "@/types/tournament";
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
 const tournamentFormats: TournamentFormat[] = [
-  "Round-Robin",
+  "Round Robin",
   "Single Elimination",
   "Double Elimination",
-  "Pool+Knockout",
+  "Pools + Playoffs",
 ];
 
 /** Map API playFormat (kebab) to TournamentFormat (display) */
 function playFormatToDisplay(playFormat: string | undefined): TournamentFormat {
-  if (!playFormat) return "Round-Robin";
+  if (!playFormat) return "Round Robin";
   const map: Record<string, TournamentFormat> = {
-    "round-robin": "Round-Robin",
+    "round-robin": "Round Robin",
     "single-elimination": "Single Elimination",
     "double-elimination": "Double Elimination",
-    "pool-play": "Pool+Knockout",
-    "pool+knockout": "Pool+Knockout",
-    swiss: "Swiss",
+    "pool-play": "Pools + Playoffs",
+    "pool+knockout": "Pools + Playoffs",
+    swiss: "Round Robin",
   };
-  return map[playFormat.toLowerCase()] ?? "Round-Robin";
+  return map[playFormat.toLowerCase()] ?? "Round Robin";
 }
 
 /** Map TournamentFormat (display) to API playFormat */
 function displayToPlayFormat(format: TournamentFormat): string {
   const map: Record<string, string> = {
-    "Round-Robin": "round-robin",
+    "Round Robin": "round-robin",
     "Single Elimination": "single-elimination",
     "Double Elimination": "double-elimination",
-    "Pool Play": "pool-play",
-    "Pool+Knockout": "pool+knockout",
-    Swiss: "swiss",
+    "Pools + Playoffs": "pool-play",
   };
   return map[format] ?? "round-robin";
 }
@@ -198,7 +196,8 @@ const OrganizerEventsPanel = ({
     skillLevel: string;
     maxPlayers: number;
     entryFee: number;
-  }>({ name: "", gameType: "Singles", format: "Round-Robin", skillLevel: "3.5-4.0", maxPlayers: 32, entryFee: 50 });
+    addPlayoffStage: boolean;
+  }>({ name: "", gameType: "Singles", format: "Round Robin", skillLevel: "3.5-4.0", maxPlayers: 32, entryFee: 50, addPlayoffStage: false });
 
   const updateEventMutation = useMutation({
     mutationFn: ({ eventId, data }: { eventId: string; data: any }) => eventAPI.update(eventId, data),
@@ -221,6 +220,7 @@ const OrganizerEventsPanel = ({
       skillLevel: event.skillLevel ?? "3.5-4.0",
       maxPlayers: event.maxTeams ?? (event.format === "singles" ? 32 : 16),
       entryFee: event.entryFee ?? 0,
+      addPlayoffStage: !!event.addPlayoffStage,
     });
   };
 
@@ -236,6 +236,7 @@ const OrganizerEventsPanel = ({
         name: editForm.name.trim(),
         format: gameTypeToFormat(editForm.gameType),
         playFormat: displayToPlayFormat(editForm.format),
+        addPlayoffStage: editForm.addPlayoffStage,
         skillLevel: editForm.skillLevel,
         maxTeams: editForm.maxPlayers,
         entryFee: editForm.entryFee,
@@ -313,6 +314,31 @@ const OrganizerEventsPanel = ({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Add Playoff Stage?</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="create-addPlayoffStage"
+                      checked={newEvent.addPlayoffStage === true}
+                      onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: true })}
+                      className="rounded-full border-primary text-primary"
+                    />
+                    <span>Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="create-addPlayoffStage"
+                      checked={newEvent.addPlayoffStage === false}
+                      onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: false })}
+                      className="rounded-full border-primary text-primary"
+                    />
+                    <span>No</span>
+                  </label>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -543,6 +569,31 @@ const OrganizerEventsPanel = ({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Add Playoff Stage?</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="edit-addPlayoffStage"
+                      checked={editForm.addPlayoffStage === true}
+                      onChange={() => setEditForm({ ...editForm, addPlayoffStage: true })}
+                      className="rounded-full border-primary text-primary"
+                    />
+                    <span>Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="edit-addPlayoffStage"
+                      checked={editForm.addPlayoffStage === false}
+                      onChange={() => setEditForm({ ...editForm, addPlayoffStage: false })}
+                      className="rounded-full border-primary text-primary"
+                    />
+                    <span>No</span>
+                  </label>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
