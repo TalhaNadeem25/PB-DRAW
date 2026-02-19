@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Trophy, Users, Loader2, Edit2, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatMatchFormatShort } from "@/constants/matchFormat";
 
 interface Team {
   _id: string;
   name: string;
-  players: any[];
+  players?: { name?: string }[];
   stats?: {
     wins: number;
     losses: number;
@@ -26,14 +27,15 @@ interface Team {
 
 interface Match {
   _id: string;
-  team1: Team;
+  team1: Team | null;
   team2: Team | null;
-  team1Score: number;
-  team2Score: number;
+  team1Score?: number;
+  team2Score?: number;
   status: string;
   bracket: string;
   round: number;
   matchNumber: number;
+  matchFormat?: string;
 }
 
 interface PlayoffBracketProps {
@@ -51,11 +53,18 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
   // Separate matches by bracket type
   const semifinals = matches.filter(m => m.bracket === 'semifinals');
   const finals = matches.find(m => m.bracket === 'finals');
+  const bronzeMatch = matches.find(m => m.bracket === 'bronze');
+
+  const getMatchScore = (match: Match) => ({
+    team1: match.team1Score ?? (match as any).score?.team1Score ?? 0,
+    team2: match.team2Score ?? (match as any).score?.team2Score ?? 0,
+  });
 
   const handleEditClick = (match: Match) => {
     setEditingMatch(match);
-    setTeam1Score(match.team1Score || 0);
-    setTeam2Score(match.team2Score || 0);
+    const s = getMatchScore(match);
+    setTeam1Score(s.team1);
+    setTeam2Score(s.team2);
   };
 
   const handleSaveScore = () => {
@@ -70,10 +79,12 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
   };
 
   const MatchCard = ({ match, position }: { match: Match; position: 'left' | 'right' | 'center' }) => {
-    const matchTeam1Score = match.team1Score || 0;
-    const matchTeam2Score = match.team2Score || 0;
+    const score = getMatchScore(match);
+    const matchTeam1Score = score.team1;
+    const matchTeam2Score = score.team2;
     const winner = matchTeam1Score > matchTeam2Score ? match.team1 :
                    matchTeam2Score > matchTeam1Score ? match.team2 : null;
+    const isEditingThis = editingMatch?._id === match._id;
 
     return (
       <div
@@ -85,10 +96,15 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
       >
         {/* Match Title */}
         <div className="flex items-center justify-between mb-3">
-          <Badge variant="outline" className="text-xs">
-            {match.bracket === 'semifinals' ? 'Semifinal' : 'Final'}
-          </Badge>
-          {onUpdateScore && (
+          <div className="flex flex-col gap-0.5">
+            <Badge variant="outline" className="text-xs w-fit">
+              {match.bracket === 'semifinals' ? 'Semifinal' : match.bracket === 'winners' ? 'Round 1' : match.bracket === 'bronze' ? 'Bronze Medal' : 'Final'}
+            </Badge>
+            {match.matchFormat && (
+              <span className="text-[10px] text-muted-foreground">{formatMatchFormatShort(match.matchFormat)}</span>
+            )}
+          </div>
+          {onUpdateScore && match.team1 && match.team2 && (
             <Button
               variant="ghost"
               size="sm"
@@ -106,16 +122,16 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
         {/* Team 1 */}
         <div className={cn(
           "flex items-center justify-between p-2 rounded mb-2 transition-colors",
-          winner?._id === match.team1._id && "bg-green-500/10 border border-green-500/20"
+          match.team1 && winner?._id === match.team1._id && "bg-green-500/10 border border-green-500/20"
         )}>
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {match.bracket === 'finals' && match.team1.stats && (
+            {match.bracket === 'finals' && match.team1?.stats && (
               <Badge variant="secondary" className="text-xs shrink-0">#1</Badge>
             )}
-            <span className="font-medium truncate">{match.team1.name}</span>
+            <span className="font-medium truncate">{match.team1?.name ?? 'TBD'}</span>
           </div>
           <div className="font-bold text-lg ml-2">
-            {team1Score}
+            {isEditingThis ? team1Score : matchTeam1Score}
           </div>
         </div>
 
@@ -137,11 +153,13 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
                 <span className="font-medium truncate">{match.team2.name}</span>
               </>
             ) : (
-              <span className="text-muted-foreground italic">Winner of Semifinal</span>
+              <span className="text-muted-foreground italic">
+                {match.bracket === 'bronze' ? 'Semifinal loser' : 'Winner of Semifinal'}
+              </span>
             )}
           </div>
           <div className="font-bold text-lg ml-2">
-            {match.team2 ? team2Score : '-'}
+            {match.team2 ? (isEditingThis ? team2Score : matchTeam2Score) : '-'}
           </div>
         </div>
 
@@ -185,11 +203,24 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
         <div>
           <div className="text-center mb-4">
             <h3 className="font-semibold text-lg">Championship</h3>
-            <p className="text-sm text-muted-foreground">Final</p>
+            <p className="text-sm text-muted-foreground">Final — Winner 🥇 Gold, Loser 🥈 Silver</p>
           </div>
           {finals && <MatchCard match={finals} position="center" />}
         </div>
       </div>
+
+      {/* Bronze Medal Match (semifinal losers) */}
+      {bronzeMatch && (
+        <div className="mt-8 pt-8 border-t border-border/50">
+          <div className="text-center mb-4">
+            <h3 className="font-semibold text-lg">Bronze Medal Match</h3>
+            <p className="text-sm text-muted-foreground">Semifinal losers — Winner 🥉 Bronze, Loser 4th place</p>
+          </div>
+          <div className="max-w-md mx-auto">
+            <MatchCard match={bronzeMatch} position="center" />
+          </div>
+        </div>
+      )}
 
       {/* Legend */}
       <Card className="bg-muted/50">
@@ -217,7 +248,11 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
-              {selectedMatch?.bracket === 'semifinals' ? 'Semifinal Match' : 'Championship Match'}
+              {selectedMatch?.bracket === 'semifinals'
+                ? 'Semifinal Match'
+                : selectedMatch?.bracket === 'bronze'
+                  ? 'Bronze Medal Match'
+                  : 'Championship Match'}
             </DialogTitle>
             <DialogDescription>
               Match details and information
@@ -229,21 +264,23 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Team 1</p>
-                  <p className="font-semibold">{selectedMatch.team1.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedMatch.team1.players.map(p => p.name).join(', ')}
-                  </p>
+                  <p className="font-semibold">{selectedMatch.team1?.name ?? 'TBD'}</p>
+                  {selectedMatch.team1?.players?.length ? (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedMatch.team1.players.map((p: { name?: string }) => p.name).join(', ')}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Team 2</p>
                   <p className="font-semibold">
-                    {selectedMatch.team2?.name || 'TBD'}
+                    {selectedMatch.team2?.name ?? 'TBD'}
                   </p>
-                  {selectedMatch.team2 && (
+                  {selectedMatch.team2?.players?.length ? (
                     <p className="text-sm text-muted-foreground">
-                      {selectedMatch.team2.players.map(p => p.name).join(', ')}
+                      {selectedMatch.team2.players.map((p: { name?: string }) => p.name).join(', ')}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
@@ -252,14 +289,14 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
                   <div className="text-center flex-1">
                     <p className="text-sm text-muted-foreground">Score</p>
                     <p className="text-3xl font-bold mt-1">
-                      {selectedMatch.team1Score || 0}
+                      {getMatchScore(selectedMatch).team1}
                     </p>
                   </div>
                   <div className="text-muted-foreground">vs</div>
                   <div className="text-center flex-1">
                     <p className="text-sm text-muted-foreground">Score</p>
                     <p className="text-3xl font-bold mt-1">
-                      {selectedMatch.team2 ? (selectedMatch.team2Score || 0) : '-'}
+                      {selectedMatch.team2 ? getMatchScore(selectedMatch).team2 : '-'}
                     </p>
                   </div>
                 </div>
@@ -297,7 +334,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    {editingMatch.team1.name}
+                    {editingMatch.team1?.name ?? 'TBD'}
                   </label>
                   <Input
                     type="number"

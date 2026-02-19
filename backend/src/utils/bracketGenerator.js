@@ -55,14 +55,16 @@ export const generateSingleEliminationBracket = async (poolId, eventId, teams, t
   let matchNumber = 1;
   let bracketPosition = 0;
 
-  // Create round 1 matches
+  // Create round 1 matches (store ObjectIds for refs)
   for (let i = 0; i < round1Teams.length; i += 2) {
+    const t1 = round1Teams[i];
+    const t2 = round1Teams[i + 1] || null;
     const match = {
       pool: poolId,
       event: eventId,
-      team1: round1Teams[i],
+      team1: t1?._id ?? t1,
       team1Model: teamModel,
-      team2: round1Teams[i + 1] || null,
+      team2: t2?._id ?? t2,
       team2Model: teamModel,
       round: 1,
       bracket: numRounds === 1 ? 'finals' : numRounds === 2 ? 'semifinals' : 'winners',
@@ -133,14 +135,40 @@ export const generateSingleEliminationBracket = async (poolId, eventId, teams, t
 
     byeTeams.forEach((byeTeam, index) => {
       if (round2Matches[index]) {
-        // Assign bye team to round 2 match
+        const id = byeTeam._id ?? byeTeam;
         if (index % 2 === 0) {
-          round2Matches[index].team1 = byeTeam;
+          round2Matches[index].team1 = id;
         } else {
-          round2Matches[index].team2 = byeTeam;
+          round2Matches[index].team2 = id;
         }
       }
     });
+  }
+
+  // Bronze medal match: for exactly 4 teams, semifinal losers play for 3rd place
+  if (teams.length === 4 && numRounds === 2) {
+    const semifinalsList = matchesByRound[1] || [];
+    const finalsList = matchesByRound[2] || [];
+    const finalMatch = finalsList[0];
+    const maxMatchNumber = createdMatches.reduce((max, m) => Math.max(max, m.matchNumber || 0), 0);
+
+    const [bronzeMatch] = await Match.insertMany([{
+      pool: poolId,
+      event: eventId,
+      team1: null,
+      team1Model: teamModel,
+      team2: null,
+      team2Model: teamModel,
+      round: 2,
+      bracket: 'bronze',
+      matchNumber: maxMatchNumber + 1,
+      status: 'scheduled'
+    }]);
+
+    semifinalsList.forEach((semi) => {
+      semi.loserNextMatchId = bronzeMatch._id;
+    });
+    createdMatches.push(bronzeMatch);
   }
 
   // Save all updated matches

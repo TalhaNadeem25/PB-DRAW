@@ -61,7 +61,18 @@ const poolSchema = new mongoose.Schema({
       enum: ['point-differential', 'head-to-head', 'points-for'],
       default: 'point-differential'
     }
-  }
+  },
+  /** Set when organizer finalizes playoffs (cannot be undone) */
+  playoffsFinalizedAt: {
+    type: Date,
+    default: null
+  },
+  /** Final placements from playoff bracket: 1=gold, 2=silver, 3=bronze, 4=4th. entityId refs Team or User. */
+  finalPlacements: [{
+    place: { type: Number, required: true },
+    entityId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    name: { type: String, default: '' }
+  }]
 }, {
   timestamps: true
 });

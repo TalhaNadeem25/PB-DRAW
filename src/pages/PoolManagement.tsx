@@ -53,6 +53,18 @@ const PoolManagement = () => {
   const [scheduleData, setScheduleData] = useState({ scheduledTime: "", courtNumber: 1 });
   const [activeTab, setActiveTab] = useState<string>("standings");
   const [poolToRemove, setPoolToRemove] = useState<string | null>(null);
+  const [isGeneratePlayoffOpen, setIsGeneratePlayoffOpen] = useState(false);
+  const [isCompletePoolOpen, setIsCompletePoolOpen] = useState(false);
+  const [playoffAdvanceCount, setPlayoffAdvanceCount] = useState(4);
+  const [playoffMatchFormats, setPlayoffMatchFormats] = useState<{
+    semifinals: string;
+    finals: string;
+    bronze: string;
+  }>({
+    semifinals: MATCH_FORMAT_LABELS[1],
+    finals: MATCH_FORMAT_LABELS[1],
+    bronze: MATCH_FORMAT_LABELS[1],
+  });
 
   // Fetch event data with teams and pools
   const { data: eventData, isLoading: eventLoading } = useQuery({
@@ -110,24 +122,46 @@ const PoolManagement = () => {
     return pool.teams?.length || 0;
   };
 
-  // Helper function to get pool members (for singles, get players from registeredPlayers)
+  // Helper function to get pool members (for singles, compute stats from pool matches)
   const getPoolMembers = (pool: any) => {
     if (isSingles) {
-      // For singles, transform players into team-like objects with stats
-      return (event?.registeredPlayers || [])
+      const playersInPool = (event?.registeredPlayers || [])
         .filter((reg: any) => reg.paymentStatus === 'paid' && reg.pool?.toString() === pool._id?.toString())
         .map((reg: any) => ({
           _id: reg.player._id,
-          name: reg.player.name,
-          players: [{ _id: reg.player._id, name: reg.player.name }],
-          stats: {
-            wins: 0,
-            losses: 0,
-            pointsFor: 0,
-            pointsAgainst: 0,
-            pointDifferential: 0
-          }
+          name: reg.player?.name ?? reg.player?.email ?? 'Player',
+          players: [{ _id: reg.player._id, name: reg.player?.name ?? reg.player?.email ?? 'Player' }],
+          stats: { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifferential: 0 }
         }));
+      const statsByPlayerId = new Map<string | undefined, typeof playersInPool[0]['stats']>();
+      playersInPool.forEach((p: any) => statsByPlayerId.set(p._id?.toString(), { ...p.stats }));
+
+      // Compute stats from completed pool matches
+      (pool.matches || []).filter((m: any) => m.status === 'completed').forEach((m: any) => {
+        const id1 = m.team1?._id?.toString() ?? m.team1?.toString();
+        const id2 = m.team2?._id?.toString() ?? m.team2?.toString();
+        const s1 = m.score?.team1Score ?? 0;
+        const s2 = m.score?.team2Score ?? 0;
+        const st1 = id1 ? statsByPlayerId.get(id1) : null;
+        const st2 = id2 ? statsByPlayerId.get(id2) : null;
+        if (st1 && st2) {
+          st1.pointsFor += s1;
+          st1.pointsAgainst += s2;
+          st2.pointsFor += s2;
+          st2.pointsAgainst += s1;
+          if (s1 > s2) { st1.wins += 1; st2.losses += 1; }
+          else if (s2 > s1) { st2.wins += 1; st1.losses += 1; }
+        }
+      });
+
+      statsByPlayerId.forEach((st) => {
+        st.pointDifferential = st.pointsFor - st.pointsAgainst;
+      });
+
+      return playersInPool.map((p: any) => ({
+        ...p,
+        stats: statsByPlayerId.get(p._id?.toString()) ?? p.stats
+      }));
     }
     return pool.teams || [];
   };
@@ -270,10 +304,11 @@ const PoolManagement = () => {
   // Update match score mutation
   const updateMatchScoreMutation = useMutation({
     mutationFn: ({ matchId, scores }: any) => matchAPI.updateScore(matchId, scores),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
       queryClient.invalidateQueries({ queryKey: ['teams', eventId] });
       queryClient.invalidateQueries({ queryKey: ['playoffs', eventId, selectedPoolId] });
+      await queryClient.refetchQueries({ queryKey: ['pools', eventId] });
       setEditingMatch(null);
       toast.success("Score updated successfully");
     },
@@ -302,13 +337,38 @@ const PoolManagement = () => {
 
   // Generate playoffs mutation (per pool)
   const generatePlayoffsMutation = useMutation({
-    mutationFn: (poolId: string) => playoffAPI.generate(eventId!, poolId),
+    mutationFn: ({
+      poolId,
+      advanceCount,
+      matchFormats,
+    }: {
+      poolId: string;
+      advanceCount: number;
+      matchFormats?: { semifinals: string; finals: string; bronze: string };
+    }) => playoffAPI.generate(eventId!, poolId, advanceCount, matchFormats),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['playoffs', eventId, selectedPoolId] });
       toast.success(data.message || "Playoff bracket generated successfully");
+      setIsGeneratePlayoffOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to generate playoffs");
+    },
+  });
+
+  // Finalize playoffs (complete pool) – cannot be undone
+  const completePlayoffsMutation = useMutation({
+    mutationFn: (poolId: string) => playoffAPI.complete(eventId!, poolId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['playoffs', eventId, selectedPoolId] });
+      setIsCompletePoolOpen(false);
+      setActiveTab('standings');
+      toast.success("Pool completed. Final standings now show gold, silver, and bronze.");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to complete pool");
     },
   });
 
@@ -728,11 +788,27 @@ const PoolManagement = () => {
                             {/* Standings Tab */}
                             <TabsContent value="standings" className="p-6 space-y-6">
                               <PoolStandings
-                                teams={getPoolMembers(selectedPool)}
+                                teams={(() => {
+                                  const members = getPoolMembers(selectedPool);
+                                  const placements = selectedPool?.playoffsFinalizedAt && selectedPool?.finalPlacements?.length
+                                    ? (selectedPool.finalPlacements as { place: number; entityId: string; name: string }[])
+                                    : null;
+                                  if (!placements?.length) return members;
+                                  const placementIds = new Set(placements.map((p) => String(p.entityId)));
+                                  const byId = new Map(members.map((m: any) => [String(m._id), m]));
+                                  const ordered: any[] = placements
+                                    .sort((a, b) => a.place - b.place)
+                                    .map((p) => byId.get(String(p.entityId)) ?? { _id: p.entityId, name: p.name, players: [{ name: p.name }], stats: { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifferential: 0 } });
+                                  const rest = members
+                                    .filter((m: any) => !placementIds.has(String(m._id)))
+                                    .sort((a: any, b: any) => (b.stats?.wins ?? 0) - (a.stats?.wins ?? 0) || (b.stats?.pointDifferential ?? 0) - (a.stats?.pointDifferential ?? 0));
+                                  return [...ordered, ...rest];
+                                })()}
                                 poolName={selectedPool.name}
                                 showPlayoffIndicators={!!event?.addPlayoffStage}
-                                onRemoveTeam={(teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
+                                onRemoveTeam={selectedPool?.playoffsFinalizedAt ? undefined : (teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
                                 isRemoving={removeTeamFromPoolMutation.isPending}
+                                isPlayoffsFinalized={!!selectedPool?.playoffsFinalizedAt}
                               />
                             </TabsContent>
 
@@ -919,29 +995,199 @@ const PoolManagement = () => {
                             {/* Playoffs Tab */}
                             {event?.addPlayoffStage && (
                               <TabsContent value="playoffs" className="p-6 space-y-6">
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                                   <h3 className="font-display font-bold text-lg">Playoff Bracket</h3>
-                                  <Button
-                                    onClick={() => generatePlayoffsMutation.mutate(selectedPool._id)}
-                                    disabled={generatePlayoffsMutation.isPending}
-                                    size="sm"
-                                    className="bg-court-green text-white hover:bg-court-green-dark shadow-lg shrink-0 rounded-xl"
-                                  >
-                                    {generatePlayoffsMutation.isPending ? (
+                                  <div className="flex items-center gap-2">
+                                    {playoffs.length > 0 && !selectedPool?.playoffsFinalizedAt && playoffs.every((m: any) => m.status === 'completed') && (
                                       <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Generating...
-                                      </>
-                                    ) : playoffs.length > 0 ? (
-                                      "Regenerate Playoffs"
-                                    ) : (
-                                      <>
-                                        <Trophy className="w-4 h-4 mr-2" />
-                                        Generate Playoffs
+                                        <Button
+                                          onClick={() => setIsCompletePoolOpen(true)}
+                                          disabled={completePlayoffsMutation.isPending}
+                                          size="sm"
+                                          className="bg-amber-600 text-white hover:bg-amber-700 shadow-lg shrink-0 rounded-xl"
+                                        >
+                                          {completePlayoffsMutation.isPending ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : (
+                                            "Complete Pool"
+                                          )}
+                                        </Button>
+                                        <AlertDialog open={isCompletePoolOpen} onOpenChange={setIsCompletePoolOpen}>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>Complete this pool?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                This will finalize the playoff results and update the standings with gold, silver, and bronze medals. You cannot go back or change results after this. Are you sure?
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <AlertDialogAction
+                                                onClick={() => selectedPoolId && completePlayoffsMutation.mutate(selectedPoolId)}
+                                                className="bg-amber-600 hover:bg-amber-700"
+                                              >
+                                                Yes, complete pool
+                                              </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>
                                       </>
                                     )}
-                                  </Button>
+                                    <Button
+                                      onClick={() => setIsGeneratePlayoffOpen(true)}
+                                      disabled={generatePlayoffsMutation.isPending || !!selectedPool?.playoffsFinalizedAt}
+                                      size="sm"
+                                      className="bg-court-green text-white hover:bg-court-green-dark shadow-lg shrink-0 rounded-xl"
+                                    >
+                                      {generatePlayoffsMutation.isPending ? (
+                                        <>
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          Generating...
+                                        </>
+                                      ) : playoffs.length > 0 ? (
+                                        "Regenerate Playoffs"
+                                      ) : (
+                                        <>
+                                          <Trophy className="w-4 h-4 mr-2" />
+                                          Generate Playoffs
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
                                 </div>
+
+                                {/* Generate Playoff: how many to promote + match format per round */}
+                                <Dialog
+                                  open={isGeneratePlayoffOpen}
+                                  onOpenChange={(open) => {
+                                    setIsGeneratePlayoffOpen(open);
+                                    if (open && selectedPool?.matchFormat) {
+                                      setPlayoffMatchFormats({
+                                        semifinals: selectedPool.matchFormat,
+                                        finals: selectedPool.matchFormat,
+                                        bronze: selectedPool.matchFormat,
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <DialogContent className="glass-card rounded-2xl border border-border/50 max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>Generate Playoff Bracket</DialogTitle>
+                                      <DialogDescription>
+                                        Set how many {isSingles ? "players" : "teams"} advance and the match format for each round.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                      <div className="grid gap-2">
+                                        <Label htmlFor="advanceCount">
+                                          {isSingles ? "Players" : "Teams"} to promote (2–8)
+                                        </Label>
+                                        <Input
+                                          id="advanceCount"
+                                          type="number"
+                                          min={2}
+                                          max={8}
+                                          value={playoffAdvanceCount}
+                                          onChange={(e) =>
+                                            setPlayoffAdvanceCount(Math.min(8, Math.max(2, parseInt(e.target.value, 10) || 2)))
+                                          }
+                                          className="rounded-xl"
+                                        />
+                                      </div>
+                                      <div className="border-t border-border/50 pt-4 space-y-4">
+                                        <p className="text-sm font-medium text-muted-foreground">Match format per round</p>
+                                        <div className="grid gap-3">
+                                          <div className="grid gap-2">
+                                            <Label>Semifinals</Label>
+                                            <Select
+                                              value={playoffMatchFormats.semifinals}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, semifinals: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>
+                                                    {label}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <Label>Championship (Final)</Label>
+                                            <Select
+                                              value={playoffMatchFormats.finals}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, finals: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>
+                                                    {label}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <Label>Bronze Medal Match</Label>
+                                            <Select
+                                              value={playoffMatchFormats.bronze}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, bronze: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>
+                                                    {label}
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => setIsGeneratePlayoffOpen(false)}
+                                        className="rounded-xl"
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button
+                                        className="bg-court-green text-white hover:bg-court-green-dark rounded-xl"
+                                        onClick={() =>
+                                          generatePlayoffsMutation.mutate({
+                                            poolId: selectedPool._id,
+                                            advanceCount: playoffAdvanceCount,
+                                            matchFormats: playoffMatchFormats,
+                                          })
+                                        }
+                                        disabled={generatePlayoffsMutation.isPending}
+                                      >
+                                        {generatePlayoffsMutation.isPending ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          "Generate"
+                                        )}
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
 
                                 {playoffs.length > 0 ? (
                                   <>

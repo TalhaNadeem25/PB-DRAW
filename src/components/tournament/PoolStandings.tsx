@@ -30,9 +30,11 @@ interface PoolStandingsProps {
   showPlayoffIndicators?: boolean;
   onRemoveTeam?: (teamId: string) => void;
   isRemoving?: boolean;
+  /** When true, first 4 rows show final medals (gold, silver, bronze, 4th) */
+  isPlayoffsFinalized?: boolean;
 }
 
-const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemoveTeam, isRemoving = false }: PoolStandingsProps) => {
+const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemoveTeam, isRemoving = false, isPlayoffsFinalized = false }: PoolStandingsProps) => {
   // Sort teams by wins (desc), then point differential (desc)
   const sortedTeams = [...teams].sort((a, b) => {
     if (b.stats.wins !== a.stats.wins) {
@@ -47,9 +49,21 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
     return team.players.map(p => p.name).join(' / ') || 'Unnamed Team';
   };
 
-  // Get rank badge/icon
+  // Medal label for finalized playoffs (gold, silver, bronze, 4th)
+  const getMedalLabel = (rank: number) => {
+    if (!isPlayoffsFinalized || rank > 4) return null;
+    switch (rank) {
+      case 1: return <span className="inline-flex items-center gap-1 font-semibold text-amber-600">🥇 Gold</span>;
+      case 2: return <span className="inline-flex items-center gap-1 font-semibold text-slate-500">🥈 Silver</span>;
+      case 3: return <span className="inline-flex items-center gap-1 font-semibold text-amber-700">🥉 Bronze</span>;
+      case 4: return <span className="inline-flex items-center gap-1 text-muted-foreground font-medium">4th place</span>;
+      default: return null;
+    }
+  };
+
+  // Get rank badge/icon (pre-playoff seeds)
   const getRankBadge = (rank: number) => {
-    if (!showPlayoffIndicators) return null;
+    if (!showPlayoffIndicators || isPlayoffsFinalized) return null;
 
     switch (rank) {
       case 1:
@@ -104,7 +118,9 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
           {poolName ? `${poolName} - Standings` : 'Pool Standings'}
         </CardTitle>
         <CardDescription>
-          {showPlayoffIndicators && 'Top 3 teams advance to playoffs'}
+          {isPlayoffsFinalized
+            ? 'Final standings with playoff results'
+            : showPlayoffIndicators && 'Top 3 teams advance to playoffs'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -142,10 +158,8 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
                       {rank}
                     </TableCell>
                     <TableCell className="font-semibold">
-                      <div className="flex items-center gap-2">
-                        {rank === 1 && showPlayoffIndicators && (
-                          <Trophy className="w-4 h-4 text-yellow-500" />
-                        )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {getMedalLabel(rank) ?? (rank === 1 && showPlayoffIndicators && <Trophy className="w-4 h-4 text-yellow-500" />)}
                         {getTeamName(team)}
                       </div>
                     </TableCell>

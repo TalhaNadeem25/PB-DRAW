@@ -130,16 +130,26 @@ export const updateMatchScore = async (req, res, next) => {
 
     const { team1Score, team2Score, status } = req.body;
 
-    // Validate score against pool's match format (single-game formats only)
+    // Capture old score before updating (for reverting team stats)
+    const oldTeam1Score = match.score?.team1Score ?? 0;
+    const oldTeam2Score = match.score?.team2Score ?? 0;
+    const wasCompleted = match.status === 'completed';
+
+    // Validate score against match format (playoff match format, or pool format)
     if (match.pool && (status === 'completed' || (team1Score !== undefined && team2Score !== undefined))) {
-      const pool = await Pool.findById(match.pool).select('matchFormatConfig').lean();
-      const config = pool?.matchFormatConfig;
+      let config = match.matchFormatConfig && typeof match.matchFormatConfig.games_to_win === 'number'
+        ? match.matchFormatConfig
+        : null;
+      if (!config) {
+        const pool = await Pool.findById(match.pool).select('matchFormatConfig').lean();
+        config = pool?.matchFormatConfig;
+      }
       if (config && config.games_to_win === 1) {
         const validation = validateSingleGameScore(team1Score ?? match.score?.team1Score ?? 0, team2Score ?? match.score?.team2Score ?? 0, config);
         if (!validation.valid) {
           return res.status(400).json({
             success: false,
-            message: validation.message || 'Invalid score for this pool\'s match format'
+            message: validation.message || 'Invalid score for this match format'
           });
         }
       }
@@ -163,43 +173,79 @@ export const updateMatchScore = async (req, res, next) => {
 
     await match.save();
 
-    // Update team stats
-    const team1 = await Team.findById(match.team1);
-    const team2 = await Team.findById(match.team2);
+    // Update team stats: subtract old score first (so edits don't double-count), then add new
+    const team1Id = match.team1?._id ?? match.team1;
+    const team2Id = match.team2?._id ?? match.team2;
+    const team1 = team1Id ? await Team.findById(team1Id) : null;
+    const team2 = team2Id ? await Team.findById(team2Id) : null;
 
     if (team1 && team2) {
+      // Subtract previous score from both teams (so updating a score doesn't double-count)
+      team1.stats.pointsFor -= oldTeam1Score;
+      team1.stats.pointsAgainst -= oldTeam2Score;
+      team2.stats.pointsFor -= oldTeam2Score;
+      team2.stats.pointsAgainst -= oldTeam1Score;
+      if (wasCompleted) {
+        if (oldTeam1Score > oldTeam2Score) {
+          team1.stats.wins -= 1;
+          team2.stats.losses -= 1;
+        } else if (oldTeam2Score > oldTeam1Score) {
+          team2.stats.wins -= 1;
+          team1.stats.losses -= 1;
+        }
+      }
+
+      // Add new score
       team1.stats.pointsFor += team1Score;
       team1.stats.pointsAgainst += team2Score;
       team2.stats.pointsFor += team2Score;
       team2.stats.pointsAgainst += team1Score;
-
-      if (team1Score > team2Score) {
-        team1.stats.wins += 1;
-        team2.stats.losses += 1;
-      } else if (team2Score > team1Score) {
-        team2.stats.wins += 1;
-        team1.stats.losses += 1;
+      if (match.status === 'completed') {
+        if (team1Score > team2Score) {
+          team1.stats.wins += 1;
+          team2.stats.losses += 1;
+        } else if (team2Score > team1Score) {
+          team2.stats.wins += 1;
+          team1.stats.losses += 1;
+        }
       }
 
       team1.stats.pointDifferential = team1.stats.pointsFor - team1.stats.pointsAgainst;
       team2.stats.pointDifferential = team2.stats.pointsFor - team2.stats.pointsAgainst;
 
+      team1.markModified('stats');
+      team2.markModified('stats');
       await team1.save();
       await team2.save();
     }
 
-    // Playoff bracket advancement logic
-    if (match.bracket === 'semifinals' && match.status === 'completed' && match.winner) {
-      // Find the finals match and advance the winner
+    // Playoff bracket advancement logic: semifinal winner → final, loser → bronze (if bronze exists)
+    if (match.bracket === 'semifinals' && match.status === 'completed') {
+      const winnerId = match.winner?._id ?? match.winner;
+      const loserId = team1Score > team2Score ? (match.team2?._id ?? match.team2) : (match.team1?._id ?? match.team1);
+
       const finalsMatch = await Match.findOne({
         event: match.event._id,
         pool: match.pool,
         bracket: 'finals'
       });
+      if (finalsMatch && winnerId) {
+        const semiSlot = match.matchNumber === 1 ? 'team1' : 'team2';
+        if (!finalsMatch[semiSlot]) {
+          finalsMatch[semiSlot] = winnerId;
+          await finalsMatch.save();
+        }
+      }
 
-      if (finalsMatch && !finalsMatch.team2) {
-        finalsMatch.team2 = match.winner;
-        await finalsMatch.save();
+      if (match.loserNextMatchId && loserId) {
+        const bronzeMatch = await Match.findById(match.loserNextMatchId);
+        if (bronzeMatch) {
+          const bronzeSlot = match.matchNumber === 1 ? 'team1' : 'team2';
+          if (!bronzeMatch[bronzeSlot]) {
+            bronzeMatch[bronzeSlot] = loserId;
+            await bronzeMatch.save();
+          }
+        }
       }
     }
 

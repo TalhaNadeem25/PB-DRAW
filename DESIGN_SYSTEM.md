@@ -381,7 +381,7 @@ Use shadcn Dialog or AlertDialog. Content: `max-w-2xl max-h-[90vh] overflow-y-au
 In TournamentDetails page -> registration tab -> when organizer remove it should also do refund as well. (Not completed) 
 If event is full let user join the waitlist, if approved by organizerthen email them to pay and join the evnets.  (Partial Complete)
 
-skill level should be in evnets 3.5-4.0 etc  (Complete)
+skill level should be in evnets 3.5-4.0 etc  (inComplete) - (user defined values)
 new event: max player should be teams or player based on game type (Complete)
 
 create new pool type : format of pool matches: game to 11 win by 2 .... (Full complete)
@@ -397,3 +397,15 @@ Asking user if they want playoffs or not (Partial/complete)
 
 Scores tab - filter by round 
 Add how many court user have when creating a tournament and then use the same input and show them in the schedule and planner
+
+Pool standing not updating 
+
+when generating playoff must ask user how many players or team depending on the format they want to promote next 
+generatation playoffs must ask pool matches format
+
+add complete button 
+
+add separate pool matches format semi, champion and bronze 
+
+
+semifinals winner -> will play for gold and silver or bronze (completed)

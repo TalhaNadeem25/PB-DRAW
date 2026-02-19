@@ -370,13 +370,26 @@ export const matchAPI = {
 
 // Playoffs
 export const playoffAPI = {
-  generate: async (eventId: string, poolId: string) => {
-    const response = await api.post(`/events/${eventId}/playoffs/${poolId}/generate`);
+  generate: async (
+    eventId: string,
+    poolId: string,
+    advanceCount?: number,
+    matchFormats?: { semifinals?: string; finals?: string; bronze?: string }
+  ) => {
+    const response = await api.post(`/events/${eventId}/playoffs/${poolId}/generate`, {
+      advanceCount: advanceCount ?? 3,
+      matchFormats: matchFormats ?? undefined,
+    });
     return response.data;
   },
 
   get: async (eventId: string, poolId: string) => {
     const response = await api.get(`/events/${eventId}/playoffs/${poolId}`);
+    return response.data;
+  },
+
+  complete: async (eventId: string, poolId: string) => {
+    const response = await api.post(`/events/${eventId}/playoffs/${poolId}/complete`);
     return response.data;
   },
 };

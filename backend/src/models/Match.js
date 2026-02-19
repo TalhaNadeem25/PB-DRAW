@@ -15,7 +15,8 @@ const matchSchema = new mongoose.Schema({
   team1: {
     type: mongoose.Schema.Types.ObjectId,
     refPath: 'team1Model',
-    required: true
+    required: false,
+    default: null
   },
   team1Model: {
     type: String,
@@ -62,7 +63,7 @@ const matchSchema = new mongoose.Schema({
   },
   bracket: {
     type: String,
-    enum: ['winners', 'losers', 'semifinals', 'finals', null],
+    enum: ['winners', 'losers', 'semifinals', 'finals', 'bronze', null],
     default: null
   },
   matchNumber: {
@@ -98,6 +99,12 @@ const matchSchema = new mongoose.Schema({
     ref: 'Match',
     default: null
   },
+  /** For semifinals: loser advances to this match (e.g. bronze medal match) */
+  loserNextMatchId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Match',
+    default: null
+  },
   scheduledTime: {
     type: Date,
     default: null
@@ -113,6 +120,20 @@ const matchSchema = new mongoose.Schema({
   notes: {
     type: String,
     trim: true
+  },
+  /** Playoff match format label (e.g. "Game to 11 – Win by 2") – overrides pool format when set */
+  matchFormat: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  /** Playoff match format config for score validation – used when matchFormat is set */
+  matchFormatConfig: {
+    games_to_win: { type: Number, default: null },
+    max_games: { type: Number, default: null },
+    points_to_win: { type: Number, default: null },
+    win_by: { type: Number, default: null },
+    hard_cap: { type: Number, default: null }
   },
   checkIn: {
     team1: {
