@@ -405,7 +405,7 @@ generatation playoffs must ask pool matches format
 
 add complete button 
 
-add separate pool matches format semi, champion and bronze 
+add separate pool matches format semi, champion and bronze (complete)
 
 
 semifinals winner -> will play for gold and silver or bronze (completed)
