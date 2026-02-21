@@ -66,6 +66,12 @@ const matchSchema = new mongoose.Schema({
     enum: ['winners', 'losers', 'semifinals', 'finals', 'bronze', null],
     default: null
   },
+  /** For event-level playoffs: which tier (gold/silver/bronze) this match belongs to */
+  bracketTier: {
+    type: String,
+    enum: ['gold', 'silver', 'bronze', 'event', null],
+    default: null
+  },
   matchNumber: {
     type: Number,
     default: null

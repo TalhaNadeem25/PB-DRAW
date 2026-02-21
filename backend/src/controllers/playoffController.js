@@ -1,8 +1,108 @@
 import Pool from '../models/Pool.js';
 import Match from '../models/Match.js';
 import Event from '../models/Event.js';
-import { generateSingleEliminationBracket } from '../utils/bracketGenerator.js';
+import { generateSingleEliminationBracket, generateSingleEliminationForEventTier } from '../utils/bracketGenerator.js';
 import { getMatchFormatConfig } from '../constants/matchFormatConfig.js';
+
+/** Get top N entities (by standings) from one pool for event playoffs. Returns array of { _id, name }. */
+async function getTopFromPool(pool, event, advanceCount, isSingles) {
+  const poolIdStr = pool._id.toString();
+  if (isSingles) {
+    const playersInPool = event.registeredPlayers
+      .filter(
+        (reg) =>
+          reg.pool && reg.pool.toString() === poolIdStr && reg.paymentStatus === 'paid' && reg.player
+      )
+      .map((reg) => reg.player);
+    const poolPlayMatches = await Match.find({
+      pool: pool._id,
+      $or: [
+        { bracket: { $exists: false } },
+        { bracket: null },
+        { bracket: { $nin: ['semifinals', 'finals', 'winners', 'bronze'] } }
+      ]
+    }).lean();
+    const statsByPlayerId = new Map();
+    playersInPool.forEach((p) => {
+      statsByPlayerId.set(p._id.toString(), { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 });
+    });
+    poolPlayMatches.forEach((m) => {
+      if (m.status !== 'completed') return;
+      const id1 = m.team1 ? (typeof m.team1 === 'object' && m.team1.toString ? m.team1.toString() : String(m.team1)) : null;
+      const id2 = m.team2 ? (typeof m.team2 === 'object' && m.team2.toString ? m.team2.toString() : String(m.team2)) : null;
+      const s1 = id1 ? statsByPlayerId.get(id1) : null;
+      const s2 = id2 ? statsByPlayerId.get(id2) : null;
+      const t1 = m.score?.team1Score ?? 0;
+      const t2 = m.score?.team2Score ?? 0;
+      if (s1) {
+        s1.pointsFor += t1;
+        s1.pointsAgainst += t2;
+        if (t1 > t2) s1.wins += 1;
+        else if (t2 > t1) s1.losses += 1;
+      }
+      if (s2) {
+        s2.pointsFor += t2;
+        s2.pointsAgainst += t1;
+        if (t2 > t1) s2.wins += 1;
+        else if (t1 > t2) s2.losses += 1;
+      }
+    });
+    statsByPlayerId.forEach((s) => { s.pointDifferential = s.pointsFor - s.pointsAgainst; });
+    const sorted = [...playersInPool].sort((a, b) => {
+      const sa = statsByPlayerId.get(a._id.toString()) || {};
+      const sb = statsByPlayerId.get(b._id.toString()) || {};
+      if ((sb.wins ?? 0) !== (sa.wins ?? 0)) return (sb.wins ?? 0) - (sa.wins ?? 0);
+      if ((sb.pointDifferential ?? 0) !== (sa.pointDifferential ?? 0)) return (sb.pointDifferential ?? 0) - (sa.pointDifferential ?? 0);
+      return (sb.pointsFor ?? 0) - (sa.pointsFor ?? 0);
+    });
+    return sorted.slice(0, advanceCount).map((p) => ({ _id: p._id, name: p.name || 'Player' }));
+  }
+  const teamIds = (pool.teams || []).map((t) => t._id ?? t);
+  if (teamIds.length === 0) return [];
+  const poolPlayMatches = await Match.find({
+    pool: pool._id,
+    $or: [
+      { bracket: { $exists: false } },
+      { bracket: null },
+      { bracket: { $nin: ['semifinals', 'finals', 'winners', 'bronze'] } }
+    ]
+  }).lean();
+  const statsByTeamId = new Map();
+  teamIds.forEach((id) => {
+    statsByTeamId.set(id.toString(), { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 });
+  });
+  poolPlayMatches.forEach((m) => {
+    if (m.status !== 'completed') return;
+    const id1 = m.team1 ? (typeof m.team1 === 'object' && m.team1.toString ? m.team1.toString() : String(m.team1)) : null;
+    const id2 = m.team2 ? (typeof m.team2 === 'object' && m.team2.toString ? m.team2.toString() : String(m.team2)) : null;
+    const s1 = id1 ? statsByTeamId.get(id1) : null;
+    const s2 = id2 ? statsByTeamId.get(id2) : null;
+    const t1 = m.score?.team1Score ?? 0;
+    const t2 = m.score?.team2Score ?? 0;
+    if (s1) {
+      s1.pointsFor += t1;
+      s1.pointsAgainst += t2;
+      if (t1 > t2) s1.wins += 1;
+      else if (t2 > t1) s1.losses += 1;
+    }
+    if (s2) {
+      s2.pointsFor += t2;
+      s2.pointsAgainst += t1;
+      if (t2 > t1) s2.wins += 1;
+      else if (t1 > t2) s2.losses += 1;
+    }
+  });
+  statsByTeamId.forEach((s) => { s.pointDifferential = s.pointsFor - s.pointsAgainst; });
+  const teamDocs = (pool.teams || []).map((t) => ({ _id: t._id, name: t.name || 'Team', stats: statsByTeamId.get((t._id ?? t).toString()) }));
+  const sorted = teamDocs.sort((a, b) => {
+    const sa = a.stats || {};
+    const sb = b.stats || {};
+    if ((sb.wins ?? 0) !== (sa.wins ?? 0)) return (sb.wins ?? 0) - (sa.wins ?? 0);
+    if ((sb.pointDifferential ?? 0) !== (sa.pointDifferential ?? 0)) return (sb.pointDifferential ?? 0) - (sa.pointDifferential ?? 0);
+    return (sb.pointsFor ?? 0) - (sa.pointsFor ?? 0);
+  });
+  return sorted.slice(0, advanceCount).map((t) => ({ _id: t._id, name: t.name || 'Team' }));
+}
 
 // @desc    Generate playoff bracket from pool standings
 // @route   POST /api/events/:eventId/playoffs/:poolId/generate
@@ -369,6 +469,248 @@ export const completePlayoffs = async (req, res, next) => {
       success: true,
       message: 'Pool finalized. Standings now show final placements with medals.',
       data: { finalPlacements: pool.finalPlacements }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Event-level playoffs (all pools combined: gold / silver / bronze tiers) ───
+
+// @desc    Get event-level playoff bracket (matches with pool=null, bracketTier)
+// @route   GET /api/events/:eventId/playoffs
+// @access  Public
+export const getEventPlayoffs = async (req, res, next) => {
+  try {
+    const eventId = req.params.eventId;
+    const event = await Event.findById(eventId).select('format').lean();
+    const isSingles = event?.format === 'singles';
+
+    const query = Match.find({
+      event: eventId,
+      pool: null,
+      bracketTier: { $in: ['gold', 'silver', 'bronze', 'event'] }
+    }).sort({ bracketTier: 1, round: 1, matchNumber: 1 });
+
+    if (isSingles) {
+      query.populate({ path: 'team1', select: 'name' }).populate({ path: 'team2', select: 'name' }).populate('winner', 'name');
+    } else {
+      query
+        .populate({ path: 'team1', select: 'name players', populate: { path: 'players', select: 'name' } })
+        .populate({ path: 'team2', select: 'name players', populate: { path: 'players', select: 'name' } })
+        .populate('winner', 'name');
+    }
+    const matches = await query;
+
+    res.status(200).json({
+      success: true,
+      data: matches
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Generate event-level playoffs: advance N per pool → qualifiers → semifinals → final + bronze
+// @route   POST /api/events/:eventId/playoffs/generate
+// @body    { advanceCountPerPool: number (how many players/teams advance from each pool), matchFormats?: { qualifiers?, semifinals?, finals?, bronze? } }
+// @access  Private (Organizer/Admin)
+export const generateEventPlayoffs = async (req, res, next) => {
+  try {
+    const eventId = req.params.eventId;
+    const advanceCountPerPool = Math.min(8, Math.max(1, parseInt(req.body?.advanceCountPerPool, 10) || 2));
+    const event = await Event.findById(eventId)
+      .populate('tournament')
+      .populate({ path: 'registeredPlayers.player', select: 'name email' });
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+    if (event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+    if (event.eventPlayoffsFinalizedAt) {
+      return res.status(400).json({ success: false, message: 'Event playoffs are already finalized.' });
+    }
+
+    const pools = await Pool.find({ event: eventId, poolPlayFinalizedAt: { $ne: null } })
+      .sort({ name: 1 })
+      .populate({ path: 'teams', populate: { path: 'players', select: 'name' } });
+    if (pools.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least 2 pools must be marked complete (Complete pool) before generating event playoffs.'
+      });
+    }
+    const isSingles = event.format === 'singles';
+    const teamModel = isSingles ? 'User' : 'Team';
+
+    // Combine top N from each pool into one advancing list (qualifiers → semis → final + bronze)
+    const allAdvancing = [];
+    for (const pool of pools) {
+      const top = await getTopFromPool(pool, event, advanceCountPerPool, isSingles);
+      allAdvancing.push(...top);
+    }
+    if (allAdvancing.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: `Need at least 4 ${isSingles ? 'players' : 'teams'} to generate playoffs. Only ${allAdvancing.length} advancing (${pools.length} pools × ${advanceCountPerPool} per pool). Increase "advance per pool" or add more ${isSingles ? 'players' : 'teams'} to pools.`
+      });
+    }
+
+    await Match.deleteMany({
+      event: eventId,
+      pool: null,
+      bracketTier: { $in: ['gold', 'silver', 'bronze', 'event'] }
+    });
+
+    const defaultFormat = pools[0]?.matchFormat || 'Game to 11 – Win by 2';
+    const matchFormats = {
+      qualifiers: req.body?.matchFormats?.qualifiers ?? req.body?.matchFormats?.semifinals ?? defaultFormat,
+      semifinals: req.body?.matchFormats?.semifinals ?? defaultFormat,
+      finals: req.body?.matchFormats?.finals ?? defaultFormat,
+      bronze: req.body?.matchFormats?.bronze ?? defaultFormat
+    };
+
+    const allCreated = await generateSingleEliminationForEventTier(
+      eventId,
+      allAdvancing,
+      teamModel,
+      'event',
+      1
+    );
+
+    for (const m of allCreated) {
+      const label =
+        m.bracket === 'winners' ? matchFormats.qualifiers
+          : m.bracket === 'semifinals' ? matchFormats.semifinals
+            : m.bracket === 'finals' ? matchFormats.finals
+              : m.bracket === 'bronze' ? matchFormats.bronze
+                : null;
+      if (label) {
+        const config = getMatchFormatConfig(label);
+        if (config) {
+          m.matchFormat = label;
+          m.matchFormatConfig = {
+            games_to_win: config.games_to_win,
+            max_games: config.max_games,
+            points_to_win: config.points_to_win,
+            win_by: config.win_by,
+            hard_cap: config.hard_cap ?? null
+          };
+          m.markModified('matchFormatConfig');
+          await m.save();
+        }
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Event playoff bracket generated: qualifiers → semifinals → final (gold/silver) + bronze match.',
+      data: { matches: allCreated }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Finalize event-level playoffs
+// @route   POST /api/events/:eventId/playoffs/complete
+// @access  Private (Organizer/Admin)
+export const completeEventPlayoffs = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.eventId).populate('tournament');
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+    if (event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+    if (event.eventPlayoffsFinalizedAt) {
+      return res.status(400).json({ success: false, message: 'Event playoffs are already finalized.' });
+    }
+
+    const playoffMatches = await Match.find({
+      event: event._id,
+      pool: null,
+      bracketTier: { $in: ['gold', 'silver', 'bronze', 'event'] }
+    }).lean();
+
+    if (playoffMatches.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No event playoff matches found. Generate event playoffs first.'
+      });
+    }
+    const incomplete = playoffMatches.filter((m) => m.status !== 'completed');
+    if (incomplete.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `${incomplete.length} playoff match(es) still need a score. Complete every match before finalizing.`
+      });
+    }
+
+    const getEntity = (match, isWinner) => {
+      const s1 = match.score?.team1Score ?? 0;
+      const s2 = match.score?.team2Score ?? 0;
+      let winnerId = match.winner?._id ?? match.winner;
+      const team1Id = match.team1?._id ?? match.team1;
+      const team2Id = match.team2?._id ?? match.team2;
+      if (!winnerId && s1 !== s2) winnerId = s1 > s2 ? team1Id : team2Id;
+      if (isWinner) {
+        const name = (match.team1 && String(team1Id) === String(winnerId) ? match.team1.name : match.team2?.name) || '—';
+        return { entityId: winnerId, name };
+      }
+      const loserId = winnerId && (String(team1Id) === String(winnerId) ? team2Id : team1Id);
+      const name = (match.team1 && String(team1Id) === String(loserId) ? match.team1.name : match.team2?.name) || '—';
+      return { entityId: loserId, name };
+    };
+
+    const placements = [];
+    let place = 1;
+    const isSingleBracket = playoffMatches.some((m) => m.bracketTier === 'event');
+    if (isSingleBracket) {
+      const finalsMatch = playoffMatches.find((m) => m.bracketTier === 'event' && m.bracket === 'finals');
+      const bronzeMatch = playoffMatches.find((m) => m.bracketTier === 'event' && m.bracket === 'bronze');
+      if (finalsMatch && (finalsMatch.score?.team1Score ?? 0) !== (finalsMatch.score?.team2Score ?? 0)) {
+        const finalWinner = getEntity(finalsMatch, true);
+        const finalLoser = getEntity(finalsMatch, false);
+        if (finalWinner.entityId) placements.push({ place: place++, entityId: finalWinner.entityId, name: finalWinner.name, tier: 'gold' });
+        if (finalLoser.entityId) placements.push({ place: place++, entityId: finalLoser.entityId, name: finalLoser.name, tier: 'silver' });
+      }
+      if (bronzeMatch && bronzeMatch.status === 'completed' && (bronzeMatch.score?.team1Score ?? 0) !== (bronzeMatch.score?.team2Score ?? 0)) {
+        const bw = getEntity(bronzeMatch, true);
+        const bl = getEntity(bronzeMatch, false);
+        if (bw.entityId) placements.push({ place: place++, entityId: bw.entityId, name: bw.name, tier: 'bronze' });
+        if (bl.entityId) placements.push({ place: place++, entityId: bl.entityId, name: bl.name, tier: '4th' });
+      }
+    } else {
+      for (const tier of ['gold', 'silver', 'bronze']) {
+        const tierMatches = playoffMatches.filter((m) => m.bracketTier === tier);
+        const finalsMatch = tierMatches.find((m) => m.bracket === 'finals');
+        const bronzeMatch = tierMatches.find((m) => m.bracket === 'bronze');
+        if (!finalsMatch || (finalsMatch.score?.team1Score ?? 0) === (finalsMatch.score?.team2Score ?? 0)) continue;
+        const finalWinner = getEntity(finalsMatch, true);
+        const finalLoser = getEntity(finalsMatch, false);
+        if (finalWinner.entityId) placements.push({ place: place++, entityId: finalWinner.entityId, name: finalWinner.name, tier });
+        if (finalLoser.entityId) placements.push({ place: place++, entityId: finalLoser.entityId, name: finalLoser.name, tier });
+        if (bronzeMatch && bronzeMatch.status === 'completed' && (bronzeMatch.score?.team1Score ?? 0) !== (bronzeMatch.score?.team2Score ?? 0)) {
+          const bw = getEntity(bronzeMatch, true);
+          const bl = getEntity(bronzeMatch, false);
+          if (bw.entityId) placements.push({ place: place++, entityId: bw.entityId, name: bw.name, tier });
+          if (bl.entityId) placements.push({ place: place++, entityId: bl.entityId, name: bl.name, tier });
+        }
+      }
+    }
+
+    event.eventPlayoffsFinalizedAt = new Date();
+    event.eventPlayoffPlacements = placements;
+    event.markModified('eventPlayoffPlacements');
+    await event.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Event playoffs finalized.',
+      data: { eventPlayoffPlacements: event.eventPlayoffPlacements }
     });
   } catch (error) {
     next(error);

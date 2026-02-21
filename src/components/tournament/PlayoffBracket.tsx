@@ -50,7 +50,8 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
   const [team1Score, setTeam1Score] = useState(0);
   const [team2Score, setTeam2Score] = useState(0);
 
-  // Separate matches by bracket type
+  // Separate matches by bracket type (qualifiers = round 1 when 8+ teams, bracket 'winners')
+  const qualifiers = matches.filter(m => m.bracket === 'winners');
   const semifinals = matches.filter(m => m.bracket === 'semifinals');
   const finals = matches.find(m => m.bracket === 'finals');
   const bronzeMatch = matches.find(m => m.bracket === 'bronze');
@@ -98,7 +99,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
         <div className="flex items-center justify-between mb-3">
           <div className="flex flex-col gap-0.5">
             <Badge variant="outline" className="text-xs w-fit">
-              {match.bracket === 'semifinals' ? 'Semifinal' : match.bracket === 'winners' ? 'Round 1' : match.bracket === 'bronze' ? 'Bronze Medal' : 'Final'}
+              {match.bracket === 'semifinals' ? 'Semifinal' : match.bracket === 'winners' ? 'Qualifier' : match.bracket === 'bronze' ? 'Bronze Medal' : 'Final'}
             </Badge>
             {match.matchFormat && (
               <span className="text-[10px] text-muted-foreground">{formatMatchFormatShort(match.matchFormat)}</span>
@@ -177,13 +178,28 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
 
   return (
     <div className="space-y-6">
-      {/* Bracket Visualization */}
+      {/* Qualifiers (when 8+ teams: first round before semifinals) */}
+      {qualifiers.length > 0 && (
+        <div className="mb-8 pb-8 border-b border-border/50">
+          <div className="text-center mb-4">
+            <h3 className="font-semibold text-lg">Qualifiers</h3>
+            <p className="text-sm text-muted-foreground">Round 1 — winners advance to semifinals</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {qualifiers.map((match) => (
+              <MatchCard key={match._id} match={match} position="left" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bracket Visualization: Semifinals → Final + Bronze */}
       <div className="grid lg:grid-cols-3 gap-8 items-center">
         {/* Semifinals Column */}
         <div className="space-y-6">
           <div className="text-center mb-4">
             <h3 className="font-semibold text-lg">Semifinals</h3>
-            <p className="text-sm text-muted-foreground">Round 1</p>
+            <p className="text-sm text-muted-foreground">{qualifiers.length > 0 ? 'Round 2' : 'Round 1'}</p>
           </div>
           {semifinals.map((match) => (
             <MatchCard key={match._id} match={match} position="left" />
@@ -248,11 +264,13 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
-              {selectedMatch?.bracket === 'semifinals'
-                ? 'Semifinal Match'
-                : selectedMatch?.bracket === 'bronze'
-                  ? 'Bronze Medal Match'
-                  : 'Championship Match'}
+              {selectedMatch?.bracket === 'winners'
+                ? 'Qualifier Match'
+                : selectedMatch?.bracket === 'semifinals'
+                  ? 'Semifinal Match'
+                  : selectedMatch?.bracket === 'bronze'
+                    ? 'Bronze Medal Match'
+                    : 'Championship Match'}
             </DialogTitle>
             <DialogDescription>
               Match details and information
@@ -338,6 +356,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
                   </label>
                   <Input
                     type="number"
+                    className="input-no-spinner"
                     min="0"
                     value={team1Score}
                     onChange={(e) => setTeam1Score(parseInt(e.target.value) || 0)}
@@ -349,6 +368,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
                   </label>
                   <Input
                     type="number"
+                    className="input-no-spinner"
                     min="0"
                     value={team2Score}
                     onChange={(e) => setTeam2Score(parseInt(e.target.value) || 0)}

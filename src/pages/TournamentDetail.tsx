@@ -519,7 +519,7 @@ const TournamentDetail = () => {
                 tournamentId={id!}
               />
 
-              <main className="flex-1 min-w-0">{renderSection()}</main>
+              <main className="flex-1 min-w-0 font-sans">{renderSection()}</main>
             </div>
           </div>
 
@@ -535,14 +535,8 @@ const TournamentDetail = () => {
   return (
     <Layout variant="minimal">
       <div className="min-h-screen bg-background">
-        {/* Compact Hero Header */}
-        <div className="bg-hero-gradient py-10 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-10 right-[10%] w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-float-slow" />
-            <div className="absolute bottom-10 left-[5%] w-48 h-48 bg-court-green-dark/30 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-          </div>
-          <div className="absolute inset-0 court-pattern opacity-5 pointer-events-none" />
-
+        {/* Compact Hero Header (Solid Premium Design) */}
+        <div className="bg-card border-b border-border/60 py-10 relative overflow-hidden shadow-sm">
           <div className="container mx-auto px-4 relative z-10">
             <Link to="/tournaments" className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors group">
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -555,29 +549,31 @@ const TournamentDetail = () => {
                   <span className={cn("w-2 h-2 rounded-full mr-2", statusInfo.dotClass)} />
                   {statusInfo.label}
                 </Badge>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-3 break-words">{tournament.name}</h1>
-                <div className="flex flex-wrap gap-3 text-primary-foreground/80">
-                  <div className="flex items-center gap-2 glass-dark px-3 py-1.5 rounded-full text-sm">
-                    <MapPin className="w-4 h-4" />
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mb-3 break-words">
+                  {tournament.name}
+                </h1>
+                <div className="flex flex-wrap gap-3 text-muted-foreground font-sans">
+                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full text-sm border border-border/50">
+                    <MapPin className="w-4 h-4 text-primary" />
                     {tournament.location}
                   </div>
-                  <div className="flex items-center gap-2 glass-dark px-3 py-1.5 rounded-full text-sm">
-                    <Calendar className="w-4 h-4" />
+                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full text-sm border border-border/50">
+                    <Calendar className="w-4 h-4 text-primary" />
                     {format(new Date(tournament.startDate), "MMM dd, yyyy")} - {format(new Date(tournament.endDate), "MMM dd, yyyy")}
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2 sm:gap-3 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow w-9 h-9 sm:w-10 sm:h-10" onClick={handleToggleFavorite}>
+                <Button variant="outline" size="icon" className="shadow-sm hover:shadow-md transition-shadow w-9 h-9 sm:w-10 sm:h-10" onClick={handleToggleFavorite}>
                   <Heart className={cn("w-4 h-4 sm:w-5 sm:h-5 transition-colors", isFavorite && "fill-red-500 text-red-500")} />
                 </Button>
-                <Button variant="glass" size="icon" className="hover:shadow-glow transition-shadow w-9 h-9 sm:w-10 sm:h-10">
+                <Button variant="outline" size="icon" className="shadow-sm hover:shadow-md transition-shadow w-9 h-9 sm:w-10 sm:h-10">
                   <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
                 <ExportButtons tournament={tournament} matches={tournament.matches || []} teams={tournament.teams || []} events={tournament.events || []} variant="outline" />
                 {tournament.status === "open" && (
-                  <Button variant="accent" size="default" className="shadow-glow-yellow hover:shadow-glow-lg transition-shadow text-sm sm:text-base" asChild>
+                  <Button variant="default" size="default" className="shadow-sm hover:shadow-md transition-shadow font-bold text-sm sm:text-base" asChild>
                     <Link to={`/tournaments/${id}/register`}>Register Now</Link>
                   </Button>
                 )}
@@ -590,9 +586,9 @@ const TournamentDetail = () => {
         <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {/* Photo Gallery */}
           {tournament.image && (
-            <div className="glass-card-hover rounded-2xl overflow-hidden mb-8 animate-fade-in">
-              <div className="h-1.5 bg-hero-gradient" />
-              <div className="p-8">
+            <div className="bg-card rounded-2xl overflow-hidden mb-8 animate-fade-in border border-border/60 shadow-sm relative">
+              <div className="h-1.5 bg-primary absolute top-0 left-0 right-0" />
+              <div className="p-8 pt-10">
                 <h3 className="font-display font-bold text-xl mb-4 flex items-center gap-2">
                   <ImageIcon className="w-5 h-5 text-primary" />
                   Tournament Gallery
@@ -616,11 +612,11 @@ const TournamentDetail = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6 lg:space-y-8 min-w-0">
               <Tabs defaultValue="overview" className="animate-fade-in">
-                <TabsList className="w-full justify-start glass border border-border/50 p-1.5 rounded-xl gap-1 overflow-x-auto scrollbar-hide">
-                  <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Overview</TabsTrigger>
-                  <TabsTrigger value="events" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Events</TabsTrigger>
-                  <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Schedule</TabsTrigger>
-                  <TabsTrigger value="brackets" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all shrink-0 text-xs sm:text-sm">Brackets</TabsTrigger>
+                <TabsList className="w-full justify-start bg-card border border-border/60 p-1.5 rounded-xl gap-1 overflow-x-auto scrollbar-hide shadow-sm">
+                  <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/50 data-[state=active]:hover:bg-primary transition-all shrink-0 text-xs sm:text-sm font-semibold">Overview</TabsTrigger>
+                  <TabsTrigger value="events" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/50 data-[state=active]:hover:bg-primary transition-all shrink-0 text-xs sm:text-sm font-semibold">Events</TabsTrigger>
+                  <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/50 data-[state=active]:hover:bg-primary transition-all shrink-0 text-xs sm:text-sm font-semibold">Schedule</TabsTrigger>
+                  <TabsTrigger value="brackets" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/50 data-[state=active]:hover:bg-primary transition-all shrink-0 text-xs sm:text-sm font-semibold">Brackets</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
@@ -631,9 +627,9 @@ const TournamentDetail = () => {
                   </div>
 
                   <div className="mt-8 grid sm:grid-cols-2 gap-4">
-                    <div className="group glass-card-hover rounded-2xl p-8">
+                    <div className="group bg-card rounded-2xl border border-border/60 hover:border-border p-8 shadow-sm transition-all duration-300">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 group-hover:bg-hero-gradient group-hover:shadow-glow transition-all duration-300 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 group-hover:bg-primary transition-colors duration-300 flex items-center justify-center">
                           <Users className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                         </div>
                         <div>
@@ -649,7 +645,7 @@ const TournamentDetail = () => {
                               const pct = Math.round(((tournament.currentPlayers || 0) / tournament.maxPlayers) * 100);
                               if (pct >= 90) return "bg-destructive";
                               if (pct >= 70) return "bg-warning";
-                              return "bg-hero-gradient";
+                              return "bg-primary";
                             })()
                           )}
                           style={{ width: `${((tournament.currentPlayers || 0) / tournament.maxPlayers) * 100}%` }}
@@ -657,9 +653,9 @@ const TournamentDetail = () => {
                       </div>
                     </div>
 
-                    <div className="group glass-card-hover rounded-2xl p-8">
+                    <div className="group bg-card rounded-2xl border border-border/60 hover:border-border p-8 shadow-sm transition-all duration-300">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 group-hover:bg-hero-gradient group-hover:shadow-glow transition-all duration-300 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 group-hover:bg-primary transition-colors duration-300 flex items-center justify-center">
                           <Clock className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                         </div>
                         <div>
@@ -672,7 +668,7 @@ const TournamentDetail = () => {
 
                   {/* Venue Details */}
                   {tournament.venue && (
-                    <div className="mt-8 glass-card-hover rounded-2xl p-8">
+                    <div className="mt-8 bg-card rounded-2xl border border-border/60 p-8 shadow-sm">
                       <h3 className="font-display font-bold text-lg mb-4">Venue Information</h3>
                       <div className="space-y-3">
                         <div>
@@ -701,7 +697,7 @@ const TournamentDetail = () => {
 
                   {/* Rules */}
                   {tournament.rules && (
-                    <div className="mt-8 glass-card-hover rounded-2xl p-8">
+                    <div className="mt-8 bg-card rounded-2xl border border-border/60 p-8 shadow-sm">
                       <h3 className="font-display font-bold text-lg mb-4">Tournament Rules</h3>
                       <p className="text-muted-foreground whitespace-pre-wrap">{tournament.rules}</p>
                     </div>
@@ -709,7 +705,7 @@ const TournamentDetail = () => {
 
                   {/* Contact Information */}
                   {(tournament.contactEmail || tournament.contactPhone) && (
-                    <div className="mt-8 glass-card-hover rounded-2xl p-8">
+                    <div className="mt-8 bg-card rounded-2xl border border-border/60 p-8 shadow-sm">
                       <h3 className="font-display font-bold text-lg mb-4">Contact Information</h3>
                       <div className="space-y-2">
                         {tournament.contactEmail && (
@@ -737,7 +733,7 @@ const TournamentDetail = () => {
                   {tournament.events && tournament.events.length > 0 ? (
                     <div className="space-y-4">
                       {tournament.events.map((event: any, index: number) => (
-                        <div key={event._id} className="glass-card-hover rounded-2xl p-6 animate-fade-in" style={{ animationDelay: `${Math.min(index * 0.1, 0.5)}s` }}>
+                        <div key={event._id} className="bg-card rounded-2xl border border-border/60 p-6 shadow-sm hover:border-border transition-colors animate-fade-in" style={{ animationDelay: `${Math.min(index * 0.1, 0.5)}s` }}>
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
                               <h4 className="font-display font-bold text-lg">{event.name}</h4>
@@ -791,9 +787,9 @@ const TournamentDetail = () => {
             {/* Right Sidebar */}
             <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               {/* Registration Card */}
-              <div className="glass-card rounded-2xl p-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-hero-gradient" />
-                <h3 className="font-display font-bold text-lg mb-4">Quick Registration</h3>
+              <div className="bg-card rounded-2xl border border-border/60 p-8 relative overflow-hidden shadow-sm">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary" />
+                <h3 className="font-display font-bold text-lg mb-4 mt-2">Quick Registration</h3>
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Entry Fee</span>
@@ -813,7 +809,7 @@ const TournamentDetail = () => {
                   </div>
                 </div>
                 {tournament.status === "open" && (
-                  <Button variant="hero" className="w-full shadow-glow hover:shadow-glow-lg transition-all duration-300 group" size="lg" asChild>
+                  <Button variant="default" className="w-full shadow-sm hover:shadow-md transition-all duration-300 group font-bold" size="lg" asChild>
                     <Link to={`/tournaments/${id}/register`}>
                       Register Now
                       <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform" />
@@ -823,7 +819,7 @@ const TournamentDetail = () => {
               </div>
 
               {/* Organizer Info */}
-              <div className="glass-card-hover rounded-2xl p-8">
+              <div className="bg-card rounded-2xl border border-border/60 p-8 shadow-sm">
                 <h3 className="font-display font-bold text-lg mb-4">Organizer</h3>
                 <div className="space-y-3 text-sm">
                   <div>
@@ -844,7 +840,7 @@ const TournamentDetail = () => {
               </div>
 
               {/* Venue Info */}
-              <div className="glass-card-hover rounded-2xl p-8">
+              <div className="bg-card rounded-2xl border border-border/60 p-8 shadow-sm">
                 <h3 className="font-display font-bold text-lg mb-4">Venue</h3>
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-primary mt-0.5" />

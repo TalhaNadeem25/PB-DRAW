@@ -329,6 +329,11 @@ export const poolAPI = {
     const response = await api.post(`/pools/${poolId}/generate-singles-matches`);
     return response.data;
   },
+
+  completePoolPlay: async (eventId: string, poolId: string) => {
+    const response = await api.post(`/events/${eventId}/pools/${poolId}/complete-pool-play`);
+    return response.data;
+  },
 };
 
 // Matches
@@ -370,6 +375,29 @@ export const matchAPI = {
 
 // Playoffs
 export const playoffAPI = {
+  /** Event-level playoffs (all pools: gold/silver/bronze tiers) */
+  getEvent: async (eventId: string) => {
+    const response = await api.get(`/events/${eventId}/playoffs`);
+    return response.data;
+  },
+
+  generateEvent: async (
+    eventId: string,
+    body: {
+      advanceCountPerPool?: number;
+      matchFormats?: { qualifiers?: string; semifinals?: string; finals?: string; bronze?: string };
+    }
+  ) => {
+    const response = await api.post(`/events/${eventId}/playoffs/generate`, body);
+    return response.data;
+  },
+
+  completeEvent: async (eventId: string) => {
+    const response = await api.post(`/events/${eventId}/playoffs/complete`);
+    return response.data;
+  },
+
+  /** Per-pool playoffs (legacy) */
   generate: async (
     eventId: string,
     poolId: string,

@@ -62,7 +62,12 @@ const poolSchema = new mongoose.Schema({
       default: 'point-differential'
     }
   },
-  /** Set when organizer finalizes playoffs (cannot be undone) */
+  /** Set when organizer marks pool play complete (standings final; pool can contribute to event playoffs) */
+  poolPlayFinalizedAt: {
+    type: Date,
+    default: null
+  },
+  /** Set when organizer finalizes playoffs (cannot be undone) – for per-pool playoffs only */
   playoffsFinalizedAt: {
     type: Date,
     default: null

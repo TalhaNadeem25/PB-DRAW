@@ -41,8 +41,8 @@ Dark mode equivalents exist in `.dark {}` in index.css — same hue families, ad
 
 | Role | Font | Usage |
 |------|------|-------|
-| Display / Headings | `font-display` = Oswald (400–700) | All headings (h1–h6), stats numbers, badge text, nav labels, section titles, button text |
-| Body | `font-sans` = Inter (400–700) | Paragraphs, descriptions, form labels, muted text |
+| Display / Headings | `font-display` = Syne (400–800) | All headings (h1–h6), stats numbers, badge text, nav labels, section titles, button text |
+| Body | `font-sans` = DM Sans (400–700) | Paragraphs, descriptions, form labels, muted text, input/textarea content |
 
 Heading pattern: Always use `font-display font-bold` (or `font-black` for hero headlines). Headings have `tracking-tight` applied globally.
 
@@ -320,7 +320,7 @@ Use shadcn Dialog or AlertDialog. Content: `max-w-2xl max-h-[90vh] overflow-y-au
 1. Old-style hero sections with massive gradient + floating orbs on dashboard/management pages — use compact TopBar (Pattern B) for organizer views.
 2. Inline tab-heavy layouts on organizer pages — use sidebar nav + content switcher.
 3. Plain `<div className="bg-white rounded-lg shadow p-4">` — use `glass-card-hover rounded-2xl p-6`.
-4. Non-Oswald headings — use `font-display font-bold`.
+4. All headings use Syne via `font-display font-bold`.
 5. Hardcoded colors (e.g. bg-green-500, text-green-600) — use `bg-primary`, `text-primary`, or `bg-hero-gradient`.
 6. Static shadow-md on cards — use `glass-card-hover`.
 7. Manual backdrop-blur — use `glass`, `glass-card`, or `glass-dark`.
@@ -398,10 +398,10 @@ Asking user if they want playoffs or not (Partial/complete)
 Scores tab - filter by round 
 Add how many court user have when creating a tournament and then use the same input and show them in the schedule and planner
 
-Pool standing not updating 
+Pool standing not updating (complete)
 
-when generating playoff must ask user how many players or team depending on the format they want to promote next 
-generatation playoffs must ask pool matches format
+when generating playoff must ask user how many players or team depending on the format they want to promote next (complete)
+generatation playoffs must ask pool matches format (complete)
 
 add complete button 
 
@@ -409,3 +409,14 @@ add separate pool matches format semi, champion and bronze (complete)
 
 
 semifinals winner -> will play for gold and silver or bronze (completed)
+
+
+semi final loser for bronze -> no duplicates
+after event complete -> go to standing qualify page 
+scorecard should be same as best 2 or 3 
+
+show bye match in UI pool 
+
+playoff bye should get the one winning more matches in pool 
+
+9 teams should be 5 matches and top team gets bye(top team from high pool)

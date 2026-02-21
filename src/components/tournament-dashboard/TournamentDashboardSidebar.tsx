@@ -61,7 +61,7 @@ const TournamentDashboardSidebar = ({
   tournamentId,
 }: TournamentDashboardSidebarProps) => {
   return (
-    <nav className="glass-card rounded-2xl sticky top-28 w-64 hidden lg:block p-3 space-y-1">
+    <nav className="bg-card border-none sm:border-r-2 sm:border-border sm:shadow-none shadow-sm sm:w-64 hidden lg:block p-3 space-y-1">
       {sidebarItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeSection === item.id;
@@ -70,14 +70,14 @@ const TournamentDashboardSidebar = ({
             key={item.id}
             onClick={() => onSectionChange(item.id)}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+              "w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-bold transition-all duration-200 border-l-4",
               isActive
-                ? "bg-hero-gradient text-primary-foreground shadow-glow"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80"
             )}
           >
-            <Icon className="w-4 h-4 shrink-0" />
-            {item.label}
+            <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-primary" : "")} />
+            <span className="font-display tracking-widest uppercase">{item.label}</span>
           </button>
         );
       })}
@@ -88,16 +88,16 @@ const TournamentDashboardSidebar = ({
       {/* Bottom links */}
       <Link
         to="/analytics"
-        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-200"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-bold border-l-4 border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200 uppercase font-display tracking-widest"
       >
-        <BarChart3 className="w-4 h-4 shrink-0" />
+        <BarChart3 className="w-5 h-5 shrink-0" />
         Analytics
       </Link>
       <Link
         to={`/tournaments/${tournamentId}/edit`}
-        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-200"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-bold border-l-4 border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200 uppercase font-display tracking-widest"
       >
-        <Settings className="w-4 h-4 shrink-0" />
+        <Settings className="w-5 h-5 shrink-0" />
         Settings
       </Link>
     </nav>
@@ -114,8 +114,8 @@ export const MobileDashboardNav = ({
   activeSection: DashboardSection;
   onSectionChange: (section: DashboardSection) => void;
 }) => (
-  <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 px-4 mb-6">
-    <div className="flex gap-2 min-w-max">
+  <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 px-4 border-b-2 border-border/50 mb-6 bg-card sticky top-14 z-20">
+    <div className="flex gap-4 min-w-max px-2">
       {sidebarItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeSection === item.id;
@@ -124,14 +124,14 @@ export const MobileDashboardNav = ({
             key={item.id}
             onClick={() => onSectionChange(item.id)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200",
+              "flex items-center gap-2 px-2 py-4 text-sm font-bold whitespace-nowrap transition-all duration-200 border-b-4",
               isActive
-                ? "bg-hero-gradient text-primary-foreground shadow-glow"
-                : "glass text-muted-foreground hover:text-foreground"
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
             )}
           >
-            <Icon className="w-4 h-4" />
-            {item.label}
+            <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "")} />
+            <span className="font-display tracking-widest uppercase">{item.label}</span>
           </button>
         );
       })}

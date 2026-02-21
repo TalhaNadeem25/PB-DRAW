@@ -2,10 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
+    --font-display: "Syne", system-ui, sans-serif;
+    --font-sans: "DM Sans", system-ui, sans-serif;
     /* Court-inspired green palette */
     --background: 120 10% 98%;
     --foreground: 150 20% 10%;
@@ -162,12 +164,32 @@
     @apply border-border;
   }
 
+  html {
+    @apply font-sans;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
 
+  /* Display font (Syne): headings, buttons, nav, badges, labels that are titles */
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-bold tracking-tight;
+  }
+
+  button,
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"] {
+    @apply font-display;
+  }
+
+  /* Ensure inputs and selects use body font (DM Sans) for content */
+  input,
+  textarea,
+  select {
+    @apply font-sans;
   }
 }
 
@@ -536,6 +558,16 @@
     }
   }
 
+  /* Hide number input spinners for score inputs (organizer types numbers) */
+  .input-no-spinner::-webkit-outer-spin-button,
+  .input-no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .input-no-spinner {
+    -moz-appearance: textfield;
+  }
+
   /* Toast Notification Custom Styling */
   /* Sonner toast container positioning */
   .toaster {
@@ -577,17 +609,17 @@
     border-color: var(--info-border) !important;
   }
 
-  /* Toast title font */
+  /* Toast title font (Syne) */
   [data-sonner-toast] [data-title] {
-    font-family: 'Oswald', 'Arial Black', Arial, sans-serif;
+    font-family: var(--font-display);
     font-weight: 600;
     font-size: 15px;
     line-height: 1.3;
   }
 
-  /* Toast description font */
+  /* Toast description font (DM Sans) */
   [data-sonner-toast] [data-description] {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     font-size: 13px;
     line-height: 1.5;
     margin-top: 4px;

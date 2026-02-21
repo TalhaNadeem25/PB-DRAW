@@ -219,31 +219,67 @@ export const updateMatchScore = async (req, res, next) => {
       await team2.save();
     }
 
-    // Playoff bracket advancement logic: semifinal winner → final, loser → bronze (if bronze exists)
-    if (match.bracket === 'semifinals' && match.status === 'completed') {
+    // Playoff bracket advancement: qualifier winner → semifinals; semifinal winner → final, loser → bronze
+    if (match.status === 'completed') {
       const winnerId = match.winner?._id ?? match.winner;
-      const loserId = team1Score > team2Score ? (match.team2?._id ?? match.team2) : (match.team1?._id ?? match.team1);
 
-      const finalsMatch = await Match.findOne({
-        event: match.event._id,
-        pool: match.pool,
-        bracket: 'finals'
-      });
-      if (finalsMatch && winnerId) {
-        const semiSlot = match.matchNumber === 1 ? 'team1' : 'team2';
-        if (!finalsMatch[semiSlot]) {
-          finalsMatch[semiSlot] = winnerId;
-          await finalsMatch.save();
+      // Qualifiers (winners round): advance winner to next match (semifinals)
+      if (match.bracket === 'winners' && match.nextMatchId && winnerId) {
+        const nextMatch = await Match.findById(match.nextMatchId);
+        if (nextMatch) {
+          const slot = nextMatch.previousMatch1Id && nextMatch.previousMatch1Id.toString() === match._id.toString()
+            ? 'team1'
+            : 'team2';
+          if (!nextMatch[slot]) {
+            nextMatch[slot] = winnerId;
+            await nextMatch.save();
+          }
         }
       }
 
-      if (match.loserNextMatchId && loserId) {
-        const bronzeMatch = await Match.findById(match.loserNextMatchId);
-        if (bronzeMatch) {
-          const bronzeSlot = match.matchNumber === 1 ? 'team1' : 'team2';
-          if (!bronzeMatch[bronzeSlot]) {
-            bronzeMatch[bronzeSlot] = loserId;
-            await bronzeMatch.save();
+      // Semifinals: winner → final, loser → bronze
+      if (match.bracket === 'semifinals' && winnerId) {
+        const loserId = team1Score > team2Score ? (match.team2?._id ?? match.team2) : (match.team1?._id ?? match.team1);
+
+        const finalsMatch = match.nextMatchId
+          ? await Match.findById(match.nextMatchId)
+          : await Match.findOne({
+              event: match.event._id,
+              pool: match.pool,
+              bracket: 'finals'
+            });
+        if (finalsMatch && winnerId) {
+          const semiSlot = finalsMatch.previousMatch1Id && finalsMatch.previousMatch1Id.toString() === match._id.toString()
+            ? 'team1'
+            : 'team2';
+          if (!finalsMatch[semiSlot]) {
+            finalsMatch[semiSlot] = winnerId;
+            await finalsMatch.save();
+          }
+        }
+
+        if (match.loserNextMatchId && loserId) {
+          const bronzeMatch = await Match.findById(match.loserNextMatchId);
+          if (bronzeMatch) {
+            let bronzeSlot;
+            if (bronzeMatch.previousMatch1Id && bronzeMatch.previousMatch1Id.toString() === match._id.toString()) {
+              bronzeSlot = 'team1';
+            } else if (bronzeMatch.previousMatch2Id && bronzeMatch.previousMatch2Id.toString() === match._id.toString()) {
+              bronzeSlot = 'team2';
+            } else {
+              // Fallback: first semi (by matchNumber) -> team1, second semi -> team2
+              const semis = await Match.find({
+                event: match.event._id,
+                pool: match.pool,
+                bracket: 'semifinals'
+              }).sort({ matchNumber: 1 });
+              const semiIndex = semis.findIndex(s => s._id.toString() === match._id.toString());
+              bronzeSlot = semiIndex === 0 ? 'team1' : 'team2';
+            }
+            if (!bronzeMatch[bronzeSlot]) {
+              bronzeMatch[bronzeSlot] = loserId;
+              await bronzeMatch.save();
+            }
           }
         }
       }

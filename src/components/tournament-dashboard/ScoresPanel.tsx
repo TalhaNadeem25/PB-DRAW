@@ -226,7 +226,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                   <div className="flex items-center justify-center gap-2 sm:gap-3">
                     <Input
                       type="number"
-                      className="w-14 sm:w-16 h-12 sm:h-14 text-center text-xl sm:text-2xl font-display font-bold rounded-lg bg-background/50 border-primary/30 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
+                      className="input-no-spinner w-14 sm:w-16 h-12 sm:h-14 text-center text-xl sm:text-2xl font-display font-bold rounded-lg bg-background/50 border-primary/30 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
                       value={editScores.team1Score}
                       onChange={(e) =>
                         setEditScores((s) => ({
@@ -239,7 +239,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                     <span className="text-xl font-bold text-muted-foreground">:</span>
                     <Input
                       type="number"
-                      className="w-14 sm:w-16 h-12 sm:h-14 text-center text-xl sm:text-2xl font-display font-bold rounded-lg bg-background/50 border-primary/30 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
+                      className="input-no-spinner w-14 sm:w-16 h-12 sm:h-14 text-center text-xl sm:text-2xl font-display font-bold rounded-lg bg-background/50 border-primary/30 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
                       value={editScores.team2Score}
                       onChange={(e) =>
                         setEditScores((s) => ({

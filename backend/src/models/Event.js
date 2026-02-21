@@ -95,7 +95,16 @@ const eventSchema = new mongoose.Schema({
     first: String,
     second: String,
     third: String
-  }
+  },
+  /** Set when event-level playoffs are finalized (all pools combined) */
+  eventPlayoffsFinalizedAt: { type: Date, default: null },
+  /** Final placements from event playoff: gold tier 1–4, silver 5–8, bronze 9–12 */
+  eventPlayoffPlacements: [{
+    place: { type: Number, required: true },
+    entityId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    name: { type: String, default: '' },
+    tier: { type: String, enum: ['gold', 'silver', 'bronze'], default: null }
+  }]
 }, {
   timestamps: true
 });

@@ -551,3 +551,48 @@ export const generateSinglesMatches = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Mark pool play as complete (standings final; pool can contribute to event playoffs)
+// @route   POST /api/events/:eventId/pools/:id/complete-pool-play
+// @access  Private (Organizer/Admin)
+export const completePoolPlay = async (req, res, next) => {
+  try {
+    const pool = await Pool.findById(req.params.id).populate('event').populate({ path: 'event', populate: 'tournament' });
+    if (!pool) {
+      return res.status(404).json({ success: false, message: 'Pool not found' });
+    }
+    if (pool.poolPlayFinalizedAt) {
+      return res.status(400).json({ success: false, message: 'Pool play is already complete for this pool' });
+    }
+    if (pool.event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const poolPlayMatches = await Match.find({
+      pool: pool._id,
+      $or: [
+        { bracket: { $exists: false } },
+        { bracket: null },
+        { bracket: { $nin: ['semifinals', 'finals', 'winners', 'bronze'] } }
+      ]
+    });
+    const incomplete = poolPlayMatches.filter((m) => m.status !== 'completed');
+    if (incomplete.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `${incomplete.length} pool play match(es) still need a score. Complete all matches before marking pool complete.`
+      });
+    }
+
+    pool.poolPlayFinalizedAt = new Date();
+    await pool.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Pool play marked complete. This pool can now contribute to event playoffs.',
+      data: { poolPlayFinalizedAt: pool.poolPlayFinalizedAt }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
