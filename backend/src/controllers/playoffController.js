@@ -55,7 +55,7 @@ async function getTopFromPool(pool, event, advanceCount, isSingles) {
       if ((sb.pointDifferential ?? 0) !== (sa.pointDifferential ?? 0)) return (sb.pointDifferential ?? 0) - (sa.pointDifferential ?? 0);
       return (sb.pointsFor ?? 0) - (sa.pointsFor ?? 0);
     });
-    return sorted.slice(0, advanceCount).map((p) => ({ _id: p._id, name: p.name || 'Player' }));
+    return sorted.slice(0, advanceCount).map((p) => ({ _id: p._id, name: p.name || 'Player', stats: statsByPlayerId.get(p._id.toString()) ?? {} }));
   }
   const teamIds = (pool.teams || []).map((t) => t._id ?? t);
   if (teamIds.length === 0) return [];
@@ -101,7 +101,7 @@ async function getTopFromPool(pool, event, advanceCount, isSingles) {
     if ((sb.pointDifferential ?? 0) !== (sa.pointDifferential ?? 0)) return (sb.pointDifferential ?? 0) - (sa.pointDifferential ?? 0);
     return (sb.pointsFor ?? 0) - (sa.pointsFor ?? 0);
   });
-  return sorted.slice(0, advanceCount).map((t) => ({ _id: t._id, name: t.name || 'Team' }));
+  return sorted.slice(0, advanceCount).map((t) => ({ _id: t._id, name: t.name || 'Team', stats: t.stats }));
 }
 
 // @desc    Generate playoff bracket from pool standings
@@ -544,12 +544,49 @@ export const generateEventPlayoffs = async (req, res, next) => {
     const isSingles = event.format === 'singles';
     const teamModel = isSingles ? 'User' : 'Team';
 
-    // Combine top N from each pool into one advancing list (qualifiers → semis → final + bronze)
+    // Combine top N from each pool into one advancing list
     const allAdvancing = [];
     for (const pool of pools) {
       const top = await getTopFromPool(pool, event, advanceCountPerPool, isSingles);
       allAdvancing.push(...top);
     }
+
+    // Cross-pool seeding: re-compute stats for every advancing team directly from
+    // their pool-play matches, then sort globally so the best performer across ALL
+    // pools becomes S1 (not just the pool-1 winner by alphabetical pool order).
+    const advancingIds = allAdvancing.map((t) => (t._id ?? t).toString());
+    const poolPlayMatchesAll = await Match.find({
+      event: eventId,
+      pool: { $ne: null },
+      isByeMatch: { $ne: true },
+      $or: [{ bracket: { $exists: false } }, { bracket: null }]
+    }).lean();
+
+    const globalStats = new Map();
+    advancingIds.forEach((id) => {
+      globalStats.set(id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 });
+    });
+    poolPlayMatchesAll.forEach((m) => {
+      if (m.status !== 'completed') return;
+      const id1 = m.team1 ? m.team1.toString() : null;
+      const id2 = m.team2 ? m.team2.toString() : null;
+      const s1 = id1 ? globalStats.get(id1) : null;
+      const s2 = id2 ? globalStats.get(id2) : null;
+      const t1 = m.score?.team1Score ?? 0;
+      const t2 = m.score?.team2Score ?? 0;
+      if (s1) { s1.pointsFor += t1; s1.pointsAgainst += t2; if (t1 > t2) s1.wins++; else if (t2 > t1) s1.losses++; }
+      if (s2) { s2.pointsFor += t2; s2.pointsAgainst += t1; if (t2 > t1) s2.wins++; else if (t1 > t2) s2.losses++; }
+    });
+    globalStats.forEach((s) => { s.pointDifferential = s.pointsFor - s.pointsAgainst; });
+
+    allAdvancing.sort((a, b) => {
+      const sa = globalStats.get((a._id ?? a).toString()) || {};
+      const sb = globalStats.get((b._id ?? b).toString()) || {};
+      if ((sb.wins ?? 0) !== (sa.wins ?? 0)) return (sb.wins ?? 0) - (sa.wins ?? 0);
+      if ((sb.pointDifferential ?? 0) !== (sa.pointDifferential ?? 0)) return (sb.pointDifferential ?? 0) - (sa.pointDifferential ?? 0);
+      return (sb.pointsFor ?? 0) - (sa.pointsFor ?? 0);
+    });
+
     if (allAdvancing.length < 4) {
       return res.status(400).json({
         success: false,

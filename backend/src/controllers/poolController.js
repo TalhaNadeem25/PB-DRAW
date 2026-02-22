@@ -34,8 +34,23 @@ const generateRoundRobinMatches = (teams, poolId, eventId) => {
       const team1 = currentArrangement[i];
       const team2 = currentArrangement[numTeams - 1 - i];
 
-      // Skip matches involving BYE (null)
-      if (team1 !== null && team2 !== null) {
+      if (team1 === null || team2 === null) {
+        // One team has a bye — create a bye match record for the non-null team
+        const byeTeam = team1 !== null ? team1 : team2;
+        if (byeTeam !== null) {
+          matches.push({
+            pool: poolId,
+            event: eventId,
+            team1: byeTeam,
+            team2: null,
+            status: 'completed',
+            isByeMatch: true,
+            round: round + 1,
+            matchNumber: matches.length + 1,
+            score: { team1Score: 0, team2Score: 0 }
+          });
+        }
+      } else {
         matches.push({
           pool: poolId,
           event: eventId,

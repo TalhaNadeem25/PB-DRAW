@@ -1245,6 +1245,41 @@ const PoolManagement = () => {
                                         const isSinglesMatch = event.format === 'singles';
                                         const isCompleted = match.status === 'completed';
 
+                                        // Bye match — render a simplified card
+                                        if (match.isByeMatch) {
+                                          return (
+                                            <div
+                                              key={match._id}
+                                              className="p-4 rounded-2xl border-2 border-dashed bg-muted/20 border-border/40"
+                                            >
+                                              <div className="flex items-center gap-2 mb-3">
+                                                <Badge variant="secondary" className="rounded-lg">Match {index + 1}</Badge>
+                                                <Badge variant="outline" className="rounded-lg text-muted-foreground">Bye</Badge>
+                                              </div>
+                                              <div className="flex items-center justify-between gap-4">
+                                                <div>
+                                                  <div className="font-bold text-lg mb-1">
+                                                    {match.team1?.name || (isSinglesMatch ? 'Player' : 'Team')}
+                                                  </div>
+                                                  {!isSinglesMatch && match.team1?.players && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                      {match.team1.players.map((p: any, i: number) => (
+                                                        <div key={i}>{p.name || `Player ${i + 1}`}</div>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                <div className="flex flex-col items-center gap-1 shrink-0">
+                                                  <Badge className="bg-muted text-muted-foreground border border-border text-sm px-4 py-1">
+                                                    BYE
+                                                  </Badge>
+                                                  <span className="text-xs text-muted-foreground">No match this round</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+
                                         return (
                                           <div
                                             key={match._id}

@@ -420,3 +420,10 @@ show bye match in UI pool
 playoff bye should get the one winning more matches in pool 
 
 9 teams should be 5 matches and top team gets bye(top team from high pool)
+
+After fix:
+  - byeTeams = [S2, S3, S4, S5, S6, S7, S1] (seed 1 moved to last bye slot)
+  - Qualifier Match 1: S2 vs S3
+  - Qualifier Match 2: S4 vs S5
+  - Qualifier Match 3: S6 vs S7
+  - Qualifier Match 4: S1 vs TBD (top seed faces the play-in winner — the weakest possible opponent ✓)

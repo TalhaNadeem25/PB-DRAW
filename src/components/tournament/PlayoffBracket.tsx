@@ -79,6 +79,13 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
     setSelectedMatch(match);
   };
 
+  const getTbdLabel = (bracket: string) => {
+    if (bracket === 'bronze') return 'Semifinal loser';
+    if (bracket === 'finals') return 'Winner of Semifinal';
+    if (bracket === 'semifinals') return qualifiers.length > 0 ? 'Winner of Qualifier' : 'TBD';
+    return 'TBD'; // 'winners' qualifier waiting for play-in winner
+  };
+
   const MatchCard = ({ match, position }: { match: Match; position: 'left' | 'right' | 'center' }) => {
     const score = getMatchScore(match);
     const matchTeam1Score = score.team1;
@@ -129,7 +136,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
             {match.bracket === 'finals' && match.team1?.stats && (
               <Badge variant="secondary" className="text-xs shrink-0">#1</Badge>
             )}
-            <span className="font-medium truncate">{match.team1?.name ?? 'TBD'}</span>
+            <span className={cn("font-medium truncate", !match.team1 && "text-muted-foreground italic")}>{match.team1?.name ?? getTbdLabel(match.bracket)}</span>
           </div>
           <div className="font-bold text-lg ml-2">
             {isEditingThis ? team1Score : matchTeam1Score}
@@ -155,7 +162,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
               </>
             ) : (
               <span className="text-muted-foreground italic">
-                {match.bracket === 'bronze' ? 'Semifinal loser' : 'Winner of Semifinal'}
+                {getTbdLabel(match.bracket)}
               </span>
             )}
           </div>
@@ -183,7 +190,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
         <div className="mb-8 pb-8 border-b border-border/50">
           <div className="text-center mb-4">
             <h3 className="font-semibold text-lg">Qualifiers</h3>
-            <p className="text-sm text-muted-foreground">Round 1 — winners advance to semifinals</p>
+            <p className="text-sm text-muted-foreground">Winners advance to semifinals</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {qualifiers.map((match) => (
