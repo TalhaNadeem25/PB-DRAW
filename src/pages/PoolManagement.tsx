@@ -409,6 +409,18 @@ const PoolManagement = () => {
     },
   });
 
+  // Regenerate pool-play matches (adds bye matches for existing odd-team pools)
+  const regenerateMatchesMutation = useMutation({
+    mutationFn: (poolId: string) => poolAPI.regenerateMatches(poolId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      toast.success("Matches regenerated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to regenerate matches");
+    },
+  });
+
   // Event-level playoffs: generate (all pools → gold/silver/bronze tiers)
   const generateEventPlayoffsMutation = useMutation({
     mutationFn: (body: { advanceCountPerPool?: number; matchFormats?: { qualifiers?: string; semifinals: string; finals: string; bronze: string } }) =>
@@ -1087,6 +1099,52 @@ const PoolManagement = () => {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* Final Standings — shown after event playoffs are finalized */}
+                  {eventPlayoffsFinalized && event?.eventPlayoffPlacements?.length > 0 && (() => {
+                    const placements = [...(event.eventPlayoffPlacements as { place: number; name: string; entityId: string; tier: string }[])]
+                      .sort((a, b) => a.place - b.place);
+                    return (
+                      <Card className="glass-card rounded-2xl border border-border/50 shadow-float">
+                        <CardContent className="p-6">
+                          <h3 className="font-display font-bold text-lg mb-5 flex items-center gap-2">
+                            <Trophy className="w-5 h-5 text-yellow-500" />
+                            Final Standings
+                          </h3>
+                          <div className="grid gap-3">
+                            {placements.map((p) => {
+                              const medal = p.place === 1 ? '🥇' : p.place === 2 ? '🥈' : p.place === 3 ? '🥉' : null;
+                              const label = p.place === 1 ? 'Champion' : p.place === 2 ? 'Runner-up' : p.place === 3 ? 'Third place' : 'Fourth place';
+                              const borderClass =
+                                p.tier === 'gold' ? 'border-yellow-400/50 bg-yellow-400/5'
+                                : p.tier === 'silver' ? 'border-slate-400/50 bg-slate-400/5'
+                                : p.tier === 'bronze' ? 'border-amber-600/50 bg-amber-600/5'
+                                : 'border-border/40 bg-muted/20';
+                              const badgeClass =
+                                p.tier === 'gold' ? 'border-yellow-500 text-yellow-600'
+                                : p.tier === 'silver' ? 'border-slate-400 text-slate-500'
+                                : p.tier === 'bronze' ? 'border-amber-700 text-amber-700'
+                                : 'border-border text-muted-foreground';
+                              return (
+                                <div key={String(p.entityId)} className={`flex items-center gap-4 p-4 rounded-xl border-2 ${borderClass}`}>
+                                  <span className="text-3xl w-10 text-center shrink-0">
+                                    {medal ?? <span className="text-lg font-bold text-muted-foreground">{p.place}</span>}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-bold text-base truncate">{p.name}</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+                                  </div>
+                                  <Badge variant="outline" className={`shrink-0 capitalize ${badgeClass}`}>
+                                    {p.tier === '4th' ? '4th place' : p.tier}
+                                  </Badge>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })()}
                 </div>
               ) : selectedPool ? (
                 <div className="space-y-6">
@@ -1122,6 +1180,22 @@ const PoolManagement = () => {
                                 })}
                               </TabsList>
                             </div>
+
+                            {/* Regenerate matches button — only for unfinalized pools */}
+                            {!selectedPool?.poolPlayFinalizedAt && (
+                              <div className="px-4 pt-2 pb-1 flex justify-end">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="rounded-xl text-xs gap-1"
+                                  onClick={() => selectedPool?._id && regenerateMatchesMutation.mutate(selectedPool._id)}
+                                  disabled={regenerateMatchesMutation.isPending}
+                                >
+                                  {regenerateMatchesMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Shuffle className="w-3 h-3" />}
+                                  Regenerate matches
+                                </Button>
+                              </div>
+                            )}
 
                             {/* Complete pool play (so this pool can contribute to event playoffs) */}
                             {!selectedPool?.poolPlayFinalizedAt && (() => {

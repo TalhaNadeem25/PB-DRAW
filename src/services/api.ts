@@ -334,6 +334,11 @@ export const poolAPI = {
     const response = await api.post(`/events/${eventId}/pools/${poolId}/complete-pool-play`);
     return response.data;
   },
+
+  regenerateMatches: async (poolId: string) => {
+    const response = await api.post(`/pools/${poolId}/regenerate-matches`);
+    return response.data;
+  },
 };
 
 // Matches

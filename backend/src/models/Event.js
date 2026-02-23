@@ -103,7 +103,7 @@ const eventSchema = new mongoose.Schema({
     place: { type: Number, required: true },
     entityId: { type: mongoose.Schema.Types.ObjectId, required: true },
     name: { type: String, default: '' },
-    tier: { type: String, enum: ['gold', 'silver', 'bronze'], default: null }
+    tier: { type: String, enum: ['gold', 'silver', 'bronze', '4th'], default: null }
   }]
 }, {
   timestamps: true

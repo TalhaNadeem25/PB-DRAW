@@ -666,11 +666,15 @@ export const completeEventPlayoffs = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Event playoffs are already finalized.' });
     }
 
+    const isSinglesFormat = event.format === 'singles';
     const playoffMatches = await Match.find({
       event: event._id,
       pool: null,
       bracketTier: { $in: ['gold', 'silver', 'bronze', 'event'] }
-    }).lean();
+    })
+      .populate('team1', isSinglesFormat ? 'name email' : 'name')
+      .populate('team2', isSinglesFormat ? 'name email' : 'name')
+      .lean();
 
     if (playoffMatches.length === 0) {
       return res.status(400).json({
@@ -686,6 +690,7 @@ export const completeEventPlayoffs = async (req, res, next) => {
       });
     }
 
+    const entityName = (doc) => doc?.name || doc?.email || '—';
     const getEntity = (match, isWinner) => {
       const s1 = match.score?.team1Score ?? 0;
       const s2 = match.score?.team2Score ?? 0;
@@ -694,12 +699,12 @@ export const completeEventPlayoffs = async (req, res, next) => {
       const team2Id = match.team2?._id ?? match.team2;
       if (!winnerId && s1 !== s2) winnerId = s1 > s2 ? team1Id : team2Id;
       if (isWinner) {
-        const name = (match.team1 && String(team1Id) === String(winnerId) ? match.team1.name : match.team2?.name) || '—';
-        return { entityId: winnerId, name };
+        const doc = match.team1 && String(team1Id) === String(winnerId) ? match.team1 : match.team2;
+        return { entityId: winnerId, name: entityName(doc) };
       }
       const loserId = winnerId && (String(team1Id) === String(winnerId) ? team2Id : team1Id);
-      const name = (match.team1 && String(team1Id) === String(loserId) ? match.team1.name : match.team2?.name) || '—';
-      return { entityId: loserId, name };
+      const doc = match.team1 && String(team1Id) === String(loserId) ? match.team1 : match.team2;
+      return { entityId: loserId, name: entityName(doc) };
     };
 
     const placements = [];

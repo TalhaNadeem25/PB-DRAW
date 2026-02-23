@@ -416,6 +416,7 @@ after event complete -> go to standing qualify page
 scorecard should be same as best 2 or 3 
 
 show bye match in UI pool 
+fix 4 enum error after playoff completion (complete)
 
 playoff bye should get the one winning more matches in pool 
 
@@ -427,3 +428,7 @@ After fix:
   - Qualifier Match 2: S4 vs S5
   - Qualifier Match 3: S6 vs S7
   - Qualifier Match 4: S1 vs TBD (top seed faces the play-in winner — the weakest possible opponent ✓)
+
+
+  single elimination - add brackets or scorecard for 2 out 3 games 
+  create automatic pools and assign players to pools and allow organizer to move players to different pools 

@@ -567,6 +567,84 @@ export const generateSinglesMatches = async (req, res, next) => {
   }
 };
 
+// @desc    Regenerate pool-play matches (for existing pools missing bye match records)
+// @route   POST /api/pools/:id/regenerate-matches
+// @access  Private (Organizer/Admin)
+export const regenerateMatches = async (req, res, next) => {
+  try {
+    const pool = await Pool.findById(req.params.id).populate({
+      path: 'event',
+      populate: { path: 'tournament' }
+    });
+
+    if (!pool) {
+      return res.status(404).json({ success: false, message: 'Pool not found' });
+    }
+
+    if (pool.event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    if (pool.poolPlayFinalizedAt) {
+      return res.status(400).json({ success: false, message: 'Cannot regenerate matches for a finalized pool' });
+    }
+
+    // For singles events, delegate to the existing singles-matches generator
+    const isSingles = pool.event.format === 'singles';
+    if (isSingles) {
+      const playerIds = pool.event.registeredPlayers
+        .filter((reg) => reg.pool && reg.pool.toString() === pool._id.toString() && reg.paymentStatus === 'paid')
+        .map((reg) => reg.player);
+
+      if (playerIds.length < 2) {
+        return res.status(400).json({ success: false, message: 'Need at least 2 players to generate matches' });
+      }
+
+      await Match.deleteMany({ pool: pool._id });
+      const playFormat = pool.playFormat || 'round-robin';
+      const matches = generateMatches(playerIds, pool._id, pool.event._id, playFormat);
+      const singlesMatches = matches.map((m) => ({ ...m, team1Model: 'User', team2Model: 'User' }));
+      const created = await Match.insertMany(singlesMatches);
+      pool.matches = created.map((m) => m._id);
+      await pool.save();
+    } else {
+      const teamIds = pool.teams.map((t) => t._id || t);
+      if (teamIds.length < 2) {
+        return res.status(400).json({ success: false, message: 'Need at least 2 teams to generate matches' });
+      }
+
+      await Match.deleteMany({ pool: pool._id });
+      const playFormat = pool.playFormat || 'round-robin';
+      const matches = generateMatches(teamIds, pool._id, pool.event._id, playFormat);
+      const created = await Match.insertMany(matches);
+      pool.matches = created.map((m) => m._id);
+      await pool.save();
+    }
+
+    // Return populated pool
+    const populated = await Pool.findById(pool._id)
+      .populate({
+        path: 'teams',
+        populate: { path: 'players', select: 'name email skillLevel' }
+      })
+      .populate({
+        path: 'matches',
+        populate: [
+          { path: 'team1', select: 'name email skillLevel players' },
+          { path: 'team2', select: 'name email skillLevel players' }
+        ]
+      });
+
+    res.status(200).json({
+      success: true,
+      message: 'Matches regenerated successfully',
+      data: populated
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Mark pool play as complete (standings final; pool can contribute to event playoffs)
 // @route   POST /api/events/:eventId/pools/:id/complete-pool-play
 // @access  Private (Organizer/Admin)
