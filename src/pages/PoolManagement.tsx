@@ -43,12 +43,16 @@ const PoolManagement = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const [newPoolName, setNewPoolName] = useState("");
-  const [newPoolMatchFormat, setNewPoolMatchFormat] = useState<string>(MATCH_FORMAT_LABELS[0]);
   const [isCreatePoolOpen, setIsCreatePoolOpen] = useState(false);
+  const [poolCount, setPoolCount] = useState(2);
+  const [poolDrafts, setPoolDrafts] = useState<{ name: string; matchFormat: string }[]>([
+    { name: 'Pool 1', matchFormat: MATCH_FORMAT_LABELS[0] },
+    { name: 'Pool 2', matchFormat: MATCH_FORMAT_LABELS[0] },
+  ]);
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
   const [editingMatch, setEditingMatch] = useState<string | null>(null);
   const [editScores, setEditScores] = useState({ team1Score: 0, team2Score: 0 });
+  const [editGames, setEditGames] = useState<{ team1Score: number; team2Score: number }[]>([]);
   const [schedulingMatch, setSchedulingMatch] = useState<string | null>(null);
   const [scheduleData, setScheduleData] = useState({ scheduledTime: "", courtNumber: 1 });
   const [activeTab, setActiveTab] = useState<string>("standings");
@@ -188,18 +192,29 @@ const PoolManagement = () => {
     return pool.teams || [];
   };
 
-  // Create pool mutation
+  // Create pool(s) mutation — accepts an array of drafts, creates all in parallel
   const createPoolMutation = useMutation({
-    mutationFn: (data: any) => poolAPI.create(eventId!, data),
-    onSuccess: () => {
+    mutationFn: (drafts: { name: string; matchFormat: string }[]) =>
+      Promise.all(
+        drafts.map((d) =>
+          poolAPI.create(eventId!, { name: d.name, matchFormat: d.matchFormat || undefined, teamIds: [] })
+        )
+      ),
+    onSuccess: (_, drafts) => {
       queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
-      setNewPoolName("");
-      setNewPoolMatchFormat(MATCH_FORMAT_LABELS[0]);
       setIsCreatePoolOpen(false);
-      toast.success("Pool created successfully");
+      // Reset draft state
+      setPoolCount(2);
+      setPoolDrafts([
+        { name: 'Pool 1', matchFormat: MATCH_FORMAT_LABELS[0] },
+        { name: 'Pool 2', matchFormat: MATCH_FORMAT_LABELS[0] },
+      ]);
+      toast.success(
+        drafts.length === 1 ? "Pool created successfully" : `${drafts.length} pools created successfully`
+      );
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create pool");
+      toast.error(error.response?.data?.message || "Failed to create pools");
     },
   });
 
@@ -409,6 +424,33 @@ const PoolManagement = () => {
     },
   });
 
+  // Auto-assign all unassigned players/teams evenly across pools
+  const autoAssignMutation = useMutation({
+    mutationFn: () => poolAPI.autoAssign(eventId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      toast.success("Players/teams auto-assigned successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to auto-assign");
+    },
+  });
+
+  // Move a player/team to a different pool
+  const moveMemberMutation = useMutation({
+    mutationFn: ({ memberId, toPoolId }: { memberId: string; toPoolId: string }) =>
+      poolAPI.moveMember(eventId!, { memberId, toPoolId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pools', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      toast.success("Moved to pool successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to move member");
+    },
+  });
+
   // Regenerate pool-play matches (adds bye matches for existing odd-team pools)
   const regenerateMatchesMutation = useMutation({
     mutationFn: (poolId: string) => poolAPI.regenerateMatches(poolId),
@@ -451,33 +493,56 @@ const PoolManagement = () => {
     },
   });
 
-  const createPool = () => {
-    if (!newPoolName) {
-      toast.error("Please enter a pool name");
-      return;
-    }
-
-    createPoolMutation.mutate({
-      name: newPoolName,
-      matchFormat: newPoolMatchFormat || undefined,
-      teamIds: [],
+  const handlePoolCountChange = (count: number) => {
+    setPoolCount(count);
+    setPoolDrafts((prev) => {
+      if (count > prev.length) {
+        const last = prev[prev.length - 1];
+        const added = Array.from({ length: count - prev.length }, (_, i) => ({
+          name: `Pool ${prev.length + i + 1}`,
+          matchFormat: last?.matchFormat ?? MATCH_FORMAT_LABELS[0],
+        }));
+        return [...prev, ...added];
+      }
+      return prev.slice(0, count);
     });
   };
 
-  const saveScore = (matchId: string) => {
-    if (editScores.team1Score === 0 && editScores.team2Score === 0) {
-      toast.error("Please enter valid scores");
+  const updatePoolDraft = (index: number, field: 'name' | 'matchFormat', value: string) => {
+    setPoolDrafts((prev) => prev.map((d, i) => (i === index ? { ...d, [field]: value } : d)));
+  };
+
+  const createPools = () => {
+    if (poolDrafts.some((d) => !d.name.trim())) {
+      toast.error("All pools need a name");
       return;
     }
+    createPoolMutation.mutate(poolDrafts);
+  };
 
-    updateMatchScoreMutation.mutate({
-      matchId,
-      scores: {
-        team1Score: editScores.team1Score,
-        team2Score: editScores.team2Score,
-        status: 'completed',
-      },
-    });
+  const saveScore = (matchId: string) => {
+    const isMultiGame = (selectedPool?.matchFormatConfig?.games_to_win ?? 1) > 1;
+
+    if (isMultiGame) {
+      const played = editGames.filter(g => g.team1Score > 0 || g.team2Score > 0);
+      if (played.length === 0) {
+        toast.error("Enter at least one game score");
+        return;
+      }
+      updateMatchScoreMutation.mutate({
+        matchId,
+        scores: { games: editGames, status: 'completed' },
+      });
+    } else {
+      if (editScores.team1Score === 0 && editScores.team2Score === 0) {
+        toast.error("Please enter valid scores");
+        return;
+      }
+      updateMatchScoreMutation.mutate({
+        matchId,
+        scores: { team1Score: editScores.team1Score, team2Score: editScores.team2Score, status: 'completed' },
+      });
+    }
   };
 
   const saveSchedule = (matchId: string) => {
@@ -559,7 +624,19 @@ const PoolManagement = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
-              <Dialog open={isCreatePoolOpen} onOpenChange={setIsCreatePoolOpen}>
+              <Dialog
+                open={isCreatePoolOpen}
+                onOpenChange={(open) => {
+                  setIsCreatePoolOpen(open);
+                  if (!open) {
+                    setPoolCount(2);
+                    setPoolDrafts([
+                      { name: 'Pool 1', matchFormat: MATCH_FORMAT_LABELS[0] },
+                      { name: 'Pool 2', matchFormat: MATCH_FORMAT_LABELS[0] },
+                    ]);
+                  }
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button
                     size="sm"
@@ -569,54 +646,76 @@ const PoolManagement = () => {
                     <span className="whitespace-nowrap">Create Pool</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="glass-card rounded-2xl border border-border/50">
+                <DialogContent className="glass-card rounded-2xl border border-border/50 sm:max-w-lg">
                   <DialogHeader>
-                    <DialogTitle className="font-display">Create New Pool</DialogTitle>
-                    <DialogDescription>Enter a name and select the match format for this pool</DialogDescription>
+                    <DialogTitle className="font-display">Create Pools</DialogTitle>
+                    <DialogDescription>Choose how many pools to create, then configure each one.</DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4">
+
+                  <div className="space-y-5">
+                    {/* Step 1 — Pool count picker */}
                     <div className="space-y-2">
-                      <Label htmlFor="pool-name">Pool Name</Label>
-                      <Input
-                        id="pool-name"
-                        placeholder="e.g., Pool A"
-                        value={newPoolName}
-                        onChange={(e) => setNewPoolName(e.target.value)}
-                        className="focus:shadow-glow transition-shadow rounded-xl"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="pool-match-format">Pool Match Format</Label>
+                      <Label className="text-sm font-semibold">How many pools?</Label>
                       <Select
-                        value={newPoolMatchFormat}
-                        onValueChange={setNewPoolMatchFormat}
+                        value={String(poolCount)}
+                        onValueChange={(v) => handlePoolCountChange(Number(v))}
                       >
-                        <SelectTrigger id="pool-match-format" className="rounded-xl">
-                          <SelectValue placeholder="Select match format" />
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {MATCH_FORMAT_LABELS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt}
+                          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n} {n === 1 ? 'Pool' : 'Pools'}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Scoring format for matches in this pool
-                      </p>
+                    </div>
+
+                    {/* Step 2 — Per-pool rows */}
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                      {poolDrafts.map((draft, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="w-16 shrink-0 text-xs font-semibold text-muted-foreground">
+                            Pool {i + 1}
+                          </span>
+                          <Input
+                            value={draft.name}
+                            onChange={(e) => updatePoolDraft(i, 'name', e.target.value)}
+                            placeholder={`Pool ${i + 1}`}
+                            className="h-8 text-sm rounded-xl flex-1 min-w-0"
+                          />
+                          <Select
+                            value={draft.matchFormat}
+                            onValueChange={(v) => updatePoolDraft(i, 'matchFormat', v)}
+                          >
+                            <SelectTrigger className="h-8 text-xs rounded-xl w-44 shrink-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {MATCH_FORMAT_LABELS.map((opt) => (
+                                <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <DialogFooter>
+
+                  <DialogFooter className="mt-2">
                     <Button variant="outline" onClick={() => setIsCreatePoolOpen(false)}>
                       Cancel
                     </Button>
                     <Button
-                      onClick={createPool}
+                      onClick={createPools}
                       disabled={createPoolMutation.isPending}
                       className="bg-court-green text-white hover:bg-court-green-dark shadow-lg"
                     >
-                      {createPoolMutation.isPending ? "Creating..." : "Create"}
+                      {createPoolMutation.isPending
+                        ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating…</>
+                        : `Create ${poolCount} Pool${poolCount > 1 ? 's' : ''}`}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -693,15 +792,33 @@ const PoolManagement = () => {
 
               <Card className="glass-card-hover rounded-2xl border border-border/50 shadow-float">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-display">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-primary" />
-                    </div>
-                    {isSingles
-                      ? `Unassigned Players (${unassignedPlayers.length})`
-                      : `Unassigned Teams (${unassignedTeams.length})`
-                    }
-                  </CardTitle>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="flex items-center gap-2 font-display">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Users className="w-5 h-5 text-primary" />
+                      </div>
+                      {isSingles
+                        ? `Unassigned Players (${unassignedPlayers.length})`
+                        : `Unassigned Teams (${unassignedTeams.length})`
+                      }
+                    </CardTitle>
+                    {/* Auto-assign button — only when there are unassigned members and open pools */}
+                    {pools.filter((p: any) => !p.poolPlayFinalizedAt).length > 0 &&
+                      (isSingles ? unassignedPlayers.length > 0 : unassignedTeams.length > 0) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 rounded-xl gap-1 text-xs"
+                        onClick={() => autoAssignMutation.mutate()}
+                        disabled={autoAssignMutation.isPending}
+                      >
+                        {autoAssignMutation.isPending
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <Shuffle className="w-3 h-3" />}
+                        Auto-assign
+                      </Button>
+                    )}
+                  </div>
                   <CardDescription>
                     {isSingles ? 'Players not in any pool' : 'Teams not in any pool'}
                   </CardDescription>
@@ -1048,10 +1165,10 @@ const PoolManagement = () => {
                                   </h4>
                                   <PlayoffBracket
                                     matches={eventPlayoffs}
-                                    onUpdateScore={(matchId, team1Score, team2Score) => {
+                                    onUpdateScore={(matchId, data) => {
                                       updateMatchScoreMutation.mutate({
                                         matchId,
-                                        scores: { team1Score, team2Score }
+                                        scores: data
                                       });
                                     }}
                                     isUpdating={updateMatchScoreMutation.isPending}
@@ -1070,10 +1187,10 @@ const PoolManagement = () => {
                                   </h4>
                                   <PlayoffBracket
                                     matches={tierMatches}
-                                    onUpdateScore={(matchId, team1Score, team2Score) => {
+                                    onUpdateScore={(matchId, data) => {
                                       updateMatchScoreMutation.mutate({
                                         matchId,
-                                        scores: { team1Score, team2Score }
+                                        scores: data
                                       });
                                     }}
                                     isUpdating={updateMatchScoreMutation.isPending}
@@ -1299,6 +1416,20 @@ const PoolManagement = () => {
                                 onRemoveTeam={selectedPool?.playoffsFinalizedAt ? undefined : (teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
                                 isRemoving={removeTeamFromPoolMutation.isPending}
                                 isPlayoffsFinalized={!!selectedPool?.playoffsFinalizedAt}
+                                availablePools={
+                                  selectedPool?.poolPlayFinalizedAt
+                                    ? undefined
+                                    : pools
+                                        .filter((p: any) => p._id !== selectedPool._id && !p.poolPlayFinalizedAt)
+                                        .map((p: any) => ({ _id: p._id, name: p.name }))
+                                }
+                                onMoveTeam={
+                                  selectedPool?.poolPlayFinalizedAt
+                                    ? undefined
+                                    : (memberId, toPoolId) =>
+                                        moveMemberMutation.mutate({ memberId, toPoolId })
+                                }
+                                isMoving={moveMemberMutation.isPending}
                               />
                             </TabsContent>
 
@@ -1409,89 +1540,135 @@ const PoolManagement = () => {
                                                 )}
                                               </div>
 
-                                              <div className="flex flex-col items-center gap-2">
-                                                {editingMatch === match._id && !selectedPool?.poolPlayFinalizedAt ? (
-                                                  <div className="flex items-center gap-2">
-                                                    <Input
-                                                      type="number"
-                                                      className="input-no-spinner w-16 text-center text-xl font-bold"
-                                                      value={editScores.team1Score}
-                                                      onChange={(e) =>
-                                                        setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })
-                                                      }
-                                                      min="0"
-                                                    />
-                                                    <span className="text-lg font-bold">-</span>
-                                                    <Input
-                                                      type="number"
-                                                      className="input-no-spinner w-16 text-center text-xl font-bold"
-                                                      value={editScores.team2Score}
-                                                      onChange={(e) =>
-                                                        setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })
-                                                      }
-                                                      min="0"
-                                                    />
-                                                  </div>
-                                                ) : (
-                                                  <div className="flex items-center gap-3">
-                                                    <span className={`text-3xl font-bold font-display ${
-                                                      isCompleted && match.score?.team1Score > match.score?.team2Score
-                                                        ? 'text-primary'
-                                                        : ''
-                                                    }`}>
-                                                      {match.score?.team1Score ?? "-"}
-                                                    </span>
-                                                    <span className="text-2xl text-muted-foreground">-</span>
-                                                    <span className={`text-3xl font-bold font-display ${
-                                                      isCompleted && match.score?.team2Score > match.score?.team1Score
-                                                        ? 'text-primary'
-                                                        : ''
-                                                    }`}>
-                                                      {match.score?.team2Score ?? "-"}
-                                                    </span>
-                                                  </div>
-                                                )}
+                                              {/* ── Score area ── */}
+                                              {(() => {
+                                                const isMultiGame = (selectedPool?.matchFormatConfig?.games_to_win ?? 1) > 1;
+                                                const maxGames = selectedPool?.matchFormatConfig?.max_games ?? 3;
+                                                const gamesToWin = selectedPool?.matchFormatConfig?.games_to_win ?? 2;
+                                                const isEditing = editingMatch === match._id && !selectedPool?.poolPlayFinalizedAt;
 
-                                                <div className="flex gap-2">
-                                                  {editingMatch === match._id && !selectedPool?.poolPlayFinalizedAt ? (
-                                                    <>
-                                                      <Button
-                                                        size="sm"
-                                                        onClick={() => saveScore(match._id)}
-                                                        disabled={updateMatchScoreMutation.isPending}
-                                                      >
-                                                        <Check className="w-4 h-4 mr-1" />
-                                                        Save
-                                                      </Button>
-                                                      <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => setEditingMatch(null)}
-                                                      >
-                                                        <X className="w-4 h-4 mr-1" />
-                                                        Cancel
-                                                      </Button>
-                                                    </>
-                                                  ) : selectedPool?.poolPlayFinalizedAt ? (
-                                                    <span className="text-xs text-muted-foreground">Scores locked</span>
-                                                  ) : (
-                                                    <Button
-                                                      size="sm"
-                                                      variant="outline"
-                                                      onClick={() => {
-                                                        setEditingMatch(match._id);
-                                                        setEditScores({
-                                                          team1Score: match.score?.team1Score || 0,
-                                                          team2Score: match.score?.team2Score || 0,
-                                                        });
-                                                      }}
-                                                    >
-                                                      <Edit2 className="w-4 h-4 mr-1" />
-                                                      {isCompleted ? 'Edit Score' : 'Enter Score'}
-                                                    </Button>
-                                                  )}
-                                                </div>
-                                              </div>
+                                                // Compute games-won for display
+                                                const displayGames: { team1Score: number; team2Score: number }[] = match.games?.length > 0 ? match.games : [];
+                                                const t1GamesWon = displayGames.filter((g: any) => g.team1Score > g.team2Score).length;
+                                                const t2GamesWon = displayGames.filter((g: any) => g.team2Score > g.team1Score).length;
+
+                                                return (
+                                                  <div className="flex flex-col items-center gap-2">
+                                                    {isEditing ? (
+                                                      isMultiGame ? (
+                                                        /* Multi-game edit: per-game rows */
+                                                        <div className="space-y-2 w-full max-w-xs">
+                                                          {Array.from({ length: maxGames }).map((_, gi) => {
+                                                            const g = editGames[gi] ?? { team1Score: 0, team2Score: 0 };
+                                                            // Disable game row if series is already decided
+                                                            const t1w = editGames.slice(0, gi).filter(x => x.team1Score > x.team2Score).length;
+                                                            const t2w = editGames.slice(0, gi).filter(x => x.team2Score > x.team1Score).length;
+                                                            const seriesDone = t1w >= gamesToWin || t2w >= gamesToWin;
+                                                            return (
+                                                              <div key={gi} className={`flex items-center gap-2 ${seriesDone ? 'opacity-40 pointer-events-none' : ''}`}>
+                                                                <span className="text-xs text-muted-foreground w-10 shrink-0">G{gi + 1}</span>
+                                                                <Input
+                                                                  type="number"
+                                                                  className="input-no-spinner w-14 text-center font-bold"
+                                                                  value={g.team1Score}
+                                                                  min="0"
+                                                                  onChange={(e) => {
+                                                                    const next = [...editGames];
+                                                                    next[gi] = { ...next[gi], team1Score: parseInt(e.target.value) || 0 };
+                                                                    setEditGames(next);
+                                                                  }}
+                                                                />
+                                                                <span className="text-muted-foreground font-bold">–</span>
+                                                                <Input
+                                                                  type="number"
+                                                                  className="input-no-spinner w-14 text-center font-bold"
+                                                                  value={g.team2Score}
+                                                                  min="0"
+                                                                  onChange={(e) => {
+                                                                    const next = [...editGames];
+                                                                    next[gi] = { ...next[gi], team2Score: parseInt(e.target.value) || 0 };
+                                                                    setEditGames(next);
+                                                                  }}
+                                                                />
+                                                              </div>
+                                                            );
+                                                          })}
+                                                        </div>
+                                                      ) : (
+                                                        /* Single-game edit */
+                                                        <div className="flex items-center gap-2">
+                                                          <Input type="number" className="input-no-spinner w-16 text-center text-xl font-bold" value={editScores.team1Score} onChange={(e) => setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })} min="0" />
+                                                          <span className="text-lg font-bold">–</span>
+                                                          <Input type="number" className="input-no-spinner w-16 text-center text-xl font-bold" value={editScores.team2Score} onChange={(e) => setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })} min="0" />
+                                                        </div>
+                                                      )
+                                                    ) : (
+                                                      /* Display */
+                                                      <div className="flex flex-col items-center gap-1">
+                                                        {isMultiGame && displayGames.length > 0 ? (
+                                                          <>
+                                                            {/* Games-won summary */}
+                                                            <div className="flex items-center gap-3">
+                                                              <span className={`text-3xl font-bold font-display ${isCompleted && t1GamesWon > t2GamesWon ? 'text-primary' : ''}`}>{t1GamesWon}</span>
+                                                              <span className="text-2xl text-muted-foreground">–</span>
+                                                              <span className={`text-3xl font-bold font-display ${isCompleted && t2GamesWon > t1GamesWon ? 'text-primary' : ''}`}>{t2GamesWon}</span>
+                                                            </div>
+                                                            {/* Individual game breakdown */}
+                                                            <div className="flex flex-wrap justify-center gap-1 mt-1">
+                                                              {displayGames.map((g: any, gi: number) => (
+                                                                <span key={gi} className="text-xs text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">
+                                                                  G{gi + 1}: {g.team1Score}–{g.team2Score}
+                                                                </span>
+                                                              ))}
+                                                            </div>
+                                                          </>
+                                                        ) : (
+                                                          <div className="flex items-center gap-3">
+                                                            <span className={`text-3xl font-bold font-display ${isCompleted && match.score?.team1Score > match.score?.team2Score ? 'text-primary' : ''}`}>{match.score?.team1Score ?? "–"}</span>
+                                                            <span className="text-2xl text-muted-foreground">–</span>
+                                                            <span className={`text-3xl font-bold font-display ${isCompleted && match.score?.team2Score > match.score?.team1Score ? 'text-primary' : ''}`}>{match.score?.team2Score ?? "–"}</span>
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                    )}
+
+                                                    {/* Action buttons */}
+                                                    <div className="flex gap-2">
+                                                      {isEditing ? (
+                                                        <>
+                                                          <Button size="sm" onClick={() => saveScore(match._id)} disabled={updateMatchScoreMutation.isPending}>
+                                                            <Check className="w-4 h-4 mr-1" />Save
+                                                          </Button>
+                                                          <Button size="sm" variant="outline" onClick={() => setEditingMatch(null)}>
+                                                            <X className="w-4 h-4 mr-1" />Cancel
+                                                          </Button>
+                                                        </>
+                                                      ) : selectedPool?.poolPlayFinalizedAt ? (
+                                                        <span className="text-xs text-muted-foreground">Scores locked</span>
+                                                      ) : (
+                                                        <Button
+                                                          size="sm"
+                                                          variant="outline"
+                                                          onClick={() => {
+                                                            setEditingMatch(match._id);
+                                                            if (isMultiGame) {
+                                                              const existing = match.games?.length > 0
+                                                                ? match.games
+                                                                : Array.from({ length: maxGames }, () => ({ team1Score: 0, team2Score: 0 }));
+                                                              setEditGames(existing);
+                                                            } else {
+                                                              setEditScores({ team1Score: match.score?.team1Score || 0, team2Score: match.score?.team2Score || 0 });
+                                                            }
+                                                          }}
+                                                        >
+                                                          <Edit2 className="w-4 h-4 mr-1" />
+                                                          {isCompleted ? 'Edit Score' : 'Enter Score'}
+                                                        </Button>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })()}
 
                                               <div className="text-left">
                                                 <div className="font-bold text-lg mb-1">

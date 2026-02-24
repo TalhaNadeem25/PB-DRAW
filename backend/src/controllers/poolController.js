@@ -645,6 +645,210 @@ export const regenerateMatches = async (req, res, next) => {
   }
 };
 
+// @desc    Auto-assign all unassigned players/teams evenly across pools
+// @route   POST /api/events/:eventId/pools/auto-assign
+// @access  Private (Organizer/Admin)
+export const autoAssignMembers = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.eventId).populate('tournament');
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+
+    if (event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const pools = await Pool.find({ event: event._id, poolPlayFinalizedAt: null });
+    if (pools.length === 0) {
+      return res.status(400).json({ success: false, message: 'No open pools to assign to' });
+    }
+
+    const isSingles = event.format === 'singles';
+
+    if (isSingles) {
+      const unassigned = event.registeredPlayers.filter(
+        (reg) => reg.paymentStatus === 'paid' && !reg.pool
+      );
+      if (unassigned.length === 0) {
+        return res.status(400).json({ success: false, message: 'No unassigned players' });
+      }
+
+      // Distribute round-robin across pools
+      unassigned.forEach((reg, i) => {
+        reg.pool = pools[i % pools.length]._id;
+      });
+      await event.save();
+
+      // Regenerate matches for each pool
+      for (const pool of pools) {
+        const playerIds = event.registeredPlayers
+          .filter((r) => r.paymentStatus === 'paid' && r.pool?.toString() === pool._id.toString())
+          .map((r) => r.player);
+
+        await Match.deleteMany({ pool: pool._id });
+        if (playerIds.length >= 2) {
+          const playFormat = pool.playFormat || 'round-robin';
+          const matches = generateMatches(playerIds, pool._id, event._id, playFormat);
+          const created = await Match.insertMany(
+            matches.map((m) => ({ ...m, team1Model: 'User', team2Model: 'User' }))
+          );
+          pool.matches = created.map((m) => m._id);
+        } else {
+          pool.matches = [];
+        }
+        await pool.save();
+      }
+    } else {
+      const unassignedTeams = await Team.find({
+        event: event._id,
+        $or: [{ pool: null }, { pool: { $exists: false } }]
+      });
+      if (unassignedTeams.length === 0) {
+        return res.status(400).json({ success: false, message: 'No unassigned teams' });
+      }
+
+      // Distribute round-robin and update pool.teams
+      const poolTeamSets = pools.map((p) => ({
+        pool: p,
+        teamIds: p.teams.map((t) => t.toString())
+      }));
+
+      unassignedTeams.forEach((team, i) => {
+        const { pool, teamIds } = poolTeamSets[i % pools.length];
+        team.pool = pool._id;
+        if (!teamIds.includes(team._id.toString())) {
+          teamIds.push(team._id.toString());
+          pool.teams.push(team._id);
+        }
+      });
+
+      await Promise.all(unassignedTeams.map((t) => t.save()));
+
+      // Regenerate matches for each pool
+      for (const { pool } of poolTeamSets) {
+        const teamIds = pool.teams.map((t) => t._id || t);
+        await Match.deleteMany({ pool: pool._id });
+        if (teamIds.length >= 2) {
+          const playFormat = pool.playFormat || 'round-robin';
+          const matches = generateMatches(teamIds, pool._id, event._id, playFormat);
+          const created = await Match.insertMany(matches);
+          pool.matches = created.map((m) => m._id);
+        } else {
+          pool.matches = [];
+        }
+        await pool.save();
+      }
+    }
+
+    res.status(200).json({ success: true, message: 'Members auto-assigned successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Move a player/team from one pool to another
+// @route   POST /api/events/:eventId/pools/move-member
+// @access  Private (Organizer/Admin)
+export const moveMember = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.eventId).populate('tournament');
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+
+    if (event.tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const { memberId, toPoolId } = req.body;
+    if (!memberId || !toPoolId) {
+      return res.status(400).json({ success: false, message: 'memberId and toPoolId are required' });
+    }
+
+    const toPool = await Pool.findById(toPoolId);
+    if (!toPool) return res.status(404).json({ success: false, message: 'Target pool not found' });
+    if (toPool.poolPlayFinalizedAt) {
+      return res.status(400).json({ success: false, message: 'Target pool is finalized' });
+    }
+
+    const isSingles = event.format === 'singles';
+    const affectedPoolIds = new Set([toPoolId]);
+
+    if (isSingles) {
+      const reg = event.registeredPlayers.find(
+        (r) => r.player.toString() === memberId.toString()
+      );
+      if (!reg) return res.status(404).json({ success: false, message: 'Player not found in event' });
+
+      const fromPoolId = reg.pool?.toString();
+      if (fromPoolId === toPoolId) {
+        return res.status(400).json({ success: false, message: 'Player is already in that pool' });
+      }
+      if (fromPoolId) affectedPoolIds.add(fromPoolId);
+
+      reg.pool = toPoolId;
+      await event.save();
+    } else {
+      const team = await Team.findById(memberId);
+      if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
+
+      const fromPoolId = team.pool?.toString();
+      if (fromPoolId === toPoolId) {
+        return res.status(400).json({ success: false, message: 'Team is already in that pool' });
+      }
+      if (fromPoolId) {
+        affectedPoolIds.add(fromPoolId);
+        await Pool.findByIdAndUpdate(fromPoolId, { $pull: { teams: team._id } });
+      }
+
+      team.pool = toPoolId;
+      await team.save();
+
+      if (!toPool.teams.map((t) => t.toString()).includes(memberId.toString())) {
+        toPool.teams.push(memberId);
+        await toPool.save();
+      }
+    }
+
+    // Regenerate matches for all affected pools
+    for (const poolId of affectedPoolIds) {
+      const pool = await Pool.findById(poolId);
+      if (!pool || pool.poolPlayFinalizedAt) continue;
+
+      await Match.deleteMany({ pool: pool._id });
+
+      if (isSingles) {
+        const playerIds = event.registeredPlayers
+          .filter((r) => r.paymentStatus === 'paid' && r.pool?.toString() === poolId)
+          .map((r) => r.player);
+
+        if (playerIds.length >= 2) {
+          const playFormat = pool.playFormat || 'round-robin';
+          const matches = generateMatches(playerIds, pool._id, event._id, playFormat);
+          const created = await Match.insertMany(
+            matches.map((m) => ({ ...m, team1Model: 'User', team2Model: 'User' }))
+          );
+          pool.matches = created.map((m) => m._id);
+        } else {
+          pool.matches = [];
+        }
+      } else {
+        const teamIds = pool.teams.map((t) => t._id || t);
+        if (teamIds.length >= 2) {
+          const playFormat = pool.playFormat || 'round-robin';
+          const matches = generateMatches(teamIds, pool._id, event._id, playFormat);
+          const created = await Match.insertMany(matches);
+          pool.matches = created.map((m) => m._id);
+        } else {
+          pool.matches = [];
+        }
+      }
+      await pool.save();
+    }
+
+    res.status(200).json({ success: true, message: 'Member moved successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Mark pool play as complete (standings final; pool can contribute to event playoffs)
 // @route   POST /api/events/:eventId/pools/:id/complete-pool-play
 // @access  Private (Organizer/Admin)

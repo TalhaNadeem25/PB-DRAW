@@ -415,12 +415,9 @@ semi final loser for bronze -> no duplicates
 after event complete -> go to standing qualify page 
 scorecard should be same as best 2 or 3 
 
-show bye match in UI pool 
+show bye match in UI pool (complete)
 fix 4 enum error after playoff completion (complete)
 
-playoff bye should get the one winning more matches in pool 
-
-9 teams should be 5 matches and top team gets bye(top team from high pool)
 
 After fix:
   - byeTeams = [S2, S3, S4, S5, S6, S7, S1] (seed 1 moved to last bye slot)
@@ -430,5 +427,9 @@ After fix:
   - Qualifier Match 4: S1 vs TBD (top seed faces the play-in winner — the weakest possible opponent ✓)
 
 
-  single elimination - add brackets or scorecard for 2 out 3 games 
-  create automatic pools and assign players to pools and allow organizer to move players to different pools 
+  single elimination - add brackets or scorecard for 2 out 3 games (complete)
+  create automatic pools and assign players to pools and allow organizer to move players to different pools (complete)
+
+
+fix round-robin (once complete each pool get own standing)
+double elim rules from chatgpt 

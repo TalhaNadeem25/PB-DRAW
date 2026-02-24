@@ -339,6 +339,16 @@ export const poolAPI = {
     const response = await api.post(`/pools/${poolId}/regenerate-matches`);
     return response.data;
   },
+
+  autoAssign: async (eventId: string) => {
+    const response = await api.post(`/events/${eventId}/pools/auto-assign`);
+    return response.data;
+  },
+
+  moveMember: async (eventId: string, data: { memberId: string; toPoolId: string }) => {
+    const response = await api.post(`/events/${eventId}/pools/move-member`, data);
+    return response.data;
+  },
 };
 
 // Matches
@@ -354,8 +364,9 @@ export const matchAPI = {
   },
 
   updateScore: async (id: string, data: {
-    team1Score: number;
-    team2Score: number;
+    team1Score?: number;
+    team2Score?: number;
+    games?: { team1Score: number; team2Score: number }[];
     status?: string;
   }) => {
     const response = await api.put(`/matches/${id}/score`, data);

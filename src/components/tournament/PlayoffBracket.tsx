@@ -25,22 +25,38 @@ interface Team {
   };
 }
 
+interface GameScore {
+  team1Score: number;
+  team2Score: number;
+}
+
+interface MatchFormatConfig {
+  games_to_win: number;
+  max_games: number;
+  points_to_win: number;
+  win_by: number;
+  hard_cap: number | null;
+}
+
 interface Match {
   _id: string;
   team1: Team | null;
   team2: Team | null;
   team1Score?: number;
   team2Score?: number;
+  score?: { team1Score: number; team2Score: number };
+  games?: GameScore[];
   status: string;
   bracket: string;
   round: number;
   matchNumber: number;
   matchFormat?: string;
+  matchFormatConfig?: MatchFormatConfig;
 }
 
 interface PlayoffBracketProps {
   matches: Match[];
-  onUpdateScore?: (matchId: string, team1Score: number, team2Score: number) => void;
+  onUpdateScore?: (matchId: string, data: { team1Score?: number; team2Score?: number; games?: GameScore[]; status?: string }) => void;
   isUpdating?: boolean;
 }
 
@@ -49,6 +65,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [team1Score, setTeam1Score] = useState(0);
   const [team2Score, setTeam2Score] = useState(0);
+  const [editGames, setEditGames] = useState<GameScore[]>([]);
 
   // Separate matches by bracket type (qualifiers = round 1 when 8+ teams, bracket 'winners')
   const qualifiers = matches.filter(m => m.bracket === 'winners');
@@ -57,22 +74,36 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
   const bronzeMatch = matches.find(m => m.bracket === 'bronze');
 
   const getMatchScore = (match: Match) => ({
-    team1: match.team1Score ?? (match as any).score?.team1Score ?? 0,
-    team2: match.team2Score ?? (match as any).score?.team2Score ?? 0,
+    team1: match.team1Score ?? match.score?.team1Score ?? 0,
+    team2: match.team2Score ?? match.score?.team2Score ?? 0,
   });
+
+  const isMatchMultiGame = (match: Match) =>
+    (match.matchFormatConfig?.games_to_win ?? 1) > 1;
 
   const handleEditClick = (match: Match) => {
     setEditingMatch(match);
-    const s = getMatchScore(match);
-    setTeam1Score(s.team1);
-    setTeam2Score(s.team2);
+    if (isMatchMultiGame(match)) {
+      const maxGames = match.matchFormatConfig!.max_games;
+      const existing = match.games?.length
+        ? match.games
+        : Array.from({ length: maxGames }, () => ({ team1Score: 0, team2Score: 0 }));
+      setEditGames(existing);
+    } else {
+      const s = getMatchScore(match);
+      setTeam1Score(s.team1);
+      setTeam2Score(s.team2);
+    }
   };
 
   const handleSaveScore = () => {
-    if (editingMatch && onUpdateScore) {
-      onUpdateScore(editingMatch._id, team1Score, team2Score);
-      setEditingMatch(null);
+    if (!editingMatch || !onUpdateScore) return;
+    if (isMatchMultiGame(editingMatch)) {
+      onUpdateScore(editingMatch._id, { games: editGames, status: 'completed' });
+    } else {
+      onUpdateScore(editingMatch._id, { team1Score, team2Score, status: 'completed' });
     }
+    setEditingMatch(null);
   };
 
   const handleMatchClick = (match: Match) => {
@@ -90,8 +121,13 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
     const score = getMatchScore(match);
     const matchTeam1Score = score.team1;
     const matchTeam2Score = score.team2;
-    const winner = matchTeam1Score > matchTeam2Score ? match.team1 :
-                   matchTeam2Score > matchTeam1Score ? match.team2 : null;
+    const multiGame = isMatchMultiGame(match);
+    const displayGames = match.games ?? [];
+    const t1GamesWon = displayGames.filter(g => g.team1Score > g.team2Score).length;
+    const t2GamesWon = displayGames.filter(g => g.team2Score > g.team1Score).length;
+    const winner = multiGame && displayGames.length
+      ? (t1GamesWon > t2GamesWon ? match.team1 : t2GamesWon > t1GamesWon ? match.team2 : null)
+      : (matchTeam1Score > matchTeam2Score ? match.team1 : matchTeam2Score > matchTeam1Score ? match.team2 : null);
     const isEditingThis = editingMatch?._id === match._id;
 
     return (
@@ -139,9 +175,22 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
             <span className={cn("font-medium truncate", !match.team1 && "text-muted-foreground italic")}>{match.team1?.name ?? getTbdLabel(match.bracket)}</span>
           </div>
           <div className="font-bold text-lg ml-2">
-            {isEditingThis ? team1Score : matchTeam1Score}
+            {isEditingThis
+              ? (multiGame ? editGames.filter(g => g.team1Score > g.team2Score).length : team1Score)
+              : (multiGame && displayGames.length ? t1GamesWon : matchTeam1Score)}
           </div>
         </div>
+
+        {/* Individual game breakdown pill (multi-game only) */}
+        {multiGame && displayGames.length > 0 && match.status === 'completed' && (
+          <div className="flex flex-wrap gap-1 my-1">
+            {displayGames.map((g, gi) => (
+              <span key={gi} className="text-[10px] text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5">
+                G{gi + 1}: {g.team1Score}–{g.team2Score}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Team 2 */}
         <div className={cn(
@@ -167,7 +216,11 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
             )}
           </div>
           <div className="font-bold text-lg ml-2">
-            {match.team2 ? (isEditingThis ? team2Score : matchTeam2Score) : '-'}
+            {match.team2
+              ? isEditingThis
+                ? (multiGame ? editGames.filter(g => g.team2Score > g.team1Score).length : team2Score)
+                : (multiGame && displayGames.length ? t2GamesWon : matchTeam2Score)
+              : '-'}
           </div>
         </div>
 
@@ -356,33 +409,70 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
 
           {editingMatch && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {editingMatch.team1?.name ?? 'TBD'}
-                  </label>
-                  <Input
-                    type="number"
-                    className="input-no-spinner"
-                    min="0"
-                    value={team1Score}
-                    onChange={(e) => setTeam1Score(parseInt(e.target.value) || 0)}
-                  />
+              {isMatchMultiGame(editingMatch) ? (
+                /* Multi-game score entry */
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold text-center truncate">{editingMatch.team1?.name ?? 'TBD'}</span>
+                    <span />
+                    <span className="text-sm font-semibold text-center truncate">{editingMatch.team2?.name ?? 'TBD'}</span>
+                  </div>
+                  {Array.from({ length: editingMatch.matchFormatConfig!.max_games }).map((_, gi) => {
+                    const g = editGames[gi] ?? { team1Score: 0, team2Score: 0 };
+                    const gamesToWin = editingMatch.matchFormatConfig!.games_to_win;
+                    const t1w = editGames.slice(0, gi).filter(x => x.team1Score > x.team2Score).length;
+                    const t2w = editGames.slice(0, gi).filter(x => x.team2Score > x.team1Score).length;
+                    const seriesDone = t1w >= gamesToWin || t2w >= gamesToWin;
+                    return (
+                      <div key={gi} className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 ${seriesDone ? 'opacity-40 pointer-events-none' : ''}`}>
+                        <Input
+                          type="number"
+                          className="input-no-spinner text-center font-bold"
+                          min="0"
+                          value={g.team1Score}
+                          placeholder={`G${gi + 1}`}
+                          onChange={(e) => {
+                            const next = [...editGames];
+                            next[gi] = { ...next[gi], team1Score: parseInt(e.target.value) || 0 };
+                            setEditGames(next);
+                          }}
+                        />
+                        <span className="text-xs text-muted-foreground text-center">G{gi + 1}</span>
+                        <Input
+                          type="number"
+                          className="input-no-spinner text-center font-bold"
+                          min="0"
+                          value={g.team2Score}
+                          placeholder={`G${gi + 1}`}
+                          onChange={(e) => {
+                            const next = [...editGames];
+                            next[gi] = { ...next[gi], team2Score: parseInt(e.target.value) || 0 };
+                            setEditGames(next);
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                  {/* Live games-won summary */}
+                  <div className="flex justify-between items-center pt-2 border-t text-sm font-semibold">
+                    <span>{editGames.filter(g => g.team1Score > g.team2Score).length} games</span>
+                    <span className="text-muted-foreground text-xs">Best of {editingMatch.matchFormatConfig!.max_games}</span>
+                    <span>{editGames.filter(g => g.team2Score > g.team1Score).length} games</span>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {editingMatch.team2?.name || 'TBD'}
-                  </label>
-                  <Input
-                    type="number"
-                    className="input-no-spinner"
-                    min="0"
-                    value={team2Score}
-                    onChange={(e) => setTeam2Score(parseInt(e.target.value) || 0)}
-                    disabled={!editingMatch.team2}
-                  />
+              ) : (
+                /* Single-game score entry */
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">{editingMatch.team1?.name ?? 'TBD'}</label>
+                    <Input type="number" className="input-no-spinner" min="0" value={team1Score} onChange={(e) => setTeam1Score(parseInt(e.target.value) || 0)} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">{editingMatch.team2?.name || 'TBD'}</label>
+                    <Input type="number" className="input-no-spinner" min="0" value={team2Score} onChange={(e) => setTeam2Score(parseInt(e.target.value) || 0)} disabled={!editingMatch.team2} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

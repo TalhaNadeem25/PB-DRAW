@@ -46,6 +46,11 @@ const matchSchema = new mongoose.Schema({
       min: 0
     }
   },
+  /** Individual game scores for Best-of-N formats. Empty for single-game matches. */
+  games: [{
+    team1Score: { type: Number, default: 0, min: 0 },
+    team2Score: { type: Number, default: 0, min: 0 }
+  }],
   winner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team',

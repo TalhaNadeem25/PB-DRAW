@@ -128,24 +128,95 @@ export const updateMatchScore = async (req, res, next) => {
       });
     }
 
-    const { team1Score, team2Score, status } = req.body;
+    const { team1Score, team2Score, games, status } = req.body;
 
-    // Capture old score before updating (for reverting team stats)
+    // Capture old state before updating (for reverting team stats)
     const oldTeam1Score = match.score?.team1Score ?? 0;
     const oldTeam2Score = match.score?.team2Score ?? 0;
     const wasCompleted = match.status === 'completed';
+    const oldWinnerId = (match.winner?._id ?? match.winner)?.toString() ?? null;
 
-    // Validate score against match format (playoff match format, or pool format)
-    if (match.pool && (status === 'completed' || (team1Score !== undefined && team2Score !== undefined))) {
-      let config = match.matchFormatConfig && typeof match.matchFormatConfig.games_to_win === 'number'
-        ? match.matchFormatConfig
-        : null;
-      if (!config) {
-        const pool = await Pool.findById(match.pool).select('matchFormatConfig').lean();
-        config = pool?.matchFormatConfig;
+    // Resolve format config (match-level for playoffs, pool-level for pool matches)
+    let formatConfig = match.matchFormatConfig && typeof match.matchFormatConfig.games_to_win === 'number'
+      ? match.matchFormatConfig
+      : null;
+    if (!formatConfig && match.pool) {
+      const pool = await Pool.findById(match.pool).select('matchFormatConfig').lean();
+      formatConfig = pool?.matchFormatConfig ?? null;
+    }
+
+    const isMultiGame = formatConfig && formatConfig.games_to_win > 1;
+
+    let finalTeam1Score, finalTeam2Score, newWinner;
+
+    if (isMultiGame && games && games.length > 0) {
+      // ── Multi-game path ──────────────────────────────────────────────
+      const gamesToWin = formatConfig.games_to_win;
+      const maxGames = formatConfig.max_games;
+
+      if (games.length > maxGames) {
+        return res.status(400).json({
+          success: false,
+          message: `Too many games: max is ${maxGames} for this format`
+        });
       }
-      if (config && config.games_to_win === 1) {
-        const validation = validateSingleGameScore(team1Score ?? match.score?.team1Score ?? 0, team2Score ?? match.score?.team2Score ?? 0, config);
+
+      // Validate each individual game score
+      for (let i = 0; i < games.length; i++) {
+        const g = games[i];
+        const bothZero = (g.team1Score ?? 0) === 0 && (g.team2Score ?? 0) === 0;
+        if (bothZero) continue; // unfilled trailing game — skip
+        const validation = validateSingleGameScore(
+          g.team1Score ?? 0,
+          g.team2Score ?? 0,
+          { ...formatConfig, games_to_win: 1 } // treat each game as single-game for validation
+        );
+        if (!validation.valid) {
+          return res.status(400).json({
+            success: false,
+            message: `Game ${i + 1}: ${validation.message}`
+          });
+        }
+      }
+
+      // Count games won and total points (only include games with actual scores)
+      let t1GamesWon = 0, t2GamesWon = 0;
+      let t1TotalPts = 0, t2TotalPts = 0;
+      const playedGames = games.filter(g => (g.team1Score ?? 0) > 0 || (g.team2Score ?? 0) > 0);
+
+      for (const g of playedGames) {
+        t1TotalPts += g.team1Score ?? 0;
+        t2TotalPts += g.team2Score ?? 0;
+        if ((g.team1Score ?? 0) > (g.team2Score ?? 0)) t1GamesWon++;
+        else if ((g.team2Score ?? 0) > (g.team1Score ?? 0)) t2GamesWon++;
+      }
+
+      // Auto-determine completion
+      const seriesOver = t1GamesWon >= gamesToWin || t2GamesWon >= gamesToWin;
+      const resolvedStatus = seriesOver ? 'completed' : (status || 'in-progress');
+
+      finalTeam1Score = t1TotalPts;
+      finalTeam2Score = t2TotalPts;
+
+      match.games = playedGames;
+      match.score.team1Score = finalTeam1Score;
+      match.score.team2Score = finalTeam2Score;
+      match.status = resolvedStatus;
+
+      // Winner by games won (NOT by total points)
+      if (resolvedStatus === 'completed') {
+        newWinner = t1GamesWon > t2GamesWon ? match.team1 : match.team2;
+        match.winner = newWinner;
+      }
+    } else {
+      // ── Single-game path ─────────────────────────────────────────────
+      if (formatConfig && formatConfig.games_to_win === 1 &&
+          (status === 'completed' || (team1Score !== undefined && team2Score !== undefined))) {
+        const validation = validateSingleGameScore(
+          team1Score ?? match.score?.team1Score ?? 0,
+          team2Score ?? match.score?.team2Score ?? 0,
+          formatConfig
+        );
         if (!validation.valid) {
           return res.status(400).json({
             success: false,
@@ -153,18 +224,21 @@ export const updateMatchScore = async (req, res, next) => {
           });
         }
       }
-    }
 
-    // Update match
-    match.score.team1Score = team1Score;
-    match.score.team2Score = team2Score;
-    match.status = status || 'completed';
+      finalTeam1Score = team1Score;
+      finalTeam2Score = team2Score;
 
-    // Determine winner
-    if (team1Score > team2Score) {
-      match.winner = match.team1;
-    } else if (team2Score > team1Score) {
-      match.winner = match.team2;
+      match.score.team1Score = finalTeam1Score;
+      match.score.team2Score = finalTeam2Score;
+      match.status = status || 'completed';
+
+      if (finalTeam1Score > finalTeam2Score) {
+        newWinner = match.team1;
+        match.winner = newWinner;
+      } else if (finalTeam2Score > finalTeam1Score) {
+        newWinner = match.team2;
+        match.winner = newWinner;
+      }
     }
 
     if (match.status === 'completed') {
@@ -173,38 +247,40 @@ export const updateMatchScore = async (req, res, next) => {
 
     await match.save();
 
-    // Update team stats: subtract old score first (so edits don't double-count), then add new
+    // Update team stats: subtract old stats first, then add new
     const team1Id = match.team1?._id ?? match.team1;
     const team2Id = match.team2?._id ?? match.team2;
     const team1 = team1Id ? await Team.findById(team1Id) : null;
     const team2 = team2Id ? await Team.findById(team2Id) : null;
+    const team1IdStr = team1Id?.toString();
 
     if (team1 && team2) {
-      // Subtract previous score from both teams (so updating a score doesn't double-count)
+      // Revert previous contribution
       team1.stats.pointsFor -= oldTeam1Score;
       team1.stats.pointsAgainst -= oldTeam2Score;
       team2.stats.pointsFor -= oldTeam2Score;
       team2.stats.pointsAgainst -= oldTeam1Score;
-      if (wasCompleted) {
-        if (oldTeam1Score > oldTeam2Score) {
+      if (wasCompleted && oldWinnerId) {
+        if (oldWinnerId === team1IdStr) {
           team1.stats.wins -= 1;
           team2.stats.losses -= 1;
-        } else if (oldTeam2Score > oldTeam1Score) {
+        } else {
           team2.stats.wins -= 1;
           team1.stats.losses -= 1;
         }
       }
 
-      // Add new score
-      team1.stats.pointsFor += team1Score;
-      team1.stats.pointsAgainst += team2Score;
-      team2.stats.pointsFor += team2Score;
-      team2.stats.pointsAgainst += team1Score;
+      // Apply new contribution
+      team1.stats.pointsFor += finalTeam1Score ?? 0;
+      team1.stats.pointsAgainst += finalTeam2Score ?? 0;
+      team2.stats.pointsFor += finalTeam2Score ?? 0;
+      team2.stats.pointsAgainst += finalTeam1Score ?? 0;
       if (match.status === 'completed') {
-        if (team1Score > team2Score) {
+        const newWinnerId = (match.winner?._id ?? match.winner)?.toString();
+        if (newWinnerId === team1IdStr) {
           team1.stats.wins += 1;
           team2.stats.losses += 1;
-        } else if (team2Score > team1Score) {
+        } else if (newWinnerId) {
           team2.stats.wins += 1;
           team1.stats.losses += 1;
         }
@@ -239,7 +315,10 @@ export const updateMatchScore = async (req, res, next) => {
 
       // Semifinals: winner → final, loser → bronze
       if (match.bracket === 'semifinals' && winnerId) {
-        const loserId = team1Score > team2Score ? (match.team2?._id ?? match.team2) : (match.team1?._id ?? match.team1);
+        // Determine loser using stored winner (works for both single and multi-game)
+        const loserId = (match.winner?._id ?? match.winner)?.toString() === (match.team1?._id ?? match.team1)?.toString()
+          ? (match.team2?._id ?? match.team2)
+          : (match.team1?._id ?? match.team1);
 
         const finalsMatch = match.nextMatchId
           ? await Match.findById(match.nextMatchId)
@@ -292,8 +371,9 @@ export const updateMatchScore = async (req, res, next) => {
     // Emit match score update to all connected clients
     emitMatchScoreUpdate(io, match._id.toString(), tournamentId, {
       matchId: match._id,
-      team1Score,
-      team2Score,
+      team1Score: match.score.team1Score,
+      team2Score: match.score.team2Score,
+      games: match.games,
       status: match.status,
       winner: match.winner,
       completedAt: match.completedAt
@@ -301,8 +381,9 @@ export const updateMatchScore = async (req, res, next) => {
 
     // If match completed, notify players (only for Team-based matches)
     if (match.status === 'completed' && team1 && team2) {
-      const winnerTeam = team1Score > team2Score ? team1 : team2;
-      const loserTeam = team1Score > team2Score ? team2 : team1;
+      const newWinnerId = (match.winner?._id ?? match.winner)?.toString();
+      const winnerTeam = newWinnerId === team1Id?.toString() ? team1 : team2;
+      const loserTeam = newWinnerId === team1Id?.toString() ? team2 : team1;
 
       // Notify winner team
       await notifyTeamPlayers(io, winnerTeam._id, {

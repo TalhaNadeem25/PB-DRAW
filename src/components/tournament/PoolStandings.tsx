@@ -10,6 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Team {
   _id: string;
@@ -32,9 +39,13 @@ interface PoolStandingsProps {
   isRemoving?: boolean;
   /** When true, first 4 rows show final medals (gold, silver, bronze, 4th) */
   isPlayoffsFinalized?: boolean;
+  /** Other pools this member can be moved to */
+  availablePools?: { _id: string; name: string }[];
+  onMoveTeam?: (teamId: string, toPoolId: string) => void;
+  isMoving?: boolean;
 }
 
-const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemoveTeam, isRemoving = false, isPlayoffsFinalized = false }: PoolStandingsProps) => {
+const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemoveTeam, isRemoving = false, isPlayoffsFinalized = false, availablePools, onMoveTeam, isMoving = false }: PoolStandingsProps) => {
   // Sort teams by wins (desc), then point differential (desc)
   const sortedTeams = [...teams].sort((a, b) => {
     if (b.stats.wins !== a.stats.wins) {
@@ -137,7 +148,7 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
                 <TableHead className="text-center font-bold">PA</TableHead>
                 <TableHead className="text-center font-bold">DIFF</TableHead>
                 {showPlayoffIndicators && <TableHead className="font-bold">Playoff Seed</TableHead>}
-                {onRemoveTeam && <TableHead className="w-12 font-bold">Actions</TableHead>}
+                {(onRemoveTeam || onMoveTeam) && <TableHead className="font-bold">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -196,18 +207,39 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
                         {getRankBadge(rank)}
                       </TableCell>
                     )}
-                    {onRemoveTeam && (
+                    {(onRemoveTeam || onMoveTeam) && (
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onRemoveTeam(team._id)}
-                          disabled={isRemoving}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          title="Remove from pool"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {onMoveTeam && availablePools && availablePools.length > 0 && (
+                            <Select
+                              onValueChange={(toPoolId) => onMoveTeam(team._id, toPoolId)}
+                              disabled={isMoving}
+                            >
+                              <SelectTrigger className="h-7 w-28 text-xs rounded-lg">
+                                <SelectValue placeholder="Move to…" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availablePools.map((p) => (
+                                  <SelectItem key={p._id} value={p._id} className="text-xs">
+                                    {p.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {onRemoveTeam && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onRemoveTeam(team._id)}
+                              disabled={isRemoving}
+                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title="Remove from pool"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
