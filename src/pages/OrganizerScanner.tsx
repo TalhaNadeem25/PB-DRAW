@@ -157,7 +157,7 @@ export default function OrganizerScanner() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Checked In Today</p>
-                  <p className="text-2xl font-bold text-green-600">{recentScans.length}</p>
+                  <p className="text-2xl font-display font-bold text-green-600">{recentScans.length}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-400" />
               </div>
@@ -169,7 +169,7 @@ export default function OrganizerScanner() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Players</p>
-                  <p className="text-2xl font-bold text-gray-900">-</p>
+                  <p className="text-2xl font-display font-bold text-gray-900">-</p>
                 </div>
                 <Users className="w-8 h-8 text-gray-400" />
               </div>
@@ -181,7 +181,7 @@ export default function OrganizerScanner() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600">-</p>
+                  <p className="text-2xl font-display font-bold text-yellow-600">-</p>
                 </div>
                 <Clock className="w-8 h-8 text-yellow-400" />
               </div>

@@ -141,7 +141,7 @@ const PartnerCancellationResponse = () => {
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 text-center">
               <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-600" />
-              <h2 className="text-xl font-bold mb-2">Cancellation Not Found</h2>
+              <h2 className="text-xl font-display font-bold mb-2">Cancellation Not Found</h2>
               <p className="text-muted-foreground mb-4">
                 This cancellation request could not be found or you don't have permission to view it.
               </p>
@@ -245,7 +245,7 @@ const PartnerCancellationResponse = () => {
           {!hasResponded && !deadlinePassed && (
             <>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-4 text-center">Choose Your Option</h2>
+                <h2 className="text-xl font-display font-semibold mb-4 text-center">Choose Your Option</h2>
                 <p className="text-muted-foreground text-center mb-6">
                   Since your partner is canceling, you have two options:
                 </p>
