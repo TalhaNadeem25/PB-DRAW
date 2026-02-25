@@ -1,35 +1,32 @@
-import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import {
-  User,
-  Save,
-  Loader2,
-  Mail,
-  MapPin,
-  Calendar,
-  Trophy,
-  Target,
-  Lock,
-  Pencil,
-  Sun,
-  Moon,
-  CalendarDays,
-  Zap,
-  ChevronUp,
-  RefreshCw,
-} from "lucide-react";
-import { authAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { authAPI } from "@/services/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Calendar,
+  CalendarDays,
+  ChevronUp,
+  Loader2,
+  Lock,
+  MapPin,
+  Moon,
+  Pencil,
+  Save,
+  Sun,
+  Target,
+  Trophy,
+  User,
+  Zap
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const AVAILABILITY_OPTIONS = [
   { id: "morning", label: "Morning", icon: Sun },
@@ -40,11 +37,7 @@ const AVAILABILITY_OPTIONS = [
 
 const PREFERRED_SIDE_OPTIONS = ["Left", "Right", "Both"] as const;
 
-const SKILL_ASSESSMENT = [
-  { label: "Soft Game / Dinking", value: 85 },
-  { label: "Power / Drives", value: 70 },
-  { label: "Court Mobility", value: 92 },
-];
+
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -446,17 +439,13 @@ const Profile = () => {
                     <Label className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase block mb-3">
                       Skill Assessment
                     </Label>
-                    <div className="space-y-4">
-                      {SKILL_ASSESSMENT.map((item) => (
-                        <div key={item.label} className="space-y-1.5">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-foreground">{item.label}</span>
-                            <span className="font-display font-bold text-primary">{item.value}%</span>
-                          </div>
-                          <Progress value={item.value} className="h-2 bg-muted" />
-                        </div>
-                      ))}
-                    </div>
+                      <div className="bg-muted/50 rounded-xl p-6 border border-border text-center">
+                        <Target className="w-8 h-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+                        <h4 className="font-display font-medium text-foreground mb-1">Dynamic Skill Tracking</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Coming soon! Track your performance across dinking, drives, and court mobility based on match results.
+                        </p>
+                      </div>
                   </div>
                 </CardContent>
               </Card>

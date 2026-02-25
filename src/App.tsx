@@ -1,44 +1,42 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { SocketProvider } from "@/contexts/SocketContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import Index from "./pages/Index";
-import Tournaments from "./pages/Tournaments";
-import TournamentDetail from "./pages/TournamentDetail";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { SocketProvider } from "@/contexts/SocketContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import AcceptInvitation from "./pages/AcceptInvitation";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import AuthPage from "./pages/AuthPage";
+import CourtManager from "./pages/CourtManager";
 import CreateTournament from "./pages/CreateTournament";
-import PoolManagement from "./pages/PoolManagement";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
 import EditTournament from "./pages/EditTournament";
-import Teams from "./pages/Teams";
+import EventRegistration from "./pages/EventRegistration";
+import FindPartner from "./pages/FindPartner";
+import ForgotPassword from "./pages/ForgotPassword";
+import Index from "./pages/Index";
 import Live from "./pages/Live";
 import LiveTournamentDetail from "./pages/LiveTournamentDetail";
-import Discover from "./pages/Discover";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import EventRegistration from "./pages/EventRegistration";
-import AcceptInvitation from "./pages/AcceptInvitation";
-import NotFound from "./pages/NotFound";
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import MyTickets from "./pages/MyTickets";
+import NotFound from "./pages/NotFound";
 import OrganizerScanner from "./pages/OrganizerScanner";
-import TournamentPlanner from "./pages/TournamentPlanner";
 import PartnerCancellationResponse from "./pages/PartnerCancellationResponse";
-import FindPartner from "./pages/FindPartner";
-import TournamentCommunications from "./pages/TournamentCommunications";
-import CourtManager from "./pages/CourtManager";
-import Terms from "./pages/Terms";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PoolManagement from "./pages/PoolManagement";
 import Privacy from "./pages/Privacy";
+import Profile from "./pages/Profile";
+import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
+import Teams from "./pages/Teams";
+import Terms from "./pages/Terms";
+import TournamentCommunications from "./pages/TournamentCommunications";
+import TournamentDetail from "./pages/TournamentDetail";
+import TournamentPlanner from "./pages/TournamentPlanner";
+import Tournaments from "./pages/Tournaments";
 import VerifyEmail from "./pages/VerifyEmail";
 
 const queryClient = new QueryClient();
@@ -55,8 +53,9 @@ const App = () => (
               <ScrollToTop />
               <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/signup" element={<AuthPage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route
@@ -84,7 +83,6 @@ const App = () => (
               }
             />
             <Route path="/tournaments" element={<Tournaments />} />
-            <Route path="/discover" element={<Discover />} />
             <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/tournaments/:id/register" element={<Register />} />
             <Route path="/tournaments/:tournamentId/register/:eventId" element={<EventRegistration />} />

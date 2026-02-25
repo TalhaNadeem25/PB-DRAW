@@ -1,73 +1,72 @@
-import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import RefundsPanel from "@/components/tournament-dashboard/RefundsPanel";
+import ScoresPanel from "@/components/tournament-dashboard/ScoresPanel";
+import TestDataPanel from "@/components/tournament-dashboard/TestDataPanel";
+import BracketViewer from "@/components/tournament/BracketViewer";
+import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
+import ExportButtons from "@/components/tournament/ExportButtons";
+import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
+import TournamentPlanner from "@/components/tournament/TournamentPlanner";
+import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Calendar,
-  MapPin,
-  Users,
-  Trophy,
-  Clock,
-  ArrowLeft,
-  Share2,
-  Heart,
-  Loader2,
-  AlertCircle,
-  Mail,
-  Phone,
-  Image as ImageIcon,
-  Layers,
-  ChevronRight,
-} from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
 } from "@/components/ui/carousel";
-import { tournamentAPI, favoritesAPI, eventAPI } from "@/services/api";
-import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSocket } from "@/contexts/SocketContext";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { eventAPI, favoritesAPI, tournamentAPI } from "@/services/api";
 import type { GameType, TournamentFormat } from "@/types/tournament";
 import { formatEventSkillLevel } from "@/types/tournament";
-import BracketViewer from "@/components/tournament/BracketViewer";
-import RefundsPanel from "@/components/tournament-dashboard/RefundsPanel";
-import TestDataPanel from "@/components/tournament-dashboard/TestDataPanel";
-import ScoresPanel from "@/components/tournament-dashboard/ScoresPanel";
-import TournamentSchedule from "@/components/tournament/TournamentSchedule";
-import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
-import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
-import TournamentPlanner from "@/components/tournament/TournamentPlanner";
-import ExportButtons from "@/components/tournament/ExportButtons";
-import { cn } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import {
+    AlertCircle,
+    ArrowLeft,
+    Calendar,
+    ChevronRight,
+    Clock,
+    Heart,
+    Image as ImageIcon,
+    Layers,
+    Loader2,
+    Mail,
+    MapPin,
+    Phone,
+    Share2,
+    Trophy,
+    Users,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 // Dashboard components
-import TournamentDashboardSidebar, {
-  MobileDashboardNav,
-  type DashboardSection,
-} from "@/components/tournament-dashboard/TournamentDashboardSidebar";
-import DashboardTopBar from "@/components/tournament-dashboard/DashboardTopBar";
 import DashboardOverview, {
-  type ActivityItem,
+    type ActivityItem,
 } from "@/components/tournament-dashboard/DashboardOverview";
+import DashboardTopBar from "@/components/tournament-dashboard/DashboardTopBar";
 import OrganizerEventsPanel from "@/components/tournament-dashboard/OrganizerEventsPanel";
+import TournamentDashboardSidebar, {
+    MobileDashboardNav,
+    type DashboardSection,
+} from "@/components/tournament-dashboard/TournamentDashboardSidebar";
 
 /* ─── Status config ─── */
 const statusConfig = {

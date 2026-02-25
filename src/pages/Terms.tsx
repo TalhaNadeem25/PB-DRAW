@@ -37,7 +37,7 @@ const Terms = () => {
                     </p>
                     <ul className="list-disc list-inside text-muted-foreground mt-2 space-y-1">
                       <li>Tournament organizers to create and manage pickleball tournaments</li>
-                      <li>Players to discover, register, and participate in tournaments</li>
+                      <li>Players to find, register, and participate in tournaments</li>
                       <li>Payment processing for tournament entry fees</li>
                       <li>Match scheduling, bracket management, and score tracking</li>
                       <li>Partner matching and team formation</li>

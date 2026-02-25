@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Syne", "system-ui", "sans-serif"],
+        display: ["Oswald", "system-ui", "sans-serif"],
         sans: ['"DM Sans"', "system-ui", "sans-serif"],
       },
       colors: {
@@ -58,6 +58,14 @@ export default {
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
+        amber: {
+          DEFAULT: "hsl(var(--amber))",
+          foreground: "hsl(var(--amber-foreground))",
         },
         court: {
           green: "hsl(var(--court-green))",

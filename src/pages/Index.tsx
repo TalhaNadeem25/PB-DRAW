@@ -1,16 +1,18 @@
-import Layout from "@/components/layout/Layout";
-import HeroSection from "@/components/home/HeroSection";
-import LogoStripSection from "@/components/home/LogoStripSection";
-import HowItWorksSection from "@/components/home/HowItWorksSection";
 import FeaturedTournamentsSection from "@/components/home/FeaturedTournamentsSection";
+import HeroSection from "@/components/home/HeroSection";
+import LiveNowStrip from "@/components/home/LiveNowStrip";
+import SocialProofBar from "@/components/home/SocialProofBar";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
+import Layout from "@/components/layout/Layout";
 
 const Index = () => {
   return (
     <Layout>
+      <LiveNowStrip />
       <HeroSection />
-      <LogoStripSection />
-      <HowItWorksSection />
+      <SocialProofBar />
       <FeaturedTournamentsSection />
+      <TestimonialsSection />
     </Layout>
   );
 };

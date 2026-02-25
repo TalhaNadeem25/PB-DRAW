@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { useSocket } from "@/contexts/SocketContext";
 import Layout from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Radio, Calendar, MapPin, Users, Trophy, Loader2, ChevronRight, Activity, Zap } from "lucide-react";
-import { tournamentAPI, eventAPI, poolAPI, matchAPI } from "@/services/api";
+import { SkeletonGrid } from "@/components/ui/skeleton-card";
+import { useSocket } from "@/contexts/SocketContext";
+import { eventAPI, matchAPI, poolAPI, tournamentAPI } from "@/services/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Activity, Calendar, ChevronRight, MapPin, Radio, Trophy, Users, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Live = () => {
   const navigate = useNavigate();
@@ -73,11 +74,11 @@ const Live = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 animate-pulse">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="min-h-screen bg-background">
+          <div className="border-b border-border/60 bg-card/50 py-8 px-6" />
+          <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+            <SkeletonGrid count={3} />
           </div>
-          <p className="text-muted-foreground">Loading live tournaments...</p>
         </div>
       </Layout>
     );

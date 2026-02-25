@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Search, Trophy, TrendingUp, User, Users, Award, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Award, BarChart3, Search, TrendingUp, Trophy, User, Users } from "lucide-react";
+import { useState } from "react";
 
 const HowItWorksSection = () => {
   const [activeView, setActiveView] = useState<"players" | "organizers">("organizers");
@@ -9,8 +9,8 @@ const HowItWorksSection = () => {
     {
       icon: Search,
       bgIcon: Search,
-      title: "Discover",
-      description: "Filter by skill level, location, and prize pool. Find the perfect match for your competitive spirit.",
+      title: "Find Events",
+      description: "Browse local and national tournaments that match your skill level and availability.",
     },
     {
       icon: Award,

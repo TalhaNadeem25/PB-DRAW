@@ -1,31 +1,32 @@
-import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Trophy,
-  Loader2,
-  AlertCircle,
-  DollarSign,
-  CheckCircle2,
-  UserPlus,
-  Mail,
-  Sparkles,
-  PartyPopper,
-} from "lucide-react";
-import { invitationAPI, paymentAPI } from "@/services/api";
-import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import PaymentForm from "@/components/payment/PaymentForm";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+import { invitationAPI, paymentAPI } from "@/services/api";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import {
+    AlertCircle,
+    Calendar,
+    CheckCircle2,
+    DollarSign,
+    Loader2,
+    Mail,
+    MapPin,
+    PartyPopper,
+    Sparkles,
+    Trophy,
+    UserPlus,
+    Users,
+} from "lucide-react";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
@@ -92,10 +93,23 @@ const AcceptInvitation = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-mesh-gradient flex items-center justify-center">
-          <div className="text-center glass p-8 rounded-2xl">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading invitation...</p>
+        <div className="min-h-screen bg-background">
+          <div className="bg-hero-gradient py-12 relative overflow-hidden">
+            <div className="container mx-auto px-4 relative z-10">
+              <Skeleton className="h-6 w-32 mb-4 bg-white/20" />
+              <Skeleton className="h-12 w-64 mb-3 bg-white/20" />
+              <Skeleton className="h-6 w-48 bg-white/20" />
+            </div>
+          </div>
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <Skeleton className="h-[400px] rounded-2xl" />
+              </div>
+              <div className="space-y-6">
+                <Skeleton className="h-[250px] rounded-2xl" />
+              </div>
+            </div>
           </div>
         </div>
       </Layout>

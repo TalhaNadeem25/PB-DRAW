@@ -1,15 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Oswald:wght@400..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400;500;600;700;800&display=swap');
-
 @layer base {
   :root {
-    --font-display: "Syne", system-ui, sans-serif;
+    --font-display: "Oswald", system-ui, sans-serif;
     --font-sans: "DM Sans", system-ui, sans-serif;
     /* Court-inspired green palette */
-    --background: 120 10% 98%;
+    --background: 75 20% 96.5%;
+    /* F7F8F4 warm-off-white */
     --foreground: 150 20% 10%;
 
     --card: 0 0% 100%;
@@ -44,6 +45,12 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
+    /* New colors for states */
+    --info: 220 80% 55%;
+    --info-foreground: 0 0% 100%;
+    --amber: 30 95% 50%;
+    --amber-foreground: 0 0% 100%;
+
     --border: 120 10% 88%;
     --input: 120 10% 88%;
     --ring: 145 70% 35%;
@@ -58,7 +65,7 @@
     --ball-yellow-light: 45 95% 70%;
     --net-white: 0 0% 100%;
     --surface-warm: 35 30% 97%;
-    
+
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(145 70% 35%), hsl(145 70% 25%));
     --gradient-hero-radial: radial-gradient(ellipse at top, hsl(145 70% 40% / 0.15), transparent 50%);
@@ -66,9 +73,9 @@
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(120 10% 98%));
     --gradient-success: linear-gradient(135deg, hsl(145 70% 40%), hsl(145 70% 30%));
     --gradient-mesh: radial-gradient(at 40% 20%, hsl(145 70% 35% / 0.15) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsl(45 95% 55% / 0.1) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsl(145 60% 45% / 0.1) 0px, transparent 50%),
-                     radial-gradient(at 80% 100%, hsl(145 70% 25% / 0.1) 0px, transparent 50%);
+      radial-gradient(at 80% 0%, hsl(45 95% 55% / 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(145 60% 45% / 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, hsl(145 70% 25% / 0.1) 0px, transparent 50%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(145 70% 35% / 0.2) 0%, transparent 70%);
 
     /* Enhanced Shadows */
@@ -125,6 +132,11 @@
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
+    --info: 220 80% 65%;
+    --info-foreground: 150 20% 10%;
+    --amber: 30 95% 55%;
+    --amber-foreground: 150 20% 10%;
+
     --border: 150 15% 18%;
     --input: 150 15% 18%;
     --ring: 145 70% 45%;
@@ -136,9 +148,9 @@
 
     --gradient-hero: linear-gradient(135deg, hsl(145 70% 45%), hsl(145 70% 35%));
     --gradient-mesh: radial-gradient(at 40% 20%, hsl(145 70% 45% / 0.1) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsl(45 90% 50% / 0.08) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsl(145 60% 45% / 0.08) 0px, transparent 50%),
-                     radial-gradient(at 80% 100%, hsl(145 70% 35% / 0.08) 0px, transparent 50%);
+      radial-gradient(at 80% 0%, hsl(45 90% 50% / 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(145 60% 45% / 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, hsl(145 70% 35% / 0.08) 0px, transparent 50%);
 
     --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
     --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
@@ -173,7 +185,12 @@
   }
 
   /* Display font (Syne): headings, buttons, nav, badges, labels that are titles */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display font-bold tracking-tight;
   }
 
@@ -201,12 +218,10 @@
 
   .text-gradient-shimmer {
     @apply bg-clip-text text-transparent animate-shimmer-text;
-    background-image: linear-gradient(
-      90deg,
-      hsl(var(--primary)) 0%,
-      hsl(var(--court-green-light)) 50%,
-      hsl(var(--primary)) 100%
-    );
+    background-image: linear-gradient(90deg,
+        hsl(var(--primary)) 0%,
+        hsl(var(--court-green-light)) 50%,
+        hsl(var(--primary)) 100%);
     background-size: 200% 100%;
   }
 
@@ -319,9 +334,12 @@
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -331,24 +349,31 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
 }
 
 @keyframes shimmer-text {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
+
   50% {
     box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
   }
@@ -359,6 +384,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -370,6 +396,7 @@
     opacity: 0;
     transform: translateX(100%);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0);
@@ -380,52 +407,57 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
 }
 
 @keyframes bounce-gentle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
 }
 
 @layer components {
+
   /* Glassmorphism Cards */
   .glass {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50;
+    @apply bg-card/80 backdrop-blur-xl border border-border/80 shadow-sm;
   }
 
   .glass-dark {
-    @apply bg-foreground/10 backdrop-blur-xl border border-foreground/10;
+    @apply bg-foreground/90 backdrop-blur-xl border border-foreground/80;
   }
 
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg;
+    @apply bg-card border border-border shadow-sm rounded-lg;
   }
 
   .glass-card-hover {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg transition-all duration-300;
+    @apply bg-card border border-border shadow-sm rounded-lg transition-all duration-300;
   }
 
   .glass-card-hover:hover {
-    @apply bg-card/90 border-primary/20 shadow-float -translate-y-1;
+    @apply border-primary/20 shadow-md -translate-y-1;
   }
 
   /* Court Pattern */
   .court-pattern {
-    background-image: 
+    background-image:
       linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px),
       linear-gradient(hsl(var(--border)) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 
   .court-pattern-subtle {
-    background-image: 
+    background-image:
       linear-gradient(90deg, hsl(var(--primary) / 0.05) 1px, transparent 1px),
       linear-gradient(hsl(var(--primary) / 0.05) 1px, transparent 1px);
     background-size: 60px 60px;
@@ -445,14 +477,14 @@
   .gradient-border {
     @apply relative;
     background: linear-gradient(var(--background), var(--background)) padding-box,
-                linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--primary))) border-box;
+      linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--primary))) border-box;
     border: 2px solid transparent;
   }
 
   .gradient-border-animated {
     @apply relative;
     background: linear-gradient(var(--background), var(--background)) padding-box,
-                linear-gradient(var(--gradient-angle, 135deg), hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--primary))) border-box;
+      linear-gradient(var(--gradient-angle, 135deg), hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--primary))) border-box;
     border: 2px solid transparent;
     animation: gradient-rotate 4s linear infinite;
   }
@@ -467,6 +499,7 @@
     0% {
       --gradient-angle: 0deg;
     }
+
     100% {
       --gradient-angle: 360deg;
     }
@@ -487,16 +520,16 @@
 
   /* Floating orbs for backgrounds */
   .floating-orb {
-    @apply absolute rounded-full blur-3xl;
-    animation: float 8s ease-in-out infinite;
+    display: none;
+    /* Orbs removed for clarity and performance */
   }
 
   .floating-orb-primary {
-    @apply floating-orb bg-primary/20;
+    display: none;
   }
 
   .floating-orb-secondary {
-    @apply floating-orb bg-secondary/20;
+    display: none;
   }
 
   /* Striped table rows */
@@ -549,9 +582,11 @@
       transform: scale(0.8);
       opacity: 0;
     }
+
     50% {
       transform: scale(1.1);
     }
+
     100% {
       transform: scale(1);
       opacity: 1;
@@ -564,6 +599,7 @@
     -webkit-appearance: none;
     margin: 0;
   }
+
   .input-no-spinner {
     -moz-appearance: textfield;
   }
@@ -664,6 +700,7 @@
       transform: translateY(-100%);
       opacity: 0;
     }
+
     to {
       transform: translateY(0);
       opacity: 1;

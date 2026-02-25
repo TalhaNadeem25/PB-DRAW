@@ -1,8 +1,8 @@
-import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Trophy, HelpCircle } from "lucide-react";
+import { HelpCircle, Home, Trophy } from "lucide-react";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 const NotFound = () => {
   const location = useLocation();
@@ -66,9 +66,10 @@ const NotFound = () => {
               </Link>
             </Button>
             <Button asChild variant="outline" className="hover-lift glass">
-              <Link to="/discover">
-                <Search className="w-4 h-4 mr-2" />
-                Discover
+              <Link to="/tournaments">
+                <Button className="w-full text-lg h-12">
+                Tournaments
+                </Button>
               </Link>
             </Button>
           </div>

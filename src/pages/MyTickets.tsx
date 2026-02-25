@@ -1,14 +1,12 @@
+import Layout from '@/components/layout/Layout';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import Layout from '@/components/layout/Layout';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import TicketCard from '../components/check-in/TicketCard';
-import { Ticket, Search, Download, Loader2, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, CheckCircle, Download, Loader2, Search, Ticket } from 'lucide-react';
 import { useState } from 'react';
-import { format } from 'date-fns';
+import TicketCard from '../components/check-in/TicketCard';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 interface TicketData {
   paymentId: string;
@@ -228,7 +226,7 @@ export default function MyTickets() {
           </p>
           {!searchTerm && (
             <Button variant="hero" asChild className="shadow-glow">
-              <a href="/discover">Browse Tournaments</a>
+              <a href="/tournaments">Browse Tournaments</a>
             </Button>
           )}
         </div>

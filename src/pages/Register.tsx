@@ -1,55 +1,54 @@
-import { useState, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Trophy,
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  DollarSign,
-  Clock,
-  User,
-  UserPlus,
-  FileText,
-  ShoppingBag,
-  ChevronUp,
-  Check,
-  Hash,
-  Mail,
-  Phone,
-  ShieldCheck,
-} from "lucide-react";
-import { tournamentAPI, eventAPI, teamAPI, invitationAPI, paymentAPI } from "@/services/api";
-import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import PaymentForm from "@/components/payment/PaymentForm";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { eventAPI, invitationAPI, paymentAPI, teamAPI, tournamentAPI } from "@/services/api";
 import { formatEventSkillLevel } from "@/types/tournament";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import {
+    AlertCircle,
+    ArrowLeft,
+    Calendar,
+    Check,
+    ChevronUp,
+    Clock,
+    FileText,
+    Hash,
+    Loader2,
+    Mail,
+    MapPin,
+    Phone,
+    ShieldCheck,
+    ShoppingBag,
+    Trophy,
+    User,
+    UserPlus,
+    Users
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -100,6 +99,26 @@ const Register = () => {
     queryFn: () => teamAPI.getMyTeams(),
     enabled: !!user,
   });
+
+  // Load pending registration from localStorage if user just logged in
+  useEffect(() => {
+    if (user && id) {
+      const pendingStr = localStorage.getItem('pendingRegistration');
+      if (pendingStr) {
+        try {
+          const pendingData = JSON.parse(pendingStr);
+          if (pendingData.tournamentId === id && pendingData.selections) {
+            setSelectedEvents(pendingData.selections);
+            // Optional: immediately trigger checkout or let user review
+            toast.success("Your cart has been restored. Please review and proceed to checkout.");
+          }
+          localStorage.removeItem('pendingRegistration');
+        } catch (e) {
+          console.error("Failed to parse pending registration", e);
+        }
+      }
+    }
+  }, [user, id]);
 
   const createAllTeamsMutation = useMutation({
     mutationFn: async (selections: EventSelection[]) => {
@@ -229,11 +248,6 @@ const Register = () => {
   ).length;
 
   const handleEventToggle = (event: any) => {
-    if (!user) {
-      toast.error("Please login to register");
-      navigate("/login");
-      return;
-    }
     if (registeredEventIds.includes(String(event._id))) {
       toast.error("You are already registered for this event");
       return;
@@ -264,6 +278,17 @@ const Register = () => {
       toast.error("Please select at least one event");
       return;
     }
+
+    if (!user) {
+      // Save pending registration and redirect to auth
+      localStorage.setItem('pendingRegistration', JSON.stringify({
+        tournamentId: id,
+        selections: selectedEvents
+      }));
+      navigate(`/auth?redirect=/tournaments/${id}/register`);
+      return;
+    }
+
     const doublesWithoutPartner = selectedEvents.filter(
       (sel) =>
         (sel.event.format === "doubles" || sel.event.format === "mixed-doubles") && !sel.partnerName

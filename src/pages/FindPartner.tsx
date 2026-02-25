@@ -1,53 +1,45 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { SkeletonGrid } from '@/components/ui/skeleton-card';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { 
-  Users, 
-  Search, 
-  MapPin, 
-  Trophy, 
-  Calendar, 
-  Send, 
-  Check, 
-  X, 
-  Clock,
-  Star,
-  Filter,
-  UserPlus,
-  MessageSquare,
-  Loader2,
-  Heart,
-  Sparkles
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-import api from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
+import api from '@/services/api';
+import { formatDistanceToNow } from 'date-fns';
+import {
+    Calendar,
+    Check,
+    Clock,
+    Filter,
+    Loader2,
+    MapPin,
+    MessageSquare,
+    Search,
+    Send,
+    Star,
+    Trophy,
+    UserPlus,
+    Users,
+    X
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface Player {
   _id: string;
@@ -321,11 +313,8 @@ const FindPartner = () => {
 
                 {/* Players Grid */}
                 {isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 animate-pulse">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                    <p className="text-muted-foreground">Loading players...</p>
+                  <div className="py-8">
+                    <SkeletonGrid count={6} />
                   </div>
                 ) : players.length === 0 ? (
                   <div className="glass-card-hover rounded-2xl p-8 text-center text-muted-foreground animate-fade-in">

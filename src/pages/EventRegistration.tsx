@@ -1,36 +1,35 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Trophy,
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  DollarSign,
-  Target,
-  UserPlus,
-  CheckCircle2,
-  Clock,
-} from "lucide-react";
-import { tournamentAPI, eventAPI, teamAPI, invitationAPI, paymentAPI } from "@/services/api";
-import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import PaymentForm from "@/components/payment/PaymentForm";
 import WaitlistButton from "@/components/registration/WaitlistButton";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import { eventAPI, invitationAPI, paymentAPI, teamAPI, tournamentAPI } from "@/services/api";
 import { formatEventSkillLevel } from "@/types/tournament";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  DollarSign,
+  Loader2,
+  MapPin,
+  Target,
+  Trophy,
+  UserPlus,
+  Users
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
@@ -64,6 +63,33 @@ const EventRegistration = () => {
 
   const tournament = tournamentData?.data;
   const event = eventData?.data;
+
+  // Load pending registration from localStorage if user just logged in
+  useEffect(() => {
+    if (user && tournamentId && eventId) {
+      const pendingStr = localStorage.getItem('pendingEventRegistration');
+      if (pendingStr) {
+        try {
+          const pendingData = JSON.parse(pendingStr);
+          if (pendingData.tournamentId === tournamentId && pendingData.eventId === eventId) {
+            setPartnerName(pendingData.partnerName || "");
+            setPartnerEmail(pendingData.partnerEmail || "");
+            // Auto-trigger team creation since they already clicked checkout previously
+            toast.success("Registration progress restored. Completing registration...");
+            createTeamMutation.mutate({
+              eventId: eventId,
+              eventFormat: event?.format || pendingData.eventFormat,
+              partnerName: pendingData.partnerName || undefined,
+              partnerEmail: pendingData.partnerEmail || undefined,
+            });
+          }
+          localStorage.removeItem('pendingEventRegistration');
+        } catch (e) {
+          console.error("Failed to parse pending event registration", e);
+        }
+      }
+    }
+  }, [user, tournamentId, eventId, event?.format]);
 
   // Create team mutation
   const createTeamMutation = useMutation({
@@ -155,14 +181,20 @@ const EventRegistration = () => {
   });
 
   const handleCreateTeam = () => {
-    if (!user) {
-      toast.error("Please login to register");
-      navigate("/login");
+    if (!eventId || !event) {
+      toast.error("Event information not found");
       return;
     }
 
-    if (!eventId || !event) {
-      toast.error("Event information not found");
+    if (!user) {
+      localStorage.setItem('pendingEventRegistration', JSON.stringify({
+        tournamentId,
+        eventId,
+        eventFormat: event.format,
+        partnerName: partnerName.trim(),
+        partnerEmail: partnerEmail.trim()
+      }));
+      navigate(`/auth?redirect=/tournaments/${tournamentId}/register/${eventId}`);
       return;
     }
 
@@ -318,15 +350,19 @@ const EventRegistration = () => {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between py-2 border-b border-border/30">
                             <span className="text-sm text-muted-foreground">Name</span>
-                            <span className="font-medium">{user?.name}</span>
+                            <span className="font-medium">{user ? user.name : "Guest Player"}</span>
                           </div>
                           <div className="flex items-center justify-between py-2 border-b border-border/30">
                             <span className="text-sm text-muted-foreground">Email</span>
-                            <span className="font-medium">{user?.email}</span>
+                            <span className="font-medium">{user ? user.email : "Will collect at checkout"}</span>
                           </div>
                           <div className="flex items-center justify-between py-2">
                             <span className="text-sm text-muted-foreground">Skill Level</span>
-                            <Badge variant="secondary" className="bg-primary/10 text-primary">{user?.skillLevel}</Badge>
+                            {user ? (
+                              <Badge variant="secondary" className="bg-primary/10 text-primary">{user.skillLevel}</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-muted text-muted-foreground">Pending</Badge>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Globe, Mail, ThumbsUp } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-background-dark border-t border-white/5 pt-24 pb-12">
+    <footer className="bg-card border-t border-border/60 pt-24 pb-12">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-20">
           {/* Brand Section */}

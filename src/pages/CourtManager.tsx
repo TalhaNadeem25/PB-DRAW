@@ -1,48 +1,47 @@
-import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  ArrowLeft,
-  Settings,
-  Wand2,
-  Trash2,
-  Plus,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  MapPin,
-  GripVertical,
-  Printer,
-} from "lucide-react";
-import { tournamentAPI, courtAPI, poolAPI } from "@/services/api";
-import { format } from "date-fns";
-import { toast } from "sonner";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { SkeletonGrid } from "@/components/ui/skeleton-card";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { courtAPI, poolAPI, tournamentAPI } from "@/services/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import {
+    AlertCircle,
+    ArrowLeft,
+    CheckCircle,
+    Clock,
+    GripVertical,
+    Loader2,
+    MapPin,
+    Plus,
+    Settings,
+    Trash2,
+    Wand2
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 interface Event {
   _id: string;
@@ -318,8 +317,11 @@ const CourtManager = () => {
   if (tournamentLoading || gridLoading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="min-h-screen bg-background">
+          <div className="border-b border-border/60 bg-card/50 px-4 sm:px-6 py-6" />
+          <div className="container mx-auto px-4 sm:px-6 py-8">
+            <SkeletonGrid count={3} />
+          </div>
         </div>
       </Layout>
     );

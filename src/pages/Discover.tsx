@@ -1,36 +1,34 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
-import {
-  Search,
-  MapPin,
-  Calendar,
-  Users,
-  Trophy,
-  Filter,
-  Loader2,
-  Award,
-  Clock,
-  DollarSign,
-  ChevronRight,
-  Sparkles,
-} from "lucide-react";
-import { tournamentAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import { tournamentAPI } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import {
+    Award,
+    Calendar,
+    ChevronRight,
+    Clock,
+    DollarSign,
+    Filter,
+    MapPin,
+    Search,
+    Sparkles,
+    Trophy
+} from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Discover = () => {
   const navigate = useNavigate();
@@ -163,11 +161,8 @@ const Discover = () => {
         {/* Tournament Grid */}
         <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="glass p-8 rounded-2xl text-center">
-                <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading tournaments...</p>
-              </div>
+            <div className="py-8">
+              <SkeletonGrid count={6} />
             </div>
           ) : sortedTournaments.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

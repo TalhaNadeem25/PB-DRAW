@@ -1,42 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Trophy,
-  Calendar,
-  MapPin,
-  Users,
-  Loader2,
-  AlertCircle,
-  TrendingUp,
-  Clock,
-  Target,
-  Medal,
-  Play,
-  UserPlus,
-  Award,
-  ArrowRight,
-  Bell,
-  Settings,
-  Plus,
-  Ticket,
-  QrCode,
-  Sparkles,
-  Brain,
-  Zap,
-  XCircle,
-} from "lucide-react";
-import { tournamentAPI, authAPI, teamAPI, invitationAPI } from "@/services/api";
 import TicketCard from "@/components/check-in/TicketCard";
-import WaitlistStatus from "@/components/registration/WaitlistStatus";
+import Layout from "@/components/layout/Layout";
 import CancelRegistrationDialog from "@/components/registration/CancelRegistrationDialog";
-import { useAuth } from "@/contexts/AuthContext";
-import { format } from "date-fns";
+import WaitlistStatus from "@/components/registration/WaitlistStatus";
 import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SkeletonGrid } from "@/components/ui/skeleton-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { authAPI, invitationAPI, teamAPI, tournamentAPI } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { AlertCircle, ArrowRight, Award, Bell, Brain, Calendar, Clock, Loader2, MapPin, Medal, Play, Plus, Settings, Sparkles, Target, Ticket, TrendingUp, Trophy, UserPlus, Users, XCircle, Zap } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -465,7 +443,64 @@ const Dashboard = () => {
             </div>
           ) : (
             /* PLAYER DASHBOARD */
-            <div className="space-y-8">
+            <Tabs defaultValue="overview" className="w-full space-y-8">
+              <TabsList className="bg-muted p-1 rounded-xl h-auto">
+                <TabsTrigger value="overview" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="events" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                  Events & Waitlist
+                </TabsTrigger>
+                <TabsTrigger value="teams" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                  Teams & Network
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-8 animate-in fade-in-50 duration-500">
+              
+              {/* Next Match Persistent Banner */}
+              {myEventRegistrations.length > 0 && (
+                <Card className="border-0 bg-hero-gradient text-primary-foreground rounded-2xl overflow-hidden relative shadow-md">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+                  <CardContent className="p-6 relative z-10 flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex-shrink-0 text-center md:text-left">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full mb-3 border border-white/20">
+                        <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />
+                        <span className="text-xs font-bold font-display uppercase tracking-widest text-white">Up Next</span>
+                      </div>
+                      <div className="flex items-center justify-center md:justify-start gap-4">
+                        <div className="text-center">
+                          <p className="text-sm font-display font-semibold uppercase tracking-wider text-white/80">
+                            {myEventRegistrations[0].tournamentStartDate ? format(new Date(myEventRegistrations[0].tournamentStartDate), 'MMM') : 'TBD'}
+                          </p>
+                          <p className="text-4xl font-display font-black leading-none">
+                            {myEventRegistrations[0].tournamentStartDate ? format(new Date(myEventRegistrations[0].tournamentStartDate), 'dd') : '--'}
+                          </p>
+                        </div>
+                        <div className="h-10 w-px bg-white/20" />
+                        <div className="text-left">
+                          <h3 className="font-display font-bold text-xl leading-tight line-clamp-1">
+                            {myEventRegistrations[0].eventName}
+                          </h3>
+                          <p className="text-sm font-medium text-white/90 truncate flex items-center gap-1.5">
+                            <Trophy className="w-3.5 h-3.5" />
+                            {myEventRegistrations[0].tournamentName}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 flex justify-center md:justify-end gap-3 w-full md:w-auto mt-4 md:mt-0">
+                      <Button className="bg-white text-primary hover:bg-neutral-100 font-display font-bold uppercase tracking-widest w-full md:w-auto rounded-xl h-12" asChild>
+                        <Link to={`/tournaments/${myEventRegistrations[0].tournamentId}`}>
+                          View Bracket <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Player Stats — hero row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                 {/* Win rate hero card */}
@@ -554,30 +589,8 @@ const Dashboard = () => {
                 </Card>
               </div>
 
-              {/* Pending Invitations - banner style */}
-              {pendingInvitations.length > 0 && (
-                <Card className="border-orange-200 bg-orange-50/80 rounded-2xl overflow-hidden">
-                  <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                        <UserPlus className="w-5 h-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="font-display font-bold text-orange-900">
-                          Pending team invitation
-                        </p>
-                        <p className="text-sm text-orange-800">
-                          You have {pendingInvitations.length} team invitation
-                          {pendingInvitations.length > 1 ? "s" : ""} waiting for your response.
-                        </p>
-                      </div>
-                    </div>
-                    <Button className="md:w-auto w-full bg-orange-500 hover:bg-orange-600 text-white" asChild>
-                      <Link to="/teams">Review</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Pending Invitations moved to Teams tab */}
+
 
               {/* My Event Registrations */}
               <Card className="rounded-2xl">
@@ -597,9 +610,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {teamsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                    </div>
+                    <SkeletonGrid count={3} />
                   ) : myEventRegistrations.length > 0 ? (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                       {myEventRegistrations.map((registration: any) => (
@@ -692,7 +703,7 @@ const Dashboard = () => {
                       <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>No event registrations</p>
                       <Button asChild className="mt-4">
-                        <Link to="/discover">Discover Tournaments</Link>
+                        <Link to="/tournaments">Find Tournaments</Link>
                       </Button>
                     </div>
                   )}
@@ -709,7 +720,7 @@ const Dashboard = () => {
                         <CardDescription>Based on your skill level and location</CardDescription>
                       </div>
                       <Button variant="outline" size="sm" asChild>
-                        <Link to="/discover">
+                        <Link to="/tournaments">
                           Browse All
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Link>
@@ -748,54 +759,9 @@ const Dashboard = () => {
                 </Card>
               )}
 
-              {/* My Teams */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="font-display text-xl">My Teams</CardTitle>
-                      <CardDescription>Teams you're a part of</CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/teams">
-                        Manage Teams
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {teamsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : myTeams.length > 0 ? (
-                    <div className="space-y-3">
-                      {myTeams.slice(0, 5).map((team: any) => (
-                        <div key={team._id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div>
-                            <p className="font-medium">{team.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {team.players?.length || 0} player(s)
-                            </p>
-                          </div>
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to="/teams">View</Link>
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No teams yet</p>
-                      <p className="text-sm mt-1">Register for a tournament to create your first team</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* My Teams moved to Teams tab */}
 
-              {/* Deep Performance Insights & Partner Spotlight */}
+              {/* Deep Performance Insights */}
               <div className="grid gap-6 lg:grid-cols-2">
                 <Card className="glass-card rounded-2xl">
                   <CardHeader>
@@ -838,31 +804,10 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="glass-card rounded-2xl">
-                  <CardHeader>
-                    <CardTitle className="font-display text-lg">Partner Spotlight</CardTitle>
-                    <CardDescription>Your most active teammate</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-hero-gradient flex items-center justify-center text-primary-foreground font-display font-bold text-lg">
-                      {(myTeams[0]?.players?.[0]?.name || user.name || 'P').charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold">
-                        {myTeams[0]?.players?.find((p: any) => p._id !== user._id)?.name ||
-                          myTeams[0]?.name ||
-                          "Join a team to get started"}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Stay connected with your partner for upcoming matches and invitations.
-                      </p>
-                      <Button variant="outline" size="sm" className="mt-3">
-                        Send Message
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
+              </TabsContent>
+
+              <TabsContent value="events" className="space-y-8 animate-in fade-in-50 duration-500">
 
               {/* My Tickets */}
               <Card>
@@ -938,7 +883,82 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               )}
-            </div>
+              </TabsContent>
+
+              <TabsContent value="teams" className="space-y-8 animate-in fade-in-50 duration-500">
+                {/* Pending Invitations - banner style */}
+                {pendingInvitations.length > 0 && (
+                  <Card className="border-orange-200 bg-orange-50/80 rounded-2xl overflow-hidden">
+                    <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                          <UserPlus className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="font-display font-bold text-orange-900">
+                            Pending team invitation
+                          </p>
+                          <p className="text-sm text-orange-800">
+                            You have {pendingInvitations.length} team invitation
+                            {pendingInvitations.length > 1 ? "s" : ""} waiting for your response.
+                          </p>
+                        </div>
+                      </div>
+                      <Button className="md:w-auto w-full bg-orange-500 hover:bg-orange-600 text-white" asChild>
+                        <Link to="/teams">Review</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* My Teams */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="font-display text-xl">My Teams</CardTitle>
+                        <CardDescription>Teams you're a part of</CardDescription>
+                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to="/teams">
+                          Manage Teams
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {teamsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : myTeams.length > 0 ? (
+                      <div className="space-y-3">
+                        {myTeams.slice(0, 5).map((team: any) => (
+                          <div key={team._id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <p className="font-medium">{team.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {team.players?.length || 0} player(s)
+                              </p>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild>
+                              <Link to="/teams">View</Link>
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No teams yet</p>
+                        <p className="text-sm mt-1">Register for a tournament to create your first team</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </div>

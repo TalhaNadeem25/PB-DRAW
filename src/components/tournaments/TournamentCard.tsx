@@ -1,9 +1,7 @@
-import { Link } from "react-router-dom";
-import { Calendar, MapPin, Heart, Share2, Signal } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { Activity, MapPin, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface TournamentCardProps {
   id: string;
@@ -20,6 +18,7 @@ interface TournamentCardProps {
   skillLevel?: string;
   imageUrl?: string;
   organizerId?: string;
+  registrationDeadline?: string;
 }
 
 const TournamentCard = ({
@@ -32,112 +31,109 @@ const TournamentCard = ({
   maxPlayers,
   eventCount,
   status,
-  featured,
   entryFee,
   skillLevel,
   imageUrl,
   organizerId,
+  registrationDeadline,
 }: TournamentCardProps) => {
   const { user } = useAuth();
   const isOwner = user?._id === organizerId || user?.role === 'admin';
   const isLive = status === "in-progress";
 
-  // Extract city/state from location
   const locationParts = location?.split(",") || [];
   const shortLocation = locationParts.length >= 2
     ? `${locationParts[0].trim()}, ${locationParts[locationParts.length - 1].trim()}`
     : location;
 
+  // Calculate spots
+  const spotsTotal = maxPlayers || 100;
+  const spotsFilled = playerCount || 0;
+  const spotsRemaining = Math.max(0, spotsTotal - spotsFilled);
+  const isFillingFast = spotsRemaining > 0 && spotsRemaining <= 20;
+
+  // Calculate days until deadline
+  const daysUntilDeadline = registrationDeadline 
+    ? Math.ceil((new Date(registrationDeadline).getTime() - new Date().getTime()) / (1000 * 3600 * 24))
+    : null;
+  const showUrgency = status === 'open' && daysUntilDeadline !== null && daysUntilDeadline > 0 && daysUntilDeadline <= 7;
+
   return (
-    <div className="group bg-card rounded-2xl overflow-hidden border border-border/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
-      {/* Image Area */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Signal className="w-8 h-8 text-primary/40" />
-            </div>
+    <div className="bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden h-full group">
+      <div className="relative h-48 w-full bg-cover bg-center bg-muted" style={{ backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined }}>
+        {!imageUrl && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+            <Activity className="w-8 h-8 text-primary/30" />
           </div>
         )}
-
-        {/* Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-        {/* LIVE Badge */}
-        {isLive && (
-          <div className="absolute top-3 left-3">
-            <Badge className="bg-primary text-primary-foreground font-display text-xs px-3 py-1 shadow-md border-0 gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
-              LIVE
-            </Badge>
-          </div>
-        )}
-
-        {/* Entry Fee Badge */}
-        {entryFee !== undefined && entryFee > 0 && (
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-foreground/80 text-background font-display text-xs px-3 py-1 shadow-md border-0 backdrop-blur-sm">
-              ${entryFee} Entry
-            </Badge>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        {/* Location + Favorite */}
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-display font-semibold tracking-wider text-primary uppercase">
-            {shortLocation}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+        
+        <div className="absolute top-4 left-4 flex gap-2">
+          <span className={`px-3 py-1 rounded bg-white font-display font-black text-[10px] uppercase tracking-widest ${isLive ? 'text-amber' : status === 'open' ? 'text-primary' : 'text-muted-foreground'}`}>
+            {isLive ? 'LIVE' : status}
           </span>
-          <button className="text-muted-foreground hover:text-destructive transition-colors p-1">
-            <Heart className="w-4 h-4" />
-          </button>
         </div>
-
-        {/* Tournament Name */}
-        <h3 className="text-lg font-display font-bold text-foreground mb-3 leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-          {name}
-        </h3>
-
-        {/* Date + Skill */}
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>{startDate} - {endDate}</span>
+        
+        {((isLive || isFillingFast) || showUrgency) && status !== 'completed' && (
+          <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
+            {(isLive || isFillingFast) && (
+              <span className={`font-display font-bold text-xs text-white bg-black/50 backdrop-blur-md px-3 py-1 rounded-full flex items-center justify-center gap-1.5 border border-white/20 ${isLive ? 'text-amber' : ''}`}>
+                {isLive && <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />}
+                {isLive ? 'Registering' : `${spotsRemaining} spots left`}
+              </span>
+            )}
+            {showUrgency && (
+              <span className="font-display font-bold text-xs text-white bg-destructive/80 backdrop-blur-md px-3 py-1 rounded-full flex items-center justify-center border border-white/20 shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                Closes in {daysUntilDeadline} {daysUntilDeadline === 1 ? 'day' : 'days'}
+              </span>
+            )}
           </div>
-          {skillLevel && (
-            <div className="flex items-center gap-1.5">
-              <Signal className="w-3.5 h-3.5" />
-              <span>{skillLevel}</span>
-            </div>
-          )}
-        </div>
+        )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="absolute bottom-4 left-4 right-4 text-white">
+          <h4 className="text-xl font-display font-black uppercase tracking-tight leading-none mb-1 shadow-sm group-hover:text-primary transition-colors line-clamp-2">
+            {name}
+          </h4>
+          <p className="font-medium text-xs text-white/90 flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-primary" /> {shortLocation} • {startDate}
+          </p>
+        </div>
+      </div>
+      
+      <div className="p-4 flex-1 flex flex-col bg-white">
+        <div className="flex justify-between items-center mb-4 text-sm font-semibold text-muted-foreground">
+          <span className="bg-muted px-2 py-1 rounded-md text-xs">{skillLevel || "All Levels"}</span>
+          <span className="text-foreground font-bold">{entryFee ? `$${entryFee}` : 'Free'} Entry</span>
+        </div>
+        
+        <div className="mt-auto">
+          {status !== 'completed' && (
+            <>
+              <div className="flex justify-between items-end mb-1 text-sm font-bold">
+                <span className="text-foreground flex items-center gap-1.5 text-xs"><Users className="w-3.5 h-3.5 text-muted-foreground"/> {spotsFilled}/{spotsTotal} filled</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-1.5 mb-5 overflow-hidden">
+                <div 
+                  className={`h-full rounded-full ${isFillingFast ? 'bg-amber' : 'bg-primary'}`} 
+                  style={{ width: `${Math.min(100, (spotsFilled / spotsTotal) * 100)}%` }}
+                ></div>
+              </div>
+            </>
+          )}
+
           <Button
-            className="flex-1 font-display text-sm h-10 shadow-sm"
+            className="w-full bg-foreground text-background hover:bg-primary font-display font-bold uppercase tracking-widest text-xs transition-colors py-5 rounded-xl shadow-none"
             asChild
           >
             <Link to={isOwner ? `/tournaments/${id}` : status === "open" ? `/tournaments/${id}/register` : `/tournaments/${id}`}>
               {isOwner
-                ? "View Details"
+                ? "Manage Event"
                 : status === "open"
                   ? "Register Now"
-                  : status === "in-progress"
+                  : isLive
                     ? "Watch Live"
                     : "View Details"}
             </Link>
-          </Button>
-          <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
-            <Share2 className="w-4 h-4" />
           </Button>
         </div>
       </div>

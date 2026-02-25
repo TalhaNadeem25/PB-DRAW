@@ -1,55 +1,56 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  CalendarIcon,
-  Plus,
-  Trash2,
-  Trophy,
-  MapPin,
-  Users,
-  DollarSign,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Loader2,
-  Sparkles,
-  Brain,
-} from "lucide-react";
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
-import { tournamentAPI, eventAPI } from "@/services/api";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import type { TournamentEvent, GameType, TournamentFormat } from "@/types/tournament";
+import { cn } from "@/lib/utils";
+import api, { eventAPI, tournamentAPI } from "@/services/api";
+import type { GameType, TournamentEvent, TournamentFormat } from "@/types/tournament";
 import { SKILL_LEVEL_RANGES, formatEventSkillLevel } from "@/types/tournament";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import {
+    ArrowLeft,
+    ArrowRight,
+    Brain,
+    CalendarIcon,
+    Check,
+    DollarSign,
+    Loader2,
+    MapPin,
+    Plus,
+    Sparkles,
+    Trash2,
+    Trophy,
+    Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
 const tournamentFormats: TournamentFormat[] = ["Round Robin", "Single Elimination", "Double Elimination", "Pools + Playoffs"];
 
@@ -133,6 +134,15 @@ const CreateTournament = () => {
       const message = error.response?.data?.message || 'Failed to create tournament';
       toast.error(message);
     },
+  });
+
+  const { data: stripeStatus } = useQuery({
+    queryKey: ['stripe-connect-status'],
+    queryFn: async () => {
+      const response = await api.get('/stripe/connect/status');
+      return response.data;
+    },
+    enabled: isAuthenticated && (user?.role === 'organizer' || user?.role === 'admin'),
   });
 
   // Handle authentication and authorization checks
@@ -219,7 +229,8 @@ const CreateTournament = () => {
 
   const canProceed = () => {
     if (step === 1) {
-      return name && location && address && description && startDate && endDate && registrationDeadline;
+      // Must be connected to Stripe and have all fields filled
+      return !!stripeStatus?.connected && name && location && address && description && startDate && endDate && registrationDeadline;
     }
     if (step === 2) {
       return events.length > 0;
@@ -297,6 +308,9 @@ const CreateTournament = () => {
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <div className="space-y-8 animate-fade-in">
+                {/* Stripe Connect Gate */}
+                <ConnectAccountStatus />
+
                 {/* AI Planner Promotion Banner */}
                 <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent overflow-hidden relative">
                   <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full blur-2xl" />

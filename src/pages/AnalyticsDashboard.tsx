@@ -1,16 +1,17 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import Layout from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { analyticsAPI, tournamentAPI } from '@/services/api';
-import Layout from '@/components/layout/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, DollarSign, Trophy, Users, TrendingUp, FileText, FileSpreadsheet } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { DollarSign, FileSpreadsheet, FileText, TrendingUp, Trophy, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from 'sonner';
-import { Progress } from '@/components/ui/progress';
 
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
@@ -108,11 +109,17 @@ const AnalyticsDashboard = () => {
     return (
       <Layout>
         <div className="min-h-screen bg-background">
-          <div className="flex items-center justify-center py-24">
-            <div className="glass-card rounded-2xl p-8 text-center">
-              <BarChart className="w-10 h-10 text-primary mx-auto mb-4 animate-pulse" />
-              <p className="text-muted-foreground">Loading analytics...</p>
+          <div className="border-b border-border/60 bg-card/50 -mx-4 px-4 py-6 mb-8 rounded-b-none animate-pulse">
+             <Skeleton className="h-8 w-64 mb-2" />
+             <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {[1, 2, 3, 4].map(i => (
+                <Skeleton key={i} className="h-24 rounded-2xl" />
+              ))}
             </div>
+            <Skeleton className="h-[400px] rounded-2xl" />
           </div>
         </div>
       </Layout>

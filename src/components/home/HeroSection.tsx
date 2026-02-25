@@ -1,68 +1,97 @@
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trophy, Search, LayoutDashboard } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Activity, MapPin, Search } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [location, setLocation] = useState("");
+  const [skill, setSkill] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (location) params.append('location', location);
+    if (skill) params.append('skill', skill);
+    navigate(`/tournaments?${params.toString()}`);
+  };
+
   return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
-      {/* Hero Background Media */}
-      <div className="absolute inset-0 z-0">
-        <div 
-          className="w-full h-full bg-cover bg-center" 
-          style={{ 
-            backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuB2ro2JcsI0AMh_eL9MTuomWPeU3IQgjXOZ_lbWs-qOPERxZiZLY83Weh3gbaWQNBnCOGogw8yElfVNwR68dFrrgZnio0rE-UVUT2K_Rg9XFOmnV1qi2bkT6dwK9rIBOv6QCrqVACeOiuyM-s5dOR-hEGRPibWpzyEsBeKwh-k7FaEfReD8TnyXUYFghCsUDcNjoF7zbV2CNrReDImqTx0XsGDIBIHKK99tvuOPw5P-xeb6A_sNBgG9v2wWzcfmimu0vjp__1PVgpI')" 
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background-dark/40 via-background-dark/60 to-background-dark/95" />
-      </div>
-      
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10 w-full">
-        <div className="max-w-3xl">
-          {/* Live Badge */}
-          <div className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-1.5 rounded-full mb-8 border border-primary/30">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-            </span>
-            <span className="text-xs font-display font-black uppercase tracking-widest">Now Live: Summer Nationals</span>
-          </div>
-          
+    <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden bg-background">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10 w-full flex flex-col md:flex-row items-center gap-12">
+        <div className="flex-1 text-center md:text-left">
           {/* Headline */}
-          <h1 className="text-white text-4xl sm:text-6xl md:text-8xl font-display font-black leading-[0.9] tracking-tighter mb-6 sm:mb-8 uppercase italic">
-            Your Tournament, <br/>
-            <span className="text-primary underline decoration-4 underline-offset-8">Perfected.</span>
+          <h1 className="text-foreground text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-black leading-[0.9] tracking-tighter mb-6 uppercase">
+            Find. Play.<br/>
+            <span className="text-primary underline decoration-4 underline-offset-8">Win.</span>
           </h1>
           
           {/* Description */}
-          <p className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed max-w-2xl mb-12">
-            Join the fastest-growing community in pickleball. From local bracket play to international championships, we provide the tools to compete, manage, and win.
+          <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed max-w-xl mx-auto md:mx-0 mb-8">
+            America's fastest-growing premium pickleball platform. Join 12,400+ players competing in real-time tournaments.
           </p>
           
-          {/* CTAs */}
-          <div className="flex flex-wrap gap-4">
-            <Button 
-              variant="default" 
-              size="lg" 
-              className="px-10 py-5 bg-primary text-primary-foreground rounded-xl font-display font-black text-lg uppercase tracking-tighter hover:scale-105 transition-transform flex items-center gap-2"
-              asChild
-            >
-              <Link to="/tournaments">
-                Find a Tournament
-                <Search className="w-5 h-5" />
-              </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="px-10 py-5 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-xl font-display font-black text-lg uppercase tracking-tighter hover:bg-white/20 transition-all flex items-center gap-2"
-              asChild
-            >
-              <Link to="/create-tournament">
-                Organize Event
-                <LayoutDashboard className="w-5 h-5" />
-              </Link>
+          {/* Secondary CTA */}
+          <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Organizers:</span>
+            <Button variant="outline" className="rounded-full shadow-sm hover:border-primary hover:text-primary transition-colors bg-white font-bold" asChild>
+              <Link to="/create-tournament">Host a Tournament (Free)</Link>
             </Button>
           </div>
+        </div>
+
+        {/* Search Card */}
+        <div className="flex-1 w-full max-w-md bg-white rounded-2xl p-6 md:p-8 shadow-md border border-border">
+          <form onSubmit={handleSearch} className="space-y-4">
+            <h3 className="text-2xl font-display font-bold text-foreground mb-4 uppercase tracking-tight">Find an Event</h3>
+            
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  placeholder="Tournament name..." 
+                  className="pl-10 h-12 bg-muted/30 border-border focus:bg-white transition-colors"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  placeholder="City or zip code..." 
+                  className="pl-10 h-12 bg-muted/30 border-border focus:bg-white transition-colors"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+
+              <div className="relative">
+                <Activity className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Select value={skill} onValueChange={setSkill}>
+                  <SelectTrigger className="pl-10 h-12 bg-muted/30 border-border focus:bg-white transition-colors">
+                    <SelectValue placeholder="Skill level (e.g. 3.5)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2.5">2.5 & Under</SelectItem>
+                    <SelectItem value="3.0">3.0</SelectItem>
+                    <SelectItem value="3.5">3.5</SelectItem>
+                    <SelectItem value="4.0">4.0</SelectItem>
+                    <SelectItem value="4.5">4.5</SelectItem>
+                    <SelectItem value="5.0+">5.0+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button type="submit" size="lg" className="w-full h-12 mt-2 bg-primary hover:bg-primary/90 text-primary-foreground font-display font-bold text-lg uppercase tracking-wide">
+              Find Tournaments →
+            </Button>
+          </form>
         </div>
       </div>
     </section>
