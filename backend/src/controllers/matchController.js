@@ -313,6 +313,47 @@ export const updateMatchScore = async (req, res, next) => {
         }
       }
 
+      // DE: winners bracket loser → losers bracket
+      if (match.bracket === 'winners' && match.loserNextMatchId) {
+        const loserId = winnerId?.toString() === (match.team1?._id ?? match.team1)?.toString()
+          ? (match.team2?._id ?? match.team2)
+          : (match.team1?._id ?? match.team1);
+        if (loserId) {
+          const lrMatch = await Match.findById(match.loserNextMatchId);
+          if (lrMatch) {
+            const slot = lrMatch.previousMatch1Id?.toString() === match._id.toString()
+              ? 'team1' : 'team2';
+            if (!lrMatch[slot]) { lrMatch[slot] = loserId; await lrMatch.save(); }
+          }
+        }
+      }
+
+      // DE: losers bracket winner advances through LR
+      if (match.bracket === 'losers' && match.nextMatchId && winnerId) {
+        const nextMatch = await Match.findById(match.nextMatchId);
+        if (nextMatch) {
+          const slot = nextMatch.previousMatch1Id?.toString() === match._id.toString()
+            ? 'team1' : 'team2';
+          if (!nextMatch[slot]) { nextMatch[slot] = winnerId; await nextMatch.save(); }
+        }
+      }
+
+      // DE: Grand Final — check if bracket reset is needed
+      if (match.bracket === 'finals' && !match.isGrandFinalReset && match.nextMatchId && winnerId) {
+        const lfWinnerId = (match.team2?._id ?? match.team2)?.toString();
+        if (lfWinnerId && winnerId.toString() === lfWinnerId) {
+          // LF winner (was 1-loss) beat WF winner → both now have 1 loss, play reset
+          const resetMatch = await Match.findById(match.nextMatchId);
+          if (resetMatch?.isGrandFinalReset && !resetMatch.team1) {
+            resetMatch.team1 = match.team1;
+            resetMatch.team2 = match.team2;
+            await resetMatch.save();
+          }
+        }
+        // If WF winner (team1) won: no reset needed — tournament is over
+      }
+      // DE: Bracket Reset final — winner is champion, no further advancement needed
+
       // Semifinals: winner → final, loser → bronze
       if (match.bracket === 'semifinals' && winnerId) {
         // Determine loser using stored winner (works for both single and multi-game)

@@ -52,6 +52,7 @@ interface Match {
   matchNumber: number;
   matchFormat?: string;
   matchFormatConfig?: MatchFormatConfig;
+  isGrandFinalReset?: boolean;
 }
 
 interface PlayoffBracketProps {
@@ -67,11 +68,24 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
   const [team2Score, setTeam2Score] = useState(0);
   const [editGames, setEditGames] = useState<GameScore[]>([]);
 
-  // Separate matches by bracket type (qualifiers = round 1 when 8+ teams, bracket 'winners')
+  // Detect double-elimination
+  const isDoubleElim = matches.some(m => m.bracket === 'losers');
+
+  // SE match partitions (used only when !isDoubleElim)
   const qualifiers = matches.filter(m => m.bracket === 'winners');
   const semifinals = matches.filter(m => m.bracket === 'semifinals');
-  const finals = matches.find(m => m.bracket === 'finals');
+  const finals = matches.find(m => m.bracket === 'finals' && !m.isGrandFinalReset);
   const bronzeMatch = matches.find(m => m.bracket === 'bronze');
+
+  // DE match partitions
+  const deWinnersMatches = matches.filter(m => m.bracket === 'winners');
+  const deLosersMatches = matches.filter(m => m.bracket === 'losers');
+  const deGfMatch = matches.find(m => m.bracket === 'finals' && !m.isGrandFinalReset);
+  const deGfReset = matches.find(m => m.bracket === 'finals' && m.isGrandFinalReset);
+
+  // WR round labels
+  const wrMaxRound = deWinnersMatches.reduce((max, m) => Math.max(max, m.round), 0);
+  const lrMaxRound = deLosersMatches.reduce((max, m) => Math.max(max, m.round), 0);
 
   const getMatchScore = (match: Match) => ({
     team1: match.team1Score ?? match.score?.team1Score ?? 0,
@@ -117,6 +131,24 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
     return 'TBD'; // 'winners' qualifier waiting for play-in winner
   };
 
+  const getMatchLabel = (match: Match): string => {
+    if (isDoubleElim) {
+      if (match.bracket === 'winners') {
+        return match.round === wrMaxRound ? 'Winners Final' : `WR Round ${match.round}`;
+      }
+      if (match.bracket === 'losers') {
+        return match.round === lrMaxRound ? 'Losers Final' : `LR Round ${match.round}`;
+      }
+      if (match.bracket === 'finals') {
+        return match.isGrandFinalReset ? 'Bracket Reset' : 'Grand Final';
+      }
+    }
+    if (match.bracket === 'semifinals') return 'Semifinal';
+    if (match.bracket === 'winners') return 'Qualifier';
+    if (match.bracket === 'bronze') return 'Bronze Medal';
+    return 'Final';
+  };
+
   const MatchCard = ({ match, position }: { match: Match; position: 'left' | 'right' | 'center' }) => {
     const score = getMatchScore(match);
     const matchTeam1Score = score.team1;
@@ -142,7 +174,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
         <div className="flex items-center justify-between mb-3">
           <div className="flex flex-col gap-0.5">
             <Badge variant="outline" className="text-xs w-fit">
-              {match.bracket === 'semifinals' ? 'Semifinal' : match.bracket === 'winners' ? 'Qualifier' : match.bracket === 'bronze' ? 'Bronze Medal' : 'Final'}
+              {getMatchLabel(match)}
             </Badge>
             {match.matchFormat && (
               <span className="text-[10px] text-muted-foreground">{formatMatchFormatShort(match.matchFormat)}</span>
@@ -236,66 +268,157 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
     );
   };
 
+  // Group DE matches by round for column rendering
+  const groupByRound = (ms: Match[]) => {
+    const map = new Map<number, Match[]>();
+    ms.forEach(m => {
+      if (!map.has(m.round)) map.set(m.round, []);
+      map.get(m.round)!.push(m);
+    });
+    return [...map.entries()].sort(([a], [b]) => a - b);
+  };
+
+  const wrByRound = groupByRound(deWinnersMatches);
+  const lrByRound = groupByRound(deLosersMatches);
+
   return (
     <div className="space-y-6">
-      {/* Qualifiers (when 8+ teams: first round before semifinals) */}
-      {qualifiers.length > 0 && (
-        <div className="mb-8 pb-8 border-b border-border/50">
-          <div className="text-center mb-4">
-            <h3 className="font-semibold text-lg">Qualifiers</h3>
-            <p className="text-sm text-muted-foreground">Winners advance to semifinals</p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {qualifiers.map((match) => (
-              <MatchCard key={match._id} match={match} position="left" />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Bracket Visualization: Semifinals → Final + Bronze */}
-      <div className="grid lg:grid-cols-3 gap-8 items-center">
-        {/* Semifinals Column */}
-        <div className="space-y-6">
-          <div className="text-center mb-4">
-            <h3 className="font-semibold text-lg">Semifinals</h3>
-            <p className="text-sm text-muted-foreground">{qualifiers.length > 0 ? 'Round 2' : 'Round 1'}</p>
-          </div>
-          {semifinals.map((match) => (
-            <MatchCard key={match._id} match={match} position="left" />
-          ))}
-        </div>
-
-        {/* Connector Lines */}
-        <div className="hidden lg:flex items-center justify-center">
-          <div className="w-full h-px bg-border relative">
-            <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2">
-              <Trophy className="w-6 h-6 text-primary" />
+      {/* ── Double-Elimination Layout ── */}
+      {isDoubleElim ? (
+        <>
+          {/* Winners Bracket */}
+          <div className="pb-6 border-b border-border/50">
+            <div className="text-center mb-4">
+              <h3 className="font-semibold text-lg">Winners Bracket</h3>
+              <p className="text-sm text-muted-foreground">Lose here and drop to Losers Bracket</p>
+            </div>
+            <div className="overflow-x-auto">
+              <div className="flex gap-6 min-w-max pb-2">
+                {wrByRound.map(([round, roundMatches]) => (
+                  <div key={round} className="space-y-4 w-56">
+                    <p className="text-xs font-semibold text-center text-muted-foreground uppercase tracking-wide">
+                      {round === wrMaxRound ? 'Winners Final' : `WR Round ${round}`}
+                    </p>
+                    {roundMatches.map(m => (
+                      <MatchCard key={m._id} match={m} position="left" />
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Finals Column */}
-        <div>
-          <div className="text-center mb-4">
-            <h3 className="font-semibold text-lg">Championship</h3>
-            <p className="text-sm text-muted-foreground">Final — Winner 🥇 Gold, Loser 🥈 Silver</p>
+          {/* Losers Bracket */}
+          <div className="pb-6 border-b border-border/50">
+            <div className="text-center mb-4">
+              <h3 className="font-semibold text-lg">Losers Bracket</h3>
+              <p className="text-sm text-muted-foreground">Lose here and you're eliminated</p>
+            </div>
+            <div className="overflow-x-auto">
+              <div className="flex gap-6 min-w-max pb-2">
+                {lrByRound.map(([round, roundMatches]) => (
+                  <div key={round} className="space-y-4 w-56">
+                    <p className="text-xs font-semibold text-center text-muted-foreground uppercase tracking-wide">
+                      {round === lrMaxRound ? 'Losers Final' : `LR Round ${round}`}
+                    </p>
+                    {roundMatches.map(m => (
+                      <MatchCard key={m._id} match={m} position="left" />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          {finals && <MatchCard match={finals} position="center" />}
-        </div>
-      </div>
 
-      {/* Bronze Medal Match (semifinal losers) */}
-      {bronzeMatch && (
-        <div className="mt-8 pt-8 border-t border-border/50">
-          <div className="text-center mb-4">
-            <h3 className="font-semibold text-lg">Bronze Medal Match</h3>
-            <p className="text-sm text-muted-foreground">Semifinal losers — Winner 🥉 Bronze, Loser 4th place</p>
+          {/* Grand Finals */}
+          <div>
+            <div className="text-center mb-4">
+              <h3 className="font-semibold text-lg">Grand Finals</h3>
+              <p className="text-sm text-muted-foreground">
+                Winners Bracket finalist (0 losses) vs Losers Bracket finalist (1 loss)
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-start">
+              {deGfMatch && (
+                <div className="w-full sm:w-64">
+                  <p className="text-xs font-semibold text-center text-muted-foreground uppercase tracking-wide mb-2">Grand Final</p>
+                  <MatchCard match={deGfMatch} position="center" />
+                </div>
+              )}
+              {/* Bracket reset — only show if it has been triggered (team1 populated) */}
+              {deGfReset?.team1 && (
+                <div className="w-full sm:w-64">
+                  <p className="text-xs font-semibold text-center text-amber-600 uppercase tracking-wide mb-2">Bracket Reset</p>
+                  <MatchCard match={deGfReset} position="center" />
+                </div>
+              )}
+            </div>
           </div>
-          <div className="max-w-md mx-auto">
-            <MatchCard match={bronzeMatch} position="center" />
+        </>
+      ) : (
+        <>
+          {/* ── Single-Elimination Layout (unchanged) ── */}
+
+          {/* Qualifiers (when 8+ teams: first round before semifinals) */}
+          {qualifiers.length > 0 && (
+            <div className="mb-8 pb-8 border-b border-border/50">
+              <div className="text-center mb-4">
+                <h3 className="font-semibold text-lg">Qualifiers</h3>
+                <p className="text-sm text-muted-foreground">Winners advance to semifinals</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {qualifiers.map((match) => (
+                  <MatchCard key={match._id} match={match} position="left" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bracket Visualization: Semifinals → Final + Bronze */}
+          <div className="grid lg:grid-cols-3 gap-8 items-center">
+            {/* Semifinals Column */}
+            <div className="space-y-6">
+              <div className="text-center mb-4">
+                <h3 className="font-semibold text-lg">Semifinals</h3>
+                <p className="text-sm text-muted-foreground">{qualifiers.length > 0 ? 'Round 2' : 'Round 1'}</p>
+              </div>
+              {semifinals.map((match) => (
+                <MatchCard key={match._id} match={match} position="left" />
+              ))}
+            </div>
+
+            {/* Connector Lines */}
+            <div className="hidden lg:flex items-center justify-center">
+              <div className="w-full h-px bg-border relative">
+                <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2">
+                  <Trophy className="w-6 h-6 text-primary" />
+                </div>
+              </div>
+            </div>
+
+            {/* Finals Column */}
+            <div>
+              <div className="text-center mb-4">
+                <h3 className="font-semibold text-lg">Championship</h3>
+                <p className="text-sm text-muted-foreground">Final — Winner 🥇 Gold, Loser 🥈 Silver</p>
+              </div>
+              {finals && <MatchCard match={finals} position="center" />}
+            </div>
           </div>
-        </div>
+
+          {/* Bronze Medal Match (semifinal losers) */}
+          {bronzeMatch && (
+            <div className="mt-8 pt-8 border-t border-border/50">
+              <div className="text-center mb-4">
+                <h3 className="font-semibold text-lg">Bronze Medal Match</h3>
+                <p className="text-sm text-muted-foreground">Semifinal losers — Winner 🥉 Bronze, Loser 4th place</p>
+              </div>
+              <div className="max-w-md mx-auto">
+                <MatchCard match={bronzeMatch} position="center" />
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Legend */}
@@ -324,13 +447,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
-              {selectedMatch?.bracket === 'winners'
-                ? 'Qualifier Match'
-                : selectedMatch?.bracket === 'semifinals'
-                  ? 'Semifinal Match'
-                  : selectedMatch?.bracket === 'bronze'
-                    ? 'Bronze Medal Match'
-                    : 'Championship Match'}
+              {selectedMatch ? getMatchLabel(selectedMatch) + ' Match' : 'Match Details'}
             </DialogTitle>
             <DialogDescription>
               Match details and information

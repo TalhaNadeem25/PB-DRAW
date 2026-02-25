@@ -257,7 +257,7 @@ const TournamentDetail = () => {
       name: newEvent.name,
       format: newEvent.gameType.toLowerCase().replace(" ", "-"),
       playFormat,
-      addPlayoffStage: !!newEvent.addPlayoffStage,
+      addPlayoffStage: playFormat !== 'round-robin',
       skillLevel: newEvent.skillLevel,
       maxTeams: newEvent.maxPlayers,
       entryFee: newEvent.entryFee,

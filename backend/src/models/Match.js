@@ -116,6 +116,11 @@ const matchSchema = new mongoose.Schema({
     ref: 'Match',
     default: null
   },
+  /** Double-elimination only: true for the bracket-reset match after Grand Final */
+  isGrandFinalReset: {
+    type: Boolean,
+    default: false
+  },
   scheduledTime: {
     type: Date,
     default: null

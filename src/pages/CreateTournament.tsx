@@ -102,7 +102,7 @@ const CreateTournament = () => {
             name: event.name,
             format: event.gameType.toLowerCase().replace(/ /g, "-"),
             playFormat,
-            addPlayoffStage: !!(event as TournamentEvent).addPlayoffStage,
+            addPlayoffStage: playFormat !== 'round-robin',
             skillLevel: event.skillLevel,
             maxTeams: event.maxPlayers,
             entryFee: event.entryFee,
@@ -587,34 +587,6 @@ const CreateTournament = () => {
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Add Playoff Stage?</Label>
-                        <div className="flex gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="addPlayoffStage"
-                              checked={newEvent.addPlayoffStage === true}
-                              onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: true })}
-                              className="rounded-full border-primary text-primary"
-                            />
-                            <span>Yes</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="addPlayoffStage"
-                              checked={newEvent.addPlayoffStage === false}
-                              onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: false })}
-                              className="rounded-full border-primary text-primary"
-                            />
-                            <span>No</span>
-                          </label>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Enable or disable a playoff bracket for this event (semifinals/final after pool or initial rounds).
-                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label>Skill Level Range</Label>

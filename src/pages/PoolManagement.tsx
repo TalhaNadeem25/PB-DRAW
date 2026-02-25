@@ -67,11 +67,13 @@ const PoolManagement = () => {
     semifinals: string;
     finals: string;
     bronze: string;
+    losers: string;
   }>({
     qualifiers: MATCH_FORMAT_LABELS[1],
     semifinals: MATCH_FORMAT_LABELS[1],
     finals: MATCH_FORMAT_LABELS[1],
     bronze: MATCH_FORMAT_LABELS[1],
+    losers: MATCH_FORMAT_LABELS[1],
   });
 
   // Fetch event data with teams and pools
@@ -465,7 +467,7 @@ const PoolManagement = () => {
 
   // Event-level playoffs: generate (all pools → gold/silver/bronze tiers)
   const generateEventPlayoffsMutation = useMutation({
-    mutationFn: (body: { advanceCountPerPool?: number; matchFormats?: { qualifiers?: string; semifinals: string; finals: string; bronze: string } }) =>
+    mutationFn: (body: { advanceCountPerPool?: number; matchFormats?: { qualifiers?: string; semifinals?: string; finals: string; bronze?: string; losers?: string } }) =>
       playoffAPI.generateEvent(eventId!, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['playoffs', eventId] });
@@ -902,7 +904,7 @@ const PoolManagement = () => {
               </Card>
 
               {/* Playoffs — sidebar section */}
-              {event?.addPlayoffStage && (
+              {event?.playFormat !== 'round-robin' && (
                 <Card className="glass-card-hover rounded-2xl border border-border/50 shadow-float">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-display">
@@ -1011,144 +1013,213 @@ const PoolManagement = () => {
                               semifinals: defaultFormat,
                               finals: defaultFormat,
                               bronze: defaultFormat,
+                              losers: defaultFormat,
                             });
                           }
                         }}
                       >
                         <DialogContent className="glass-card rounded-2xl border border-border/50 max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Generate event playoffs</DialogTitle>
-                            <DialogDescription>
-                              Choose how many {isSingles ? 'players' : 'teams'} advance from each completed pool. They will play qualifiers, then semifinals. Semifinal winners play for gold/silver; losers play for bronze/4th. Need at least 2 completed pools.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <p className="text-sm text-muted-foreground">
-                              Completed pools: {completedPoolsCount}
-                            </p>
-                            <div className="grid gap-2">
-                              <Label>How many {isSingles ? 'players' : 'teams'} advance from each pool?</Label>
-                              <Select
-                                value={String(playoffAdvanceCount)}
-                                onValueChange={(v) => setPlayoffAdvanceCount(parseInt(v, 10))}
-                              >
-                                <SelectTrigger className="rounded-xl">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <p className="text-xs text-muted-foreground">
-                                Total advancing: {completedPoolsCount * playoffAdvanceCount} {isSingles ? 'players' : 'teams'} (must be at least 4 for bracket).
-                              </p>
-                            </div>
-                            <div className="border-t border-border/50 pt-4 space-y-4">
-                              <p className="text-sm font-medium text-muted-foreground">
-                                Match format per round (same options as pool format)
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Game to 11/15/21 win by 1 or 2, or best 2 of 3 / 3 of 5. Choose one for each round below.
-                              </p>
-                              <div className="grid gap-3">
-                                <div className="grid gap-2">
-                                  <Label>Qualifiers (if needed)</Label>
-                                  <Select
-                                    value={playoffMatchFormats.qualifiers}
-                                    onValueChange={(v) =>
-                                      setPlayoffMatchFormats((prev) => ({ ...prev, qualifiers: v }))
-                                    }
-                                  >
-                                    <SelectTrigger className="rounded-xl">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {MATCH_FORMAT_LABELS.map((label) => (
-                                        <SelectItem key={label} value={label}>{label}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                          {(() => {
+                            const isDoubleElim = event?.playFormat === 'double-elimination';
+                            const totalAdvancing = completedPoolsCount * playoffAdvanceCount;
+                            const validDE = totalAdvancing >= 4 && (totalAdvancing & (totalAdvancing - 1)) === 0;
+                            const generateDisabled = generateEventPlayoffsMutation.isPending
+                              || completedPoolsCount < 2
+                              || totalAdvancing < 4
+                              || (isDoubleElim && !validDE);
+                            return (
+                              <>
+                                <DialogHeader>
+                                  <DialogTitle>Generate event playoffs</DialogTitle>
+                                  <DialogDescription>
+                                    {isDoubleElim
+                                      ? `Double elimination — teams must lose twice to be eliminated. Total advancing must be 4, 8, or 16.`
+                                      : `Choose how many ${isSingles ? 'players' : 'teams'} advance from each completed pool. They will play qualifiers, then semifinals. Semifinal winners play for gold/silver; losers play for bronze/4th. Need at least 2 completed pools.`}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                  <p className="text-sm text-muted-foreground">
+                                    Completed pools: {completedPoolsCount}
+                                  </p>
+                                  <div className="grid gap-2">
+                                    <Label>How many {isSingles ? 'players' : 'teams'} advance from each pool?</Label>
+                                    <Select
+                                      value={String(playoffAdvanceCount)}
+                                      onValueChange={(v) => setPlayoffAdvanceCount(parseInt(v, 10))}
+                                    >
+                                      <SelectTrigger className="rounded-xl">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                      Total advancing: {totalAdvancing} {isSingles ? 'players' : 'teams'}
+                                      {isDoubleElim ? ' (must be 4, 8, or 16 for DE)' : ' (must be at least 4 for bracket)'}.
+                                    </p>
+                                    {isDoubleElim && totalAdvancing >= 4 && !validDE && (
+                                      <p className="text-xs text-amber-600">
+                                        {totalAdvancing} teams is not valid for double elimination. Needs to be 4, 8, or 16.
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="border-t border-border/50 pt-4 space-y-4">
+                                    <p className="text-sm font-medium text-muted-foreground">
+                                      Match format per round (same options as pool format)
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Game to 11/15/21 win by 1 or 2, or best 2 of 3 / 3 of 5. Choose one for each round below.
+                                    </p>
+                                    <div className="grid gap-3">
+                                      {isDoubleElim ? (
+                                        <>
+                                          <div className="grid gap-2">
+                                            <Label>Winners Bracket</Label>
+                                            <Select
+                                              value={playoffMatchFormats.qualifiers}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, qualifiers: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <Label>Losers Bracket</Label>
+                                            <Select
+                                              value={playoffMatchFormats.losers}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, losers: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <Label>Grand Finals (+ Bracket Reset)</Label>
+                                            <Select
+                                              value={playoffMatchFormats.finals}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, finals: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div className="grid gap-2">
+                                            <Label>Qualifiers (if needed)</Label>
+                                            <Select
+                                              value={playoffMatchFormats.qualifiers}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, qualifiers: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <Label>Semifinals</Label>
+                                            <Select
+                                              value={playoffMatchFormats.semifinals}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, semifinals: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <Label>Championship (Final)</Label>
+                                            <Select
+                                              value={playoffMatchFormats.finals}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, finals: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <Label>Bronze medal match</Label>
+                                            <Select
+                                              value={playoffMatchFormats.bronze}
+                                              onValueChange={(v) =>
+                                                setPlayoffMatchFormats((prev) => ({ ...prev, bronze: v }))
+                                              }
+                                            >
+                                              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                                              <SelectContent>
+                                                {MATCH_FORMAT_LABELS.map((label) => (
+                                                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="grid gap-2">
-                                  <Label>Semifinals</Label>
-                                  <Select
-                                    value={playoffMatchFormats.semifinals}
-                                    onValueChange={(v) =>
-                                      setPlayoffMatchFormats((prev) => ({ ...prev, semifinals: v }))
+                                <DialogFooter>
+                                  <Button variant="outline" onClick={() => setIsGeneratePlayoffOpen(false)} className="rounded-xl">
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    className="bg-court-green text-white hover:bg-court-green-dark rounded-xl"
+                                    onClick={() =>
+                                      generateEventPlayoffsMutation.mutate({
+                                        advanceCountPerPool: playoffAdvanceCount,
+                                        matchFormats: playoffMatchFormats,
+                                      })
                                     }
+                                    disabled={generateDisabled}
                                   >
-                                    <SelectTrigger className="rounded-xl">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {MATCH_FORMAT_LABELS.map((label) => (
-                                        <SelectItem key={label} value={label}>{label}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="grid gap-2">
-                                  <Label>Championship (Final)</Label>
-                                  <Select
-                                    value={playoffMatchFormats.finals}
-                                    onValueChange={(v) =>
-                                      setPlayoffMatchFormats((prev) => ({ ...prev, finals: v }))
-                                    }
-                                  >
-                                    <SelectTrigger className="rounded-xl">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {MATCH_FORMAT_LABELS.map((label) => (
-                                        <SelectItem key={label} value={label}>{label}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="grid gap-2">
-                                  <Label>Bronze medal match</Label>
-                                  <Select
-                                    value={playoffMatchFormats.bronze}
-                                    onValueChange={(v) =>
-                                      setPlayoffMatchFormats((prev) => ({ ...prev, bronze: v }))
-                                    }
-                                  >
-                                    <SelectTrigger className="rounded-xl">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {MATCH_FORMAT_LABELS.map((label) => (
-                                        <SelectItem key={label} value={label}>{label}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsGeneratePlayoffOpen(false)} className="rounded-xl">
-                              Cancel
-                            </Button>
-                            <Button
-                              className="bg-court-green text-white hover:bg-court-green-dark rounded-xl"
-                              onClick={() =>
-                                generateEventPlayoffsMutation.mutate({
-                                  advanceCountPerPool: playoffAdvanceCount,
-                                  matchFormats: playoffMatchFormats,
-                                })
-                              }
-                              disabled={generateEventPlayoffsMutation.isPending || completedPoolsCount < 2 || completedPoolsCount * playoffAdvanceCount < 4}
-                            >
-                              {generateEventPlayoffsMutation.isPending ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                "Generate"
-                              )}
-                            </Button>
-                          </DialogFooter>
+                                    {generateEventPlayoffsMutation.isPending ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      "Generate"
+                                    )}
+                                  </Button>
+                                </DialogFooter>
+                              </>
+                            );
+                          })()}
                         </DialogContent>
                       </Dialog>
 
@@ -1412,7 +1483,7 @@ const PoolManagement = () => {
                                   return [...ordered, ...rest];
                                 })()}
                                 poolName={selectedPool.name}
-                                showPlayoffIndicators={!!event?.addPlayoffStage}
+                                showPlayoffIndicators={event?.playFormat !== 'round-robin'}
                                 onRemoveTeam={selectedPool?.playoffsFinalizedAt ? undefined : (teamId) => handleRemoveTeamFromPool(teamId, selectedPool._id)}
                                 isRemoving={removeTeamFromPoolMutation.isPending}
                                 isPlayoffsFinalized={!!selectedPool?.playoffsFinalizedAt}

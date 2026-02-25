@@ -1,6 +1,11 @@
 import Match from '../models/Match.js';
 
 /**
+ * Returns true if n is a power of 2 and >= 2.
+ */
+export const isPowerOf2 = (n) => n >= 2 && (n & (n - 1)) === 0;
+
+/**
  * Calculate bracket size (next power of 2)
  * @param {number} numTeams - Number of teams
  * @returns {object} - { bracketSize, byes }
@@ -476,6 +481,194 @@ export const generateFourTeamTierBracket = async (eventId, teams, teamModel, bra
   await bronzeDoc.save();
 
   return [semi1Doc, semi2Doc, finalDoc, bronzeDoc];
+};
+
+/**
+ * Generate a full double-elimination bracket for event-level playoffs.
+ * N must be a power of 2 and >= 4.
+ *
+ * Structure for N teams (k = log2(N)):
+ *   Winners bracket: WR rounds 1..(k-1) + Winners Final (WF)
+ *   Losers bracket: LR rounds 1..2*(k-1)  (last round = Losers Final, LF)
+ *   Grand Final (GF) + optional Bracket Reset match
+ *
+ * WR round 1 seeding: teams[i] vs teams[N-1-i] for i = 0..N/2-1 (top vs bottom).
+ *
+ * @param {string} eventId
+ * @param {Array} teams  - team/player objects ordered by seed (best first)
+ * @param {string} teamModel - 'Team' | 'User'
+ * @param {string} bracketTier - 'event' | 'gold' | 'silver' | 'bronze'
+ * @returns {Promise<Array>} flat array of all created Match documents
+ */
+export const generateDoubleEliminationForEventTier = async (eventId, teams, teamModel, bracketTier) => {
+  const N = teams.length;
+  if (!isPowerOf2(N) || N < 4) {
+    throw new Error(`DE bracket requires a power-of-2 count >= 4, got ${N}`);
+  }
+
+  const k = Math.log2(N);          // total WR rounds including WF
+  const wrRounds = k - 1;          // prelim WR rounds (1 .. wrRounds)
+  const lrRounds = 2 * (k - 1);   // LR rounds (1 .. lrRounds), last = LF
+
+  const allMatchDefs = [];
+
+  // ── Winners bracket (WR rounds 1..wrRounds) ──────────────────────────
+  for (let r = 1; r <= wrRounds; r++) {
+    const count = N / Math.pow(2, r);
+    for (let i = 0; i < count; i++) {
+      const def = {
+        pool: null, event: eventId,
+        round: r, bracket: 'winners',
+        bracketTier, status: 'scheduled',
+        team1Model: teamModel, team2Model: teamModel,
+        team1: null, team2: null
+      };
+      // WR round 1: seed top-vs-bottom
+      if (r === 1) {
+        def.team1 = teams[i]?._id ?? teams[i];
+        def.team2 = teams[N - 1 - i]?._id ?? teams[N - 1 - i];
+      }
+      allMatchDefs.push(def);
+    }
+  }
+
+  // ── Winners Final (WF) ───────────────────────────────────────────────
+  allMatchDefs.push({
+    pool: null, event: eventId,
+    round: k, bracket: 'winners',
+    bracketTier, status: 'scheduled',
+    team1Model: teamModel, team2Model: teamModel,
+    team1: null, team2: null
+  });
+
+  // ── Losers bracket (LR rounds 1..lrRounds) ───────────────────────────
+  for (let lr = 1; lr <= lrRounds; lr++) {
+    const count = N / Math.pow(2, Math.ceil(lr / 2) + 1);
+    for (let i = 0; i < count; i++) {
+      allMatchDefs.push({
+        pool: null, event: eventId,
+        round: lr, bracket: 'losers',
+        bracketTier, status: 'scheduled',
+        team1Model: teamModel, team2Model: teamModel,
+        team1: null, team2: null
+      });
+    }
+  }
+
+  // ── Grand Final (GF) ─────────────────────────────────────────────────
+  allMatchDefs.push({
+    pool: null, event: eventId,
+    round: 1, bracket: 'finals',
+    bracketTier, isGrandFinalReset: false, status: 'scheduled',
+    team1Model: teamModel, team2Model: teamModel,
+    team1: null, team2: null
+  });
+
+  // ── Bracket Reset ─────────────────────────────────────────────────────
+  allMatchDefs.push({
+    pool: null, event: eventId,
+    round: 1, bracket: 'finals',
+    bracketTier, isGrandFinalReset: true, status: 'scheduled',
+    team1Model: teamModel, team2Model: teamModel,
+    team1: null, team2: null
+  });
+
+  const created = await Match.insertMany(allMatchDefs);
+
+  // ── Extract match references by type ─────────────────────────────────
+  let idx = 0;
+  const wrMatches = {};
+  for (let r = 1; r <= wrRounds; r++) {
+    const count = N / Math.pow(2, r);
+    wrMatches[r] = created.slice(idx, idx + count);
+    idx += count;
+  }
+  const wfMatch = created[idx++];
+
+  const lrMatches = {};
+  for (let lr = 1; lr <= lrRounds; lr++) {
+    const count = N / Math.pow(2, Math.ceil(lr / 2) + 1);
+    lrMatches[lr] = created.slice(idx, idx + count);
+    idx += count;
+  }
+  const gfMatch = created[idx++];
+  const gfReset = created[idx++];
+
+  // ── Link: WR winner advancement ───────────────────────────────────────
+  // WR[r] → WR[r+1]
+  for (let r = 1; r <= wrRounds - 1; r++) {
+    wrMatches[r].forEach((m, i) => {
+      const next = wrMatches[r + 1][Math.floor(i / 2)];
+      m.nextMatchId = next._id;
+      if (i % 2 === 0) next.previousMatch1Id = m._id;
+      else next.previousMatch2Id = m._id;
+    });
+  }
+  // Last WR round → WF
+  if (wrRounds >= 1) {
+    const lastWR = wrMatches[wrRounds];
+    lastWR[0].nextMatchId = wfMatch._id;
+    lastWR[1].nextMatchId = wfMatch._id;
+    wfMatch.previousMatch1Id = lastWR[0]._id;
+    wfMatch.previousMatch2Id = lastWR[1]._id;
+  }
+  // WF winner → GF (team1 = undefeated finalist)
+  wfMatch.nextMatchId = gfMatch._id;
+  gfMatch.previousMatch1Id = wfMatch._id;
+
+  // ── Link: WR loser routing ────────────────────────────────────────────
+  // WR1 losers → LR1 (cross-pair: top loser vs bottom loser)
+  const wr1Count = N / 2; // = wrMatches[1].length
+  for (let i = 0; i < wr1Count / 2; i++) {
+    const topWR = wrMatches[1][i];
+    const botWR = wrMatches[1][wr1Count - 1 - i];
+    const lr1m = lrMatches[1][i];
+    topWR.loserNextMatchId = lr1m._id;
+    lr1m.previousMatch1Id = topWR._id;   // top loser → team1
+    botWR.loserNextMatchId = lr1m._id;
+    lr1m.previousMatch2Id = botWR._id;   // bottom loser → team2
+  }
+  // WR rounds 2..wrRounds losers → LR even "drop-in" rounds
+  for (let kk = 2; kk <= wrRounds; kk++) {
+    const feedLR = lrMatches[2 * (kk - 1)];
+    wrMatches[kk].forEach((m, i) => {
+      m.loserNextMatchId = feedLR[i]._id;
+      feedLR[i].previousMatch2Id = m._id;  // WR loser → team2
+    });
+  }
+  // WF loser → LF (last LR round), as team2
+  wfMatch.loserNextMatchId = lrMatches[lrRounds][0]._id;
+  lrMatches[lrRounds][0].previousMatch2Id = wfMatch._id;
+
+  // ── Link: LR winner advancement ───────────────────────────────────────
+  // Odd LR rounds (survivor rounds): LR[lr][i] → LR[lr+1][i] as team1
+  for (let lr = 1; lr <= lrRounds - 1; lr += 2) {
+    lrMatches[lr].forEach((m, i) => {
+      const next = lrMatches[lr + 1][i];
+      m.nextMatchId = next._id;
+      next.previousMatch1Id = m._id;  // survivor → team1
+    });
+  }
+  // Even LR rounds (except LF = lrRounds): compression rounds
+  for (let lr = 2; lr <= lrRounds - 2; lr += 2) {
+    lrMatches[lr].forEach((m, i) => {
+      const next = lrMatches[lr + 1][Math.floor(i / 2)];
+      m.nextMatchId = next._id;
+      if (i % 2 === 0) next.previousMatch1Id = m._id;
+      else next.previousMatch2Id = m._id;
+    });
+  }
+  // LF (= lrMatches[lrRounds][0]) winner → GF as team2
+  lrMatches[lrRounds][0].nextMatchId = gfMatch._id;
+  gfMatch.previousMatch2Id = lrMatches[lrRounds][0]._id;
+
+  // ── Link: GF → Reset ──────────────────────────────────────────────────
+  gfMatch.nextMatchId = gfReset._id;
+
+  // ── Persist all matches ───────────────────────────────────────────────
+  await Promise.all(created.map(m => m.save()));
+
+  return created;
 };
 
 /**

@@ -1,7 +1,7 @@
 import Pool from '../models/Pool.js';
 import Match from '../models/Match.js';
 import Event from '../models/Event.js';
-import { generateSingleEliminationBracket, generateSingleEliminationForEventTier } from '../utils/bracketGenerator.js';
+import { generateSingleEliminationBracket, generateSingleEliminationForEventTier, generateDoubleEliminationForEventTier, isPowerOf2 } from '../utils/bracketGenerator.js';
 import { getMatchFormatConfig } from '../constants/matchFormatConfig.js';
 
 /** Get top N entities (by standings) from one pool for event playoffs. Returns array of { _id, name }. */
@@ -141,6 +141,13 @@ export const generatePlayoffs = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to generate playoffs for this pool'
+      });
+    }
+
+    if (event.playFormat === 'round-robin') {
+      return res.status(400).json({
+        success: false,
+        message: 'Round-robin events do not have playoffs. Final standings are determined by pool play.'
       });
     }
 
@@ -532,6 +539,13 @@ export const generateEventPlayoffs = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Event playoffs are already finalized.' });
     }
 
+    if (event.playFormat === 'round-robin') {
+      return res.status(400).json({
+        success: false,
+        message: 'Round-robin events do not have playoffs. Final standings are determined by pool play.'
+      });
+    }
+
     const pools = await Pool.find({ event: eventId, poolPlayFinalizedAt: { $ne: null } })
       .sort({ name: 1 })
       .populate({ path: 'teams', populate: { path: 'players', select: 'name' } });
@@ -605,9 +619,55 @@ export const generateEventPlayoffs = async (req, res, next) => {
       qualifiers: req.body?.matchFormats?.qualifiers ?? req.body?.matchFormats?.semifinals ?? defaultFormat,
       semifinals: req.body?.matchFormats?.semifinals ?? defaultFormat,
       finals: req.body?.matchFormats?.finals ?? defaultFormat,
-      bronze: req.body?.matchFormats?.bronze ?? defaultFormat
+      bronze: req.body?.matchFormats?.bronze ?? defaultFormat,
+      losers: req.body?.matchFormats?.losers ?? req.body?.matchFormats?.qualifiers ?? defaultFormat
     };
 
+    // ── Double-elimination path ───────────────────────────────────────
+    if (event.playFormat === 'double-elimination') {
+      const N = allAdvancing.length;
+      if (!isPowerOf2(N) || N < 4) {
+        return res.status(400).json({
+          success: false,
+          message: `Double elimination requires exactly 4, 8, or 16 advancing teams. Currently ${N} teams would advance. Adjust advanceCountPerPool so the total is a power of 2 (e.g. 4, 8, or 16).`
+        });
+      }
+
+      const allCreated = await generateDoubleEliminationForEventTier(
+        eventId, allAdvancing, teamModel, 'event'
+      );
+
+      for (const m of allCreated) {
+        const label =
+          m.bracket === 'winners' ? matchFormats.qualifiers
+            : m.bracket === 'losers' ? matchFormats.losers
+              : m.bracket === 'finals' ? matchFormats.finals
+                : null;
+        if (label) {
+          const config = getMatchFormatConfig(label);
+          if (config) {
+            m.matchFormat = label;
+            m.matchFormatConfig = {
+              games_to_win: config.games_to_win,
+              max_games: config.max_games,
+              points_to_win: config.points_to_win,
+              win_by: config.win_by,
+              hard_cap: config.hard_cap ?? null
+            };
+            m.markModified('matchFormatConfig');
+            await m.save();
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Double elimination bracket generated.',
+        data: { matches: allCreated }
+      });
+    }
+
+    // ── Single-elimination path (existing) ───────────────────────────
     const allCreated = await generateSingleEliminationForEventTier(
       eventId,
       allAdvancing,
@@ -682,7 +742,10 @@ export const completeEventPlayoffs = async (req, res, next) => {
         message: 'No event playoff matches found. Generate event playoffs first.'
       });
     }
-    const incomplete = playoffMatches.filter((m) => m.status !== 'completed');
+    // For DE: the bracket-reset match starts empty (teams null) unless triggered — skip it in the incomplete check
+    const incomplete = playoffMatches.filter(
+      (m) => m.status !== 'completed' && !(m.isGrandFinalReset && !m.team1)
+    );
     if (incomplete.length > 0) {
       return res.status(400).json({
         success: false,
@@ -711,19 +774,52 @@ export const completeEventPlayoffs = async (req, res, next) => {
     let place = 1;
     const isSingleBracket = playoffMatches.some((m) => m.bracketTier === 'event');
     if (isSingleBracket) {
-      const finalsMatch = playoffMatches.find((m) => m.bracketTier === 'event' && m.bracket === 'finals');
-      const bronzeMatch = playoffMatches.find((m) => m.bracketTier === 'event' && m.bracket === 'bronze');
-      if (finalsMatch && (finalsMatch.score?.team1Score ?? 0) !== (finalsMatch.score?.team2Score ?? 0)) {
-        const finalWinner = getEntity(finalsMatch, true);
-        const finalLoser = getEntity(finalsMatch, false);
-        if (finalWinner.entityId) placements.push({ place: place++, entityId: finalWinner.entityId, name: finalWinner.name, tier: 'gold' });
-        if (finalLoser.entityId) placements.push({ place: place++, entityId: finalLoser.entityId, name: finalLoser.name, tier: 'silver' });
-      }
-      if (bronzeMatch && bronzeMatch.status === 'completed' && (bronzeMatch.score?.team1Score ?? 0) !== (bronzeMatch.score?.team2Score ?? 0)) {
-        const bw = getEntity(bronzeMatch, true);
-        const bl = getEntity(bronzeMatch, false);
-        if (bw.entityId) placements.push({ place: place++, entityId: bw.entityId, name: bw.name, tier: 'bronze' });
-        if (bl.entityId) placements.push({ place: place++, entityId: bl.entityId, name: bl.name, tier: '4th' });
+      const isDE = playoffMatches.some((m) => m.bracket === 'losers');
+
+      if (isDE) {
+        // Double-elimination: champion comes from GF reset (if played) or GF
+        const gfReset = playoffMatches.find((m) => m.bracket === 'finals' && m.isGrandFinalReset);
+        const gfMatch = playoffMatches.find((m) => m.bracket === 'finals' && !m.isGrandFinalReset);
+
+        const resetPlayed = gfReset?.team1 && gfReset?.status === 'completed';
+        const championMatch = resetPlayed ? gfReset : gfMatch;
+
+        if (!championMatch || (championMatch.score?.team1Score ?? 0) === (championMatch.score?.team2Score ?? 0)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Grand Final must have a completed score with a clear winner before finalizing.'
+          });
+        }
+
+        const champion = getEntity(championMatch, true);
+        const runnerUp = getEntity(championMatch, false);
+        if (champion.entityId) placements.push({ place: place++, entityId: champion.entityId, name: champion.name, tier: 'gold' });
+        if (runnerUp.entityId) placements.push({ place: place++, entityId: runnerUp.entityId, name: runnerUp.name, tier: 'silver' });
+
+        // 3rd place = loser of Losers Final (eliminated just before GF)
+        const lfMatch = playoffMatches
+          .filter((m) => m.bracket === 'losers')
+          .sort((a, b) => b.round - a.round)[0];
+        if (lfMatch?.status === 'completed') {
+          const lfLoser = getEntity(lfMatch, false);
+          if (lfLoser.entityId) placements.push({ place: place++, entityId: lfLoser.entityId, name: lfLoser.name, tier: 'bronze' });
+        }
+      } else {
+        // Single-elimination
+        const finalsMatch = playoffMatches.find((m) => m.bracketTier === 'event' && m.bracket === 'finals');
+        const bronzeMatch = playoffMatches.find((m) => m.bracketTier === 'event' && m.bracket === 'bronze');
+        if (finalsMatch && (finalsMatch.score?.team1Score ?? 0) !== (finalsMatch.score?.team2Score ?? 0)) {
+          const finalWinner = getEntity(finalsMatch, true);
+          const finalLoser = getEntity(finalsMatch, false);
+          if (finalWinner.entityId) placements.push({ place: place++, entityId: finalWinner.entityId, name: finalWinner.name, tier: 'gold' });
+          if (finalLoser.entityId) placements.push({ place: place++, entityId: finalLoser.entityId, name: finalLoser.name, tier: 'silver' });
+        }
+        if (bronzeMatch && bronzeMatch.status === 'completed' && (bronzeMatch.score?.team1Score ?? 0) !== (bronzeMatch.score?.team2Score ?? 0)) {
+          const bw = getEntity(bronzeMatch, true);
+          const bl = getEntity(bronzeMatch, false);
+          if (bw.entityId) placements.push({ place: place++, entityId: bw.entityId, name: bw.name, tier: 'bronze' });
+          if (bl.entityId) placements.push({ place: place++, entityId: bl.entityId, name: bl.name, tier: '4th' });
+        }
       }
     } else {
       for (const tier of ['gold', 'silver', 'bronze']) {

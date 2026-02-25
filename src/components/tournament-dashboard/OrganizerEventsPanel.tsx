@@ -236,7 +236,7 @@ const OrganizerEventsPanel = ({
         name: editForm.name.trim(),
         format: gameTypeToFormat(editForm.gameType),
         playFormat: displayToPlayFormat(editForm.format),
-        addPlayoffStage: editForm.addPlayoffStage,
+        addPlayoffStage: displayToPlayFormat(editForm.format) !== 'round-robin',
         skillLevel: editForm.skillLevel,
         maxTeams: editForm.maxPlayers,
         entryFee: editForm.entryFee,
@@ -314,31 +314,6 @@ const OrganizerEventsPanel = ({
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Add Playoff Stage?</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="create-addPlayoffStage"
-                      checked={newEvent.addPlayoffStage === true}
-                      onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: true })}
-                      className="rounded-full border-primary text-primary"
-                    />
-                    <span>Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="create-addPlayoffStage"
-                      checked={newEvent.addPlayoffStage === false}
-                      onChange={() => setNewEvent({ ...newEvent, addPlayoffStage: false })}
-                      className="rounded-full border-primary text-primary"
-                    />
-                    <span>No</span>
-                  </label>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -569,31 +544,6 @@ const OrganizerEventsPanel = ({
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Add Playoff Stage?</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="edit-addPlayoffStage"
-                      checked={editForm.addPlayoffStage === true}
-                      onChange={() => setEditForm({ ...editForm, addPlayoffStage: true })}
-                      className="rounded-full border-primary text-primary"
-                    />
-                    <span>Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="edit-addPlayoffStage"
-                      checked={editForm.addPlayoffStage === false}
-                      onChange={() => setEditForm({ ...editForm, addPlayoffStage: false })}
-                      className="rounded-full border-primary text-primary"
-                    />
-                    <span>No</span>
-                  </label>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
