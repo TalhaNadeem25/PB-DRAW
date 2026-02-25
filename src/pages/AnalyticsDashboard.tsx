@@ -199,7 +199,7 @@ const AnalyticsDashboard = () => {
                 <DollarSign className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-display font-bold">
                   ${analyticsData?.revenue?.total?.toFixed(2) || '0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
@@ -217,7 +217,7 @@ const AnalyticsDashboard = () => {
                 <Trophy className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-display font-bold">
                   {analyticsData?.summary?.totalTournaments || 0}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
@@ -232,7 +232,7 @@ const AnalyticsDashboard = () => {
                 <Users className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-display font-bold">
                   {analyticsData?.summary?.uniqueParticipants || 0}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
@@ -247,7 +247,7 @@ const AnalyticsDashboard = () => {
                 <TrendingUp className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-display font-bold">
                   {analyticsData?.registrations?.fillRate?.toFixed(1) || '0.0'}%
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">

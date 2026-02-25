@@ -207,7 +207,7 @@ const EventRegistration = () => {
             <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
               <AlertCircle className="w-8 h-8 text-destructive" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Event Not Found</h2>
+            <h2 className="text-2xl font-display font-bold mb-2">Event Not Found</h2>
             <p className="text-muted-foreground mb-6">
               The event you're trying to register for doesn't exist.
             </p>

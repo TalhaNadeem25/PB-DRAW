@@ -24,7 +24,6 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { waitlistAPI, eventAPI } from "@/services/api";
 import { toast } from "sonner";
-import { useToast } from "@/hooks/use-toast";
 import type { GameType, TournamentFormat } from "@/types/tournament";
 import { SKILL_LEVEL_RANGES, formatEventSkillLevel } from "@/types/tournament";
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
@@ -82,7 +81,7 @@ function WaitlistDialogContent({
 }: {
   eventId: string;
   onClose: () => void;
-  toast: ReturnType<typeof useToast>["toast"];
+  toast: any;
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
   const { data, isLoading } = useQuery({
@@ -184,7 +183,6 @@ const OrganizerEventsPanel = ({
   createEventPending,
   onDeleteEvent,
 }: OrganizerEventsPanelProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const allowWaitlist = tournament?.settings?.allowWaitlist === true;
   const [waitlistEvent, setWaitlistEvent] = useState<{ _id: string; name: string } | null>(null);
