@@ -10,6 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { SkeletonGrid } from "@/components/ui/skeleton-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { tournamentAPI } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";

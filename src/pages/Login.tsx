@@ -37,7 +37,7 @@ const Login = () => {
   return (
     <Layout variant="auth">
     <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans">
-      <div className="h-6" />
+      
 
       {/* Left Side: Hero Brand Experience (Hidden on Mobile) */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-7/12 relative overflow-hidden items-center justify-center">  
@@ -68,7 +68,7 @@ const Login = () => {
       </div>
 
       {/* Right Side: Login Interface — Pattern E */}
-      <div className="flex w-full flex-col lg:w-1/2 xl:w-5/12 bg-background px-6 py-10 sm:px-16 lg:px-20 xl:px-24 justify-center overflow-y-auto">
+      <div className="flex w-full flex-col lg:w-1/2 xl:w-5/12 bg-gradient-to-b from-primary/5 to-transparent lg:from-transparent px-6 py-10 sm:px-16 lg:px-20 xl:px-24 justify-center overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
           <div className="glass-card rounded-2xl p-8 animate-fade-in">
             {/* Mobile Logo (Hidden on desktop) */}
@@ -128,6 +128,7 @@ const Login = () => {
                             type="button" 
                             className="absolute right-4 text-muted-foreground hover:text-foreground"
                             onClick={() => setShowPassword(!showPassword)}
+                            aria-label="Toggle password visibility"
                         >
                             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
@@ -142,7 +143,7 @@ const Login = () => {
                         onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                         className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground border-input"
                     />
-                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer group-hover:text-foreground transition-colors font-normal">
+                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer transition-colors font-normal">
                         Remember me on this device
                     </Label>
                 </div>
@@ -177,11 +178,11 @@ const Login = () => {
                     <div className="flex-grow border-t border-border"></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <button className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                    <button disabled title="Coming Soon" className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border opacity-50 cursor-not-allowed">
                         <Chrome className="w-5 h-5" />
                         <span className="text-sm font-semibold text-foreground">Google</span>
                     </button>
-                    <button className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                    <button disabled title="Coming Soon" className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border opacity-50 cursor-not-allowed">
                         <Apple className="w-5 h-5 text-foreground" />
                         <span className="text-sm font-semibold text-foreground">Apple</span>
                     </button>
