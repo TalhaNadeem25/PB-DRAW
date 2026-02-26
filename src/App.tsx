@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
@@ -30,7 +31,9 @@ import PoolManagement from "./pages/PoolManagement";
 import Privacy from "./pages/Privacy";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
+import RegistrationSuccess from "./pages/RegistrationSuccess";
 import ResetPassword from "./pages/ResetPassword";
+import SkillQuiz from "./pages/SkillQuiz";
 import Teams from "./pages/Teams";
 import Terms from "./pages/Terms";
 import TournamentCommunications from "./pages/TournamentCommunications";
@@ -42,7 +45,8 @@ import VerifyEmail from "./pages/VerifyEmail";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <SocketProvider>
         <TooltipProvider>
@@ -86,6 +90,7 @@ const App = () => (
             <Route path="/tournaments/:id" element={<TournamentDetail />} />
             <Route path="/tournaments/:id/register" element={<Register />} />
             <Route path="/tournaments/:tournamentId/register/:eventId" element={<EventRegistration />} />
+            <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/invitations/:id/accept" element={<AcceptInvitation />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/live" element={<Live />} />
@@ -174,6 +179,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/skill-quiz" element={<SkillQuiz />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
               </Routes>
@@ -183,6 +189,7 @@ const App = () => (
       </SocketProvider>
     </AuthProvider>
   </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

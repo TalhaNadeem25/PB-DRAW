@@ -19,11 +19,13 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   Filter,
   Search,
   Trophy
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,6 +34,13 @@ const Tournaments = () => {
   const [skillFilter, setSkillFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
   const [formatFilter, setFormatFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, locationFilter, skillFilter, priceFilter, formatFilter]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["tournaments", searchQuery, statusFilter], // In a real app add all filters
@@ -68,6 +77,11 @@ const Tournaments = () => {
     (skillFilter !== "all" ? 1 : 0) +
     (priceFilter !== "all" ? 1 : 0) +
     (formatFilter !== "all" ? 1 : 0);
+
+  // Pagination logic
+  const totalPages = Math.ceil(formattedTournaments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedTournaments = formattedTournaments.slice(startIndex, startIndex + itemsPerPage);
 
   const FilterOptions = () => (
     <div className="space-y-6">
@@ -243,7 +257,7 @@ const Tournaments = () => {
               {/* Active filter pills (Desktop) */}
               <div className="hidden md:flex items-center justify-between mb-6">
                 <div className="text-muted-foreground font-semibold text-sm uppercase tracking-wide">
-                  Showing {formattedTournaments.length} results
+                  Showing {paginatedTournaments.length} of {formattedTournaments.length} results
                 </div>
                 <div className="flex items-center gap-3">
                    <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
@@ -270,18 +284,62 @@ const Tournaments = () => {
                   <Button onClick={() => window.location.reload()} className="mt-4 rounded-xl font-display font-bold uppercase tracking-widest">Retry</Button>
                 </div>
               ) : formattedTournaments.length > 0 ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {formattedTournaments.map((tournament: any, index: number) => (
-                    <div
-                      key={tournament.id}
-                      className="animate-fade-in"
-                      style={{
-                        animationDelay: `${Math.min(index * 0.05, 0.5)}s`,
-                      }}
-                    >
-                      <TournamentCard {...tournament} />
+                <div className="space-y-10">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {paginatedTournaments.map((tournament: any, index: number) => (
+                      <div
+                        key={tournament.id}
+                        className="animate-fade-in"
+                        style={{
+                          animationDelay: `${Math.min(index * 0.05, 0.5)}s`,
+                        }}
+                      >
+                        <TournamentCard {...tournament} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-8 border-t border-border">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="w-10 h-10 rounded-xl"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </Button>
+                      
+                      <div className="flex items-center gap-1 mx-2">
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCurrentPage(i + 1)}
+                            className={cn(
+                              "w-10 h-10 rounded-xl font-display font-bold text-sm transition-colors",
+                              currentPage === i + 1 
+                                ? "bg-primary text-primary-foreground" 
+                                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="w-10 h-10 rounded-xl"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </Button>
                     </div>
-                  ))}
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-32 bg-white rounded-2xl border border-border shadow-sm">

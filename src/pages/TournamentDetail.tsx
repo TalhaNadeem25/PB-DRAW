@@ -54,6 +54,7 @@ import {
     Users,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -496,6 +497,9 @@ const TournamentDetail = () => {
 
     return (
       <Layout variant="minimal">
+        <Helmet>
+          <title>Dashboard - {tournament.name} | Pickle Rally</title>
+        </Helmet>
         <div className="min-h-screen bg-background">
           <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
             {/* Top Bar */}
@@ -533,6 +537,14 @@ const TournamentDetail = () => {
   ═══════════════════════════════════════════ */
   return (
     <Layout variant="minimal">
+      <Helmet>
+        <title>{tournament.name} | Pickle Rally</title>
+        <meta name="description" content={tournament.description || `Register for ${tournament.name} on Pickle Rally.`} />
+        <meta property="og:title" content={`${tournament.name} | Pickle Rally`} />
+        <meta property="og:description" content={tournament.description || `Register for ${tournament.name} on Pickle Rally.`} />
+        {tournament.image && <meta property="og:image" content={tournament.image} />}
+        <meta property="og:type" content="website" />
+      </Helmet>
       <div className="min-h-screen bg-background">
         {/* Compact Hero Header (Solid Premium Design) */}
         <div className="bg-card border-b border-border/60 py-10 relative overflow-hidden shadow-sm">

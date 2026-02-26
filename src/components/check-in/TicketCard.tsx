@@ -1,9 +1,10 @@
-import { Card, CardContent, CardHeader } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Download, Copy, CheckCircle, Clock, Calendar, MapPin } from 'lucide-react';
-import { useState } from 'react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { format } from 'date-fns';
+import { Calendar, CheckCircle, Clock, Copy, Download, MapPin, Maximize2 } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader } from '../ui/card';
 
 interface TicketCardProps {
   payment: {
@@ -122,13 +123,37 @@ export default function TicketCard({ payment, compact = false }: TicketCardProps
 
               {payment.qrCodeUrl ? (
                 <div className="flex flex-col items-center">
-                  <div className="bg-white p-4 rounded-lg shadow-md border-4 border-white inline-block">
-                    <img
-                      src={payment.qrCodeUrl}
-                      alt="QR Code"
-                      className="w-48 h-48 object-contain"
-                    />
-                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <div className="bg-white p-4 rounded-lg shadow-md border-4 border-white inline-block relative group cursor-pointer transition-transform hover:scale-105 duration-200">
+                        <img
+                          src={payment.qrCodeUrl}
+                          alt="QR Code"
+                          className="w-48 h-48 object-contain transition-opacity group-hover:opacity-80"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 backdrop-blur-[1px] rounded-lg">
+                          <Maximize2 className="w-8 h-8 text-green-900 drop-shadow-md" />
+                        </div>
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md flex flex-col items-center justify-center p-8 sm:p-12 bg-white border-0 shadow-2xl rounded-3xl gap-0">
+                      <div className="w-full mb-6">
+                        <h3 className="font-display font-black text-2xl text-center text-foreground">{payment.tournament.name}</h3>
+                        <p className="text-center text-muted-foreground font-medium mt-1">Event Ticket</p>
+                      </div>
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8">
+                        <img
+                          src={payment.qrCodeUrl}
+                          alt="QR Code Fullsize"
+                          className="w-64 h-64 sm:w-80 sm:h-80 object-contain"
+                        />
+                      </div>
+                      <code className="bg-green-50 px-6 py-3 rounded-xl font-mono text-2xl sm:text-3xl font-bold tracking-widest text-green-800 border border-green-200">
+                        {payment.ticketCode}
+                      </code>
+                      <p className="text-muted-foreground mt-8 text-center text-sm">Present this code at check-in</p>
+                    </DialogContent>
+                  </Dialog>
 
                   <div className="mt-4 flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-green-500">
                     <code className="font-mono text-sm font-bold text-green-700">

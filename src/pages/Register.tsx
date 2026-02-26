@@ -46,7 +46,7 @@ import {
     UserPlus,
     Users
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -173,7 +173,7 @@ const Register = () => {
           } else {
             toast.success("Successfully registered for all events!");
             setSelectedEvents([]);
-            navigate("/dashboard");
+            navigate("/registration-success", { state: { tournamentName: tournamentData?.data?.name, eventIds: teamRegistrations.map(r => r.eventId) }});
           }
         } catch (paymentError: any) {
           console.error("Payment setup error:", paymentError);
@@ -182,7 +182,7 @@ const Register = () => {
       } else {
         toast.success("Successfully registered for all events!");
         setSelectedEvents([]);
-        navigate("/dashboard");
+        navigate("/registration-success", { state: { tournamentName: tournamentData?.data?.name, eventIds: teamRegistrations.map(r => r.eventId) }});
       }
     },
     onError: (error: any) => {
@@ -304,7 +304,7 @@ const Register = () => {
     setClientSecret(null);
     setEventBreakdown([]);
     setSelectedEvents([]);
-    navigate("/dashboard");
+    navigate("/registration-success", { state: { tournamentName: tournamentData?.data?.name }});
   };
 
   const handlePaymentCancel = () => {
