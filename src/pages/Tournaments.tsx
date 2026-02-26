@@ -131,6 +131,19 @@ const Tournaments = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedTournaments = formattedTournaments.slice(startIndex, startIndex + itemsPerPage);
 
+  const getPageNumbers = (current: number, total: number): (number | '...')[] => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: (number | '...')[] = [1];
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i);
+    }
+    if (current < total - 2) pages.push('...');
+    pages.push(total);
+    return pages;
+  };
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
+
   const FilterOptions = () => (
     <div className="space-y-6">
       {/* Location */}
@@ -365,20 +378,29 @@ const Tournaments = () => {
                       </Button>
                       
                       <div className="flex items-center gap-1 mx-2">
-                        {Array.from({ length: totalPages }).map((_, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setCurrentPage(i + 1)}
-                            className={cn(
-                              "w-10 h-10 rounded-xl font-display font-bold text-sm transition-colors",
-                              currentPage === i + 1 
-                                ? "bg-primary text-primary-foreground" 
-                                : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                            )}
-                          >
-                            {i + 1}
-                          </button>
-                        ))}
+                        {pageNumbers.map((page, i) =>
+                          page === '...' ? (
+                            <span
+                              key={`ellipsis-${i}`}
+                              className="w-10 h-10 flex items-center justify-center text-muted-foreground text-sm select-none"
+                            >
+                              …
+                            </span>
+                          ) : (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page as number)}
+                              className={cn(
+                                "w-10 h-10 rounded-xl font-display font-bold text-sm transition-colors",
+                                currentPage === page
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {page}
+                            </button>
+                          )
+                        )}
                       </div>
 
                       <Button

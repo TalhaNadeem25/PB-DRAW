@@ -161,7 +161,15 @@ const EventRegistration = () => {
             console.log('No payment required');
             setIsPreparingPayment(false);
             toast.success("Successfully registered for the event!");
-            navigate('/dashboard');
+            navigate('/registration-success', {
+              state: {
+                tournamentName: tournament?.name,
+                startDate: tournament?.startDate,
+                endDate: tournament?.endDate,
+                location: tournament?.location,
+                eventIds: eventId ? [eventId] : [],
+              },
+            });
           }
         } catch (paymentError: any) {
           console.error('Payment setup error:', paymentError);
@@ -172,7 +180,15 @@ const EventRegistration = () => {
         // No payment required
         console.log('Free tournament, no payment needed');
         toast.success("Successfully registered for the event!");
-        navigate('/dashboard');
+        navigate('/registration-success', {
+          state: {
+            tournamentName: tournament?.name,
+            startDate: tournament?.startDate,
+            endDate: tournament?.endDate,
+            location: tournament?.location,
+            eventIds: eventId ? [eventId] : [],
+          },
+        });
       }
     },
     onError: (error: any) => {
@@ -208,7 +224,15 @@ const EventRegistration = () => {
 
   const handlePaymentSuccess = () => {
     toast.success("Payment successful! Your registration is confirmed.");
-    navigate('/dashboard');
+    navigate('/registration-success', {
+      state: {
+        tournamentName: tournament?.name,
+        startDate: tournament?.startDate,
+        endDate: tournament?.endDate,
+        location: tournament?.location,
+        eventIds: eventId ? [eventId] : [],
+      },
+    });
   };
 
   const handlePaymentCancel = () => {
@@ -537,6 +561,14 @@ const EventRegistration = () => {
                           </div>
                         </>
                       )}
+
+                      {/* Refund Policy */}
+                      <div className="rounded-lg bg-muted/50 border border-border/50 p-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          <span className="font-semibold text-foreground">Refund Policy: </span>
+                          Full refund if cancelled 7+ days before the event. No refunds within 7 days of event start. No-shows forfeit entry fees.
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>

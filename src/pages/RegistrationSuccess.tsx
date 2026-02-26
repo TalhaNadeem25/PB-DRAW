@@ -1,17 +1,64 @@
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Calendar, Check, Share2, Ticket } from "lucide-react";
+import { ArrowRight, Calendar, CalendarPlus, Check, Share2, Ticket } from "lucide-react";
 import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 import { Link, useLocation } from "react-router-dom";
 import { useWindowSize } from "react-use";
 
+const generateICS = (name: string, startDate: string, endDate: string, location: string): string => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const toICSDate = (d: string) => {
+    const dt = new Date(d);
+    return `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}`;
+  };
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Pickle Rally//EN',
+    'BEGIN:VEVENT',
+    `UID:pickle-rally-${Date.now()}@picklerally.com`,
+    `DTSTAMP:${toICSDate(new Date().toISOString())}T000000Z`,
+    `DTSTART;VALUE=DATE:${toICSDate(startDate)}`,
+    `DTEND;VALUE=DATE:${toICSDate(endDate)}`,
+    `SUMMARY:${name}`,
+    'DESCRIPTION:Registered via Pickle Rally — picklerally.com',
+    `LOCATION:${location}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  return lines.join('\r\n');
+};
+
 const RegistrationSuccess = () => {
   const { width, height } = useWindowSize();
   const [showConfetti, setShowConfetti] = useState(true);
   const location = useLocation();
-  const state = location.state as { tournamentName?: string; eventIds?: string[]; } | null;
+  const state = location.state as {
+    tournamentName?: string;
+    eventIds?: string[];
+    startDate?: string;
+    endDate?: string;
+    location?: string;
+  } | null;
+
+  const handleAddToCalendar = () => {
+    if (!state?.startDate) return;
+    const ics = generateICS(
+      state.tournamentName || 'Pickleball Tournament',
+      state.startDate,
+      state.endDate || state.startDate,
+      state.location || '',
+    );
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(state.tournamentName || 'tournament').replace(/\s+/g, '-').toLowerCase()}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setShowConfetti(false), 5000);
@@ -96,6 +143,16 @@ const RegistrationSuccess = () => {
                 Go to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
+            {state?.startDate && (
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl font-display font-bold uppercase tracking-widest text-sm"
+                onClick={handleAddToCalendar}
+              >
+                <CalendarPlus className="w-4 h-4 mr-2" />
+                Add to Calendar
+              </Button>
+            )}
             <Button variant="outline" className="w-full h-12 rounded-xl font-display font-bold uppercase tracking-widest text-sm" asChild>
               <Link to="/tournaments">
                 Find More Tournaments

@@ -1,12 +1,16 @@
+import { cn } from "@/lib/utils";
 import { tournamentAPI } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, MapPin, Users } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+
+const CARD_WIDTH = 344; // min-w-[320px] + gap-6 (24px)
 
 const FeaturedTournamentsSection = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -14,6 +18,13 @@ const FeaturedTournamentsSection = () => {
         left: direction === "left" ? -400 : 400,
         behavior: "smooth",
       });
+    }
+  };
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const newIndex = Math.round(scrollRef.current.scrollLeft / CARD_WIDTH);
+      setActiveIndex(newIndex);
     }
   };
 
@@ -53,6 +64,7 @@ const FeaturedTournamentsSection = () => {
 
       <div
         ref={scrollRef}
+        onScroll={handleScroll}
         className="flex gap-6 px-4 md:px-6 max-w-[1200px] mx-auto overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory"
       >
         {tournaments.map((tournament: any) => {
@@ -145,6 +157,26 @@ const FeaturedTournamentsSection = () => {
           );
         })}
       </div>
+      {/* Carousel dots — mobile only */}
+      {tournaments.length > 1 && (
+        <div className="flex md:hidden items-center justify-center gap-2 pt-2 pb-4">
+          {tournaments.map((_: any, i: number) => (
+            <button
+              key={i}
+              onClick={() =>
+                scrollRef.current?.scrollTo({ left: i * CARD_WIDTH, behavior: "smooth" })
+              }
+              className={cn(
+                "rounded-full transition-all duration-300",
+                i === activeIndex
+                  ? "w-6 h-2 bg-primary"
+                  : "w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+              )}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };
