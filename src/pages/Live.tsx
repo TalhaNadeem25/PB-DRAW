@@ -68,7 +68,7 @@ const Live = () => {
       return { totalMatches, liveMatches };
     },
     enabled: !!selectedTournament,
-    refetchInterval: 10000,
+    refetchInterval: 30000,
   });
 
   if (isLoading) {

@@ -70,9 +70,9 @@ const Profile = () => {
         state: user.location?.state ?? "",
         playingDays: user.preferences?.playingDays ?? [],
         partnerPreference: user.preferences?.partnerPreference ?? "either",
-        preferredSide: "Left",
-        primaryPaddle: "",
-        availability: [],
+        preferredSide: (user.preferences?.preferredSide as "Left" | "Right" | "Both") ?? "Left",
+        primaryPaddle: user.preferences?.primaryPaddle ?? "",
+        availability: user.preferences?.availability ?? [],
       });
     }
   }, [user]);
@@ -87,6 +87,9 @@ const Profile = () => {
     state: user?.location?.state ?? "",
     playingDays: user?.preferences?.playingDays ?? [],
     partnerPreference: user?.preferences?.partnerPreference ?? "either",
+    preferredSide: (user?.preferences?.preferredSide as "Left" | "Right" | "Both") ?? "Left",
+    primaryPaddle: user?.preferences?.primaryPaddle ?? "",
+    availability: user?.preferences?.availability ?? [],
   };
   const hasUnsavedChanges =
     formData.name !== initialData.name ||
@@ -96,7 +99,10 @@ const Profile = () => {
     formData.city !== initialData.city ||
     formData.state !== initialData.state ||
     JSON.stringify(formData.playingDays) !== JSON.stringify(initialData.playingDays) ||
-    formData.partnerPreference !== initialData.partnerPreference;
+    formData.partnerPreference !== initialData.partnerPreference ||
+    formData.preferredSide !== initialData.preferredSide ||
+    formData.primaryPaddle !== initialData.primaryPaddle ||
+    JSON.stringify(formData.availability) !== JSON.stringify(initialData.availability);
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ["user-stats"],
@@ -130,6 +136,9 @@ const Profile = () => {
       preferences: {
         playingDays: formData.playingDays,
         partnerPreference: formData.partnerPreference,
+        preferredSide: formData.preferredSide,
+        primaryPaddle: formData.primaryPaddle || undefined,
+        availability: formData.availability,
       },
     });
   };
@@ -155,9 +164,9 @@ const Profile = () => {
         state: user.location?.state ?? "",
         playingDays: user.preferences?.playingDays ?? [],
         partnerPreference: user.preferences?.partnerPreference ?? "either",
-        preferredSide: formData.preferredSide,
-        primaryPaddle: formData.primaryPaddle,
-        availability: formData.availability,
+        preferredSide: (user.preferences?.preferredSide as "Left" | "Right" | "Both") ?? "Left",
+        primaryPaddle: user.preferences?.primaryPaddle ?? "",
+        availability: user.preferences?.availability ?? [],
       });
       toast.success("Changes discarded");
     }

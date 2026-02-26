@@ -26,35 +26,83 @@ import {
   Trophy
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 const Tournaments = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || "all");
   const [locationFilter, setLocationFilter] = useState("all");
-  const [skillFilter, setSkillFilter] = useState("all");
+  const [skillFilter, setSkillFilter] = useState(searchParams.get('skill') || "all");
   const [priceFilter, setPriceFilter] = useState("all");
   const [formatFilter, setFormatFilter] = useState("all");
+  const [sortOption, setSortOption] = useState("soonest");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, locationFilter, skillFilter, priceFilter, formatFilter]);
+  }, [searchQuery, statusFilter, locationFilter, skillFilter, priceFilter, formatFilter, sortOption]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["tournaments", searchQuery, statusFilter], // In a real app add all filters
+    queryKey: ["tournaments", searchQuery, statusFilter],
     queryFn: () =>
       tournamentAPI.getAll({
-        status: statusFilter,
-        search: searchQuery,
-        limit: 50,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        search: searchQuery || undefined,
+        limit: 100,
       }),
   });
 
   const tournaments = data?.data || [];
 
-  const formattedTournaments = tournaments.map((tournament: any) => ({
+  const STATE_MAP: Record<string, string[]> = {
+    ca: ["CA", "California"],
+    fl: ["FL", "Florida"],
+    tx: ["TX", "Texas"],
+  };
+
+  const filteredAndSortedTournaments = tournaments
+    .filter((t: any) => {
+      // Location filter
+      if (locationFilter !== "all" && locationFilter !== "near") {
+        const aliases = STATE_MAP[locationFilter] || [];
+        const loc = (t.location || "").toUpperCase();
+        if (!aliases.some((a) => loc.includes(a.toUpperCase()))) return false;
+      }
+      // Skill filter
+      if (skillFilter !== "all") {
+        const skill = String(t.skillLevel || "");
+        if (skill !== skillFilter && !skill.includes(skillFilter)) return false;
+      }
+      // Price filter
+      if (priceFilter !== "all") {
+        const fee = t.entryFee || 0;
+        if (priceFilter === "0" && fee !== 0) return false;
+        if (priceFilter === "50" && fee >= 50) return false;
+        if (priceFilter === "100" && fee >= 100) return false;
+      }
+      // Format filter (best-effort via events array if available)
+      if (formatFilter !== "all" && Array.isArray(t.events)) {
+        const hasFormat = t.events.some((ev: any) =>
+          (ev.gameType || "").toLowerCase().includes(formatFilter)
+        );
+        if (!hasFormat) return false;
+      }
+      return true;
+    })
+    .sort((a: any, b: any) => {
+      if (sortOption === "soonest") {
+        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+      }
+      if (sortOption === "popular") {
+        return (b.currentPlayers || 0) - (a.currentPlayers || 0);
+      }
+      return 0;
+    });
+
+  const formattedTournaments = filteredAndSortedTournaments.map((tournament: any) => ({
     id: tournament._id,
     name: tournament.name,
     location: tournament.location,
@@ -71,9 +119,9 @@ const Tournaments = () => {
     organizerId: typeof tournament.organizer === 'string' ? tournament.organizer : tournament.organizer?._id,
   }));
 
-  const activeFiltersCount = 
-    (statusFilter !== "all" ? 1 : 0) + 
-    (locationFilter !== "all" ? 1 : 0) + 
+  const activeFiltersCount =
+    (statusFilter !== "all" ? 1 : 0) +
+    (locationFilter !== "all" ? 1 : 0) +
     (skillFilter !== "all" ? 1 : 0) +
     (priceFilter !== "all" ? 1 : 0) +
     (formatFilter !== "all" ? 1 : 0);
@@ -90,7 +138,7 @@ const Tournaments = () => {
         <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Location</h3>
         <div className="space-y-2">
           {["all", "near", "ca", "fl", "tx"].map((val) => (
-            <label key={val} className="flex items-center gap-2 cursor-pointer group">
+            <label key={val} onClick={() => setLocationFilter(val)} className="flex items-center gap-2 cursor-pointer group">
               <div className={cn(
                 "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                 locationFilter === val ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary"
@@ -108,7 +156,7 @@ const Tournaments = () => {
         <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Skill Level</h3>
         <div className="space-y-2">
           {["all", "2.5", "3.0", "3.5", "4.0", "4.5"].map((val) => (
-            <label key={val} className="flex items-center gap-2 cursor-pointer group">
+            <label key={val} onClick={() => setSkillFilter(val)} className="flex items-center gap-2 cursor-pointer group">
               <div className={cn(
                 "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                 skillFilter === val ? "border-primary bg-primary text-white" : "border-muted-foreground group-hover:border-primary text-transparent"
@@ -126,14 +174,14 @@ const Tournaments = () => {
         <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Status</h3>
         <div className="space-y-2">
           {["all", "open", "in-progress", "completed"].map((val) => (
-            <label key={val} className="flex items-center gap-2 cursor-pointer group">
+            <label key={val} onClick={() => setStatusFilter(val)} className="flex items-center gap-2 cursor-pointer group">
               <div className={cn(
                 "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                 statusFilter === val ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary"
               )}>
                 {statusFilter === val && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
               </div>
-              <span className="text-sm font-medium capitalize">{val === "in-progress" ? "Live" : val}</span>
+              <span className="text-sm font-medium capitalize">{val === "all" ? "All" : val === "in-progress" ? "Live" : val}</span>
             </label>
           ))}
         </div>
@@ -144,7 +192,7 @@ const Tournaments = () => {
         <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Entry Fee</h3>
         <div className="space-y-2">
           {["all", "0", "50", "100"].map((val) => (
-            <label key={val} className="flex items-center gap-2 cursor-pointer group">
+            <label key={val} onClick={() => setPriceFilter(val)} className="flex items-center gap-2 cursor-pointer group">
               <div className={cn(
                 "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                 priceFilter === val ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary"
@@ -162,7 +210,7 @@ const Tournaments = () => {
         <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Format</h3>
         <div className="space-y-2">
           {["all", "singles", "doubles", "mixed"].map((val) => (
-            <label key={val} className="flex items-center gap-2 cursor-pointer group">
+            <label key={val} onClick={() => setFormatFilter(val)} className="flex items-center gap-2 cursor-pointer group">
               <div className={cn(
                 "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                 formatFilter === val ? "border-primary bg-primary text-white" : "border-muted-foreground group-hover:border-primary text-transparent"
@@ -241,6 +289,7 @@ const Tournaments = () => {
                       setSkillFilter("all");
                       setPriceFilter("all");
                       setFormatFilter("all");
+                      setSortOption("soonest");
                     }}
                     className="text-xs text-muted-foreground hover:text-primary font-bold uppercase tracking-wider transition-colors"
                   >
@@ -263,10 +312,13 @@ const Tournaments = () => {
                    <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
                     Sort:
                   </span>
-                  <select className="bg-transparent text-sm font-bold uppercase tracking-wide focus:outline-none cursor-pointer hover:text-primary transition-colors">
-                    <option>Nearest</option>
-                    <option>Soonest</option>
-                    <option>Most popular</option>
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                    className="bg-transparent text-sm font-bold uppercase tracking-wide focus:outline-none cursor-pointer hover:text-primary transition-colors"
+                  >
+                    <option value="soonest">Soonest</option>
+                    <option value="popular">Most Popular</option>
                   </select>
                 </div>
               </div>
@@ -362,6 +414,7 @@ const Tournaments = () => {
                       setSkillFilter("all");
                       setPriceFilter("all");
                       setFormatFilter("all");
+                      setSortOption("soonest");
                     }}
                   >
                     Clear Filters
