@@ -20,27 +20,27 @@ const Footer = () => {
                 Pickle Rally
               </h2>
             </div>
-            <p className="text-slate-400 text-lg mb-8 max-w-sm">
+            <p className="text-muted-foreground text-lg mb-8 max-w-sm">
               The digital backbone of professional and amateur pickleball worldwide.
             </p>
             <div className="flex gap-4">
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
+                className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
                 aria-label="Website"
               >
                 <Globe className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
+                className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
                 aria-label="Email"
               >
                 <Mail className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
+                className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all"
                 aria-label="Social"
               >
                 <ThumbsUp className="w-5 h-5" />
@@ -63,7 +63,7 @@ const Footer = () => {
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-slate-400 hover:text-white transition-colors"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -77,12 +77,12 @@ const Footer = () => {
             <h5 className="text-sm font-display font-black uppercase tracking-widest text-primary mb-8">
               Stay Updated
             </h5>
-            <p className="text-slate-400 text-sm mb-4">Get the latest tournament drops and news.</p>
+            <p className="text-muted-foreground text-sm mb-4">Get the latest tournament drops and news.</p>
             <div className="flex flex-col gap-2">
               <Input
                 type="email"
                 placeholder="Email Address"
-                className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-0 text-foreground placeholder:text-slate-500"
+                className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-0 text-foreground placeholder:text-muted-foreground"
               />
               <Button className="bg-primary text-primary-foreground font-display font-black uppercase tracking-widest py-3 rounded-lg text-sm hover:brightness-110 transition-all">
                 Subscribe
@@ -92,13 +92,13 @@ const Footer = () => {
         </div>
 
         {/* Footer Bottom */}
-        <div className="pt-8 sm:pt-12 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest text-center sm:text-left">
+        <div className="pt-8 sm:pt-12 border-t border-border/30 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 text-muted-foreground text-xs font-bold uppercase tracking-widest text-center sm:text-left">
           <p>© {new Date().getFullYear()} Pickle Rally. All Rights Reserved.</p>
           <div className="flex gap-8">
-            <Link to="/privacy" className="hover:text-white transition-colors">
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="hover:text-white transition-colors">
+            <Link to="/terms" className="hover:text-foreground transition-colors">
               Terms of Service
             </Link>
           </div>

@@ -81,7 +81,7 @@ const Navbar = () => {
                 <div className="absolute inset-0 rounded-xl bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               <span className="font-display text-lg sm:text-xl font-bold text-foreground tracking-wide whitespace-nowrap">
-                PICKLE<span className="text-primary">PLAY</span>
+                PICKLE<span className="text-primary"> RALLY</span>
               </span>
             </Link>
 
@@ -95,6 +95,7 @@ const Navbar = () => {
                   <Link
                     key={link.href}
                     to={link.href}
+                    aria-label={link.label}
                     className={cn(
                       "relative flex items-center justify-center gap-1.5 text-sm font-medium transition-all duration-200 p-2.5 rounded-xl min-w-[40px]",
                       isActive(link.href)
@@ -235,7 +236,7 @@ const Navbar = () => {
                         )}
 
                         <DropdownMenuItem asChild className="cursor-pointer rounded-xl p-3 focus:bg-accent/50">
-                          <Link to="/my-tickets" className="flex items-center gap-3">
+                          <Link to="/tickets" className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
                               <CreditCard className="w-4 h-4 text-foreground" />
                             </div>
@@ -290,6 +291,7 @@ const Navbar = () => {
             <button
               className="lg:hidden p-2 rounded-xl hover:bg-accent/50 transition-colors"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle navigation menu"
             >
               <div className="relative w-6 h-6">
                 <span className={cn(
