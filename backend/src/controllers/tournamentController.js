@@ -261,18 +261,20 @@ export const getTournamentRegistrations = async (req, res, next) => {
       format: event.format,
       skillLevel: event.skillLevel,
       entryFee: event.entryFee,
-      teams: event.teams.map(team => ({
-        teamId: team._id,
-        teamName: team.name,
-        players: team.players.map(player => ({
-          playerId: player._id,
-          name: player.name,
-          email: player.email,
-          skillLevel: player.skillLevel
+      teams: event.teams
+        .filter(team => team.paymentStatus === 'paid')
+        .map(team => ({
+          teamId: team._id,
+          teamName: team.name,
+          players: team.players.map(player => ({
+            playerId: player._id,
+            name: player.name,
+            email: player.email,
+            skillLevel: player.skillLevel
+          })),
+          paymentStatus: team.paymentStatus,
+          registeredAt: team.createdAt
         })),
-        paymentStatus: team.paymentStatus,
-        registeredAt: team.createdAt
-      })),
       // Singles registrations
       registeredPlayers: event.registeredPlayers.map(reg => ({
         playerId: reg.player._id,

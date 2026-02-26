@@ -83,6 +83,14 @@ const paymentSchema = new mongoose.Schema(
       receiptEmail: {
         type: String,
         default: ''
+      },
+      paymentType: {
+        type: String,
+        default: null
+      },
+      invitationId: {
+        type: String,
+        default: null
       }
     },
     refundedAt: {
