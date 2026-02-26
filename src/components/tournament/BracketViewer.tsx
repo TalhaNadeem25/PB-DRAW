@@ -50,6 +50,58 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
   const pools = poolsData?.data || [];
   const playoffs = playoffsData?.data || [];
 
+  const selectedEvent = events.find((e: any) => e._id === selectedEventId);
+  const isSingles = selectedEvent?.format === 'singles';
+
+  // For singles events, fetch the full event to get registeredPlayers
+  const { data: fullEventData } = useQuery({
+    queryKey: ['event', selectedEventId],
+    queryFn: () => eventAPI.getById(selectedEventId!),
+    enabled: !!selectedEventId && isSingles,
+  });
+
+  const fullEvent = fullEventData?.data;
+
+  // Compute standings-compatible members for any pool
+  const getPoolMembers = (pool: any) => {
+    if (isSingles) {
+      const playersInPool = (fullEvent?.registeredPlayers || [])
+        .filter((reg: any) => reg.paymentStatus === 'paid' && reg.pool?.toString() === pool._id?.toString())
+        .map((reg: any) => ({
+          _id: reg.player._id,
+          name: reg.player?.name ?? reg.player?.email ?? 'Player',
+          players: [{ _id: reg.player._id, name: reg.player?.name ?? reg.player?.email ?? 'Player' }],
+          stats: { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifferential: 0 }
+        }));
+
+      const statsByPlayerId = new Map<string, typeof playersInPool[0]['stats']>();
+      playersInPool.forEach((p: any) => statsByPlayerId.set(p._id?.toString(), { ...p.stats }));
+
+      (pool.matches || []).filter((m: any) => m.status === 'completed').forEach((m: any) => {
+        const id1 = m.team1?._id?.toString() ?? m.team1?.toString();
+        const id2 = m.team2?._id?.toString() ?? m.team2?.toString();
+        const s1 = m.score?.team1Score ?? 0;
+        const s2 = m.score?.team2Score ?? 0;
+        const st1 = id1 ? statsByPlayerId.get(id1) : null;
+        const st2 = id2 ? statsByPlayerId.get(id2) : null;
+        if (st1 && st2) {
+          st1.pointsFor += s1; st1.pointsAgainst += s2;
+          st2.pointsFor += s2; st2.pointsAgainst += s1;
+          if (s1 > s2) { st1.wins += 1; st2.losses += 1; }
+          else if (s2 > s1) { st2.wins += 1; st1.losses += 1; }
+        }
+      });
+
+      statsByPlayerId.forEach((st) => { st.pointDifferential = st.pointsFor - st.pointsAgainst; });
+
+      return playersInPool.map((p: any) => ({
+        ...p,
+        stats: statsByPlayerId.get(p._id?.toString()) ?? p.stats
+      }));
+    }
+    return pool.teams || [];
+  };
+
   const handleEventChange = (eventId: string) => {
     setSelectedEventId(eventId);
     setSelectedPoolId(null); // Reset pool selection when event changes
@@ -133,7 +185,9 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
                   <SelectContent>
                     {pools.map((pool: any) => (
                       <SelectItem key={pool._id} value={pool._id}>
-                        {pool.name} ({pool.teams?.length || 0} teams)
+                        {pool.name} ({isSingles
+                          ? (fullEvent?.registeredPlayers || []).filter((r: any) => r.paymentStatus === 'paid' && r.pool?.toString() === pool._id?.toString()).length
+                          : pool.teams?.length || 0} {isSingles ? 'players' : 'teams'})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -162,7 +216,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
             <>
               {/* Standings Table */}
               <PoolStandings
-                teams={pools.find((p: any) => p._id === selectedPoolId)?.teams || []}
+                teams={selectedPoolId ? getPoolMembers(pools.find((p: any) => p._id === selectedPoolId)) : []}
                 poolName={pools.find((p: any) => p._id === selectedPoolId)?.name}
                 showPlayoffIndicators={true}
               />
