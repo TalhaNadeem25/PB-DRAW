@@ -579,7 +579,18 @@ const TournamentDetail = () => {
                 <Button variant="outline" size="icon" className="shadow-sm hover:shadow-md transition-shadow w-9 h-9 sm:w-10 sm:h-10" onClick={handleToggleFavorite}>
                   <Heart className={cn("w-4 h-4 sm:w-5 sm:h-5 transition-colors", isFavorite && "fill-red-500 text-red-500")} />
                 </Button>
-                <Button variant="outline" size="icon" className="shadow-sm hover:shadow-md transition-shadow w-9 h-9 sm:w-10 sm:h-10">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shadow-sm hover:shadow-md transition-shadow w-9 h-9 sm:w-10 sm:h-10"
+                  onClick={() => {
+                    const url = `${window.location.origin}/spectator/${id}`;
+                    navigator.clipboard
+                      .writeText(url)
+                      .then(() => toast.success("Spectator link copied!"))
+                      .catch(() => toast.error("Could not copy link"));
+                  }}
+                >
                   <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
                 <ExportButtons tournament={tournament} matches={tournament.matches || []} teams={tournament.teams || []} events={tournament.events || []} variant="outline" />

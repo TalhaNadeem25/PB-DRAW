@@ -6,9 +6,9 @@ import { useSocket } from "@/contexts/SocketContext";
 import { eventAPI, matchAPI, poolAPI, tournamentAPI } from "@/services/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Activity, Calendar, ChevronRight, MapPin, Radio, Trophy, Users, Zap } from "lucide-react";
+import { Activity, Calendar, ChevronRight, Eye, MapPin, Radio, Trophy, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Live = () => {
   const navigate = useNavigate();
@@ -183,6 +183,18 @@ const Live = () => {
                     <Button variant="default" size="lg" className="w-full shadow-glow group-hover:shadow-glow-lg transition-all">
                       View Live Matches
                       <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full mt-2"
+                      asChild
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link to={`/spectator/${tournament._id}`}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Spectator View
+                      </Link>
                     </Button>
                   </div>
                 </div>

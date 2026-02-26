@@ -40,6 +40,7 @@ import TournamentCommunications from "./pages/TournamentCommunications";
 import TournamentDetail from "./pages/TournamentDetail";
 import TournamentPlanner from "./pages/TournamentPlanner";
 import Tournaments from "./pages/Tournaments";
+import Spectator from "./pages/Spectator";
 import VerifyEmail from "./pages/VerifyEmail";
 
 const queryClient = new QueryClient();
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/live" element={<Live />} />
             <Route path="/live/:id" element={<LiveTournamentDetail />} />
+            <Route path="/spectator/:id" element={<Spectator />} />
             <Route
               path="/tournaments/:id/edit"
               element={
