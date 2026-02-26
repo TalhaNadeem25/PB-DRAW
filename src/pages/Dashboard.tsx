@@ -445,13 +445,13 @@ const Dashboard = () => {
             /* PLAYER DASHBOARD */
             <Tabs defaultValue="overview" className="w-full space-y-8">
               <TabsList className="bg-muted p-1 rounded-xl h-auto">
-                <TabsTrigger value="overview" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                <TabsTrigger value="overview" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="events" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                <TabsTrigger value="events" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
                   Events & Waitlist
                 </TabsTrigger>
-                <TabsTrigger value="teams" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                <TabsTrigger value="teams" className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
                   Teams & Network
                 </TabsTrigger>
               </TabsList>
@@ -464,7 +464,7 @@ const Dashboard = () => {
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
                   <CardContent className="p-6 relative z-10 flex flex-col md:flex-row items-center gap-6">
                     <div className="flex-shrink-0 text-center md:text-left">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full mb-3 border border-white/20">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-card/20 backdrop-blur-md rounded-full mb-3 border border-white/20">
                         <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />
                         <span className="text-xs font-bold font-display uppercase tracking-widest text-white">Up Next</span>
                       </div>

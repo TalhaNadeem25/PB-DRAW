@@ -66,7 +66,7 @@ export default function TicketCard({ payment, compact = false }: TicketCardProps
             </h3>
             <div className="flex flex-wrap gap-2 mt-2">
               {payment.events.map((event) => (
-                <Badge key={event.id} variant="outline" className="bg-white">
+                <Badge key={event.id} variant="outline" className="bg-background">
                   {event.name}
                 </Badge>
               ))}
@@ -136,7 +136,7 @@ export default function TicketCard({ payment, compact = false }: TicketCardProps
                         </div>
                       </div>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md flex flex-col items-center justify-center p-8 sm:p-12 bg-white border-0 shadow-2xl rounded-3xl gap-0">
+                    <DialogContent className="sm:max-w-md flex flex-col items-center justify-center p-8 sm:p-12 bg-card border-0 shadow-2xl rounded-3xl gap-0">
                       <div className="w-full mb-6">
                         <h3 className="font-display font-black text-2xl text-center text-foreground">{payment.tournament.name}</h3>
                         <p className="text-center text-muted-foreground font-medium mt-1">Event Ticket</p>
@@ -155,7 +155,7 @@ export default function TicketCard({ payment, compact = false }: TicketCardProps
                     </DialogContent>
                   </Dialog>
 
-                  <div className="mt-4 flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-green-500">
+                  <div className="mt-4 flex items-center gap-2 bg-muted px-4 py-2 rounded-lg border border-green-500">
                     <code className="font-mono text-sm font-bold text-green-700">
                       {payment.ticketCode}
                     </code>

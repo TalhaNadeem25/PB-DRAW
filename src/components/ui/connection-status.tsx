@@ -3,7 +3,11 @@ import { Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const ConnectionStatus = () => {
-  const { connected } = useSocket();
+  const { socket, connected } = useSocket();
+
+  // Socket is null when running on a serverless host (e.g. Vercel) where no
+  // persistent Socket.IO server exists. Don't show a status badge in that case.
+  if (socket === null) return null;
 
   return (
     <div

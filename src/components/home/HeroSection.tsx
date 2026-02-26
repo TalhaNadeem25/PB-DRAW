@@ -38,14 +38,14 @@ const HeroSection = () => {
           {/* Secondary CTA */}
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
             <span className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Organizers:</span>
-            <Button variant="outline" className="rounded-full shadow-sm hover:border-primary hover:text-primary transition-colors bg-white font-bold" asChild>
+            <Button variant="outline" className="rounded-full shadow-sm bg-background font-bold" asChild>
               <Link to="/create-tournament">Host a Tournament (Free)</Link>
             </Button>
           </div>
         </div>
 
         {/* Search Card */}
-        <div className="flex-1 w-full max-w-md bg-white rounded-2xl p-6 md:p-8 shadow-md border border-border">
+        <div className="flex-1 w-full max-w-md bg-card rounded-2xl p-6 md:p-8 shadow-md border border-border">
           <form onSubmit={handleSearch} className="space-y-4">
             <h3 className="text-2xl font-display font-bold text-foreground mb-4 uppercase tracking-tight">Find an Event</h3>
             
@@ -54,7 +54,7 @@ const HeroSection = () => {
                 <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input 
                   placeholder="Tournament name..." 
-                  className="pl-10 h-12 bg-muted/30 border-border focus:bg-white transition-colors"
+                  className="pl-10 h-12 bg-muted/30 border-border focus:bg-card transition-colors"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -64,7 +64,7 @@ const HeroSection = () => {
                 <MapPin className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input 
                   placeholder="City or zip code..." 
-                  className="pl-10 h-12 bg-muted/30 border-border focus:bg-white transition-colors"
+                  className="pl-10 h-12 bg-muted/30 border-border focus:bg-card transition-colors"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                 />
@@ -73,7 +73,7 @@ const HeroSection = () => {
               <div className="relative">
                 <Activity className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Select value={skill} onValueChange={setSkill}>
-                  <SelectTrigger className="pl-10 h-12 bg-muted/30 border-border focus:bg-white transition-colors">
+                  <SelectTrigger className="pl-10 h-12 bg-muted/30 border-border focus:bg-card transition-colors">
                     <SelectValue placeholder="Skill level (e.g. 3.5)" />
                   </SelectTrigger>
                   <SelectContent>

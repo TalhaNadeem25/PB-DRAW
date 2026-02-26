@@ -25,6 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -36,9 +37,11 @@ import { format } from "date-fns";
 import {
     ArrowLeft,
     ArrowRight,
+    Award,
     Brain,
     CalendarIcon,
     Check,
+    Clock,
     DollarSign,
     Loader2,
     MapPin,
@@ -75,6 +78,22 @@ const CreateTournament = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [allowWaitlist, setAllowWaitlist] = useState(false);
+
+  // Step 3: Venue & Courts
+  const [courtCount, setCourtCount] = useState<number | string>(4);
+  const [courtSurface, setCourtSurface] = useState("");
+  const [playStartTime, setPlayStartTime] = useState("08:00");
+  const [playEndTime, setPlayEndTime] = useState("18:00");
+  const [amenities, setAmenities] = useState<string[]>([]);
+  const [spectatorCapacity, setSpectatorCapacity] = useState<number | string>("");
+
+  // Step 4: Rules & Prizes
+  const [checkInWindow, setCheckInWindow] = useState("30");
+  const [refereeType, setRefereeType] = useState("");
+  const [prizeTotal, setPrizeTotal] = useState<number | string>("");
+  const [prizeFirst, setPrizeFirst] = useState("");
+  const [prizeSecond, setPrizeSecond] = useState("");
+  const [prizeThird, setPrizeThird] = useState("");
 
   // Events state
   const [events, setEvents] = useState<Omit<TournamentEvent, "id" | "registeredPlayers">[]>([]);
@@ -188,6 +207,12 @@ const CreateTournament = () => {
     setEvents(events.filter((_, i) => i !== index));
   };
 
+  const toggleAmenity = (amenity: string) => {
+    setAmenities(prev =>
+      prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]
+    );
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -224,6 +249,26 @@ const CreateTournament = () => {
       maxPlayers,
       status: 'open',
       settings: { allowWaitlist },
+      venue: {
+        courts: courtCount !== "" ? Number(courtCount) : undefined,
+        courtSurface: courtSurface || undefined,
+        facilities: amenities.length > 0 ? amenities : undefined,
+        spectatorCapacity: spectatorCapacity !== "" ? Number(spectatorCapacity) : undefined,
+      },
+      scheduling: {
+        startTime: playStartTime,
+        endTime: playEndTime,
+        checkInWindow: Number(checkInWindow),
+      },
+      refereeType: refereeType || undefined,
+      prizePool: prizeTotal !== "" && Number(prizeTotal) >= 0 ? {
+        total: Number(prizeTotal),
+        distribution: {
+          first: prizeFirst || undefined,
+          second: prizeSecond || undefined,
+          third: prizeThird || undefined,
+        },
+      } : undefined,
     });
   };
 
@@ -263,35 +308,37 @@ const CreateTournament = () => {
         {/* Progress Steps */}
         <div className="container mx-auto px-4 sm:px-6 py-6">
           <div className="glass-card rounded-2xl p-4 sm:p-6 animate-fade-in overflow-x-auto">
-            <div className="flex items-center justify-between max-w-2xl mx-auto min-w-[280px]">
+            <div className="flex items-center justify-between max-w-3xl mx-auto min-w-[300px]">
               {[
                 { num: 1, label: "Basic Info" },
                 { num: 2, label: "Events" },
-                { num: 3, label: "Review" },
+                { num: 3, label: "Venue" },
+                { num: 4, label: "Rules" },
+                { num: 5, label: "Review" },
               ].map((s, i) => (
                 <div key={s.num} className="flex items-center">
                   <div
                     className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center font-display font-bold transition-all",
+                      "w-9 h-9 rounded-full flex items-center justify-center font-display font-bold transition-all text-sm",
                       step >= s.num
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {step > s.num ? <Check className="w-5 h-5" /> : s.num}
+                    {step > s.num ? <Check className="w-4 h-4" /> : s.num}
                   </div>
                   <span
                     className={cn(
-                      "ml-3 font-medium hidden sm:block",
+                      "ml-2 font-medium hidden sm:block text-sm",
                       step >= s.num ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
                     {s.label}
                   </span>
-                  {i < 2 && (
+                  {i < 4 && (
                     <div
                       className={cn(
-                        "w-12 sm:w-24 h-1 mx-4 rounded-full",
+                        "w-6 sm:w-12 h-1 mx-2 rounded-full",
                         step > s.num ? "bg-primary" : "bg-muted"
                       )}
                     />
@@ -732,8 +779,216 @@ const CreateTournament = () => {
               </div>
             )}
 
-            {/* Step 3: Review */}
+            {/* Step 3: Venue & Courts */}
             {step === 3 && (
+              <div className="space-y-8 animate-fade-in">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      Venue & Courts
+                    </CardTitle>
+                    <CardDescription>
+                      Tell players about your venue setup — all fields are optional
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="courtCount">Number of Courts</Label>
+                        <Input
+                          id="courtCount"
+                          type="number"
+                          min={1}
+                          placeholder="e.g. 8"
+                          value={courtCount}
+                          onChange={(e) => setCourtCount(e.target.value === "" ? "" : Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Court Surface</Label>
+                        <Select value={courtSurface} onValueChange={setCourtSurface}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select surface type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="indoor-sport-court">Indoor Sport Court</SelectItem>
+                            <SelectItem value="indoor-wood">Indoor Wood</SelectItem>
+                            <SelectItem value="outdoor-concrete">Outdoor Concrete</SelectItem>
+                            <SelectItem value="outdoor-asphalt">Outdoor Asphalt</SelectItem>
+                            <SelectItem value="outdoor-sport-court">Outdoor Sport Court</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="playStartTime">Play Starts</Label>
+                        <Input
+                          id="playStartTime"
+                          type="time"
+                          value={playStartTime}
+                          onChange={(e) => setPlayStartTime(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="playEndTime">Play Ends</Label>
+                        <Input
+                          id="playEndTime"
+                          type="time"
+                          value={playEndTime}
+                          onChange={(e) => setPlayEndTime(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="spectatorCapacity">Spectator Capacity</Label>
+                      <Input
+                        id="spectatorCapacity"
+                        type="number"
+                        min={0}
+                        placeholder="e.g. 200"
+                        value={spectatorCapacity}
+                        onChange={(e) => setSpectatorCapacity(e.target.value === "" ? "" : Number(e.target.value))}
+                      />
+                      <p className="text-xs text-muted-foreground">Approximate number of spectators the venue can accommodate</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Amenities</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {["Parking", "Restrooms", "Locker Rooms", "Food & Beverages", "Seating/Bleachers", "First Aid", "WiFi"].map((amenity) => (
+                          <label
+                            key={amenity}
+                            className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                          >
+                            <Checkbox
+                              checked={amenities.includes(amenity)}
+                              onCheckedChange={() => toggleAmenity(amenity)}
+                            />
+                            <span className="text-sm font-medium">{amenity}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Step 4: Rules & Prizes */}
+            {step === 4 && (
+              <div className="space-y-8 animate-fade-in">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-primary" />
+                      Check-In & Officials
+                    </CardTitle>
+                    <CardDescription>
+                      Set check-in policy and officiating details — all optional
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Check-In Window</Label>
+                        <Select value={checkInWindow} onValueChange={setCheckInWindow}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="15">15 minutes before first match</SelectItem>
+                            <SelectItem value="30">30 minutes before first match</SelectItem>
+                            <SelectItem value="45">45 minutes before first match</SelectItem>
+                            <SelectItem value="60">1 hour before first match</SelectItem>
+                            <SelectItem value="120">2 hours before first match</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">How early players must check in on tournament day</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Referee Type</Label>
+                        <Select value={refereeType} onValueChange={setRefereeType}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select referee type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="self-officiated">Self-Officiated</SelectItem>
+                            <SelectItem value="line-judges">Line Judges</SelectItem>
+                            <SelectItem value="certified-referees">Certified Referees</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-primary" />
+                      Prize Information
+                    </CardTitle>
+                    <CardDescription>
+                      Add prize details to attract competitive players — optional
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="prizeTotal">Total Prize Pool ($)</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="prizeTotal"
+                          type="number"
+                          min={0}
+                          className="pl-9"
+                          placeholder="0"
+                          value={prizeTotal}
+                          onChange={(e) => setPrizeTotal(e.target.value === "" ? "" : Number(e.target.value))}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">Enter 0 for medals-only or no cash prizes</p>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="prizeFirst">🥇 1st Place</Label>
+                        <Input
+                          id="prizeFirst"
+                          placeholder="e.g. $500 or Gold Medal"
+                          value={prizeFirst}
+                          onChange={(e) => setPrizeFirst(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="prizeSecond">🥈 2nd Place</Label>
+                        <Input
+                          id="prizeSecond"
+                          placeholder="e.g. $250 or Silver Medal"
+                          value={prizeSecond}
+                          onChange={(e) => setPrizeSecond(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="prizeThird">🥉 3rd Place</Label>
+                        <Input
+                          id="prizeThird"
+                          placeholder="e.g. $100 or Bronze Medal"
+                          value={prizeThird}
+                          onChange={(e) => setPrizeThird(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Step 5: Review */}
+            {step === 5 && (
               <div className="space-y-8 animate-fade-in">
                 <Card>
                   <CardHeader>
@@ -824,6 +1079,72 @@ const CreateTournament = () => {
                         ))}
                       </div>
                     </div>
+
+                    {(courtCount !== "" || courtSurface || amenities.length > 0 || spectatorCapacity !== "") && (
+                      <div className="pt-4 border-t border-border">
+                        <h3 className="font-display font-bold text-lg mb-4">Venue & Courts</h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {courtCount !== "" && (
+                            <div>
+                              <span className="text-sm text-muted-foreground">Courts</span>
+                              <p className="font-medium">
+                                {courtCount} courts{courtSurface ? ` · ${courtSurface.replace(/-/g, " ")}` : ""}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-sm text-muted-foreground">Play Hours</span>
+                            <p className="font-medium">{playStartTime} – {playEndTime}</p>
+                          </div>
+                          {spectatorCapacity !== "" && (
+                            <div>
+                              <span className="text-sm text-muted-foreground">Spectator Capacity</span>
+                              <p className="font-medium">{spectatorCapacity}</p>
+                            </div>
+                          )}
+                          {amenities.length > 0 && (
+                            <div>
+                              <span className="text-sm text-muted-foreground">Amenities</span>
+                              <p className="font-medium">{amenities.join(", ")}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {(refereeType || prizeFirst || prizeSecond || prizeThird || (prizeTotal !== "" && Number(prizeTotal) > 0)) && (
+                      <div className="pt-4 border-t border-border">
+                        <h3 className="font-display font-bold text-lg mb-4">Rules & Prizes</h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <span className="text-sm text-muted-foreground">Check-In Window</span>
+                            <p className="font-medium">{checkInWindow} minutes before first match</p>
+                          </div>
+                          {refereeType && (
+                            <div>
+                              <span className="text-sm text-muted-foreground">Referee Type</span>
+                              <p className="font-medium capitalize">{refereeType.replace(/-/g, " ")}</p>
+                            </div>
+                          )}
+                          {prizeTotal !== "" && Number(prizeTotal) > 0 && (
+                            <div>
+                              <span className="text-sm text-muted-foreground">Total Prize Pool</span>
+                              <p className="font-medium">${Number(prizeTotal).toLocaleString()}</p>
+                            </div>
+                          )}
+                          {(prizeFirst || prizeSecond || prizeThird) && (
+                            <div>
+                              <span className="text-sm text-muted-foreground">Distribution</span>
+                              <div className="space-y-0.5 mt-1">
+                                {prizeFirst && <p className="font-medium text-sm">🥇 {prizeFirst}</p>}
+                                {prizeSecond && <p className="font-medium text-sm">🥈 {prizeSecond}</p>}
+                                {prizeThird && <p className="font-medium text-sm">🥉 {prizeThird}</p>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -840,7 +1161,7 @@ const CreateTournament = () => {
                 Back
               </Button>
 
-              {step < 3 ? (
+              {step < 5 ? (
                 <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />

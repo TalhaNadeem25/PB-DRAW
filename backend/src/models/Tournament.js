@@ -78,7 +78,14 @@ const tournamentSchema = new mongoose.Schema({
   venue: {
     name: String,
     courts: Number,
-    facilities: [String]
+    courtSurface: String,
+    facilities: [String],
+    spectatorCapacity: Number
+  },
+  refereeType: {
+    type: String,
+    enum: ['', 'self-officiated', 'line-judges', 'certified-referees'],
+    default: ''
   },
   contactEmail: {
     type: String,
@@ -171,6 +178,7 @@ const tournamentSchema = new mongoose.Schema({
     startTime: { type: String, default: '08:00' },
     endTime: { type: String, default: '18:00' },
     slotDuration: { type: Number, default: 30 }, // minutes
+    checkInWindow: { type: Number, default: 30 }, // minutes before first match
     breakTimes: [{
       start: String,
       end: String,

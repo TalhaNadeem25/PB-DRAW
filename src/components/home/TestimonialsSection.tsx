@@ -23,7 +23,7 @@ const TestimonialsSection = () => {
   ];
 
   return (
-    <section className="py-24 bg-[#F7F8F4]">
+    <section className="py-24 bg-background">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-display font-black uppercase tracking-tight text-foreground mb-4">
@@ -36,7 +36,7 @@ const TestimonialsSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((t, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl border border-border shadow-sm flex flex-col hover:-translate-y-1 transition-transform duration-300">
+            <div key={i} className="bg-card p-8 rounded-2xl border border-border shadow-sm flex flex-col hover:-translate-y-1 transition-transform duration-300">
               <div className="flex gap-1 mb-6">
                 {[1,2,3,4,5].map(star => <Star key={star} className="w-5 h-5 text-amber fill-amber" />)}
               </div>

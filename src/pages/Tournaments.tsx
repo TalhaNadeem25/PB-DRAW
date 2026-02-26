@@ -255,7 +255,7 @@ const Tournaments = () => {
                   placeholder="Search by tournament name or venue"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-14 text-base bg-white border-border rounded-xl shadow-sm"
+                  className="pl-12 h-14 text-base bg-card border-border rounded-xl shadow-sm"
                 />
                 <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg font-display uppercase tracking-widest font-bold">Search</Button>
               </div>
@@ -264,7 +264,7 @@ const Tournaments = () => {
               <div className="md:hidden">
                 <Drawer>
                   <DrawerTrigger asChild>
-                    <Button variant="outline" className="w-full h-14 rounded-xl flex items-center gap-2 shadow-sm border-border bg-white text-foreground font-display uppercase font-bold tracking-wide">
+                    <Button variant="outline" className="w-full h-14 rounded-xl flex items-center gap-2 shadow-sm border-border bg-card text-foreground font-display uppercase font-bold tracking-wide">
                       <Filter className="w-5 h-5" />
                       Filters {activeFiltersCount > 0 && <Badge className="ml-2 bg-primary">{activeFiltersCount}</Badge>}
                     </Button>
@@ -289,7 +289,7 @@ const Tournaments = () => {
 
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Desktop Filters Sidebar */}
-            <aside className="hidden md:block w-[280px] shrink-0 sticky top-28 bg-white p-6 rounded-2xl border border-border shadow-sm">
+            <aside className="hidden md:block w-[280px] shrink-0 sticky top-28 bg-card p-6 rounded-2xl border border-border shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-display font-bold text-xl uppercase tracking-tight flex items-center gap-2">
                   <Filter className="w-5 h-5 text-primary" /> Filters
@@ -339,7 +339,7 @@ const Tournaments = () => {
               {isLoading ? (
                 <SkeletonGrid count={6} className="mt-4" />
               ) : error ? (
-                <div className="text-center py-20 bg-white rounded-2xl border border-border">
+                <div className="text-center py-20 bg-card rounded-2xl border border-border">
                   <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
                     <Search className="w-8 h-8 text-destructive" />
                   </div>
@@ -416,7 +416,7 @@ const Tournaments = () => {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-32 bg-white rounded-2xl border border-border shadow-sm">
+                <div className="text-center py-32 bg-card rounded-2xl border border-border shadow-sm">
                   <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-6">
                     <Trophy className="w-10 h-10 text-muted-foreground" />
                   </div>

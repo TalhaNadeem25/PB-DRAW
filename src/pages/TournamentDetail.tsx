@@ -549,7 +549,7 @@ const TournamentDetail = () => {
         {/* Compact Hero Header (Solid Premium Design) */}
         <div className="bg-card border-b border-border/60 py-10 relative overflow-hidden shadow-sm">
           <div className="container mx-auto px-4 relative z-10">
-            <Link to="/tournaments" className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors group">
+            <Link to="/tournaments" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors group">
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Tournaments
             </Link>

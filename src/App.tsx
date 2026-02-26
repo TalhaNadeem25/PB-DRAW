@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -50,6 +51,7 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <SocketProvider>
+        <ThemeProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -188,6 +190,7 @@ const App = () => (
             </BrowserRouter>
           </ErrorBoundary>
       </TooltipProvider>
+        </ThemeProvider>
       </SocketProvider>
     </AuthProvider>
   </QueryClientProvider>

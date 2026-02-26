@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, Heart, ChevronRight, CreditCard, Settings, Grid3X3 } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, Heart, ChevronRight, CreditCard, Settings, Grid3X3, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import {
   DropdownMenu,
@@ -25,6 +26,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -133,6 +135,9 @@ const Navbar = () => {
             <div className="hidden lg:flex items-center gap-3 shrink-0">
               {isAuthenticated ? (
                 <>
+                  <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                    {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  </Button>
                   {/* Notification Center */}
                   <NotificationCenter />
                   
@@ -271,6 +276,9 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
+                  <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                    {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  </Button>
                   <Button variant="ghost" size="sm" className="hover:bg-accent/50" asChild>
                     <Link to="/login">
                       <LogIn className="w-4 h-4 mr-1.5" />
@@ -360,12 +368,15 @@ const Navbar = () => {
                           {user?.name?.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{user?.name}</p>
                         <p className="text-xs text-muted-foreground capitalize">
                           {user?.role} • {user?.skillLevel} skill
                         </p>
                       </div>
+                      <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="shrink-0">
+                        {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                      </Button>
                     </div>
                   </div>
                   <Link
@@ -414,6 +425,12 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
+                  <div className="flex items-center justify-between py-2 px-4">
+                    <span className="text-sm font-medium text-muted-foreground">Theme</span>
+                    <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                      {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    </Button>
+                  </div>
                   <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <LogIn className="w-4 h-4 mr-2" />

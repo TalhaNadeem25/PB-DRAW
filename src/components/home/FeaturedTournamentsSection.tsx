@@ -39,7 +39,7 @@ const FeaturedTournamentsSection = () => {
   if (tournaments.length === 0) return null;
 
   return (
-    <section className="py-24 bg-white overflow-hidden">
+    <section className="py-24 bg-background overflow-hidden">
       <div className="max-w-[1200px] mx-auto px-4 md:px-6 mb-12 flex items-center justify-between">
         <h2 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tighter text-foreground">
           Featured Tournaments
@@ -47,14 +47,14 @@ const FeaturedTournamentsSection = () => {
         <div className="hidden md:flex gap-4">
           <button
             onClick={() => scroll("left")}
-            className="w-12 h-12 rounded-full border-2 border-border bg-white flex items-center justify-center hover:border-primary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+            className="w-12 h-12 rounded-full border-2 border-border bg-background flex items-center justify-center hover:border-primary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
             aria-label="Scroll left"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => scroll("right")}
-            className="w-12 h-12 rounded-full border-2 border-border bg-white flex items-center justify-center hover:border-primary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+            className="w-12 h-12 rounded-full border-2 border-border bg-background flex items-center justify-center hover:border-primary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
             aria-label="Scroll right"
           >
             <ChevronRight className="w-5 h-5" />
@@ -83,7 +83,7 @@ const FeaturedTournamentsSection = () => {
           return (
             <div
               key={tournament._id}
-              className="min-w-[320px] md:min-w-[400px] bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden snap-start"
+              className="min-w-[320px] md:min-w-[400px] bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden snap-start"
             >
               <div
                 className="relative h-56 w-full bg-cover bg-center bg-muted"
@@ -119,7 +119,7 @@ const FeaturedTournamentsSection = () => {
                 </div>
               </div>
 
-              <div className="p-5 flex-1 flex flex-col bg-white">
+              <div className="p-5 flex-1 flex flex-col bg-card">
                 <div className="flex justify-between items-center mb-4 text-sm font-semibold text-muted-foreground">
                   <span className="bg-muted px-2 py-1 rounded-md">
                     {tournament.skillLevel || "All Levels"}

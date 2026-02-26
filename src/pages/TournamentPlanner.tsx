@@ -182,7 +182,7 @@ const TournamentPlanner = () => {
                   <Card key={idx} className="glass-card-hover rounded-2xl border-border/50 group animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
                     <CardContent className="p-6 text-center">
                       <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:shadow-glow transition-all duration-300">
-                        <feature.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground" />
+                        <feature.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                       </div>
                       <h3 className="font-display font-bold text-lg mb-2">{feature.title}</h3>
                       <p className="text-sm text-muted-foreground">{feature.description}</p>
