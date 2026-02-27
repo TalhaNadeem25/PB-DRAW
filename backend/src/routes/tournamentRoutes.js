@@ -6,6 +6,7 @@ import {
   updateTournament,
   deleteTournament,
   startTournament,
+  completeTournament,
   getTournamentRegistrations,
   registerForTournament,
   uploadTournamentImage
@@ -21,6 +22,7 @@ router.get('/:id/registrations', protect, authorize('organizer', 'admin'), getTo
 router.post('/', protect, authorize('organizer', 'admin'), createTournament);
 router.put('/:id', protect, authorize('organizer', 'admin'), updateTournament);
 router.put('/:id/start', protect, authorize('organizer', 'admin'), startTournament);
+router.put('/:id/complete', protect, authorize('organizer', 'admin'), completeTournament);
 router.delete('/:id', protect, authorize('organizer', 'admin'), deleteTournament);
 router.post('/:id/register', protect, registerForTournament);
 router.post('/:id/upload-image', protect, authorize('organizer', 'admin'), upload.single('image'), uploadTournamentImage);

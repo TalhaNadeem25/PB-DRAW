@@ -338,6 +338,45 @@ export const updateMatchScore = async (req, res, next) => {
         }
       }
 
+      // DE (event-level): feed true Bronze match from Winners Final and Losers Final
+      if ((match.bracket === 'winners' || match.bracket === 'losers') && winnerId) {
+        const loserId = winnerId?.toString() === (match.team1?._id ?? match.team1)?.toString()
+          ? (match.team2?._id ?? match.team2)
+          : (match.team1?._id ?? match.team1);
+
+        if (loserId) {
+          // If this match is wired as parent1 of a bronze match, loser → team1
+          const bronzeFromParent1 = await Match.findOne({
+            event: match.event._id,
+            pool: match.pool,
+            bracket: 'bronze',
+            previousMatch1Id: match._id
+          });
+          if (bronzeFromParent1 && !bronzeFromParent1.team1) {
+            bronzeFromParent1.team1 = loserId;
+            await bronzeFromParent1.save();
+          }
+
+          // If this match is wired as parent2 of a bronze match, loser → team2
+          const bronzeFromParent2 = await Match.findOne({
+            event: match.event._id,
+            pool: match.pool,
+            bracket: 'bronze',
+            previousMatch2Id: match._id
+          });
+          if (
+            bronzeFromParent2 &&
+            !bronzeFromParent2.team2 &&
+            // Avoid duplicate participant: if loser is already bronze team1, skip
+            (!bronzeFromParent2.team1 ||
+              bronzeFromParent2.team1.toString() !== loserId.toString())
+          ) {
+            bronzeFromParent2.team2 = loserId;
+            await bronzeFromParent2.save();
+          }
+        }
+      }
+
       // DE: Grand Final — check if bracket reset is needed
       if (match.bracket === 'finals' && !match.isGrandFinalReset && match.nextMatchId && winnerId) {
         const lfWinnerId = (match.team2?._id ?? match.team2)?.toString();

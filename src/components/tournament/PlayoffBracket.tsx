@@ -354,6 +354,21 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
               )}
             </div>
           </div>
+
+          {/* Bronze Medal Match (true bronze for double-elimination) */}
+          {bronzeMatch && (
+            <div className="mt-8 pt-8 border-t border-border/50">
+              <div className="text-center mb-4">
+                <h3 className="font-semibold text-lg">Bronze Medal Match</h3>
+                <p className="text-sm text-muted-foreground">
+                  Losers of Winners Final and Losers Final — Winner 🥉 Bronze, Loser 4th place
+                </p>
+              </div>
+              <div className="max-w-md mx-auto">
+                <MatchCard match={bronzeMatch} position="center" />
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <>

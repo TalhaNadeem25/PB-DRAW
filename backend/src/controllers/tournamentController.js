@@ -217,6 +217,49 @@ export const startTournament = async (req, res, next) => {
   }
 };
 
+// @desc    Complete tournament (change status to completed)
+// @route   PUT /api/tournaments/:id/complete
+// @access  Private (Organizer/Admin)
+export const completeTournament = async (req, res, next) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+
+    if (!tournament) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tournament not found'
+      });
+    }
+
+    // Check if user is tournament organizer or admin
+    if (tournament.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to complete this tournament'
+      });
+    }
+
+    // Can only complete a tournament that is in-progress
+    if (tournament.status !== 'in-progress') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot complete tournament with status "${tournament.status}". Tournament must be "in-progress" to complete.`
+      });
+    }
+
+    tournament.status = 'completed';
+    await tournament.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Tournament completed successfully!',
+      data: tournament
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get all registrations for a tournament
 // @route   GET /api/tournaments/:id/registrations
 // @access  Private (Organizer/Admin)

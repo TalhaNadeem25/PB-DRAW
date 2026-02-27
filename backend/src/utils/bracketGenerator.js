@@ -557,20 +557,47 @@ export const generateDoubleEliminationForEventTier = async (eventId, teams, team
 
   // ── Grand Final (GF) ─────────────────────────────────────────────────
   allMatchDefs.push({
-    pool: null, event: eventId,
-    round: 1, bracket: 'finals',
-    bracketTier, isGrandFinalReset: false, status: 'scheduled',
-    team1Model: teamModel, team2Model: teamModel,
-    team1: null, team2: null
+    pool: null,
+    event: eventId,
+    round: 1,
+    bracket: 'finals',
+    bracketTier,
+    isGrandFinalReset: false,
+    status: 'scheduled',
+    team1Model: teamModel,
+    team2Model: teamModel,
+    team1: null,
+    team2: null
   });
 
   // ── Bracket Reset ─────────────────────────────────────────────────────
   allMatchDefs.push({
-    pool: null, event: eventId,
-    round: 1, bracket: 'finals',
-    bracketTier, isGrandFinalReset: true, status: 'scheduled',
-    team1Model: teamModel, team2Model: teamModel,
-    team1: null, team2: null
+    pool: null,
+    event: eventId,
+    round: 1,
+    bracket: 'finals',
+    bracketTier,
+    isGrandFinalReset: true,
+    status: 'scheduled',
+    team1Model: teamModel,
+    team2Model: teamModel,
+    team1: null,
+    team2: null
+  });
+
+  // ── Bronze Medal Match (Option 2 – true bronze) ───────────────────────
+  // Separate match so 3rd/4th are decided on court, not inferred.
+  allMatchDefs.push({
+    pool: null,
+    event: eventId,
+    round: 1,
+    bracket: 'bronze',
+    bracketTier,
+    status: 'scheduled',
+    team1Model: teamModel,
+    team2Model: teamModel,
+    team1: null,
+    team2: null
   });
 
   const created = await Match.insertMany(allMatchDefs);
@@ -593,6 +620,7 @@ export const generateDoubleEliminationForEventTier = async (eventId, teams, team
   }
   const gfMatch = created[idx++];
   const gfReset = created[idx++];
+  const bronzeMatch = created[idx++];
 
   // ── Link: WR winner advancement ───────────────────────────────────────
   // WR[r] → WR[r+1]
@@ -659,8 +687,19 @@ export const generateDoubleEliminationForEventTier = async (eventId, teams, team
     });
   }
   // LF (= lrMatches[lrRounds][0]) winner → GF as team2
-  lrMatches[lrRounds][0].nextMatchId = gfMatch._id;
-  gfMatch.previousMatch2Id = lrMatches[lrRounds][0]._id;
+  const losersFinal = lrMatches[lrRounds][0];
+  losersFinal.nextMatchId = gfMatch._id;
+  gfMatch.previousMatch2Id = losersFinal._id;
+
+  // ── Link: Bronze match parents (Winners Final + Losers Final) ─────────
+  // We keep classic DE flow: WF loser drops into Losers Final via loserNextMatchId.
+  // Bronze is a separate, true 3rd-place match fed by the losers of WF and LF.
+  if (bronzeMatch && wfMatch && losersFinal) {
+    bronzeMatch.previousMatch1Id = wfMatch._id;
+    bronzeMatch.previousMatch2Id = losersFinal._id;
+    // WF loser still goes to Losers Final (configured above via loserNextMatchId)
+    // and both losers are later routed into Bronze when those matches complete.
+  }
 
   // ── Link: GF → Reset ──────────────────────────────────────────────────
   gfMatch.nextMatchId = gfReset._id;

@@ -163,6 +163,11 @@ export const tournamentAPI = {
     return response.data;
   },
 
+  completeTournament: async (id: string) => {
+    const response = await api.put(`/tournaments/${id}/complete`);
+    return response.data;
+  },
+
   getRegistrations: async (id: string) => {
     const response = await api.get(`/tournaments/${id}/registrations`);
     return response.data;

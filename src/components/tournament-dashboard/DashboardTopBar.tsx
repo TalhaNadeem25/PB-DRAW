@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, Trophy, Trash2, Calendar } from "lucide-react";
+import { ArrowLeft, Heart, Share2, Trophy, Trash2, Calendar, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ExportButtons from "@/components/tournament/ExportButtons";
@@ -39,6 +39,7 @@ interface DashboardTopBarProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onStartTournament: () => void;
+  onCompleteTournament: () => void;
   onDeleteTournament: () => void;
 }
 
@@ -47,6 +48,7 @@ const DashboardTopBar = ({
   isFavorite,
   onToggleFavorite,
   onStartTournament,
+  onCompleteTournament,
   onDeleteTournament,
 }: DashboardTopBarProps) => {
   const statusInfo =
@@ -101,6 +103,18 @@ const DashboardTopBar = ({
           >
             <Trophy className="w-4 h-4 mr-2" />
             <span className="whitespace-nowrap">Start Tournament</span>
+          </Button>
+        )}
+
+        {tournament.status === "in-progress" && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm border-foreground/30 hover:bg-foreground hover:text-background transition-colors"
+            onClick={onCompleteTournament}
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            <span className="whitespace-nowrap">Complete Tournament</span>
           </Button>
         )}
 

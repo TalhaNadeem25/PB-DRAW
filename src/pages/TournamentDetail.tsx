@@ -122,6 +122,7 @@ const TournamentDetail = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleteTournamentDialogOpen, setIsDeleteTournamentDialogOpen] = useState(false);
   const [isStartTournamentDialogOpen, setIsStartTournamentDialogOpen] = useState(false);
+  const [isCompleteTournamentDialogOpen, setIsCompleteTournamentDialogOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
   const [newEvent, setNewEvent] = useState({
     name: "",
@@ -187,6 +188,17 @@ const TournamentDetail = () => {
     onError: (err: any) => toast.error(err.response?.data?.message || "Failed to start tournament"),
   });
 
+  const completeTournamentMutation = useMutation({
+    mutationFn: (tid: string) => tournamentAPI.completeTournament(tid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tournament", id] });
+      queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      setIsCompleteTournamentDialogOpen(false);
+      toast.success("Tournament completed! Great event.");
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to complete tournament"),
+  });
+
   /* ─── Socket ─── */
   useEffect(() => {
     if (id) {
@@ -249,6 +261,8 @@ const TournamentDetail = () => {
   const handleConfirmDeleteTournament = () => { if (id) deleteTournamentMutation.mutate(id); };
   const handleStartTournamentClick = () => { setIsStartTournamentDialogOpen(true); };
   const handleConfirmStartTournament = () => { if (id) startTournamentMutation.mutate(id); };
+  const handleCompleteTournamentClick = () => { setIsCompleteTournamentDialogOpen(true); };
+  const handleConfirmCompleteTournament = () => { if (id) completeTournamentMutation.mutate(id); };
 
   const handleCreateEvent = () => {
     if (!newEvent.name) { toast.error("Please enter an event name"); return; }
@@ -367,6 +381,24 @@ const TournamentDetail = () => {
             <AlertDialogCancel onClick={() => setIsStartTournamentDialogOpen(false)}>No</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmStartTournament} disabled={startTournamentMutation.isPending} className="bg-court-green text-white hover:bg-court-green-dark">
               {startTournamentMutation.isPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Starting...</>) : "Yes, Start Tournament"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Complete Tournament */}
+      <AlertDialog open={isCompleteTournamentDialogOpen} onOpenChange={setIsCompleteTournamentDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Tournament?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will mark the tournament as finished. The status will change to "Completed" and it will no longer appear as a live tournament. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsCompleteTournamentDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCompleteTournament} disabled={completeTournamentMutation.isPending} className="bg-foreground text-background hover:bg-foreground/90">
+              {completeTournamentMutation.isPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Completing...</>) : "Yes, Complete Tournament"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -508,6 +540,7 @@ const TournamentDetail = () => {
               isFavorite={isFavorite}
               onToggleFavorite={handleToggleFavorite}
               onStartTournament={handleStartTournamentClick}
+              onCompleteTournament={handleCompleteTournamentClick}
               onDeleteTournament={handleDeleteTournamentClick}
             />
 

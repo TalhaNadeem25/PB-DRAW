@@ -109,9 +109,9 @@ const Live = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Badge variant="destructive" className="px-3 py-1.5 text-sm gap-2 animate-pulse">
+                <Badge variant="destructive" className="px-3 py-1.5 text-sm gap-2">
                   <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                    <span className="animate-[ping_1.5s_ease-in-out_infinite] absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
                   </span>
                   {liveTournaments.length} Live Now
@@ -146,9 +146,9 @@ const Live = () => {
                   <div className="h-1 bg-gradient-to-r from-red-500 via-red-400 to-red-500" />
                   <div className="pt-4">
                     <div className="flex items-start justify-between mb-3">
-                      <Badge className="bg-destructive text-destructive-foreground gap-2 px-3 py-1 animate-pulse">
+                      <Badge className="bg-destructive text-destructive-foreground gap-2 px-3 py-1">
                         <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                          <span className="animate-[ping_1.5s_ease-in-out_infinite] absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
                         </span>
                         LIVE

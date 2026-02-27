@@ -272,6 +272,11 @@ const CreateTournament = () => {
     });
   };
 
+  const goToStep = (n: number) => {
+    setStep(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const canProceed = () => {
     if (step === 1) {
       // Must be connected to Stripe and have all fields filled
@@ -1155,7 +1160,7 @@ const CreateTournament = () => {
             <div className="flex justify-between mt-8">
               <Button
                 variant="outline"
-                onClick={() => setStep(step - 1)}
+                onClick={() => goToStep(step - 1)}
                 disabled={step === 1}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1163,7 +1168,7 @@ const CreateTournament = () => {
               </Button>
 
               {step < 5 ? (
-                <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
+                <Button onClick={() => goToStep(step + 1)} disabled={!canProceed()}>
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

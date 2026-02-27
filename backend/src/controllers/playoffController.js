@@ -642,7 +642,8 @@ export const generateEventPlayoffs = async (req, res, next) => {
           m.bracket === 'winners' ? matchFormats.qualifiers
             : m.bracket === 'losers' ? matchFormats.losers
               : m.bracket === 'finals' ? matchFormats.finals
-                : null;
+                : m.bracket === 'bronze' ? (matchFormats.bronze ?? matchFormats.finals)
+                  : null;
         if (label) {
           const config = getMatchFormatConfig(label);
           if (config) {
@@ -796,13 +797,27 @@ export const completeEventPlayoffs = async (req, res, next) => {
         if (champion.entityId) placements.push({ place: place++, entityId: champion.entityId, name: champion.name, tier: 'gold' });
         if (runnerUp.entityId) placements.push({ place: place++, entityId: runnerUp.entityId, name: runnerUp.name, tier: 'silver' });
 
-        // 3rd place = loser of Losers Final (eliminated just before GF)
-        const lfMatch = playoffMatches
-          .filter((m) => m.bracket === 'losers')
-          .sort((a, b) => b.round - a.round)[0];
-        if (lfMatch?.status === 'completed') {
-          const lfLoser = getEntity(lfMatch, false);
-          if (lfLoser.entityId) placements.push({ place: place++, entityId: lfLoser.entityId, name: lfLoser.name, tier: 'bronze' });
+        // True bronze (Option 2): separate bronze medal match decides 3rd vs 4th.
+        const bronzeMatch = playoffMatches.find(
+          (m) => m.bracket === 'bronze' && (m.bracketTier === 'event' || m.bracketTier === null)
+        );
+
+        if (bronzeMatch && bronzeMatch.status === 'completed' &&
+          (bronzeMatch.score?.team1Score ?? 0) !== (bronzeMatch.score?.team2Score ?? 0)) {
+          const bw = getEntity(bronzeMatch, true);
+          const bl = getEntity(bronzeMatch, false);
+          if (bw.entityId) placements.push({ place: place++, entityId: bw.entityId, name: bw.name, tier: 'bronze' });
+          if (bl.entityId) placements.push({ place: place++, entityId: bl.entityId, name: bl.name, tier: '4th' });
+        } else {
+          // Fallback for legacy DE brackets without an explicit bronze match:
+          // 3rd place = loser of Losers Final (eliminated just before GF)
+          const lfMatch = playoffMatches
+            .filter((m) => m.bracket === 'losers')
+            .sort((a, b) => b.round - a.round)[0];
+          if (lfMatch?.status === 'completed') {
+            const lfLoser = getEntity(lfMatch, false);
+            if (lfLoser.entityId) placements.push({ place: place++, entityId: lfLoser.entityId, name: lfLoser.name, tier: 'bronze' });
+          }
         }
       } else {
         // Single-elimination
