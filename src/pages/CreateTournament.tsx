@@ -705,6 +705,7 @@ const CreateTournament = () => {
                                 entryFee: parseInt(e.target.value) || 0,
                               })
                             }
+                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <Button onClick={addEvent}>
                             <Plus className="w-4 h-4" />
