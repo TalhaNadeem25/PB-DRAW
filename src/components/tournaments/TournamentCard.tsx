@@ -59,7 +59,7 @@ const TournamentCard = ({
   const showUrgency = status === 'open' && daysUntilDeadline !== null && daysUntilDeadline > 0 && daysUntilDeadline <= 7;
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden h-full group">
+    <div className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden h-full group">
       <div className="relative h-48 w-full bg-cover bg-center bg-muted" style={{ backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined }}>
         {!imageUrl && (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
@@ -100,7 +100,7 @@ const TournamentCard = ({
         </div>
       </div>
       
-      <div className="p-4 flex-1 flex flex-col bg-white">
+      <div className="p-4 flex-1 flex flex-col bg-card">
         <div className="flex justify-between items-center mb-4 text-sm font-semibold text-muted-foreground">
           <span className="bg-muted px-2 py-1 rounded-md text-xs">{skillLevel || "All Levels"}</span>
           <span className="text-foreground font-bold">{entryFee ? `$${entryFee}` : 'Free'} Entry</span>

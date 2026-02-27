@@ -18,6 +18,9 @@ interface User {
   preferences?: {
     playingDays?: string[];
     partnerPreference?: 'looking' | 'have-partner' | 'either';
+    preferredSide?: string;
+    primaryPaddle?: string;
+    availability?: string[];
   };
   statistics?: {
     matchesPlayed: number;
