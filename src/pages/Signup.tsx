@@ -74,7 +74,6 @@ const Signup = () => {
   return (
     <Layout variant="auth">
     <div className="min-h-screen flex flex-col bg-background font-sans">
-      <div className="h-6" />
       <main className="flex-1 flex overflow-hidden">
         {/* Split Layout: Left Panel (Visual) */}
         <div className="hidden lg:flex flex-1 relative bg-sidebar-primary overflow-hidden">

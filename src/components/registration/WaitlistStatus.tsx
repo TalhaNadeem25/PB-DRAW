@@ -58,9 +58,9 @@ export default function WaitlistStatus({ entry }: WaitlistStatusProps) {
   return (
     <Card className={`
       border-l-4 transition-all hover:shadow-md
-      ${isPromoted ? 'border-l-green-500 bg-green-50/50' : ''}
-      ${isExpired ? 'border-l-red-500 bg-red-50/50' : ''}
-      ${isWaiting ? 'border-l-yellow-500 bg-yellow-50/50' : ''}
+      ${isPromoted ? 'border-l-green-500 bg-green-50/50 dark:bg-green-950/30' : ''}
+      ${isExpired ? 'border-l-red-500 bg-red-50/50 dark:bg-red-950/30' : ''}
+      ${isWaiting ? 'border-l-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/30' : ''}
     `}>
       <CardContent className="pt-4 pb-4">
         <div className="flex items-start justify-between gap-4">
@@ -83,20 +83,20 @@ export default function WaitlistStatus({ entry }: WaitlistStatusProps) {
               </Badge>
             </div>
 
-            <h4 className="font-semibold text-gray-900 text-sm truncate">
+            <h4 className="font-semibold text-foreground text-sm truncate">
               {entry.tournament.name}
             </h4>
-            <p className="text-xs text-gray-600 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {entry.event.name}
             </p>
 
             {entry.metadata?.teamName && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Team: {entry.metadata.teamName}
               </p>
             )}
 
-            <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <Clock className="w-3 h-3" />
               {format(new Date(entry.tournament.startDate), 'MMM d, yyyy')}
             </div>
@@ -109,7 +109,7 @@ export default function WaitlistStatus({ entry }: WaitlistStatusProps) {
                 <div className="text-2xl font-bold text-yellow-600">
                   #{entry.position}
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   in line
                 </div>
               </div>
@@ -139,12 +139,12 @@ export default function WaitlistStatus({ entry }: WaitlistStatusProps) {
         {/* Progress bar for waiting status */}
         {isWaiting && (
           <div className="mt-3 space-y-1">
-            <div className="flex items-center justify-between text-xs text-gray-600">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Progress</span>
               <span>{Math.round(progressPercent)}%</span>
             </div>
             <Progress value={progressPercent} className="h-2" />
-            <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{entry.position - 1} ahead</span>
               <span>{entry.event.maxTeams} capacity</span>
             </div>
