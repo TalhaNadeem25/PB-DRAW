@@ -101,8 +101,10 @@ const TournamentCard = ({
       </div>
       
       <div className="p-4 flex-1 flex flex-col bg-card">
-        <div className="flex justify-between items-center mb-4 text-sm font-semibold text-muted-foreground">
-          <span className="bg-muted px-2 py-1 rounded-md text-xs">{skillLevel || "All Levels"}</span>
+        <div className="flex justify-between items-center mb-4 text-sm font-semibold">
+          <span className="bg-muted px-2 py-1 rounded-md text-xs text-foreground">
+            {skillLevel || "All Levels"}
+          </span>
           <span className="text-foreground font-bold">{entryFee ? `$${entryFee}` : 'Free'} Entry</span>
         </div>
         

@@ -115,7 +115,8 @@ const Tournaments = () => {
     featured: false,
     entryFee: tournament.entryFee || 0,
     skillLevel: tournament.skillLevel || "All Levels",
-    imageUrl: tournament.imageUrl || "",
+    // Prefer uploaded tournament image; fall back to any legacy imageUrl
+    imageUrl: tournament.image || tournament.imageUrl || "",
     organizerId: typeof tournament.organizer === 'string' ? tournament.organizer : tournament.organizer?._id,
   }));
 
