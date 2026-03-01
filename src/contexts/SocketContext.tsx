@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -24,7 +24,10 @@ export const useSocket = () => {
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [liveScoreAnnouncement, setLiveScoreAnnouncement] = useState('');
   const { user, isAuthenticated } = useAuth();
+  const tournamentRefCount = useRef<Record<string, number>>({});
+  const matchRefCount = useRef<Record<string, number>>({});
 
   useEffect(() => {
     // VITE_SOCKET_URL overrides; otherwise derive from VITE_API_URL (strip /api path for Socket.IO)
@@ -79,33 +82,64 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [isAuthenticated, user]);
 
-  const joinTournament = (tournamentId: string) => {
-    if (socket) {
+  const joinTournament = useCallback((tournamentId: string) => {
+    if (!socket) return;
+    const prev = tournamentRefCount.current[tournamentId] ?? 0;
+    tournamentRefCount.current[tournamentId] = prev + 1;
+    if (prev === 0) {
       socket.emit('join-tournament', tournamentId);
       console.log(`📺 Joined tournament:${tournamentId}`);
     }
-  };
+  }, [socket]);
 
-  const leaveTournament = (tournamentId: string) => {
-    if (socket) {
+  const leaveTournament = useCallback((tournamentId: string) => {
+    if (!socket) return;
+    const prev = tournamentRefCount.current[tournamentId] ?? 0;
+    const next = Math.max(0, prev - 1);
+    tournamentRefCount.current[tournamentId] = next;
+    if (prev === 1) {
       socket.emit('leave-tournament', tournamentId);
       console.log(`👋 Left tournament:${tournamentId}`);
     }
-  };
+  }, [socket]);
 
-  const joinMatch = (matchId: string) => {
-    if (socket) {
+  const joinMatch = useCallback((matchId: string) => {
+    if (!socket) return;
+    const prev = matchRefCount.current[matchId] ?? 0;
+    matchRefCount.current[matchId] = prev + 1;
+    if (prev === 0) {
       socket.emit('join-match', matchId);
       console.log(`🏓 Joined match:${matchId}`);
     }
-  };
+  }, [socket]);
 
-  const leaveMatch = (matchId: string) => {
-    if (socket) {
+  const leaveMatch = useCallback((matchId: string) => {
+    if (!socket) return;
+    const prev = matchRefCount.current[matchId] ?? 0;
+    const next = Math.max(0, prev - 1);
+    matchRefCount.current[matchId] = next;
+    if (prev === 1) {
       socket.emit('leave-match', matchId);
       console.log(`👋 Left match:${matchId}`);
     }
-  };
+  }, [socket]);
+
+  // Announce score updates for screen readers (aria-live)
+  useEffect(() => {
+    if (!socket) return;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const onScoreUpdate = (data: { matchId?: string; team1Score?: number; team2Score?: number }) => {
+      const t1 = data.team1Score ?? 0;
+      const t2 = data.team2Score ?? 0;
+      setLiveScoreAnnouncement(`Score updated: ${t1} to ${t2}`);
+      timeoutId = setTimeout(() => setLiveScoreAnnouncement(''), 1500);
+    };
+    socket.on('score-updated', onScoreUpdate);
+    return () => {
+      socket.off('score-updated', onScoreUpdate);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [socket]);
 
   return (
     <SocketContext.Provider
@@ -118,6 +152,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         leaveMatch,
       }}
     >
+      {/* Screen reader announcement for live score updates */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only" role="status">
+        {liveScoreAnnouncement}
+      </div>
       {children}
     </SocketContext.Provider>
   );

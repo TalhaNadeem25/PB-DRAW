@@ -36,15 +36,21 @@ api.interceptors.request.use(
   }
 );
 
+// Optional: set from app so 401 uses React Router instead of full page redirect (preserves state)
+let onUnauthorized: (() => void) | null = null;
+export function setOnUnauthorized(fn: (() => void) | null) {
+  onUnauthorized = fn;
+}
+
 // Handle response errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (onUnauthorized) onUnauthorized();
+      else window.location.href = '/login';
     }
     return Promise.reject(error);
   }
@@ -109,6 +115,14 @@ export const authAPI = {
   },
 };
 
+// Public stats (homepage social proof)
+export const statsAPI = {
+  getPublic: async () => {
+    const response = await api.get('/stats/public');
+    return response.data;
+  },
+};
+
 // Tournaments
 export const tournamentAPI = {
   getAll: async (params?: {
@@ -116,6 +130,11 @@ export const tournamentAPI = {
     search?: string;
     limit?: number;
     page?: number;
+    sort?: 'soonest' | 'popular';
+    location?: string;
+    skillLevel?: string;
+    entryFeeMax?: string;
+    format?: string;
     organizer?: string;
   }) => {
     const response = await api.get('/tournaments', { params });

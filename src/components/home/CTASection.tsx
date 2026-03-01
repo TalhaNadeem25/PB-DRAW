@@ -1,8 +1,18 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Trophy, Star, Sparkles } from "lucide-react";
+import { statsAPI } from "@/services/api";
+import { ArrowRight, Trophy, Sparkles } from "lucide-react";
 
 const CTASection = () => {
+  const { data } = useQuery({
+    queryKey: ["public-stats"],
+    queryFn: () => statsAPI.getPublic(),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+  const organizersCount = data?.data?.organizersCount ?? 0;
+
   return (
     <section className="py-28 relative overflow-hidden">
       {/* Gradient background */}
@@ -41,7 +51,9 @@ const CTASection = () => {
             </h2>
             
             <p className="text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
-              Join hundreds of organizers who trust PicklePlay to run professional-grade tournaments.
+              {organizersCount > 0
+                ? `Join ${organizersCount}+ organizers who trust Pickle Rally to run professional-grade tournaments.`
+                : "Join organizers who trust Pickle Rally to run professional-grade tournaments."}
             </p>
             
             {/* CTAs */}

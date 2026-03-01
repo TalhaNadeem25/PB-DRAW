@@ -6,12 +6,15 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requireRole?: ('player' | 'organizer' | 'admin')[];
+  /** When set, show this instead of redirecting to login (e.g. preview + sign-up CTA) */
+  unauthenticatedFallback?: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAuth = true,
   requireRole,
+  unauthenticatedFallback,
 }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
@@ -25,8 +28,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirect to login if authentication is required but user is not authenticated
+  // When unauthenticated: show fallback (e.g. preview + CTA) or redirect to login
   if (requireAuth && !isAuthenticated) {
+    if (unauthenticatedFallback) {
+      return <>{unauthenticatedFallback}</>;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

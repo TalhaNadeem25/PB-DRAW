@@ -68,8 +68,8 @@ const Navbar = () => {
         className={cn(
           "fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-2xl",
           scrolled 
-            ? "bg-card/80 backdrop-blur-xl shadow-float border border-border/50" 
-            : "bg-card/60 backdrop-blur-lg border border-border/30"
+            ? "bg-card/95 backdrop-blur-md shadow-float border border-border/50" 
+            : "bg-card/90 backdrop-blur-md border border-border/30"
         )}
       >
         <div className="px-3 sm:px-4 md:px-6">
@@ -87,25 +87,26 @@ const Navbar = () => {
               </span>
             </Link>
 
-            {/* Desktop Nav — icon-only, spread evenly between logo and actions */}
+            {/* Desktop Nav — icon + label for discoverability (audit 1.8) */}
             <div className="hidden lg:flex flex-1 items-center justify-evenly min-w-0 px-4 md:px-6">
               {authenticatedNavLinks.map((link) => {
                 const Icon = link.icon;
                 const isLiveLink = (link as any).isLive;
                 const isNewLink = (link as any).isNew;
-                const navLink = (
+                return (
                   <Link
                     key={link.href}
                     to={link.href}
                     aria-label={link.label}
                     className={cn(
-                      "relative flex items-center justify-center gap-1.5 text-sm font-medium transition-all duration-200 p-2.5 rounded-xl min-w-[40px]",
+                      "relative flex items-center justify-center gap-2 text-sm font-medium transition-all duration-200 px-3 py-2.5 rounded-xl",
                       isActive(link.href)
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     )}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
+                    <span className="truncate max-w-[72px]">{link.label}</span>
                     {isLiveLink && (
                       <span className="absolute top-1.5 right-1.5 flex h-1.5 w-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -113,20 +114,14 @@ const Navbar = () => {
                       </span>
                     )}
                     {isNewLink && (
-                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" title="New" />
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold bg-primary text-primary-foreground rounded ml-0.5">
+                        NEW
+                      </span>
                     )}
                     {isActive(link.href) && (
                       <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
                     )}
                   </Link>
-                );
-                return (
-                  <Tooltip key={link.href} delayDuration={200}>
-                    <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                    <TooltipContent side="bottom" className="font-medium">
-                      {link.label}
-                    </TooltipContent>
-                  </Tooltip>
                 );
               })}
             </div>
@@ -208,13 +203,13 @@ const Navbar = () => {
                         <div className="px-4 py-3">
                           <p className="text-[8px] font-display font-bold tracking-[0.2em] text-muted-foreground uppercase mb-0.5">Skill</p>
                           <p className="text-[26px] font-display font-black text-foreground leading-none tracking-tighter">
-                            {user?.skillLevel || '3.5'}
+                            {user?.skillLevel ?? '—'}
                           </p>
-                          <p className="text-[10px] text-primary font-bold mt-0.5">↗ +0.05 this season</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">Rating</p>
                         </div>
                         <div className="px-4 py-3">
                           <p className="text-[8px] font-display font-bold tracking-[0.2em] text-muted-foreground uppercase mb-0.5">Played</p>
-                          <p className="text-[26px] font-display font-black text-foreground leading-none tracking-tighter">12</p>
+                          <p className="text-[26px] font-display font-black text-foreground leading-none tracking-tighter">—</p>
                           <p className="text-[10px] text-muted-foreground font-bold mt-0.5 flex items-center gap-1">
                             <Trophy className="w-2.5 h-2.5" />
                             {user?.role === 'organizer' ? 'ORGANIZER' : 'PLAYER'}

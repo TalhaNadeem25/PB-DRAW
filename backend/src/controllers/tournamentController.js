@@ -2,40 +2,93 @@ import Tournament from '../models/Tournament.js';
 import Event from '../models/Event.js';
 import cloudinary from '../config/cloudinary.js';
 
-// @desc    Get all tournaments
+// Location filter: state code -> regex for tournament location field
+const LOCATION_REGEX = {
+  ca: /CA|California/i,
+  fl: /FL|Florida/i,
+  tx: /TX|Texas/i,
+};
+
+// @desc    Get all tournaments (server-side filter, sort, pagination)
 // @route   GET /api/tournaments
 // @access  Public
 export const getTournaments = async (req, res, next) => {
   try {
-    const { status, search, limit = 10, page = 1 } = req.query;
+    const {
+      status,
+      search,
+      limit = 12,
+      page = 1,
+      sort = 'soonest',
+      location,
+      skillLevel,
+      entryFeeMax,
+      format,
+    } = req.query;
 
-    // Build query
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 12, 1), 100);
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+
     let query = {};
 
     if (status && status !== 'all') {
       query.status = status;
     }
 
-    if (search) {
-      query.$text = { $search: search };
+    if (search && typeof search === 'string' && search.trim()) {
+      query.$text = { $search: search.trim() };
     }
 
-    const tournaments = await Tournament.find(query)
-      .populate('organizer', 'name email')
-      .populate('events')
-      .sort({ startDate: 1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    if (location && location !== 'all' && location !== 'near') {
+      const regex = LOCATION_REGEX[location.toLowerCase()];
+      if (regex) query.location = regex;
+    }
 
-    const total = await Tournament.countDocuments(query);
+    if (skillLevel && skillLevel !== 'all') {
+      const level = parseFloat(skillLevel);
+      if (!Number.isNaN(level)) {
+        query.$or = [
+          { skillLevelRequirement: { $exists: false } },
+          { $and: [{ 'skillLevelRequirement.min': { $lte: level } }, { 'skillLevelRequirement.max': { $gte: level } }] },
+        ];
+      }
+    }
+
+    if (entryFeeMax !== undefined && entryFeeMax !== '' && entryFeeMax !== 'all') {
+      const max = parseFloat(entryFeeMax);
+      if (!Number.isNaN(max)) {
+        query.entryFee = max === 0 ? 0 : { $lte: max };
+      }
+    }
+
+    if (format && format !== 'all') {
+      const formatValue = format === 'mixed' ? 'mixed-doubles' : format;
+      const tournamentIds = await Event.distinct('tournament', { format: formatValue });
+      query._id = { $in: tournamentIds };
+    }
+
+    const sortOption = sort === 'popular' ? { currentPlayers: -1, startDate: 1 } : { startDate: 1 };
+
+    const [tournaments, total] = await Promise.all([
+      Tournament.find(query)
+        .populate('organizer', 'name email')
+        .populate('events')
+        .sort(sortOption)
+        .limit(limitNum)
+        .skip((pageNum - 1) * limitNum)
+        .lean(),
+      Tournament.countDocuments(query),
+    ]);
+
+    const pages = Math.ceil(total / limitNum) || 1;
 
     res.status(200).json({
       success: true,
       count: tournaments.length,
       total,
-      page: parseInt(page),
-      pages: Math.ceil(total / limit),
-      data: tournaments
+      page: pageNum,
+      pages,
+      data: tournaments,
     });
   } catch (error) {
     next(error);

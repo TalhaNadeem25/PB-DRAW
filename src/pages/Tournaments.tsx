@@ -26,10 +26,18 @@ import {
   Trophy
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import WelcomeOnboarding, { getWelcomeDismissed } from "@/components/onboarding/WelcomeOnboarding";
 
 const Tournaments = () => {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const fromSignup = (location.state as { fromSignup?: boolean } | null)?.fromSignup;
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (fromSignup && !getWelcomeDismissed()) setShowWelcome(true);
+  }, [fromSignup]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || "all");
   const [locationFilter, setLocationFilter] = useState("all");
@@ -46,63 +54,36 @@ const Tournaments = () => {
   }, [searchQuery, statusFilter, locationFilter, skillFilter, priceFilter, formatFilter, sortOption]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["tournaments", searchQuery, statusFilter],
+    queryKey: [
+      "tournaments",
+      searchQuery,
+      statusFilter,
+      locationFilter,
+      skillFilter,
+      priceFilter,
+      formatFilter,
+      sortOption,
+      currentPage,
+    ],
     queryFn: () =>
       tournamentAPI.getAll({
         status: statusFilter !== "all" ? statusFilter : undefined,
         search: searchQuery || undefined,
-        limit: 100,
+        limit: itemsPerPage,
+        page: currentPage,
+        sort: sortOption as "soonest" | "popular",
+        location: locationFilter !== "all" && locationFilter !== "near" ? locationFilter : undefined,
+        skillLevel: skillFilter !== "all" ? skillFilter : undefined,
+        entryFeeMax: priceFilter !== "all" ? priceFilter : undefined,
+        format: formatFilter !== "all" ? formatFilter : undefined,
       }),
   });
 
   const tournaments = data?.data || [];
+  const totalCount = data?.total ?? 0;
+  const totalPages = Math.max(1, data?.pages ?? 1);
 
-  const STATE_MAP: Record<string, string[]> = {
-    ca: ["CA", "California"],
-    fl: ["FL", "Florida"],
-    tx: ["TX", "Texas"],
-  };
-
-  const filteredAndSortedTournaments = tournaments
-    .filter((t: any) => {
-      // Location filter
-      if (locationFilter !== "all" && locationFilter !== "near") {
-        const aliases = STATE_MAP[locationFilter] || [];
-        const loc = (t.location || "").toUpperCase();
-        if (!aliases.some((a) => loc.includes(a.toUpperCase()))) return false;
-      }
-      // Skill filter
-      if (skillFilter !== "all") {
-        const skill = String(t.skillLevel || "");
-        if (skill !== skillFilter && !skill.includes(skillFilter)) return false;
-      }
-      // Price filter
-      if (priceFilter !== "all") {
-        const fee = t.entryFee || 0;
-        if (priceFilter === "0" && fee !== 0) return false;
-        if (priceFilter === "50" && fee >= 50) return false;
-        if (priceFilter === "100" && fee >= 100) return false;
-      }
-      // Format filter (best-effort via events array if available)
-      if (formatFilter !== "all" && Array.isArray(t.events)) {
-        const hasFormat = t.events.some((ev: any) =>
-          (ev.gameType || "").toLowerCase().includes(formatFilter)
-        );
-        if (!hasFormat) return false;
-      }
-      return true;
-    })
-    .sort((a: any, b: any) => {
-      if (sortOption === "soonest") {
-        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
-      }
-      if (sortOption === "popular") {
-        return (b.currentPlayers || 0) - (a.currentPlayers || 0);
-      }
-      return 0;
-    });
-
-  const formattedTournaments = filteredAndSortedTournaments.map((tournament: any) => ({
+  const formattedTournaments = tournaments.map((tournament: any) => ({
     id: tournament._id,
     name: tournament.name,
     location: tournament.location,
@@ -127,10 +108,8 @@ const Tournaments = () => {
     (priceFilter !== "all" ? 1 : 0) +
     (formatFilter !== "all" ? 1 : 0);
 
-  // Pagination logic
-  const totalPages = Math.ceil(formattedTournaments.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedTournaments = formattedTournaments.slice(startIndex, startIndex + itemsPerPage);
+  // Server-side pagination: current page data is already in formattedTournaments
+  const paginatedTournaments = formattedTournaments;
 
   const getPageNumbers = (current: number, total: number): (number | '...')[] => {
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -157,7 +136,7 @@ const Tournaments = () => {
                 "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                 locationFilter === val ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary"
               )}>
-                {locationFilter === val && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                {locationFilter === val && <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />}
               </div>
               <span className="text-sm font-medium">{val === "all" ? "All Locations" : val === "near" ? "Near Me" : val.toUpperCase()}</span>
             </label>
@@ -193,7 +172,7 @@ const Tournaments = () => {
                 "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                 statusFilter === val ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary"
               )}>
-                {statusFilter === val && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                {statusFilter === val && <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />}
               </div>
               <span className="text-sm font-medium capitalize">{val === "all" ? "All" : val === "in-progress" ? "Live" : val}</span>
             </label>
@@ -211,7 +190,7 @@ const Tournaments = () => {
                 "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                 priceFilter === val ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary"
               )}>
-                {priceFilter === val && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                {priceFilter === val && <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />}
               </div>
               <span className="text-sm font-medium capitalize">{val === "all" ? "Any Price" : val === "0" ? "Free" : `Under $${val}`}</span>
             </label>
@@ -241,6 +220,7 @@ const Tournaments = () => {
 
   return (
     <Layout>
+      <WelcomeOnboarding open={showWelcome} onOpenChange={setShowWelcome} />
       <div className="min-h-screen bg-background pt-24 pb-12">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           {/* Header */}
@@ -320,7 +300,7 @@ const Tournaments = () => {
               {/* Active filter pills (Desktop) */}
               <div className="hidden md:flex items-center justify-between mb-6">
                 <div className="text-muted-foreground font-semibold text-sm uppercase tracking-wide">
-                  Showing {paginatedTournaments.length} of {formattedTournaments.length} results
+                  Showing {paginatedTournaments.length} of {totalCount} results
                 </div>
                 <div className="flex items-center gap-3">
                    <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
@@ -329,7 +309,7 @@ const Tournaments = () => {
                   <select
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
-                    className="bg-transparent text-sm font-bold uppercase tracking-wide focus:outline-none cursor-pointer hover:text-primary transition-colors"
+                    className="bg-card border border-border rounded-lg px-2 py-1.5 text-foreground text-sm font-bold uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:border-primary/50 transition-colors"
                   >
                     <option value="soonest">Soonest</option>
                     <option value="popular">Most Popular</option>

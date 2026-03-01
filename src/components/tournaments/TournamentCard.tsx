@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Activity, MapPin, Users } from "lucide-react";
+import { MapPin, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface TournamentCardProps {
@@ -62,8 +62,11 @@ const TournamentCard = ({
     <div className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden h-full group">
       <div className="relative h-48 w-full bg-cover bg-center bg-muted" style={{ backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined }}>
         {!imageUrl && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-            <Activity className="w-8 h-8 text-primary/30" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 border-b border-border/50">
+            <div className="rounded-full bg-primary/10 p-4">
+              <Trophy className="w-10 h-10 text-primary/40" aria-hidden />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tournament</span>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
@@ -77,7 +80,9 @@ const TournamentCard = ({
         {((isLive || isFillingFast) || showUrgency) && status !== 'completed' && (
           <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
             {(isLive || isFillingFast) && (
-              <span className={`font-display font-bold text-xs text-white bg-black/50 backdrop-blur-md px-3 py-1 rounded-full flex items-center justify-center gap-1.5 border border-white/20 ${isLive ? 'text-amber' : ''}`}>
+              <span className={`font-display font-bold text-xs text-white backdrop-blur-md px-3 py-1 rounded-full flex items-center justify-center gap-1.5 border border-white/20 ${
+                isLive ? 'bg-black/50 text-amber' : spotsRemaining <= 5 ? 'bg-destructive/90' : 'bg-black/50'
+              }`}>
                 {isLive && <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />}
                 {isLive ? 'Registering' : `${spotsRemaining} spots left`}
               </span>

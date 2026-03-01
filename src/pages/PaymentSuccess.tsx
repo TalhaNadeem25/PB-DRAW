@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Home, Trophy, Calendar, Users, Sparkles } from "lucide-react";
+import { CheckCircle2, Home, Trophy, Calendar, Users, Sparkles, Ticket, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const PaymentSuccess = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paymentIntent = searchParams.get("payment_intent");
   const [showConfetti, setShowConfetti] = useState(true);
@@ -74,48 +74,58 @@ const PaymentSuccess = () => {
               </p>
             </div>
 
-            {/* What's next section */}
+            {/* What's next — clear CTAs (audit 2.3) */}
             <div className="space-y-4">
-              <h3 className="font-display font-semibold text-lg">What's Next?</h3>
+              <h3 className="font-display font-semibold text-lg">What&apos;s Next?</h3>
               <div className="grid gap-3">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                <Link
+                  to="/tickets"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted border border-transparent hover:border-primary/20 transition-all"
+                >
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">Check Schedule</p>
-                    <p className="text-xs text-muted-foreground">View your match times</p>
+                  <div className="flex-1 text-left">
+                    <p className="font-medium text-sm">View my tickets</p>
+                    <p className="text-xs text-muted-foreground">QR code for check-in</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+                <Link
+                  to="/teams"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted border border-transparent hover:border-primary/20 transition-all"
+                >
                   <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
                     <Users className="w-5 h-5 text-secondary" />
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">Manage Team</p>
-                    <p className="text-xs text-muted-foreground">Invite partners or view team details</p>
+                  <div className="flex-1 text-left">
+                    <p className="font-medium text-sm">Manage team</p>
+                    <p className="text-xs text-muted-foreground">Invite partner or view details</p>
                   </div>
-                </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
               </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                onClick={() => navigate("/")}
-                variant="outline"
-                className="flex-1 h-12 hover-lift"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Go Home
+            {/* Primary action first */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button variant="hero" className="flex-1 h-12 hover-lift shadow-glow" asChild>
+                <Link to="/tickets">
+                  <Ticket className="w-4 h-4 mr-2" />
+                  View my tickets
+                </Link>
               </Button>
-              <Button
-                onClick={() => navigate("/dashboard")}
-                variant="hero"
-                className="flex-1 h-12 hover-lift shadow-glow"
-              >
-                <Trophy className="w-4 h-4 mr-2" />
-                View Dashboard
+              <Button variant="outline" className="flex-1 h-12 hover-lift" asChild>
+                <Link to="/dashboard">
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Link>
+              </Button>
+              <Button variant="ghost" className="h-12" asChild>
+                <Link to="/">
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
+                </Link>
               </Button>
             </div>
           </div>

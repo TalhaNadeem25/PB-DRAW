@@ -19,11 +19,11 @@ export const RatingWidget = () => (
     </div>
     <CardContent className="p-5">
       <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-4xl font-display font-bold text-foreground">4.12</span>
-        <span className="text-sm text-primary font-semibold">↗ +0.05</span>
+        <span className="text-4xl font-display font-bold text-foreground">—</span>
+        <span className="text-sm text-muted-foreground font-semibold">DUPR</span>
       </div>
       <p className="text-xs text-muted-foreground">
-        DUPR Verified • Updated 2 days ago
+        Connect DUPR to see your rating
       </p>
     </CardContent>
   </Card>

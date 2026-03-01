@@ -139,6 +139,12 @@ const RegistrationSuccess = () => {
 
           <div className="flex flex-col gap-3">
             <Button className="w-full h-12 rounded-xl font-display font-bold uppercase tracking-widest text-sm" asChild>
+              <Link to="/tickets">
+                <Ticket className="w-4 h-4 mr-2" />
+                View my tickets <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full h-12 rounded-xl font-display font-bold uppercase tracking-widest text-sm" asChild>
               <Link to="/dashboard">
                 Go to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
               </Link>

@@ -1,3 +1,4 @@
+import AuthGate from "@/components/AuthGate";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -9,57 +10,67 @@ import { SocketProvider } from "@/contexts/SocketContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import AcceptInvitation from "./pages/AcceptInvitation";
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
-import AuthPage from "./pages/AuthPage";
-import CourtManager from "./pages/CourtManager";
-import CreateTournament from "./pages/CreateTournament";
-import Dashboard from "./pages/Dashboard";
-import EditTournament from "./pages/EditTournament";
-import EventRegistration from "./pages/EventRegistration";
-import FindPartner from "./pages/FindPartner";
-import ForgotPassword from "./pages/ForgotPassword";
-import Index from "./pages/Index";
-import Live from "./pages/Live";
-import LiveTournamentDetail from "./pages/LiveTournamentDetail";
-import MyTickets from "./pages/MyTickets";
-import NotFound from "./pages/NotFound";
-import OrganizerScanner from "./pages/OrganizerScanner";
-import PartnerCancellationResponse from "./pages/PartnerCancellationResponse";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PoolManagement from "./pages/PoolManagement";
-import Privacy from "./pages/Privacy";
-import Profile from "./pages/Profile";
-import Register from "./pages/Register";
-import RegistrationSuccess from "./pages/RegistrationSuccess";
-import ResetPassword from "./pages/ResetPassword";
-import SkillQuiz from "./pages/SkillQuiz";
-import Teams from "./pages/Teams";
-import Terms from "./pages/Terms";
-import TournamentCommunications from "./pages/TournamentCommunications";
-import TournamentDetail from "./pages/TournamentDetail";
-import TournamentPlanner from "./pages/TournamentPlanner";
-import Tournaments from "./pages/Tournaments";
-import Spectator from "./pages/Spectator";
-import VerifyEmail from "./pages/VerifyEmail";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { setOnUnauthorized } from "@/services/api";
+import { Users, Ticket, UserPlus } from "lucide-react";
+import { Loader2 } from "lucide-react";
+
+const PageFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" aria-label="Loading" />
+  </div>
+);
+
+const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
+const AnalyticsDashboard = lazy(() => import("./pages/AnalyticsDashboard"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const CourtManager = lazy(() => import("./pages/CourtManager"));
+const CreateTournament = lazy(() => import("./pages/CreateTournament"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const EditTournament = lazy(() => import("./pages/EditTournament"));
+const EventRegistration = lazy(() => import("./pages/EventRegistration"));
+const FindPartner = lazy(() => import("./pages/FindPartner"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Index = lazy(() => import("./pages/Index"));
+const Live = lazy(() => import("./pages/Live"));
+const LiveTournamentDetail = lazy(() => import("./pages/LiveTournamentDetail"));
+const MyTickets = lazy(() => import("./pages/MyTickets"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const OrganizerScanner = lazy(() => import("./pages/OrganizerScanner"));
+const PartnerCancellationResponse = lazy(() => import("./pages/PartnerCancellationResponse"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PoolManagement = lazy(() => import("./pages/PoolManagement"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Register = lazy(() => import("./pages/Register"));
+const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const SkillQuiz = lazy(() => import("./pages/SkillQuiz"));
+const Teams = lazy(() => import("./pages/Teams"));
+const Terms = lazy(() => import("./pages/Terms"));
+const TournamentCommunications = lazy(() => import("./pages/TournamentCommunications"));
+const TournamentDetail = lazy(() => import("./pages/TournamentDetail"));
+const TournamentPlanner = lazy(() => import("./pages/TournamentPlanner"));
+const Tournaments = lazy(() => import("./pages/Tournaments"));
+const Spectator = lazy(() => import("./pages/Spectator"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <SocketProvider>
-        <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <ErrorBoundary>
-            <BrowserRouter>
-              <ScrollToTop />
-              <Routes>
+function AppRoutes() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    setOnUnauthorized(() => navigate("/login"));
+    return () => setOnUnauthorized(null);
+  }, [navigate]);
+  return (
+    <>
+      <ScrollToTop />
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
             <Route path="/" element={<Index />} />
+            {/* Single auth page: login + signup tabs; /auth redirects here */}
             <Route path="/login" element={<AuthPage />} />
             <Route path="/signup" element={<AuthPage />} />
             <Route path="/auth" element={<AuthPage />} />
@@ -68,9 +79,11 @@ const App = () => (
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
+                <ErrorBoundary>
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                </ErrorBoundary>
               }
             />
             <Route
@@ -84,13 +97,21 @@ const App = () => (
             <Route
               path="/teams"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  unauthenticatedFallback={
+                    <AuthGate
+                      title="Your Teams"
+                      description="Sign in to view and manage your teams."
+                      icon={<Users className="w-7 h-7" />}
+                    />
+                  }
+                >
                   <Teams />
                 </ProtectedRoute>
               }
             />
             <Route path="/tournaments" element={<Tournaments />} />
-            <Route path="/tournaments/:id" element={<TournamentDetail />} />
+            <Route path="/tournaments/:id" element={<ErrorBoundary><TournamentDetail /></ErrorBoundary>} />
             <Route path="/tournaments/:id/register" element={<Register />} />
             <Route path="/tournaments/:tournamentId/register/:eventId" element={<EventRegistration />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
@@ -110,17 +131,21 @@ const App = () => (
             <Route
               path="/create-tournament"
               element={
-                <ProtectedRoute requireRole={['organizer', 'admin']}>
-                  <CreateTournament />
-                </ProtectedRoute>
+                <ErrorBoundary>
+                  <ProtectedRoute requireRole={['organizer', 'admin']}>
+                    <CreateTournament />
+                  </ProtectedRoute>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/tournaments/:id/events/:eventId/pools"
               element={
-                <ProtectedRoute requireRole={['organizer', 'admin']}>
-                  <PoolManagement />
-                </ProtectedRoute>
+                <ErrorBoundary>
+                  <ProtectedRoute requireRole={['organizer', 'admin']}>
+                    <PoolManagement />
+                  </ProtectedRoute>
+                </ErrorBoundary>
               }
             />
             <Route
@@ -134,7 +159,15 @@ const App = () => (
             <Route
               path="/tickets"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  unauthenticatedFallback={
+                    <AuthGate
+                      title="My Tickets"
+                      description="Sign in to view your match tickets and check-in."
+                      icon={<Ticket className="w-7 h-7" />}
+                    />
+                  }
+                >
                   <MyTickets />
                 </ProtectedRoute>
               }
@@ -167,7 +200,15 @@ const App = () => (
             <Route
               path="/find-partner"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  unauthenticatedFallback={
+                    <AuthGate
+                      title="Find a Partner"
+                      description="Sign in to search for partners and join doubles events together."
+                      icon={<UserPlus className="w-7 h-7" />}
+                    />
+                  }
+                >
                   <FindPartner />
                 </ProtectedRoute>
               }
@@ -186,7 +227,24 @@ const App = () => (
             <Route path="/skill-quiz" element={<SkillQuiz />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-              </Routes>
+        </Routes>
+      </Suspense>
+    </>
+  );
+}
+
+const App = () => (
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <SocketProvider>
+        <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <ErrorBoundary>
+            <BrowserRouter>
+              <AppRoutes />
             </BrowserRouter>
           </ErrorBoundary>
       </TooltipProvider>

@@ -95,7 +95,7 @@ const AuthPage = () => {
         skillLevel: parseFloat(signupData.skillLevel),
         phone: signupData.phone || undefined,
       });
-      navigate(redirectUrl);
+      navigate(redirectUrl, { state: { fromSignup: true } });
     } catch (error) {
       console.error('Signup error:', error);
       setError('Failed to create account. Please try again.');
@@ -129,13 +129,13 @@ const AuthPage = () => {
             </p>
             <div className="mt-12 flex gap-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <div className="flex flex-col">
-                  <span className="text-primary text-3xl font-display font-bold">12k+</span>
-                  <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Players</span>
+                  <span className="text-primary text-3xl font-display font-bold">Play</span>
+                  <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Tournaments</span>
               </div>
               <div className="w-px h-12 bg-primary-foreground/20"></div>
               <div className="flex flex-col">
-                  <span className="text-primary text-3xl font-display font-bold">450+</span>
-                  <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Clubs</span>
+                  <span className="text-primary text-3xl font-display font-bold">Manage</span>
+                  <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Events</span>
               </div>
             </div>
           </div>
