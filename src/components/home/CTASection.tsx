@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { statsAPI } from "@/services/api";
-import { ArrowRight, Trophy, Sparkles } from "lucide-react";
+import { ArrowRight, Trophy, Sparkles, Star } from "lucide-react";
+import { motion } from "framer-motion";
 
 const CTASection = () => {
   const { data } = useQuery({
@@ -29,19 +30,37 @@ const CTASection = () => {
       <div className="absolute inset-0 court-pattern opacity-10" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="max-w-4xl mx-auto"
+        >
           {/* Glass card */}
           <div className="glass-dark rounded-3xl p-12 md:p-16 text-center backdrop-blur-xl border border-primary-foreground/10">
             {/* Icon */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary/20 backdrop-blur-sm mb-8 animate-bounce-gentle">
+            <motion.div
+              initial={{ scale: 0 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+              className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary/20 backdrop-blur-sm mb-8"
+            >
               <Trophy className="w-10 h-10 text-primary-foreground" />
-            </div>
+            </motion.div>
             
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 mb-8"
+            >
               <Sparkles className="w-4 h-4 text-secondary" />
               <span className="text-sm font-medium text-primary-foreground">Start for free today</span>
-            </div>
+            </motion.div>
             
             {/* Headline */}
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary-foreground mb-6">
@@ -52,12 +71,18 @@ const CTASection = () => {
             
             <p className="text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
               {organizersCount > 0
-                ? `Join ${organizersCount}+ organizers who trust Pickle Rally to run professional-grade tournaments.`
-                : "Join organizers who trust Pickle Rally to run professional-grade tournaments."}
+                ? `Join ${organizersCount}+ organizers who trust Picklix to run professional-grade tournaments.`
+                : "Join organizers who trust Picklix to run professional-grade tournaments."}
             </p>
             
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
               <Button variant="accent" size="xl" className="group shadow-glow-yellow hover:shadow-[0_0_60px_hsl(45_95%_55%/0.4)] transition-shadow" asChild>
                 <Link to="/signup">
                   Get Started Free
@@ -69,7 +94,7 @@ const CTASection = () => {
                   Browse Tournaments
                 </Link>
               </Button>
-            </div>
+            </motion.div>
             
             {/* Trust indicators */}
             <div className="mt-12 pt-8 border-t border-primary-foreground/10">
@@ -91,7 +116,7 @@ const CTASection = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

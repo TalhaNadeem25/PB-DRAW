@@ -4,15 +4,13 @@ import OrganizerDashboard from "@/components/dashboard/OrganizerDashboard";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertCircle, Bell, Settings } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import OrganizerDashboard from "@/components/dashboard/OrganizerDashboard";
-import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -68,7 +66,12 @@ const Dashboard = () => {
     <Layout>
       <div className="min-h-screen bg-background">
         {/* Compact top bar */}
-        <div className="border-b border-border/60 bg-card/50">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="border-b border-border/60 bg-card/50"
+        >
           <div className="container mx-auto px-4 sm:px-6 py-6">
             <div className="flex items-start sm:items-center justify-between gap-3">
               <div>
@@ -95,7 +98,7 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {dashboardLoading ? (

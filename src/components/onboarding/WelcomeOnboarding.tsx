@@ -10,7 +10,7 @@ import {
 import { Trophy, User, Users, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const ONBOARDING_DISMISSED_KEY = "pickle_rally_welcome_dismissed";
+const ONBOARDING_DISMISSED_KEY = "picklix_welcome_dismissed";
 
 export function getWelcomeDismissed(): boolean {
   if (typeof sessionStorage === "undefined") return true;
@@ -40,7 +40,7 @@ export default function WelcomeOnboarding({ open, onOpenChange }: WelcomeOnboard
             <Trophy className="w-8 h-8 text-primary" />
           </div>
           <DialogTitle className="text-center text-xl font-display font-bold">
-            Welcome to Pickle Rally
+            Welcome to Picklix
           </DialogTitle>
           <DialogDescription className="text-center">
             You&apos;re all set. Here are some quick next steps:

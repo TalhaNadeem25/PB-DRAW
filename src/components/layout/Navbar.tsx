@@ -19,6 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +65,10 @@ const Navbar = () => {
 
   return (
     <>
-      <nav 
+      <motion.nav
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
         className={cn(
           "fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-2xl",
           scrolled 
@@ -83,11 +87,11 @@ const Navbar = () => {
                 <div className="absolute inset-0 rounded-xl bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               <span className="font-display text-lg sm:text-xl font-bold text-foreground tracking-wide whitespace-nowrap">
-                PICKLE<span className="text-primary"> RALLY</span>
+                PICK<span className="text-primary">LIX</span>
               </span>
             </Link>
 
-            {/* Desktop Nav — icon + label for discoverability (audit 1.8) */}
+            {/* Desktop Nav */}
             <div className="hidden lg:flex flex-1 items-center justify-evenly min-w-0 px-4 md:px-6">
               {authenticatedNavLinks.map((link) => {
                 const Icon = link.icon;
@@ -119,7 +123,11 @@ const Navbar = () => {
                       </span>
                     )}
                     {isActive(link.href) && (
-                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+                      <motion.span
+                        layoutId="nav-indicator"
+                        className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
                     )}
                   </Link>
                 );
@@ -133,7 +141,6 @@ const Navbar = () => {
                   <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
                     {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                   </Button>
-                  {/* Notification Center */}
                   <NotificationCenter />
                   
                   {(user?.role === 'organizer' || user?.role === 'admin') && (
@@ -163,15 +170,13 @@ const Navbar = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" sideOffset={8} className="w-[290px] p-0 bg-card border border-border/50 shadow-2xl rounded-2xl overflow-hidden z-50">
 
-                      {/* ── Hero Header ── */}
+                      {/* Hero Header */}
                       <div className="relative bg-hero-gradient px-5 pt-5 pb-5 overflow-hidden">
-                        {/* decorative circles */}
                         <div className="absolute -right-5 -top-5 w-20 h-20 bg-white/5 rounded-full pointer-events-none" />
                         <div className="absolute -right-1 -top-1 w-10 h-10 bg-white/5 rounded-full pointer-events-none" />
                         <div className="absolute left-0 bottom-0 w-16 h-16 bg-black/5 rounded-full blur-xl pointer-events-none" />
 
                         <div className="relative flex items-center gap-3.5">
-                          {/* Avatar */}
                           <div className="relative shrink-0">
                             <div className="w-12 h-12 rounded-xl bg-white/15 border border-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
                               <span className="text-xl font-display font-black text-white leading-none">
@@ -181,7 +186,6 @@ const Navbar = () => {
                             <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white/40 shadow-sm" />
                           </div>
 
-                          {/* Name + badges */}
                           <div className="flex-1 min-w-0">
                             <p className="font-display font-black text-white text-[15px] uppercase tracking-tight leading-none truncate mb-2">
                               {user?.name}
@@ -198,7 +202,7 @@ const Navbar = () => {
                         </div>
                       </div>
 
-                      {/* ── Stat Strip ── */}
+                      {/* Stat Strip */}
                       <div className="grid grid-cols-2 divide-x divide-border/40 border-b border-border/40">
                         <div className="px-4 py-3">
                           <p className="text-[8px] font-display font-bold tracking-[0.2em] text-muted-foreground uppercase mb-0.5">Skill</p>
@@ -217,7 +221,7 @@ const Navbar = () => {
                         </div>
                       </div>
 
-                      {/* ── Nav Items ── */}
+                      {/* Nav Items */}
                       <div className="p-1.5 space-y-px">
                         <DropdownMenuItem asChild className="p-0 focus:bg-transparent cursor-pointer group">
                           <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-all duration-150">
@@ -261,7 +265,7 @@ const Navbar = () => {
                         </DropdownMenuItem>
                       </div>
 
-                      {/* ── Footer ── */}
+                      {/* Footer */}
                       <div className="flex items-stretch border-t border-border/40 mx-1.5 mb-1.5">
                         <Link
                           to="/profile"
@@ -328,145 +332,163 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu */}
-        <div className={cn(
-          "lg:hidden overflow-hidden transition-all duration-300",
-          isOpen ? "max-h-[calc(100vh-5rem)] border-t border-border/50" : "max-h-0"
-        )}>
-          <div className="px-4 py-4 space-y-2 overflow-y-auto max-h-[calc(100vh-6rem)]">
-            {authenticatedNavLinks.map((link) => {
-              const Icon = link.icon;
-              const isLiveLink = (link as any).isLive;
-              const isNewLink = (link as any).isNew;
-              return (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={cn(
-                    "flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200",
-                    isActive(link.href)
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  )}
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Icon className="w-5 h-5" />
-                  {link.label}
-                  {isLiveLink && (
-                    <span className="relative flex h-2 w-2 ml-auto">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
-                  )}
-                  {isNewLink && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary to-purple-600 text-white rounded-full ml-auto">
-                      NEW
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-            
-            <div className="pt-3 border-t border-border/50 space-y-2">
-              {isAuthenticated ? (
-                <>
-                  <div className="py-3 px-4 bg-accent/30 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-hero-gradient flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary-foreground">
-                          {user?.name?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{user?.name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">
-                          {user?.role} • {user?.skillLevel} skill
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="shrink-0">
-                        {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <Link
-                    to="/teams"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-                  >
-                    <Users className="w-5 h-5" />
-                    My Teams
-                  </Link>
-                  {(user?.role === 'organizer' || user?.role === 'admin') && (
-                    <Link
-                      to="/analytics"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="lg:hidden overflow-hidden border-t border-border/50"
+            >
+              <div className="px-4 py-4 space-y-2 overflow-y-auto max-h-[calc(100vh-6rem)]">
+                {authenticatedNavLinks.map((link, i) => {
+                  const Icon = link.icon;
+                  const isLiveLink = (link as any).isLive;
+                  const isNewLink = (link as any).isNew;
+                  return (
+                    <motion.div
+                      key={link.href}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
                     >
-                      <BarChart className="w-5 h-5" />
-                      Analytics
-                    </Link>
-                  )}
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-                  >
-                    <UserCircle className="w-5 h-5" />
-                    Profile
-                  </Link>
-                  {(user?.role === 'organizer' || user?.role === 'admin') && (
-                    <Button variant="default" size="sm" className="w-full justify-center" asChild>
-                      <Link to="/create-tournament" onClick={() => setIsOpen(false)}>
-                        <Trophy className="w-4 h-4 mr-2" />
-                        Create Tournament
+                      <Link
+                        to={link.href}
+                        className={cn(
+                          "flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200",
+                          isActive(link.href)
+                            ? "text-primary bg-primary/10"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        )}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Icon className="w-5 h-5" />
+                        {link.label}
+                        {isLiveLink && (
+                          <span className="relative flex h-2 w-2 ml-auto">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                          </span>
+                        )}
+                        {isNewLink && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-primary to-purple-600 text-white rounded-full ml-auto">
+                            NEW
+                          </span>
+                        )}
                       </Link>
-                    </Button>
+                    </motion.div>
+                  );
+                })}
+                
+                <div className="pt-3 border-t border-border/50 space-y-2">
+                  {isAuthenticated ? (
+                    <>
+                      <div className="py-3 px-4 bg-accent/30 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-hero-gradient flex items-center justify-center">
+                            <span className="text-sm font-bold text-primary-foreground">
+                              {user?.name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{user?.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {user?.role} • {user?.skillLevel} skill
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="shrink-0">
+                            {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <Link
+                        to="/teams"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                      >
+                        <Users className="w-5 h-5" />
+                        My Teams
+                      </Link>
+                      {(user?.role === 'organizer' || user?.role === 'admin') && (
+                        <Link
+                          to="/analytics"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                        >
+                          <BarChart className="w-5 h-5" />
+                          Analytics
+                        </Link>
+                      )}
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                      >
+                        <UserCircle className="w-5 h-5" />
+                        Profile
+                      </Link>
+                      {(user?.role === 'organizer' || user?.role === 'admin') && (
+                        <Button variant="default" size="sm" className="w-full justify-center" asChild>
+                          <Link to="/create-tournament" onClick={() => setIsOpen(false)}>
+                            <Trophy className="w-4 h-4 mr-2" />
+                            Create Tournament
+                          </Link>
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleLogout} 
+                        className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Log Out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between py-2 px-4">
+                        <span className="text-sm font-medium text-muted-foreground">Theme</span>
+                        <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                          {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                      <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+                        <Link to="/login" onClick={() => setIsOpen(false)}>
+                          <LogIn className="w-4 h-4 mr-2" />
+                          Log In
+                        </Link>
+                      </Button>
+                      <Button variant="default" size="sm" className="w-full justify-center" asChild>
+                        <Link to="/signup" onClick={() => setIsOpen(false)}>
+                          <User className="w-4 h-4 mr-2" />
+                          Sign Up
+                        </Link>
+                      </Button>
+                    </>
                   )}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleLogout} 
-                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Log Out
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between py-2 px-4">
-                    <span className="text-sm font-medium text-muted-foreground">Theme</span>
-                    <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
-                      {resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                  <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                    <Link to="/login" onClick={() => setIsOpen(false)}>
-                      <LogIn className="w-4 h-4 mr-2" />
-                      Log In
-                    </Link>
-                  </Button>
-                  <Button variant="default" size="sm" className="w-full justify-center" asChild>
-                    <Link to="/signup" onClick={() => setIsOpen(false)}>
-                      <User className="w-4 h-4 mr-2" />
-                      Sign Up
-                    </Link>
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
 
       {/* Mobile menu backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Spacer for fixed navbar (responsive to nav height) */}
+      {/* Spacer for fixed navbar */}
       <div className="h-16 sm:h-[5rem]" />
     </>
   );
