@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Award, BarChart3, Search, TrendingUp, Trophy, User, Users } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 const HowItWorksSection = () => {
   const [activeView, setActiveView] = useState<"players" | "organizers">("organizers");
@@ -29,12 +30,18 @@ const HowItWorksSection = () => {
   return (
     <section className="py-24 bg-background-light dark:bg-[#1a1f29]">
       <div className="max-w-[1200px] mx-auto px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20"
+        >
           <div className="max-w-2xl">
             <h2 className="text-4xl md:text-5xl font-display font-black uppercase italic tracking-tighter mb-4">
               How It Works
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-muted-foreground text-lg">
               Streamlining the pickleball experience for everyone. From registration to the final podium.
             </p>
           </div>
@@ -44,8 +51,8 @@ const HowItWorksSection = () => {
               className={cn(
                 "p-4 border rounded-lg transition-colors",
                 activeView === "players"
-                  ? "border-primary bg-white/5"
-                  : "border-white/10 hover:border-primary"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary"
               )}
             >
               <User className="w-5 h-5 text-primary" />
@@ -56,23 +63,28 @@ const HowItWorksSection = () => {
               className={cn(
                 "p-4 border rounded-lg transition-colors",
                 activeView === "organizers"
-                  ? "border-primary bg-white/5"
-                  : "border-white/10 hover:border-primary"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary"
               )}
             >
               <Users className="w-5 h-5 text-primary" />
               <span className="block text-[10px] font-bold uppercase mt-1">Organizers</span>
             </button>
           </div>
-        </div>
+        </motion.div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature, index) => {
             const BgIcon = feature.bgIcon;
             return (
-              <div
+              <motion.div
                 key={feature.title}
-                className="group p-8 rounded-2xl bg-background-dark border border-white/5 hover:border-primary/50 transition-all relative overflow-hidden"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                className="group p-8 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all relative overflow-hidden"
               >
                 {/* Background Icon */}
                 <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -86,8 +98,8 @@ const HowItWorksSection = () => {
                 
                 {/* Content */}
                 <h3 className="text-2xl font-display font-bold mb-4 uppercase italic">{feature.title}</h3>
-                <p className="text-slate-400 leading-relaxed">{feature.description}</p>
-              </div>
+                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+              </motion.div>
             );
           })}
         </div>
@@ -97,4 +109,3 @@ const HowItWorksSection = () => {
 };
 
 export default HowItWorksSection;
-

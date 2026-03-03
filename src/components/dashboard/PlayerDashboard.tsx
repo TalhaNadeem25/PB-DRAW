@@ -506,9 +506,9 @@ const PlayerDashboard = ({
               </div>
             ) : ticketsData && Array.isArray(ticketsData) && ticketsData.length > 0 ? (
               <div className="space-y-4">
-                {ticketsData.slice(0, 3).map((ticket: unknown, index: number) => (
+                {ticketsData.slice(0, 3).map((ticket: any, index: number) => (
                   <TicketCard
-                    key={(ticket as { paymentId?: string })?.paymentId ?? index}
+                    key={ticket?.paymentId ?? index}
                     payment={ticket}
                     compact
                   />
@@ -546,9 +546,9 @@ const PlayerDashboard = ({
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {waitlistData.slice(0, 3).map((entry: unknown) => (
+                {waitlistData.slice(0, 3).map((entry: any) => (
                   <WaitlistStatus
-                    key={(entry as { _id?: string })?._id ?? Math.random()}
+                    key={entry?._id ?? Math.random()}
                     entry={entry}
                   />
                 ))}

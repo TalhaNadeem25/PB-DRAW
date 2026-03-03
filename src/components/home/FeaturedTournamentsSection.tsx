@@ -5,8 +5,9 @@ import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, MapPin, Users } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const CARD_WIDTH = 344; // min-w-[320px] + gap-6 (24px)
+const CARD_WIDTH = 344;
 
 const FeaturedTournamentsSection = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,7 +41,13 @@ const FeaturedTournamentsSection = () => {
 
   return (
     <section className="py-24 bg-background overflow-hidden">
-      <div className="max-w-[1200px] mx-auto px-4 md:px-6 mb-12 flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+        className="max-w-[1200px] mx-auto px-4 md:px-6 mb-12 flex items-center justify-between"
+      >
         <h2 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tighter text-foreground">
           Featured Tournaments
         </h2>
@@ -60,14 +67,14 @@ const FeaturedTournamentsSection = () => {
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       <div
         ref={scrollRef}
         onScroll={handleScroll}
         className="flex gap-6 px-4 md:px-6 max-w-[1200px] mx-auto overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory"
       >
-        {tournaments.map((tournament: any) => {
+        {tournaments.map((tournament: any, index: number) => {
           const spotsFilled = tournament.currentPlayers || 0;
           const spotsTotal = tournament.maxPlayers || 64;
           const isFillingFast = spotsTotal - spotsFilled <= 10;
@@ -81,8 +88,13 @@ const FeaturedTournamentsSection = () => {
           }
 
           return (
-            <div
+            <motion.div
               key={tournament._id}
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
               className="min-w-[320px] md:min-w-[400px] bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden snap-start"
             >
               <div
@@ -140,9 +152,12 @@ const FeaturedTournamentsSection = () => {
                     </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2 mb-6 overflow-hidden">
-                    <div
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${Math.min((spotsFilled / spotsTotal) * 100, 100)}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
                       className={`h-2 rounded-full ${isFillingFast ? "bg-amber-400" : "bg-primary"}`}
-                      style={{ width: `${Math.min((spotsFilled / spotsTotal) * 100, 100)}%` }}
                     />
                   </div>
                   <Link
@@ -153,7 +168,7 @@ const FeaturedTournamentsSection = () => {
                   </Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

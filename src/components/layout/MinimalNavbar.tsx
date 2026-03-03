@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { motion } from "framer-motion";
 
 const MinimalNavbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -20,7 +21,10 @@ const MinimalNavbar = () => {
 
   return (
     <>
-      <nav
+      <motion.nav
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
         className={cn(
           "fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-2xl",
           scrolled
@@ -39,7 +43,7 @@ const MinimalNavbar = () => {
                 <div className="absolute inset-0 rounded-xl bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               <span className="font-display text-lg font-bold text-foreground tracking-wide whitespace-nowrap">
-                PICKLE<span className="text-primary">PLAY</span>
+                PICK<span className="text-primary">LIX</span>
               </span>
             </Link>
 
@@ -66,9 +70,9 @@ const MinimalNavbar = () => {
             </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
-      {/* Spacer to push content below fixed navbar */}
+      {/* Spacer */}
       <div className="h-14 sm:h-[4.5rem]" />
     </>
   );

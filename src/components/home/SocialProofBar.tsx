@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { statsAPI } from "@/services/api";
 import { MapPin, Trophy, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 const SocialProofBar = () => {
   const { data } = useQuery({
@@ -15,7 +16,12 @@ const SocialProofBar = () => {
   const organizersCount = stats?.organizersCount ?? 0;
 
   return (
-    <div className="bg-muted/30 border-y border-border py-6 w-full shadow-sm relative z-10">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.5 }}
+      className="bg-muted/30 border-y border-border py-6 w-full shadow-sm relative z-10"
+    >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 flex flex-wrap justify-center items-center gap-6 md:gap-12 text-sm md:text-base font-semibold text-muted-foreground font-display uppercase tracking-widest">
         <div className="flex items-center gap-2">
           <MapPin className="w-5 h-5 text-foreground shrink-0" />
@@ -25,7 +31,7 @@ const SocialProofBar = () => {
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-foreground shrink-0" />
           <span>
-            {tournamentsRun > 0 ? `${tournamentsRun}+ tournaments run` : "Tournaments run on Pickle Rally"}
+            {tournamentsRun > 0 ? `${tournamentsRun}+ tournaments run` : "Tournaments run on Picklix"}
           </span>
         </div>
         {organizersCount > 0 && (
@@ -38,7 +44,7 @@ const SocialProofBar = () => {
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 export default SocialProofBar;

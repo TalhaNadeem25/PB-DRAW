@@ -1,4 +1,5 @@
 import { Trophy, Users, LayoutGrid, Award, BarChart3, Shield, Zap, Globe } from "lucide-react";
+import { motion } from "framer-motion";
 
 const features = [
   {
@@ -39,6 +40,20 @@ const features = [
   },
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
+
 const FeaturesSection = () => {
   return (
     <section className="py-28 relative overflow-hidden">
@@ -51,30 +66,43 @@ const FeaturesSection = () => {
       <div className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-secondary/5 blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-20 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/20 mb-6 animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-20 max-w-3xl mx-auto"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/20 mb-6">
             <Zap className="w-4 h-4 text-secondary" />
             <span className="text-sm font-medium">Powerful Features</span>
           </div>
           
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
             Everything You Need to
             <br />
             <span className="text-gradient">Run Great Tournaments</span>
           </h2>
           
-          <p className="text-lg text-muted-foreground animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <p className="text-lg text-muted-foreground">
             Powerful tools designed specifically for pickleball tournament management.
             From registration to results, we've got you covered.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {features.map((feature) => (
+            <motion.div
               key={feature.title}
-              className="group glass-card-hover p-8 rounded-2xl animate-fade-in"
-              style={{ animationDelay: `${0.1 * index}s` }}
+              variants={cardVariants}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
+              className="group glass-card-hover p-8 rounded-2xl"
             >
               {/* Icon */}
               <div className={`
@@ -106,9 +134,9 @@ const FeaturesSection = () => {
                 h-1 w-0 mt-6 rounded-full transition-all duration-500 group-hover:w-16
                 ${feature.accent === 'primary' ? 'bg-hero-gradient' : 'bg-accent-gradient'}
               `} />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
