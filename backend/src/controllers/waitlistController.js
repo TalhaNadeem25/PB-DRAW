@@ -3,6 +3,7 @@ import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
 import User from '../models/User.js';
 import { sendWaitlistJoinedEmail, sendWaitlistPromotionEmail, sendWaitlistExpiredEmail } from '../services/emailService.js';
+import { createNotification } from './notificationController.js';
 
 /**
  * Join waitlist for an event
@@ -222,9 +223,10 @@ export const leaveWaitlist = async (req, res, next) => {
  * Promote next person from waitlist (internal function)
  * @param {string} eventId - Event ID
  * @param {string} reason - Reason for promotion
+ * @param {object} io - Socket.IO instance (optional, for in-app notifications)
  * @returns {object} - Promoted waitlist entry
  */
-export const promoteNextWaitlist = async (eventId, reason = 'spot-available') => {
+export const promoteNextWaitlist = async (eventId, reason = 'spot-available', io = null) => {
   try {
     // Find next waiting entry
     const nextEntry = await Waitlist.findOne({
@@ -250,6 +252,24 @@ export const promoteNextWaitlist = async (eventId, reason = 'spot-available') =>
 
     // Generate payment URL (event registration page with tournament context)
     const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register/${eventId}`;
+
+    // Send in-app notification
+    if (io) {
+      try {
+        await createNotification(io, nextEntry.user._id, {
+          type: 'waitlist-promoted',
+          title: `Spot Available — ${event.name}`,
+          message: `Your waitlist spot for ${event.name} at ${tournament.name} has been approved. You have 24 hours to complete your registration.`,
+          data: {
+            tournamentId,
+            eventId: eventId.toString(),
+            actionUrl: `/tournaments/${tournamentId}/register/${eventId}`
+          }
+        });
+      } catch (notifError) {
+        console.error('Failed to send in-app waitlist notification:', notifError);
+      }
+    }
 
     // Send promotion email
     try {
@@ -338,6 +358,44 @@ export const convertWaitlistToRegistration = async (waitlistId, paymentId) => {
   } catch (error) {
     console.error('Error converting waitlist entry:', error);
     throw error;
+  }
+};
+
+/**
+ * Get all waitlist entries for the current user (across all events)
+ * @route   GET /api/waitlist/my-entries
+ * @access  Private
+ */
+export const getMyWaitlistEntries = async (req, res, next) => {
+  try {
+    const entries = await Waitlist.find({
+      user: req.user.id,
+      status: { $in: ['waiting', 'promoted', 'expired'] }
+    })
+      .populate({ path: 'event', select: 'name maxTeams currentTeams' })
+      .populate({ path: 'event', populate: { path: 'tournament', select: 'name startDate' } })
+      .sort({ createdAt: -1 });
+
+    // Reshape to include tournament at the top level for convenience
+    const data = entries.map(entry => ({
+      _id: entry._id,
+      event: {
+        _id: entry.event._id,
+        name: entry.event.name,
+        maxTeams: entry.event.maxTeams,
+      },
+      tournament: entry.event.tournament,
+      position: entry.position,
+      status: entry.status,
+      promotedAt: entry.promotedAt,
+      promotionExpiresAt: entry.promotionExpiresAt,
+      metadata: entry.metadata,
+      createdAt: entry.createdAt,
+    }));
+
+    res.status(200).json({ success: true, count: data.length, data });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -433,6 +491,23 @@ export const approveWaitlistEntry = async (req, res, next) => {
 
     const tournamentId = tournament._id.toString();
     const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register/${eventId}`;
+
+    // Send in-app notification
+    try {
+      const io = req.app.get('io');
+      await createNotification(io, entry.user._id, {
+        type: 'waitlist-promoted',
+        title: `Spot Available — ${entry.event.name}`,
+        message: `Your waitlist spot for ${entry.event.name} at ${tournament.name} has been approved. You have 24 hours to complete your registration.`,
+        data: {
+          tournamentId,
+          eventId,
+          actionUrl: `/tournaments/${tournamentId}/register/${eventId}`
+        }
+      });
+    } catch (notifError) {
+      console.error('Failed to send in-app waitlist notification:', notifError);
+    }
 
     try {
       await sendWaitlistPromotionEmail({

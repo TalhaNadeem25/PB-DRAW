@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Check, CheckCheck, Trash2, Trophy, Calendar, Users, AlertCircle, Clock, X } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, Trophy, Calendar, Users, AlertCircle, Clock, X, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import api from '@/services/api';
+import { Link } from 'react-router-dom';
 
 interface Notification {
   _id: string;
@@ -275,6 +276,19 @@ export const NotificationCenter = () => {
                             ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })
                             : 'Just now'}
                         </p>
+                        {notification.type === 'waitlist-promoted' && notification.data?.actionUrl && (
+                          <Button
+                            asChild
+                            size="sm"
+                            className="mt-2 h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link to={notification.data.actionUrl}>
+                              <CreditCard className="h-3 w-3 mr-1" />
+                              Pay Now
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                       {!notification.read && (
                         <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />

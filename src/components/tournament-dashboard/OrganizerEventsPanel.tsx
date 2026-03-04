@@ -94,10 +94,12 @@ function WaitlistDialogContent({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["waitlist", eventId] });
       queryClient.invalidateQueries({ queryKey: ["tournament"] });
-      toast({ title: "Approved", description: "User has been emailed to pay and complete registration." });
+      toast.success("Approved", {
+        description: "User has been emailed to pay and complete registration.",
+      });
     },
     onError: (err: any) => {
-      toast({ title: "Error", description: err.response?.data?.message || "Failed to approve", variant: "destructive" });
+      toast.error(err.response?.data?.message || "Failed to approve");
     },
   });
   const entries = data?.data ?? [];

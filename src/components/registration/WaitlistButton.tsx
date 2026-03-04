@@ -114,10 +114,10 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
   // Not on waitlist yet - show join button
   if (!waitlistPosition) {
     return (
-      <Card className="border-2 border-yellow-500 bg-yellow-50">
+      <Card className="border-2 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-yellow-600" />
+            <Users className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             Event Full - Join Waitlist
           </CardTitle>
           <CardDescription>
@@ -128,7 +128,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
           <Button
             onClick={() => joinWaitlist.mutate()}
             disabled={joinWaitlist.isPending}
-            className="w-full bg-yellow-600 hover:bg-yellow-700"
+            className="w-full bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-500"
           >
             {joinWaitlist.isPending ? (
               <>
@@ -151,27 +151,27 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
   return (
     <Card className={`border-2 ${
       waitlistPosition.status === 'promoted'
-        ? 'border-green-500 bg-green-50'
+        ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
         : waitlistPosition.status === 'expired'
-        ? 'border-red-500 bg-red-50'
-        : 'border-yellow-500 bg-yellow-50'
+        ? 'border-red-500 bg-red-50 dark:bg-red-950/30'
+        : 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
     }`}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="flex items-center gap-2">
             {waitlistPosition.status === 'promoted' ? (
               <>
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 Spot Available!
               </>
             ) : waitlistPosition.status === 'expired' ? (
               <>
-                <XCircle className="w-5 h-5 text-red-600" />
+                <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 Promotion Expired
               </>
             ) : (
               <>
-                <Clock className="w-5 h-5 text-yellow-600" />
+                <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                 On Waitlist
               </>
             )}
@@ -189,9 +189,9 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
         {/* Promoted Status */}
         {waitlistPosition.status === 'promoted' && (
           <>
-            <Alert className="bg-white border-green-500">
-              <AlertCircle className="w-4 h-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="bg-card border-green-500">
+              <AlertCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-300">
                 <strong>A spot is now available for you!</strong>
                 <br />
                 Complete your registration within {waitlistPosition.promotionExpiresAt && getTimeRemaining(waitlistPosition.promotionExpiresAt)}
@@ -199,7 +199,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
             </Alert>
 
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md hover:shadow-lg"
+              className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white font-semibold shadow-md hover:shadow-lg"
               size="lg"
               onClick={() => {
                 if (waitlistPosition.paymentLink) {
@@ -221,10 +221,10 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
 
             {waitlistPosition.promotionExpiresAt && (
               <div className="text-center">
-                <div className="text-sm font-semibold text-red-600">
+                <div className="text-sm font-semibold text-red-600 dark:text-red-400">
                   {getTimeRemaining(waitlistPosition.promotionExpiresAt)}
                 </div>
-                <div className="text-xs text-gray-600 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   If you don't complete registration, your spot will go to the next person
                 </div>
               </div>
@@ -235,21 +235,21 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
         {/* Waiting Status */}
         {waitlistPosition.status === 'waiting' && (
           <>
-            <div className="bg-white rounded-lg p-4 border border-yellow-300">
+            <div className="bg-card rounded-lg p-4 border border-yellow-300 dark:border-yellow-700">
               <div className="text-center">
-                <div className="text-4xl font-bold text-yellow-600 mb-2">
+                <div className="text-4xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
                   #{waitlistPosition.position}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Your position in the waitlist
                 </div>
               </div>
 
               {waitlistPosition.totalAhead > 0 && (
-                <div className="mt-4 pt-4 border-t border-yellow-200">
+                <div className="mt-4 pt-4 border-t border-yellow-200 dark:border-yellow-800">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">People ahead:</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-muted-foreground">People ahead:</span>
+                    <span className="font-semibold text-foreground">
                       {waitlistPosition.totalAhead}
                     </span>
                   </div>
@@ -257,7 +257,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
               )}
             </div>
 
-            <Alert className="bg-white">
+            <Alert className="bg-card">
               <Clock className="w-4 h-4" />
               <AlertDescription>
                 You'll receive an email notification when a spot becomes available. You'll then have <strong>24 hours</strong> to complete your registration.
@@ -285,7 +285,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
         {/* Expired Status */}
         {waitlistPosition.status === 'expired' && (
           <>
-            <Alert variant="destructive" className="bg-white">
+            <Alert variant="destructive" className="bg-card">
               <XCircle className="w-4 h-4" />
               <AlertDescription>
                 Your promotion window has expired. The spot was offered to the next person in line. You can rejoin the waitlist if you'd like.
@@ -295,7 +295,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
             <Button
               onClick={() => joinWaitlist.mutate()}
               disabled={joinWaitlist.isPending}
-              className="w-full bg-yellow-600 hover:bg-yellow-700"
+              className="w-full bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-500"
             >
               {joinWaitlist.isPending ? (
                 <>

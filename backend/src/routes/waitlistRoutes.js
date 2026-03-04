@@ -5,18 +5,22 @@ import {
   getWaitlistPosition,
   leaveWaitlist,
   getEventWaitlist,
-  approveWaitlistEntry
+  approveWaitlistEntry,
+  getMyWaitlistEntries
 } from '../controllers/waitlistController.js';
 
-const router = express.Router({ mergeParams: true }); // mergeParams to access :eventId
+// Event-scoped router (mounted at /api/events/:eventId/waitlist)
+const router = express.Router({ mergeParams: true });
 
-// Public waitlist routes (require authentication)
 router.post('/', protect, joinWaitlist);
 router.get('/my-position', protect, getWaitlistPosition);
 router.delete('/', protect, leaveWaitlist);
 
-// Admin/Organizer routes
 router.get('/all', protect, authorize('organizer', 'admin'), getEventWaitlist);
 router.post('/:waitlistId/approve', protect, authorize('organizer', 'admin'), approveWaitlistEntry);
+
+// Top-level user router (mounted at /api/waitlist)
+export const userWaitlistRouter = express.Router();
+userWaitlistRouter.get('/my-entries', protect, getMyWaitlistEntries);
 
 export default router;

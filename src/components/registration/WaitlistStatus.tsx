@@ -159,7 +159,7 @@ export default function WaitlistStatus({ entry }: WaitlistStatusProps) {
               size="sm"
               className="w-full bg-green-600 hover:bg-green-700"
             >
-              <Link to={`/events/${entry.event._id}/register`}>
+              <Link to={`/tournaments/${entry.tournament._id}/register/${entry.event._id}`}>
                 Complete Registration
                 <ArrowRight className="w-3 h-3 ml-2" />
               </Link>
@@ -187,7 +187,7 @@ export default function WaitlistStatus({ entry }: WaitlistStatusProps) {
               variant="outline"
               className="w-full"
             >
-              <Link to={`/events/${entry.event._id}/register`}>
+              <Link to={`/tournaments/${entry.tournament._id}/register/${entry.event._id}`}>
                 Rejoin Waitlist
                 <ArrowRight className="w-3 h-3 ml-2" />
               </Link>

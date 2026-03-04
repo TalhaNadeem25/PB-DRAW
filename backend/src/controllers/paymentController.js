@@ -793,8 +793,9 @@ export const confirmPayment = async (req, res, next) => {
             ? [payment.event]
             : [];
 
+        const io = req.app.get('io');
         for (const event of eventsToCheck) {
-          await promoteNextWaitlist(event._id, 'payment_completed');
+          await promoteNextWaitlist(event._id, 'payment_completed', io);
         }
       } catch (waitlistError) {
         console.error('Error promoting waitlist after payment:', waitlistError);

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { eventAPI, invitationAPI, paymentAPI, teamAPI, tournamentAPI } from "@/services/api";
+import { eventAPI, invitationAPI, paymentAPI, teamAPI, tournamentAPI, waitlistAPI } from "@/services/api";
 import { formatEventSkillLevel } from "@/types/tournament";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -63,6 +63,22 @@ const EventRegistration = () => {
 
   const tournament = tournamentData?.data;
   const event = eventData?.data;
+
+  // Check if user was approved from waitlist — if so, bypass the "event full" gate
+  const { data: waitlistPosition } = useQuery({
+    queryKey: ['waitlist-position', eventId],
+    queryFn: async () => {
+      try {
+        const res = await waitlistAPI.getMyPosition(eventId!);
+        return res?.data ?? null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!eventId && !!user,
+    retry: false,
+  });
+  const isPromotedFromWaitlist = waitlistPosition?.status === 'promoted';
 
   // Load pending registration from localStorage if user just logged in
   useEffect(() => {
@@ -314,20 +330,20 @@ const EventRegistration = () => {
 
         {/* Content */}
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             {step === "team-details" ? (
-              <div className="grid lg:grid-cols-3 gap-8">
+              <div className="grid lg:grid-cols-[1fr_minmax(420px,480px)] gap-8 items-stretch">
                 {/* Main Form */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Check if event is full and show waitlist */}
-                  {event.currentTeams >= event.maxTeams && tournament?.settings?.allowWaitlist ? (
+                <div className="min-w-0 space-y-6 flex flex-col">
+                  {/* Check if event is full and show waitlist — promoted users bypass this */}
+                  {event.currentTeams >= event.maxTeams && !isPromotedFromWaitlist && tournament?.settings?.allowWaitlist ? (
                     <WaitlistButton
-                    eventId={event._id}
-                    isEventFull={true}
-                    tournamentId={tournamentId}
-                    onPayNow={() => setStep('payment')}
-                  />
-                  ) : event.currentTeams >= event.maxTeams ? (
+                      eventId={event._id}
+                      isEventFull={true}
+                      tournamentId={tournamentId}
+                      onPayNow={handleCreateTeam}
+                    />
+                  ) : event.currentTeams >= event.maxTeams && !isPromotedFromWaitlist ? (
                     <Card className="border-red-500 bg-red-50">
                       <CardHeader>
                         <CardTitle className="text-red-900 flex items-center gap-2">
@@ -349,17 +365,30 @@ const EventRegistration = () => {
                     </Card>
                   ) : (
                     <Card className="glass-card border-border/50 shadow-lg">
+                    {isPromotedFromWaitlist && (
+                      <div className="mx-6 mt-6 rounded-lg bg-green-500/10 border border-green-500/30 px-4 py-3 flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                        <div className="text-sm">
+                          <p className="font-semibold text-green-700">Your waitlist spot was approved!</p>
+                          <p className="text-green-600">
+                            {waitlistPosition?.promotionExpiresAt
+                              ? `Complete registration before your spot expires.`
+                              : 'Complete your registration below.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                           <UserPlus className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                          <span>Team Information</span>
+                          <span>{requiresPartner ? 'Team Information' : 'Registration'}</span>
                           <CardDescription className="mt-1">
                             {requiresPartner
                               ? "Enter your partner's information to create your team"
-                              : "Register as a singles player"}
+                              : "You're registering as a singles player — no team details needed"}
                           </CardDescription>
                         </div>
                       </CardTitle>
@@ -450,11 +479,11 @@ const EventRegistration = () => {
                         {createTeamMutation.isPending ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Creating Team...
+                            {requiresPartner ? 'Creating Team...' : 'Setting up registration...'}
                           </>
                         ) : entryFee > 0 ? (
                           <>
-                            Continue to Payment
+                            {requiresPartner ? 'Create Team &' : ''} Continue to Payment
                             <DollarSign className="w-4 h-4 ml-2" />
                           </>
                         ) : (
@@ -469,104 +498,103 @@ const EventRegistration = () => {
                   )}
                 </div>
 
-                {/* Sidebar - Event Summary */}
-                <div className="space-y-6">
-                  <Card className="glass-card border-border/50 shadow-lg overflow-hidden">
-                    {/* Gradient accent */}
-                    <div className="h-1.5 bg-hero-gradient" />
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-primary" />
-                        Event Details
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label className="text-muted-foreground text-xs">Event Type</Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="capitalize bg-primary/10 text-primary">
-                            {event.format.replace('-', ' ')}
-                          </Badge>
-                          <Badge variant="outline">
-                            {event.playFormat?.split('-').map((word: string) =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                            ).join(' ')}
-                          </Badge>
+                {/* Sidebar — Event Summary */}
+                <div className="space-y-4">
+                  <Card className="border border-border/60 shadow-xl overflow-hidden bg-card">
+                    {/* Colour-band header */}
+                    <div className="bg-hero-gradient px-5 py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                          <Trophy className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold text-white/70 uppercase tracking-widest">Event Details</p>
+                          <p className="font-display font-bold text-white text-base leading-tight">{event.name}</p>
                         </div>
                       </div>
+                    </div>
 
-                      <div>
-                        <Label className="text-muted-foreground text-xs">Skill Level</Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Target className="w-4 h-4 text-primary" />
-                          <span className="font-medium">{formatEventSkillLevel(event.skillLevel)}</span>
-                        </div>
+                    <CardContent className="p-5 space-y-5">
+                      {/* Format badges */}
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className="bg-primary/10 text-primary border border-primary/20 capitalize font-semibold">
+                          {event.format.replace('-', ' ')}
+                        </Badge>
+                        <Badge variant="outline" className="font-medium">
+                          {event.playFormat?.split('-').map((w: string) =>
+                            w.charAt(0).toUpperCase() + w.slice(1)
+                          ).join(' ')}
+                        </Badge>
                       </div>
 
-                      <div>
-                        <Label className="text-muted-foreground text-xs">
-                          {(event.format || "").toLowerCase() === "singles" ? "Players" : "Teams"} Registered
-                        </Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Users className="w-4 h-4 text-primary" />
-                          <span className="font-medium">
-                            {event.currentTeams || 0} / {event.maxTeams}
-                          </span>
-                        </div>
-                        {/* Progress bar */}
-                        <div className="h-1.5 bg-muted rounded-full mt-2 overflow-hidden">
-                          <div 
-                            className="h-full bg-hero-gradient rounded-full transition-all duration-500"
-                            style={{ width: `${((event.currentTeams || 0) / event.maxTeams) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <Label className="text-muted-foreground text-xs">Tournament</Label>
-                        <p className="font-medium mt-1">{tournament.name}</p>
-                      </div>
-
-                      <div>
-                        <Label className="text-muted-foreground text-xs">Location</Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm">{tournament.location}</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-muted-foreground text-xs">Dates</Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm">
-                            {format(new Date(tournament.startDate), 'MMM dd')} - {format(new Date(tournament.endDate), 'MMM dd, yyyy')}
-                          </span>
-                        </div>
-                      </div>
-
-                      {entryFee > 0 && (
-                        <>
-                          <Separator />
-                          <div className="glass rounded-xl p-4 border border-primary/20 shadow-glow">
-                            <Label className="text-muted-foreground text-xs">Entry Fee</Label>
-                            <div className="flex items-center justify-between mt-2">
-                              <span className="text-3xl font-display font-bold text-primary">
-                                ${entryFee.toFixed(2)}
-                              </span>
-                              <DollarSign className="w-8 h-8 text-primary/30" />
-                            </div>
+                      {/* Stats grid — 2 columns, never cramped */}
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Skill Level</p>
+                          <div className="flex items-center gap-1.5">
+                            <Target className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="font-semibold text-sm">{formatEventSkillLevel(event.skillLevel)}</span>
                           </div>
-                        </>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                            {(event.format || '').toLowerCase() === 'singles' ? 'Players' : 'Teams'}
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="font-semibold text-sm">{event.currentTeams || 0} / {event.maxTeams}</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full mt-1.5 overflow-hidden">
+                            <div
+                              className="h-full bg-hero-gradient rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(((event.currentTeams || 0) / event.maxTeams) * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tournament</p>
+                          <p className="font-semibold text-sm leading-snug">{tournament.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Location</p>
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="text-sm font-medium">{tournament.location}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Dates — full width */}
+                      <div className="flex items-center gap-3 rounded-lg bg-muted/40 border border-border/50 px-4 py-3">
+                        <Calendar className="w-4 h-4 text-primary shrink-0" />
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Dates</p>
+                          <p className="font-semibold text-sm mt-0.5">
+                            {format(new Date(tournament.startDate), 'MMM d')} – {format(new Date(tournament.endDate), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Entry Fee — prominent */}
+                      {entryFee > 0 && (
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 px-5 py-4 flex items-center justify-between">
+                          <div>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Entry Fee</p>
+                            <p className="text-3xl font-display font-black text-primary mt-0.5">
+                              ${entryFee.toFixed(2)}
+                            </p>
+                          </div>
+                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <DollarSign className="w-6 h-6 text-primary" />
+                          </div>
+                        </div>
                       )}
 
-                      {/* Refund Policy */}
-                      <div className="rounded-lg bg-muted/50 border border-border/50 p-3">
+                      {/* Refund policy */}
+                      <div className="rounded-lg bg-muted/30 border border-border/40 px-4 py-3">
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           <span className="font-semibold text-foreground">Refund Policy: </span>
-                          Full refund if cancelled 7+ days before the event. No refunds within 7 days of event start. No-shows forfeit entry fees.
+                          Full refund if cancelled 7+ days before the event. No refunds within 7 days of event start.
                         </p>
                       </div>
                     </CardContent>
