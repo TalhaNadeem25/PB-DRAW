@@ -163,7 +163,7 @@ export default function OrganizerTournamentDashboard({
   return (
     <Layout variant="minimal">
       <Helmet>
-        <title>Dashboard - {tournament.name} | Pickle Rally</title>
+        <title>Dashboard - {tournament.name} | Picklix</title>
       </Helmet>
       <div className="min-h-screen bg-background">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6">

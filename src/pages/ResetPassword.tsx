@@ -97,7 +97,7 @@ const ResetPassword = () => {
                   <Trophy className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <span className="font-display text-2xl font-bold">
-                  PICKLE<span className="text-primary">PLAY</span>
+                  PICK<span className="text-primary">LIX</span>
                 </span>
               </Link>
               <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">

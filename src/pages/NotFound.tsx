@@ -66,10 +66,9 @@ const NotFound = () => {
               </Link>
             </Button>
             <Button asChild variant="outline" className="hover-lift glass">
-              <Link to="/tournaments">
-                <Button className="w-full text-lg h-12">
-                Tournaments
-                </Button>
+              <Link to="/help">
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Get Help
               </Link>
             </Button>
           </div>
@@ -78,7 +77,7 @@ const NotFound = () => {
         {/* Help text */}
         <div className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <HelpCircle className="w-4 h-4" />
-          <span>Need help? Contact support@pickleplay.com</span>
+          <span>Need help? Contact support@picklix.com</span>
         </div>
       </div>
     </div>
