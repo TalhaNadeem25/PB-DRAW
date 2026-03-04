@@ -26,7 +26,7 @@ const Privacy = () => {
                   <section>
                     <h2 className="text-xl font-semibold mb-3">1. Introduction</h2>
                     <p className="text-muted-foreground">
-                      Pickle Rally ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our tournament management platform.
+                      Picklix ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our tournament management platform.
                     </p>
                   </section>
 
@@ -150,7 +150,7 @@ const Privacy = () => {
                       <li><strong>Export</strong> - Receive your data in a portable format</li>
                     </ul>
                     <p className="text-muted-foreground mt-2">
-                      To exercise these rights, please contact us at privacy@picklerally.com.
+                      To exercise these rights, please contact us at privacy@picklix.com.
                     </p>
                   </section>
 
@@ -217,8 +217,8 @@ const Privacy = () => {
                       If you have questions or concerns about this Privacy Policy or our data practices, please contact us at:
                     </p>
                     <div className="text-muted-foreground mt-2 space-y-1">
-                      <p>Email: privacy@picklerally.com</p>
-                      <p>Support: support@picklerally.com</p>
+                       <p>Email: privacy@picklix.com</p>
+                       <p>Support: support@picklix.com</p>
                     </div>
                   </section>
                 </div>

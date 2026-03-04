@@ -57,10 +57,10 @@ export default function PlayerTournamentView({
   return (
     <Layout variant="minimal">
       <Helmet>
-        <title>{tournament.name} | Pickle Rally</title>
-        <meta name="description" content={tournament.description || `Register for ${tournament.name} on Pickle Rally.`} />
-        <meta property="og:title" content={`${tournament.name} | Pickle Rally`} />
-        <meta property="og:description" content={tournament.description || `Register for ${tournament.name} on Pickle Rally.`} />
+        <title>{tournament.name} | Picklix</title>
+        <meta name="description" content={tournament.description || `Register for ${tournament.name} on Picklix.`} />
+        <meta property="og:title" content={`${tournament.name} | Picklix`} />
+        <meta property="og:description" content={tournament.description || `Register for ${tournament.name} on Picklix.`} />
         {tournament.image && <meta property="og:image" content={tournament.image} />}
         <meta property="og:type" content="website" />
       </Helmet>

@@ -173,7 +173,7 @@ const AuthPage = () => {
               <TabsContent value="login" className="space-y-6 animate-in fade-in-50 duration-500">
                 <div className="mb-8">
                   <h2 className="text-3xl font-display font-bold text-foreground mb-2">Welcome back</h2>
-                  <p className="text-muted-foreground">Enter your credentials to access the rally.</p>
+                  <p className="text-muted-foreground">Enter your credentials to access your account.</p>
                 </div>
 
                 <form onSubmit={handleLoginSubmit} className="space-y-5">
