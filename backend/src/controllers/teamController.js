@@ -130,6 +130,19 @@ export const createTeam = async (req, res, next) => {
       });
     }
 
+    // Guard against duplicate registration for the same user in the same event
+    const alreadyRegistered = await Team.findOne({
+      event: req.params.eventId,
+      players: req.user.id,
+      paymentStatus: { $ne: 'refunded' }
+    });
+    if (alreadyRegistered) {
+      return res.status(409).json({
+        success: false,
+        message: 'You are already registered for this event'
+      });
+    }
+
     // Event has space - create team normally
     req.body.event = req.params.eventId;
     const team = await Team.create(req.body);

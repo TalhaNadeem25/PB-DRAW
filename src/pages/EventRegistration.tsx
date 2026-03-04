@@ -80,7 +80,7 @@ const EventRegistration = () => {
   });
   const isPromotedFromWaitlist = waitlistPosition?.status === 'promoted';
 
-  // Load pending registration from localStorage if user just logged in
+  // Restore form fields from localStorage after post-login redirect (do NOT auto-trigger mutation)
   useEffect(() => {
     if (user && tournamentId && eventId) {
       const pendingStr = localStorage.getItem('pendingEventRegistration');
@@ -90,22 +90,18 @@ const EventRegistration = () => {
           if (pendingData.tournamentId === tournamentId && pendingData.eventId === eventId) {
             setPartnerName(pendingData.partnerName || "");
             setPartnerEmail(pendingData.partnerEmail || "");
-            // Auto-trigger team creation since they already clicked checkout previously
-            toast.success("Registration progress restored. Completing registration...");
-            createTeamMutation.mutate({
-              eventId: eventId,
-              eventFormat: event?.format || pendingData.eventFormat,
-              partnerName: pendingData.partnerName || undefined,
-              partnerEmail: pendingData.partnerEmail || undefined,
-            });
+            toast.info("Registration details restored. Click Continue to proceed.");
           }
-          localStorage.removeItem('pendingEventRegistration');
         } catch (e) {
           console.error("Failed to parse pending event registration", e);
         }
+        // Always clear localStorage regardless — prevents stale data triggering on future visits
+        localStorage.removeItem('pendingEventRegistration');
       }
     }
-  }, [user, tournamentId, eventId, event?.format]);
+  // Only run once after user + route params are available — not on every re-render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, tournamentId, eventId]);
 
   // Create team mutation
   const createTeamMutation = useMutation({
@@ -208,13 +204,24 @@ const EventRegistration = () => {
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to register for event");
+      const msg = error.response?.data?.message || "Failed to register for event";
+      if (error.response?.status === 409) {
+        toast.error("You're already registered for this event.");
+      } else {
+        toast.error(msg);
+      }
     },
   });
 
   const handleCreateTeam = () => {
     if (!eventId || !event) {
       toast.error("Event information not found");
+      return;
+    }
+
+    // Team already created (user went back from payment step) — skip straight to payment
+    if (createdTeam) {
+      setStep("payment");
       return;
     }
 

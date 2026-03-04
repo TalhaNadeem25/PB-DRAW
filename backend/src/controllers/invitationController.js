@@ -297,6 +297,19 @@ export const acceptInvitation = async (req, res, next) => {
       });
     }
 
+    // Check if the partner already has a team in this event (prevents cross-team duplicates)
+    const existingTeam = await Team.findOne({
+      event: team.event._id || team.event,
+      players: req.user.id,
+      paymentStatus: { $ne: 'refunded' }
+    });
+    if (existingTeam) {
+      return res.status(409).json({
+        success: false,
+        message: 'You are already registered for this event in another team'
+      });
+    }
+
     // Add user to team
     team.players.push(req.user.id);
     await team.save();

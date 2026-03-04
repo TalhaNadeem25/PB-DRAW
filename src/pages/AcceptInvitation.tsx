@@ -76,7 +76,12 @@ const AcceptInvitation = () => {
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to accept invitation");
+      const msg = error.response?.data?.message || "Failed to accept invitation";
+      if (error.response?.status === 409) {
+        toast.error("You're already registered for this event in another team.");
+      } else {
+        toast.error(msg);
+      }
     },
   });
 

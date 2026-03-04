@@ -558,6 +558,20 @@ export const createPartnerPaymentIntent = async (req, res, next) => {
       });
     }
 
+    // Check if partner already has a team in this event (prevents cross-team duplicates)
+    const partnerExistingTeam = await Team.findOne({
+      event: event._id,
+      players: req.user.id,
+      _id: { $ne: team._id }, // exclude the team they're being invited to
+      paymentStatus: { $ne: 'refunded' }
+    });
+    if (partnerExistingTeam) {
+      return res.status(409).json({
+        success: false,
+        message: 'You are already registered for this event in another team'
+      });
+    }
+
     // Check Stripe Connect onboarding
     if (!organizer.stripeConnectAccountId || !organizer.stripeConnectOnboarded) {
       return res.status(400).json({
@@ -727,8 +741,13 @@ export const confirmPayment = async (req, res, next) => {
             const team = await Team.findById(payment.team);
 
             if (team) {
-              // Add partner to team
-              if (!team.players.includes(req.user.id)) {
+              // Add partner to team (guard: skip if already on this team OR already in another team for this event)
+              const alreadyInEvent = await Team.findOne({
+                event: team.event,
+                players: req.user.id,
+                paymentStatus: { $ne: 'refunded' }
+              });
+              if (!alreadyInEvent && !team.players.map(p => p.toString()).includes(req.user.id)) {
                 team.players.push(req.user.id);
                 await team.save();
                 console.log(`Partner ${req.user.email} added to team ${team._id} after payment confirmation`);
