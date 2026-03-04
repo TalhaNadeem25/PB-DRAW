@@ -21,7 +21,7 @@ import invitationRoutes from '../backend/src/routes/invitationRoutes.js';
 import paymentRoutes from '../backend/src/routes/paymentRoutes.js';
 import stripeConnectRoutes from '../backend/src/routes/stripeConnectRoutes.js';
 import analyticsRoutes from '../backend/src/routes/analyticsRoutes.js';
-import waitlistRoutes from '../backend/src/routes/waitlistRoutes.js';
+import waitlistRoutes, { userWaitlistRouter } from '../backend/src/routes/waitlistRoutes.js';
 import checkInRoutes from '../backend/src/routes/checkInRoutes.js';
 import aiPlannerRoutes from '../backend/src/routes/aiPlannerRoutes.js';
 import aiRoutes from '../backend/src/routes/aiRoutes.js';
@@ -102,6 +102,7 @@ app.use('/api/events/:eventId/pools', poolRoutes);
 app.use('/api/events/:eventId/teams', teamRoutes);
 app.use('/api/events/:eventId/playoffs', playoffRoutes);
 app.use('/api/events/:eventId/waitlist', waitlistRoutes);
+app.use('/api/waitlist', userWaitlistRouter);
 app.use('/api/pools/:poolId/matches', matchRoutes);
 app.use('/api/teams/:teamId/invitations', invitationRoutes);
 
