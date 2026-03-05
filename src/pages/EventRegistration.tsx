@@ -479,7 +479,7 @@ const EventRegistration = () => {
 
                       <Button
                         onClick={handleCreateTeam}
-                        disabled={createTeamMutation.isPending}
+                        disabled={createTeamMutation.isPending || createTeamMutation.isSuccess}
                         className="w-full"
                         size="lg"
                       >

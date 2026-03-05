@@ -103,7 +103,8 @@ export const createPaymentIntent = async (req, res, next) => {
       });
     }
 
-    const amount = tournament.entryFee || 0;
+    // Use event.entryFee (per-event fee); tournament.entryFee is deprecated
+    const amount = event.entryFee || tournament.entryFee || 0;
 
     if (amount === 0) {
       // Free tournament - no payment needed
@@ -721,8 +722,11 @@ export const confirmPayment = async (req, res, next) => {
           const event = await Event.findById(team.event);
           if (event) {
             // Add team to event.teams array if not already there
-            if (!event.teams.includes(teamId)) {
-              event.teams.push(teamId);
+            // Must compare with .toString() because event.teams holds ObjectIds
+            const teamObjectId = (teamId._id || teamId).toString();
+            const alreadyInEvent = event.teams.some(id => id.toString() === teamObjectId);
+            if (!alreadyInEvent) {
+              event.teams.push(team._id);
             }
             // Update the count
             event.currentTeams = event.teams.length;

@@ -84,6 +84,20 @@ export const createTeam = async (req, res, next) => {
       });
     }
 
+    // Guard against duplicate registration — must run before the "event full" check
+    // so the waitlist path also cannot create duplicates
+    const alreadyRegistered = await Team.findOne({
+      event: req.params.eventId,
+      players: req.user.id,
+      paymentStatus: { $ne: 'refunded' }
+    });
+    if (alreadyRegistered) {
+      return res.status(409).json({
+        success: false,
+        message: 'You are already registered for this event'
+      });
+    }
+
     // Check if event is full
     if (event.currentTeams >= event.maxTeams) {
       const tournament = await Tournament.findById(event.tournament._id || event.tournament);
@@ -127,19 +141,6 @@ export const createTeam = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Event is full and waitlist is not available'
-      });
-    }
-
-    // Guard against duplicate registration for the same user in the same event
-    const alreadyRegistered = await Team.findOne({
-      event: req.params.eventId,
-      players: req.user.id,
-      paymentStatus: { $ne: 'refunded' }
-    });
-    if (alreadyRegistered) {
-      return res.status(409).json({
-        success: false,
-        message: 'You are already registered for this event'
       });
     }
 
