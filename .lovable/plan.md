@@ -1,86 +1,104 @@
+# Picklix UI/UX Sophistication Plan
 
+## Upgrade 1: Hero Section — Add Visual Weight
 
-# Dark Mode Audit: Build Fix + Dark Mode Issues
+The hero is currently text-only on a plain `bg-background`. For a premium sports marketplace, it needs a strong visual anchor.
 
-## Step 1: Fix Build Error (P0)
+**Changes to `HeroSection.tsx`:**
 
-**File:** `src/contexts/AuthContext.tsx`
-
-The `User` interface's `preferences` type is missing three properties that `Profile.tsx` uses: `preferredSide`, `primaryPaddle`, and `availability`. The fix is to extend the `preferences` type:
-
-```typescript
-preferences?: {
-  playingDays?: string[];
-  partnerPreference?: 'looking' | 'have-partner' | 'either';
-  preferredSide?: string;
-  primaryPaddle?: string;
-  availability?: string[];
-};
-```
+- Add a large decorative element on the right side (abstract court-line SVG pattern or gradient mesh) to fill the empty half of the viewport on desktop
+- Add an animated stats counter row below the CTAs (e.g., "500+ Tournaments · 10K+ Players · 28 States") using `framer-motion` number counting animation
+- Add a subtle gradient wash behind the hero text area for depth
+- Make the headline responsive — currently `text-8xl` on lg which is aggressive; tighten to `text-7xl` max
 
 ---
 
-## Step 2: Hardcoded `bg-white` Breaking Dark Mode
+## Upgrade 2: Page Transition Animations
 
-These components use `bg-white` instead of `bg-card`, making them render as bright white boxes in dark mode:
+Currently pages just pop in. Wrapping the `<Routes>` outlet with `framer-motion` `AnimatePresence` and a shared `PageTransition` wrapper component will give smooth fade+slide transitions between every route.
 
-| File | Line(s) | Issue | Fix |
-|------|---------|-------|-----|
-| `src/components/tournaments/TournamentCard.tsx` | Line 62 | `bg-white` on outer card | Change to `bg-card` |
-| `src/components/tournaments/TournamentCard.tsx` | Line 103 | `bg-white` on inner content area | Change to `bg-card` |
-| `src/components/home/FeaturedTournamentsSection.tsx` | Line 95 | `bg-white` on status badge | Change to `bg-card` |
+**New file: `src/components/layout/PageTransition.tsx**`
 
----
-
-## Step 3: Hardcoded Gray Text Breaking Dark Mode
-
-The `WaitlistStatus.tsx` component uses hardcoded `text-gray-*` classes throughout, which don't adapt in dark mode (they remain dark gray on a dark background, becoming invisible):
-
-| Line | Current Class | Fix |
-|------|--------------|-----|
-| 86 | `text-gray-900` | `text-foreground` |
-| 89 | `text-gray-600` | `text-muted-foreground` |
-| 94 | `text-gray-500` | `text-muted-foreground` |
-| 99 | `text-gray-500` | `text-muted-foreground` |
-| 112 | `text-gray-500` | `text-muted-foreground` |
-| 142 | `text-gray-600` | `text-muted-foreground` |
-| 147 | `text-gray-500` | `text-muted-foreground` |
-
-Additionally, the card background colors use hardcoded light-only values:
-| Line | Current | Fix |
-|------|---------|-----|
-| 61 | `bg-green-50/50` | `bg-green-50/50 dark:bg-green-950/30` |
-| 62 | `bg-red-50/50` | `bg-red-50/50 dark:bg-red-950/30` |
-| 63 | `bg-yellow-50/50` | `bg-yellow-50/50 dark:bg-yellow-950/30` |
+- Wrap children with `motion.div` using `initial={{ opacity: 0, y: 12 }}`, `animate={{ opacity: 1, y: 0 }}`, `exit={{ opacity: 0, y: -8 }}`
+- Apply to every `<Route>` element's component
 
 ---
 
-## Step 4: FeaturedTournamentsSection Dark Mode Polish
+## Upgrade 3: Tournament Card Micro-interactions
 
-**File:** `src/components/home/FeaturedTournamentsSection.tsx`
+**Changes to `TournamentCard.tsx`:**
 
-The "OPEN"/"LIVE" badge (line 95) uses `bg-white` which looks correct on a photo overlay but should stay white intentionally. However the status badge text class uses a string template without dark mode consideration -- this is acceptable since it's on a white badge.
-
-No changes needed here beyond the `bg-white` to `bg-card` fix for the badge (keeping it light on dark photos is intentional, so actually keep `bg-white` here -- it sits on an image overlay). Only fix the outer card wrapper if needed -- already uses `bg-card`, so this section is fine except for line 95's badge which is intentionally white on a photo.
-
-**Revised:** No changes needed for FeaturedTournamentsSection -- re-checking shows it already uses `bg-card` for card bodies. The `bg-white` badge on line 95 sits over a photo with dark gradient overlay so white is correct.
-
----
-
-## Step 5: Signup Page Spacer
-
-**File:** `src/pages/Signup.tsx` (line 77)
-
-There's a `<div className="h-6" />` orphan spacer that pushes content down unnecessarily (same issue previously found in Login). Remove it.
+- Wrap the entire card in `motion.div` with `whileHover={{ y: -6, scale: 1.01 }}` and `whileTap={{ scale: 0.98 }}`
+- Add a subtle shine/shimmer effect on hover (CSS pseudo-element gradient sweep)
+- Animate the progress bar on mount using `framer-motion` (like FeaturedTournamentsSection already does)
+- Add image zoom on hover (`group-hover:scale-105` on the background image)
 
 ---
 
-## Summary of All Changes
+## Upgrade 4: Features Section — Redesign to Bento Grid
 
-| Priority | File | Change |
-|----------|------|--------|
-| P0 | `src/contexts/AuthContext.tsx` | Add `preferredSide`, `primaryPaddle`, `availability` to User preferences type |
-| P1 | `src/components/tournaments/TournamentCard.tsx` | Replace `bg-white` with `bg-card` (2 occurrences) |
-| P1 | `src/components/registration/WaitlistStatus.tsx` | Replace all `text-gray-*` with semantic tokens + add dark mode card backgrounds |
-| P2 | `src/pages/Signup.tsx` | Remove orphan spacer div |
+The current 3-column grid is functional but generic. Convert to a bento-grid layout where the first two cards are larger (span 2 cols) and the rest fill in, creating visual hierarchy.
 
+**Changes to `FeaturesSection.tsx`:**
+
+- First card spans `md:col-span-2` with a larger icon area
+- Add a subtle animated border glow on hover using the `animated-gradient-border` pattern already in CSS
+- Add numbered step indicators (01, 02, etc.) for visual rhythm
+
+---
+
+## Upgrade 5: Footer — Add More Depth
+
+**Changes to `Footer.tsx`:**
+
+- Add a top-of-footer CTA banner ("Ready to play? Browse tournaments →") as a colored strip
+- Add app download badges (App Store / Google Play) placeholder for the Capacitor builds
+- Add a "Company" column with About, Blog, Careers links (even as placeholder)
+
+---
+
+## Upgrade 6: Mobile Bottom Nav — Active State Animation
+
+**Changes to `MobileNav.tsx`:**
+
+- Add `framer-motion` `layoutId` animated indicator (pill background) that slides between active tabs
+- Add haptic-style scale animation on tap using `whileTap={{ scale: 0.9 }}`
+- Increase icon active state contrast (fill the icon when active)
+
+---
+
+## Upgrade 7: Testimonials — Add Carousel on Mobile
+
+**Changes to `TestimonialsSection.tsx`:**
+
+- On mobile, convert the 3-column grid to a horizontal scroll carousel with snap points (matching FeaturedTournamentsSection pattern)
+- Add quote marks as a decorative SVG element
+- Add company/club logos below each testimonial for credibility
+
+---
+
+## Upgrade 8: Loading & Empty States
+
+Add polished skeleton loaders and empty states across key pages:
+
+- Tournaments page already has `SkeletonGrid` — add branded empty state when no results found (illustrated SVG + action CTA)
+- Dashboard loading state should show content-shaped skeletons, not a spinner
+
+---
+
+## Summary of All File Changes
+
+
+| Priority | File                                                   | Change                                                  |
+| -------- | ------------------------------------------------------ | ------------------------------------------------------- |
+| P0       | `src/services/api.ts`                                  | Add missing `picklixAIAPI` export                       |
+| P0       | `src/components/tournament/PicklixAIChatInterface.tsx` | Fix type error on `.data`                               |
+| P1       | `src/components/layout/PageTransition.tsx`             | New — animated page wrapper                             |
+| P1       | `src/App.tsx`                                          | Wrap routes with PageTransition                         |
+| P1       | `src/components/home/HeroSection.tsx`                  | Add visual anchor, stats counters, gradient             |
+| P1       | `src/components/tournaments/TournamentCard.tsx`        | framer-motion hover/tap, image zoom, progress animation |
+| P2       | `src/components/home/FeaturesSection.tsx`              | Bento grid layout, numbered steps                       |
+| P2       | `src/components/layout/MobileNav.tsx`                  | Animated active indicator, tap animation                |
+| P2       | `src/components/home/TestimonialsSection.tsx`          | Mobile carousel, decorative elements                    |
+| P2       | `src/components/layout/Footer.tsx`                     | CTA strip, company column, app badges                   |
+| P3       | `src/pages/Tournaments.tsx`                            | Branded empty state illustration                        |
