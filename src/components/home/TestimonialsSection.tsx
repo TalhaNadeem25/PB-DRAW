@@ -1,30 +1,36 @@
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 import { motion } from "framer-motion";
+import { useRef } from "react";
 
 const TestimonialsSection = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const testimonials = [
     {
       quote: "The live bracket updates saved us hours of answering 'when do we play next'. Worth every penny.",
       author: "Sarah J.",
       role: "Tournament Director",
-      image: "https://i.pravatar.cc/150?u=sarah"
+      image: "https://i.pravatar.cc/150?u=sarah",
+      club: "Sunset Pickleball Club",
     },
     {
       quote: "Finally a platform that feels like it belongs in this decade. Finding a partner was incredibly easy.",
       author: "Michael T.",
       role: "4.5 Player",
-      image: "https://i.pravatar.cc/150?u=michael"
+      image: "https://i.pravatar.cc/150?u=michael",
+      club: "Austin PB League",
     },
     {
       quote: "We switched from pickleball brackets last month. Registration conversion is up 40%.",
       author: "David R.",
       role: "Club Owner",
-      image: "https://i.pravatar.cc/150?u=david"
+      image: "https://i.pravatar.cc/150?u=david",
+      club: "Rally Point Sports",
     }
   ];
 
   return (
-    <section className="py-24 bg-background">
+    <section className="py-24 bg-background overflow-hidden">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -41,7 +47,11 @@ const TestimonialsSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Desktop grid / Mobile horizontal scroll */}
+        <div
+          ref={scrollRef}
+          className="flex md:grid md:grid-cols-3 gap-6 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0"
+        >
           {testimonials.map((t, i) => (
             <motion.div
               key={i}
@@ -50,8 +60,11 @@ const TestimonialsSection = () => {
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.5, delay: i * 0.15 }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="bg-card p-8 rounded-2xl border border-border shadow-sm flex flex-col"
+              className="bg-card p-8 rounded-2xl border border-border shadow-sm flex flex-col min-w-[300px] md:min-w-0 snap-center relative"
             >
+              {/* Decorative quote mark */}
+              <Quote className="absolute top-6 right-6 w-8 h-8 text-primary/10" />
+
               <div className="flex gap-1 mb-6">
                 {[1,2,3,4,5].map(star => <Star key={star} className="w-5 h-5 text-amber fill-amber" />)}
               </div>
@@ -64,6 +77,10 @@ const TestimonialsSection = () => {
                   <p className="font-display font-bold text-foreground tracking-wide">{t.author}</p>
                   <p className="text-sm text-primary font-bold uppercase tracking-wider">{t.role}</p>
                 </div>
+              </div>
+              {/* Club badge */}
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{t.club}</span>
               </div>
             </motion.div>
           ))}

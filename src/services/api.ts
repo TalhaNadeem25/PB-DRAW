@@ -206,6 +206,14 @@ export const aiPlannerAPI = {
   },
 };
 
+// Picklix AI (standalone planner chat — no tournament context required)
+export const picklixAIAPI = {
+  chat: async (message: string, history?: Array<{ role: 'user' | 'assistant'; content: string }>) => {
+    const response = await api.post('/ai/chat', { message, history });
+    return response;
+  },
+};
+
 // Events
 export const eventAPI = {
   getByTournament: async (tournamentId: string) => {
