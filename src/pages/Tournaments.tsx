@@ -397,31 +397,46 @@ const Tournaments = () => {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-32 bg-card rounded-2xl border border-border shadow-sm">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-6">
-                    <Trophy className="w-10 h-10 text-muted-foreground" />
+              <div className="text-center py-32 bg-card rounded-2xl border border-border shadow-sm">
+                  {/* Branded empty state illustration */}
+                  <div className="w-24 h-24 mx-auto mb-6 relative">
+                    <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
+                    <div className="absolute inset-2 rounded-full bg-primary/5 flex items-center justify-center">
+                      <Trophy className="w-10 h-10 text-primary/60" />
+                    </div>
+                    {/* Decorative dots */}
+                    <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary/40" />
+                    <div className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full bg-primary/30" />
                   </div>
                   <h3 className="text-2xl font-display font-black uppercase tracking-tight mb-2">
                     No tournaments found
                   </h3>
                   <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
-                    Try adjusting your search or filters to find more tournaments.
+                    Try adjusting your search or filters, or create your own tournament.
                   </p>
-                  <Button
-                    variant="outline"
-                    className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-8"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setStatusFilter("all");
-                      setLocationFilter("all");
-                      setSkillFilter("all");
-                      setPriceFilter("all");
-                      setFormatFilter("all");
-                      setSortOption("soonest");
-                    }}
-                  >
-                    Clear Filters
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      variant="outline"
+                      className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-8"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setStatusFilter("all");
+                        setLocationFilter("all");
+                        setSkillFilter("all");
+                        setPriceFilter("all");
+                        setFormatFilter("all");
+                        setSortOption("soonest");
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                    <Button
+                      className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-8"
+                      asChild
+                    >
+                      <Link to="/create-tournament">Host a Tournament</Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </main>

@@ -311,8 +311,8 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
   const chatMutation = useMutation({
     mutationFn: ({ message, hist }: { message: string; hist: typeof history }) =>
       picklixAIAPI.chat(message, hist),
-    onSuccess: (res, variables) => {
-      const aiData = res.data;
+    onSuccess: (res: any, variables) => {
+      const aiData = res.data ?? res;
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',

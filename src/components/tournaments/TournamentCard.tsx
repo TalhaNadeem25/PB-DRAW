@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 interface TournamentCardProps {
   id: string;
@@ -46,21 +47,36 @@ const TournamentCard = ({
     ? `${locationParts[0].trim()}, ${locationParts[locationParts.length - 1].trim()}`
     : location;
 
-  // Calculate spots
   const spotsTotal = maxPlayers || 100;
   const spotsFilled = playerCount || 0;
   const spotsRemaining = Math.max(0, spotsTotal - spotsFilled);
   const isFillingFast = spotsRemaining > 0 && spotsRemaining <= 20;
+  const fillPercent = Math.min(100, (spotsFilled / spotsTotal) * 100);
 
-  // Calculate days until deadline
-  const daysUntilDeadline = registrationDeadline 
+  const daysUntilDeadline = registrationDeadline
     ? Math.ceil((new Date(registrationDeadline).getTime() - new Date().getTime()) / (1000 * 3600 * 24))
     : null;
   const showUrgency = status === 'open' && daysUntilDeadline !== null && daysUntilDeadline > 0 && daysUntilDeadline <= 7;
 
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden h-full group">
-      <div className="relative h-48 w-full bg-cover bg-center bg-muted" style={{ backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined }}>
+    <motion.div
+      whileHover={{ y: -6, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden h-full group relative"
+    >
+      {/* Shimmer overlay on hover */}
+      <div className="absolute inset-0 z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden rounded-2xl">
+        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      </div>
+
+      <div className="relative h-48 w-full bg-cover bg-center bg-muted overflow-hidden">
+        {imageUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+            style={{ backgroundImage: `url('${imageUrl}')` }}
+          />
+        )}
         {!imageUrl && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 border-b border-border/50">
             <div className="rounded-full bg-primary/10 p-4">
@@ -70,13 +86,13 @@ const TournamentCard = ({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-        
+
         <div className="absolute top-4 left-4 flex gap-2">
           <span className={`px-3 py-1 rounded bg-white font-display font-black text-[10px] uppercase tracking-widest ${isLive ? 'text-amber' : status === 'open' ? 'text-primary' : 'text-muted-foreground'}`}>
             {isLive ? 'LIVE' : status}
           </span>
         </div>
-        
+
         {((isLive || isFillingFast) || showUrgency) && status !== 'completed' && (
           <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
             {(isLive || isFillingFast) && (
@@ -104,7 +120,7 @@ const TournamentCard = ({
           </p>
         </div>
       </div>
-      
+
       <div className="p-4 flex-1 flex flex-col bg-card">
         <div className="flex justify-between items-center mb-4 text-sm font-semibold">
           <span className="bg-muted px-2 py-1 rounded-md text-xs text-foreground">
@@ -112,7 +128,7 @@ const TournamentCard = ({
           </span>
           <span className="text-foreground font-bold">{entryFee ? `$${entryFee}` : 'Free'} Entry</span>
         </div>
-        
+
         <div className="mt-auto">
           {status !== 'completed' && (
             <>
@@ -120,10 +136,13 @@ const TournamentCard = ({
                 <span className="text-foreground flex items-center gap-1.5 text-xs"><Users className="w-3.5 h-3.5 text-muted-foreground"/> {spotsFilled}/{spotsTotal} filled</span>
               </div>
               <div className="w-full bg-muted rounded-full h-1.5 mb-5 overflow-hidden">
-                <div 
-                  className={`h-full rounded-full ${isFillingFast ? 'bg-amber' : 'bg-primary'}`} 
-                  style={{ width: `${Math.min(100, (spotsFilled / spotsTotal) * 100)}%` }}
-                ></div>
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${fillPercent}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                  className={`h-full rounded-full ${isFillingFast ? 'bg-amber' : 'bg-primary'}`}
+                />
               </div>
             </>
           )}
@@ -144,7 +163,7 @@ const TournamentCard = ({
           </Button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
