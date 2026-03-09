@@ -1,5 +1,5 @@
 import { useSocket } from '@/contexts/SocketContext';
-import { Wifi, WifiOff } from 'lucide-react';
+import { WifiHigh, WifiSlash } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 export const ConnectionStatus = () => {
@@ -20,12 +20,12 @@ export const ConnectionStatus = () => {
     >
       {connected ? (
         <>
-          <Wifi className="w-4 h-4" />
+          <WifiHigh className="w-4 h-4" />
           <span>Live</span>
         </>
       ) : (
         <>
-          <WifiOff className="w-4 h-4 animate-pulse" />
+          <WifiSlash className="w-4 h-4 animate-pulse" />
           <span>Reconnecting...</span>
         </>
       )}

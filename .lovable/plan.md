@@ -1,145 +1,86 @@
 
 
-# Phosphor Icons Migration Plan
+# Dark Mode Audit: Build Fix + Dark Mode Issues
 
-## Scope
+## Step 1: Fix Build Error (P0)
 
-Full replacement of `lucide-react` with `@phosphor-icons/react` across **~55 files** (20 UI primitives, 8 home/layout, 16 tournament, 10 dashboard, 20+ pages).
+**File:** `src/contexts/AuthContext.tsx`
 
-## Icon Mapping
+The `User` interface's `preferences` type is missing three properties that `Profile.tsx` uses: `preferredSide`, `primaryPaddle`, and `availability`. The fix is to extend the `preferences` type:
 
-Phosphor uses a different naming convention. Key mappings:
+```typescript
+preferences?: {
+  playingDays?: string[];
+  partnerPreference?: 'looking' | 'have-partner' | 'either';
+  preferredSide?: string;
+  primaryPaddle?: string;
+  availability?: string[];
+};
+```
 
-| Lucide | Phosphor |
-|--------|----------|
-| `Trophy` | `Trophy` |
-| `Users` | `Users` |
-| `Loader2` | `SpinnerGap` (with `className="animate-spin"`) |
-| `ChevronRight` | `CaretRight` |
-| `ChevronLeft` | `CaretLeft` |
-| `ChevronDown` | `CaretDown` |
-| `ChevronUp` | `CaretUp` |
-| `ArrowRight` | `ArrowRight` |
-| `ArrowLeft` | `ArrowLeft` |
-| `X` | `X` |
-| `Check` | `Check` |
-| `Eye` | `Eye` |
-| `EyeOff` | `EyeSlash` |
-| `Search` | `MagnifyingGlass` |
-| `Mail` | `Envelope` |
-| `Bell` | `Bell` |
-| `Calendar` | `Calendar` |
-| `Clock` | `Clock` |
-| `MapPin` | `MapPin` |
-| `Star` | `Star` |
-| `Heart` | `Heart` |
-| `Home` | `House` |
-| `User` | `User` |
-| `UserCircle` | `UserCircle` |
-| `LogIn` | `SignIn` |
-| `LogOut` | `SignOut` |
-| `Menu` | `List` |
-| `Settings` | `Gear` |
-| `Trash2` | `Trash` |
-| `Edit2` | `PencilSimple` |
-| `Plus` | `Plus` |
-| `PlusCircle` | `PlusCircle` |
-| `Send` | `PaperPlaneRight` |
-| `Sparkles` | `Sparkle` |
-| `Brain` | `Brain` |
-| `Zap` | `Lightning` |
-| `Shield` | `Shield` |
-| `Globe` | `Globe` |
-| `BarChart3` | `ChartBar` |
-| `TrendingUp` | `TrendUp` |
-| `TrendingDown` | `TrendDown` |
-| `Award` | `Medal` |
-| `Medal` | `Medal` |
-| `Crown` | `Crown` |
-| `LayoutGrid` | `GridFour` |
-| `Grid3X3` | `GridNine` |
-| `LayoutDashboard` | `SquaresFour` |
-| `Radio` | `Broadcast` |
-| `Wifi` | `Wifi` |
-| `WifiOff` | `WifiSlash` |
-| `AlertCircle` | `WarningCircle` |
-| `AlertTriangle` | `Warning` |
-| `Info` | `Info` |
-| `CheckCircle` / `CheckCircle2` | `CheckCircle` |
-| `XCircle` | `XCircle` |
-| `DollarSign` | `CurrencyDollar` |
-| `CreditCard` | `CreditCard` |
-| `Ticket` | `Ticket` |
-| `Download` | `DownloadSimple` |
-| `Printer` | `Printer` |
-| `FileText` | `FileText` |
-| `FileSpreadsheet` | `Table` |
-| `ClipboardCheck` / `ClipboardList` | `ClipboardText` |
-| `Share2` | `ShareNetwork` |
-| `ThumbsUp` | `ThumbsUp` |
-| `Lock` | `Lock` |
-| `Camera` | `Camera` |
-| `CameraOff` | `CameraSlash` |
-| `FlipHorizontal` | `ArrowsLeftRight` |
-| `Keyboard` | `Keyboard` |
-| `Scan` | `Scan` |
-| `RotateCcw` | `ArrowCounterClockwise` |
-| `RefreshCcw` | `ArrowsClockwise` |
-| `Undo` | `ArrowUUndo` |
-| `Dot` | `DotOutline` |
-| `Circle` | `Circle` |
-| `MoreHorizontal` | `DotsThree` |
-| `GripVertical` | `DotsSixVertical` |
-| `PanelLeft` | `SidebarSimple` |
-| `Layers` | `Stack` |
-| `Activity` | `Pulse` |
-| `Target` | `Target` |
-| `Apple` | `AppleLogo` |
-| `Chrome` | `GoogleChromeLogo` |
-| `HelpCircle` | `Question` |
-| `Moon` | `Moon` |
-| `Sun` | `Sun` |
-| `Quote` | `Quotes` |
-| `Square` | `Square` |
-| `ListOrdered` | `ListNumbers` |
-| `CheckCheck` | `Checks` |
-| `UserPlus` | `UserPlus` |
-| `Copy` | `Copy` |
+---
 
-## Phosphor Advantage
+## Step 2: Hardcoded `bg-white` Breaking Dark Mode
 
-Phosphor icons support a `weight` prop (`thin`, `light`, `regular`, `bold`, `fill`, `duotone`) out of the box -- no separate fill variants needed. This gives the app a more distinctive visual identity than Lucide's single-weight stroke style.
+These components use `bg-white` instead of `bg-card`, making them render as bright white boxes in dark mode:
 
-## Execution Plan
+| File | Line(s) | Issue | Fix |
+|------|---------|-------|-----|
+| `src/components/tournaments/TournamentCard.tsx` | Line 62 | `bg-white` on outer card | Change to `bg-card` |
+| `src/components/tournaments/TournamentCard.tsx` | Line 103 | `bg-white` on inner content area | Change to `bg-card` |
+| `src/components/home/FeaturedTournamentsSection.tsx` | Line 95 | `bg-white` on status badge | Change to `bg-card` |
 
-### Step 1 — Install + remove
-- Install `@phosphor-icons/react`
-- Remove `lucide-react` from dependencies
+---
 
-### Step 2 — UI primitives (20 files)
-Replace imports in all `src/components/ui/*.tsx` files: `accordion`, `breadcrumb`, `calendar`, `carousel`, `checkbox`, `command`, `connection-status`, `context-menu`, `dialog`, `dropdown-menu`, `input-otp`, `menubar`, `navigation-menu`, `pagination`, `radio-group`, `resizable`, `select`, `sheet`, `sidebar`, `toast`
+## Step 3: Hardcoded Gray Text Breaking Dark Mode
 
-### Step 3 — Layout components (4 files)
-`Navbar.tsx`, `MinimalNavbar.tsx`, `Footer.tsx`, `MobileNav.tsx`
+The `WaitlistStatus.tsx` component uses hardcoded `text-gray-*` classes throughout, which don't adapt in dark mode (they remain dark gray on a dark background, becoming invisible):
 
-### Step 4 — Home sections (8 files)
-`HeroSection`, `FeaturesSection`, `TestimonialsSection`, `CTASection`, `SocialProofBar`, `FeaturedTournamentsSection`, `HowItWorksSection`, `AIPlannerSection`
+| Line | Current Class | Fix |
+|------|--------------|-----|
+| 86 | `text-gray-900` | `text-foreground` |
+| 89 | `text-gray-600` | `text-muted-foreground` |
+| 94 | `text-gray-500` | `text-muted-foreground` |
+| 99 | `text-gray-500` | `text-muted-foreground` |
+| 112 | `text-gray-500` | `text-muted-foreground` |
+| 142 | `text-gray-600` | `text-muted-foreground` |
+| 147 | `text-gray-500` | `text-muted-foreground` |
 
-### Step 5 — Tournament components (16 files)
-All files in `src/components/tournament/` and `src/components/tournament-detail/`
+Additionally, the card background colors use hardcoded light-only values:
+| Line | Current | Fix |
+|------|---------|-----|
+| 61 | `bg-green-50/50` | `bg-green-50/50 dark:bg-green-950/30` |
+| 62 | `bg-red-50/50` | `bg-red-50/50 dark:bg-red-950/30` |
+| 63 | `bg-yellow-50/50` | `bg-yellow-50/50 dark:bg-yellow-950/30` |
 
-### Step 6 — Dashboard components (12 files)
-All files in `src/components/tournament-dashboard/`, `src/components/dashboard/`, plus standalone components (`ProtectedRoute`, `NotificationCenter`, `NotificationListener`, `QRScanner`, `ConnectAccountButton`, `WaitlistButton`, `WaitlistStatus`, `CancelRegistrationDialog`)
+---
 
-### Step 7 — Pages (20+ files)
-All page files in `src/pages/` that import lucide-react
+## Step 4: FeaturedTournamentsSection Dark Mode Polish
 
-### Step 8 — Cleanup
-- Remove `lucide-react` from `package.json`
-- Verify build succeeds
+**File:** `src/components/home/FeaturedTournamentsSection.tsx`
 
-## Notes
-- Phosphor uses `size` prop (same as Lucide) and `color` prop — minimal API change
-- `className` pass-through works the same way
-- `animate-spin` on `SpinnerGap` replaces `Loader2`'s built-in animation
+The "OPEN"/"LIVE" badge (line 95) uses `bg-white` which looks correct on a photo overlay but should stay white intentionally. However the status badge text class uses a string template without dark mode consideration -- this is acceptable since it's on a white badge.
+
+No changes needed here beyond the `bg-white` to `bg-card` fix for the badge (keeping it light on dark photos is intentional, so actually keep `bg-white` here -- it sits on an image overlay). Only fix the outer card wrapper if needed -- already uses `bg-card`, so this section is fine except for line 95's badge which is intentionally white on a photo.
+
+**Revised:** No changes needed for FeaturedTournamentsSection -- re-checking shows it already uses `bg-card` for card bodies. The `bg-white` badge on line 95 sits over a photo with dark gradient overlay so white is correct.
+
+---
+
+## Step 5: Signup Page Spacer
+
+**File:** `src/pages/Signup.tsx` (line 77)
+
+There's a `<div className="h-6" />` orphan spacer that pushes content down unnecessarily (same issue previously found in Login). Remove it.
+
+---
+
+## Summary of All Changes
+
+| Priority | File | Change |
+|----------|------|--------|
+| P0 | `src/contexts/AuthContext.tsx` | Add `preferredSide`, `primaryPaddle`, `availability` to User preferences type |
+| P1 | `src/components/tournaments/TournamentCard.tsx` | Replace `bg-white` with `bg-card` (2 occurrences) |
+| P1 | `src/components/registration/WaitlistStatus.tsx` | Replace all `text-gray-*` with semantic tokens + add dark mode card backgrounds |
+| P2 | `src/pages/Signup.tsx` | Remove orphan spacer div |
 
