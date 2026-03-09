@@ -1,6 +1,6 @@
 import Layout from "@/components/layout/Layout";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 
 const Privacy = () => {

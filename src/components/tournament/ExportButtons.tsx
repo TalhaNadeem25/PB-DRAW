@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Printer, FileText, Trophy, ClipboardCheck, Download } from "lucide-react";
+import { Printer, FileText, Trophy, ClipboardCheck, DownloadSimple } from "@phosphor-icons/react";
 import PrintableSchedule from "./PrintableSchedule";
 import PrintableBracket from "./PrintableBracket";
 import PrintableCheckIn from "./PrintableCheckIn";
@@ -122,7 +122,7 @@ const ExportButtons = ({
               downloadCSV(csvContent, `${tournament.name.replace(/\s+/g, '_')}_data.csv`);
             }}
           >
-            <Download className="h-4 w-4 mr-2" />
+            <DownloadSimple className="h-4 w-4 mr-2" />
             Export to CSV
           </DropdownMenuItem>
         </DropdownMenuContent>

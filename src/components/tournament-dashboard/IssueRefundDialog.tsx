@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, DollarSign, Loader2 } from "lucide-react";
+import { Warning, CurrencyDollar, CircleNotch } from "@phosphor-icons/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventAPI, cancellationAPI } from "@/services/api";
 import { toast } from "sonner";
@@ -139,7 +139,7 @@ export default function IssueRefundDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-display">
-            <DollarSign className="w-5 h-5 text-primary" />
+            <CurrencyDollar className="w-5 h-5 text-primary" />
             Issue Refund
           </DialogTitle>
           <DialogDescription>
@@ -211,7 +211,7 @@ export default function IssueRefundDialog({
                 Refund Amount (max: ${maxAmount.toFixed(2)})
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <CurrencyDollar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="number"
                   step="0.01"
@@ -255,7 +255,7 @@ export default function IssueRefundDialog({
           {/* Confirmation warning */}
           {confirmStep === "confirm" && (
             <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-fade-in">
-              <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <Warning className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
               <p className="text-sm text-destructive font-medium">
                 Are you sure? This will process a ${refundAmount || maxAmount.toFixed(2)} refund
                 via Stripe. This action cannot be undone.
@@ -279,7 +279,7 @@ export default function IssueRefundDialog({
           >
             {refundMutation.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 Processing...
               </>
             ) : confirmStep === "confirm" ? (

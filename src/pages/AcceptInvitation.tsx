@@ -11,19 +11,19 @@ import { loadStripe } from "@stripe/stripe-js";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
-    AlertCircle,
+    Warning,
     Calendar,
-    CheckCircle2,
-    DollarSign,
-    Loader2,
-    Mail,
+    CheckCircle,
+    CurrencyDollar,
+    CircleNotch,
+    Envelope,
     MapPin,
-    PartyPopper,
-    Sparkles,
+    Confetti,
+    Sparkle,
     Trophy,
     UserPlus,
     Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -128,7 +128,7 @@ const AcceptInvitation = () => {
           <Card className="max-w-md w-full glass border-0 shadow-float">
             <CardContent className="pt-10 pb-8 text-center">
               <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-6">
-                <AlertCircle className="w-10 h-10 text-destructive" />
+                <Warning className="w-10 h-10 text-destructive" />
               </div>
               <h2 className="text-2xl font-display font-bold mb-2">Invitation Not Found</h2>
               <p className="text-muted-foreground mb-6">
@@ -152,7 +152,7 @@ const AcceptInvitation = () => {
           <Card className="max-w-md w-full glass border-0 shadow-float">
             <CardContent className="pt-10 pb-8 text-center">
               <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
-                <AlertCircle className="w-10 h-10 text-amber-500" />
+                <Warning className="w-10 h-10 text-amber-500" />
               </div>
               <h2 className="text-2xl font-display font-bold mb-2 capitalize">
                 Invitation {invitation.status}
@@ -187,13 +187,13 @@ const AcceptInvitation = () => {
             <div className="animate-fade-in">
               <div className="flex items-center gap-3 mb-4">
                 <Badge className="bg-secondary text-secondary-foreground gap-1 px-3 py-1">
-                  <PartyPopper className="w-3 h-3" />
+                  <Confetti className="w-3 h-3" />
                   Team Invitation {step === "payment" && "- Payment"}
                 </Badge>
               </div>
               <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-2 flex items-center gap-3">
                 You've Been Invited!
-                <Sparkles className="w-10 h-10 text-secondary animate-bounce" />
+                <Sparkle className="w-10 h-10 text-secondary animate-bounce" />
               </h1>
               <p className="text-xl text-primary-foreground/80">
                 Join {invitation.inviter?.name || 'your teammate'}'s team
@@ -224,7 +224,7 @@ const AcceptInvitation = () => {
                       {/* Inviter Info */}
                       <div className="bg-muted/50 p-5 rounded-xl border border-border/50">
                         <h3 className="font-semibold mb-3 flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-primary" />
+                          <Envelope className="w-4 h-4 text-primary" />
                           Invited By
                         </h3>
                         <div className="flex items-center gap-4">
@@ -275,7 +275,7 @@ const AcceptInvitation = () => {
                         <div className="bg-secondary/10 border border-secondary/30 rounded-xl p-5">
                           <div className="flex gap-4">
                             <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center flex-shrink-0">
-                              <DollarSign className="w-6 h-6 text-secondary" />
+                              <CurrencyDollar className="w-6 h-6 text-secondary" />
                             </div>
                             <div>
                               <p className="font-semibold text-secondary mb-1">Payment Required</p>
@@ -297,17 +297,17 @@ const AcceptInvitation = () => {
                         >
                           {acceptMutation.isPending ? (
                             <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              <CircleNotch className="w-5 h-5 mr-2 animate-spin" />
                               Processing...
                             </>
                           ) : entryFee > 0 ? (
                             <>
                               Accept & Pay ${entryFee.toFixed(2)}
-                              <DollarSign className="w-5 h-5 ml-2" />
+                              <CurrencyDollar className="w-5 h-5 ml-2" />
                             </>
                           ) : (
                             <>
-                              <CheckCircle2 className="w-5 h-5 mr-2" />
+                              <CheckCircle className="w-5 h-5 mr-2" />
                               Accept Invitation
                             </>
                           )}
@@ -368,7 +368,7 @@ const AcceptInvitation = () => {
                 <div className="h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
                 <CardHeader className="pt-8">
                   <CardTitle className="flex items-center gap-2 text-2xl">
-                    <DollarSign className="w-6 h-6 text-primary" />
+                    <CurrencyDollar className="w-6 h-6 text-primary" />
                     Complete Payment
                   </CardTitle>
                   <CardDescription>
@@ -405,7 +405,7 @@ const AcceptInvitation = () => {
                     </Elements>
                   ) : (
                     <div className="text-center py-12">
-                      <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                      <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
                       <p className="text-muted-foreground">Loading payment form...</p>
                     </div>
                   )}

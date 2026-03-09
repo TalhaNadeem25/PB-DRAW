@@ -15,13 +15,13 @@ import {
   ArrowLeft,
   Trophy,
   Clock,
-  AlertCircle,
-  Wifi,
-  WifiOff,
-  Loader2,
+  Warning,
+  WifiHigh,
+  WifiSlash,
+  CircleNotch,
   Square,
   Plus,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { tournamentAPI, eventAPI, poolAPI, matchAPI } from "@/services/api";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -200,7 +200,7 @@ const LiveTournamentDetail = () => {
     return (
       <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <CircleNotch className="w-12 h-12 animate-spin text-primary" />
         </div>
       </Layout>
     );
@@ -211,7 +211,7 @@ const LiveTournamentDetail = () => {
       <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <Alert className="max-w-md">
-            <AlertCircle className="h-4 w-4" />
+            <Warning className="h-4 w-4" />
             <AlertDescription>Tournament not found</AlertDescription>
           </Alert>
         </div>
@@ -272,12 +272,12 @@ const LiveTournamentDetail = () => {
                 )}
                 {connected ? (
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20">
-                    <Wifi className="w-3.5 h-3.5 text-primary" />
+                    <WifiHigh className="w-3.5 h-3.5 text-primary" />
                     <span className="text-xs font-medium text-primary">Live</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted border border-border">
-                    <WifiOff className="w-3.5 h-3.5 text-muted-foreground" />
+                    <WifiSlash className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Polling</span>
                   </div>
                 )}
@@ -364,7 +364,7 @@ const LiveTournamentDetail = () => {
             <main className="flex-1 min-w-0">
               {matchesLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <CircleNotch className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : sortedMatches.length === 0 ? (
                 <div className="glass-card rounded-2xl p-12 text-center">

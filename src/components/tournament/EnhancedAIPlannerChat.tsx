@@ -6,18 +6,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Loader2,
-  Send,
-  Sparkles,
+  CircleNotch,
+  PaperPlaneTilt,
+  Sparkle,
   ArrowRight,
-  CheckCircle2,
+  CheckCircle,
   Copy,
-  RotateCcw,
-  Trash2,
-  Edit2,
+  ArrowCounterClockwise,
+  Trash,
+  PencilSimple,
   Check,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -349,12 +349,12 @@ What would you like help with today?`,
           >
             {applySuggestionsMutation.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 Creating...
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-4 h-4 mr-2" />
+                <CheckCircle className="w-4 h-4 mr-2" />
                 Create All {message.data.length} Events
               </>
             )}
@@ -396,7 +396,7 @@ What would you like help with today?`,
       <div className="bg-hero-gradient p-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-white/20 rounded-lg">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <Sparkle className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
             <h3 className="font-display font-bold text-primary-foreground">AI Tournament Planner</h3>
@@ -409,7 +409,7 @@ What would you like help with today?`,
           onClick={handleClearChat}
           className="text-primary-foreground hover:bg-white/20"
         >
-          <Trash2 className="w-4 h-4 mr-2" />
+          <Trash className="w-4 h-4 mr-2" />
           Clear Chat
         </Button>
       </div>
@@ -426,7 +426,7 @@ What would you like help with today?`,
           >
             {message.role === "ai" && (
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-hero-gradient flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary-foreground" />
+                <Sparkle className="w-4 h-4 text-primary-foreground" />
               </div>
             )}
 
@@ -505,7 +505,7 @@ What would you like help with today?`,
                         className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
                         title="Edit message"
                       >
-                        <Edit2 className="w-3 h-3" />
+                        <PencilSimple className="w-3 h-3" />
                       </button>
                     )}
                     {message.role === "ai" && message.id === messages[messages.length - 1].id && (
@@ -514,7 +514,7 @@ What would you like help with today?`,
                         className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground transition-colors"
                         title="Regenerate response"
                       >
-                        <RotateCcw className="w-3 h-3" />
+                        <ArrowCounterClockwise className="w-3 h-3" />
                       </button>
                     )}
                     <span className="text-xs text-muted-foreground ml-2">
@@ -536,7 +536,7 @@ What would you like help with today?`,
         {isTyping && (
           <div className="flex gap-3">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-hero-gradient flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
+              <Sparkle className="w-4 h-4 text-primary-foreground" />
             </div>
             <div className="bg-muted rounded-2xl p-4">
               <div className="flex gap-1">
@@ -571,9 +571,9 @@ What would you like help with today?`,
             className="h-[60px] w-[60px] flex-shrink-0"
           >
             {isTyping ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <CircleNotch className="w-5 h-5 animate-spin" />
             ) : (
-              <Send className="w-5 h-5" />
+              <PaperPlaneTilt className="w-5 h-5" />
             )}
           </Button>
         </div>

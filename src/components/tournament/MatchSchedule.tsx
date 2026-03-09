@@ -3,27 +3,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  Search,
-  Zap,
+  CaretLeft,
+  CaretRight,
+  CaretDown,
+  CaretUp,
+  MagnifyingGlass,
+  Lightning,
   Check,
-  Filter,
-  MoreVertical,
-  AlertTriangle,
+  Funnel,
+  DotsThreeVertical,
+  Warning,
   X,
   Radio,
   Flame,
-  Inbox,
+  Tray,
   Plus,
-  GripVertical,
-  ArrowRightLeft,
+  DotsSixVertical,
+  ArrowsLeftRight,
   XCircle,
-  Trash2,
-  Loader2,
-} from "lucide-react";
+  Trash,
+  CircleNotch,
+} from "@phosphor-icons/react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   DropdownMenu,
@@ -515,7 +515,7 @@ const MatchSchedule = ({
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5">
             {variant === "pool" && (
-              <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+              <DotsSixVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
             )}
             <span
               className={cn(
@@ -538,7 +538,7 @@ const MatchSchedule = ({
                     disabled={matchIndex === 0}
                     onClick={() => handleReorderMatch(match, courtMatchList, matchIndex, "up")}
                   >
-                    <ChevronUp className="w-3.5 h-3.5" />
+                    <CaretUp className="w-3.5 h-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -547,7 +547,7 @@ const MatchSchedule = ({
                     disabled={matchIndex === courtMatchList.length - 1}
                     onClick={() => handleReorderMatch(match, courtMatchList, matchIndex, "down")}
                   >
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <CaretDown className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               )}
@@ -569,7 +569,7 @@ const MatchSchedule = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
-                    <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                    <DotsThreeVertical className="w-3.5 h-3.5 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -577,7 +577,7 @@ const MatchSchedule = ({
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
-                      <ArrowRightLeft className="w-3.5 h-3.5 mr-2" />
+                      <ArrowsLeftRight className="w-3.5 h-3.5 mr-2" />
                       Move to Court
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
@@ -694,7 +694,7 @@ const MatchSchedule = ({
               className="h-9 w-9 rounded-xl"
               onClick={() => setSelectedDate(subDays(selectedDate, 1))}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <CaretLeft className="w-4 h-4" />
             </Button>
             <span className="font-display font-bold text-foreground min-w-[170px] text-center">
               {format(selectedDate, "MMMM d, yyyy")}
@@ -705,7 +705,7 @@ const MatchSchedule = ({
               className="h-9 w-9 rounded-xl"
               onClick={() => setSelectedDate(addDays(selectedDate, 1))}
             >
-              <ChevronRight className="w-4 h-4" />
+              <CaretRight className="w-4 h-4" />
             </Button>
           </div>
 
@@ -748,7 +748,7 @@ const MatchSchedule = ({
         {/* Row 2: Search + Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border/40 pt-4">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search matches or players..."
               value={searchQuery}
@@ -765,7 +765,7 @@ const MatchSchedule = ({
                   className="rounded-xl gap-1.5 text-sm"
                   onClick={() => setShowAutoScheduleDialog(true)}
                 >
-                  <Zap className="w-3.5 h-3.5" />
+                  <Lightning className="w-3.5 h-3.5" />
                   Auto-Schedule
                 </Button>
                 <Button
@@ -774,7 +774,7 @@ const MatchSchedule = ({
                   className="rounded-xl text-sm"
                   onClick={handleCheckConflicts}
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+                  <Warning className="w-3.5 h-3.5 mr-1.5" />
                   Conflicts
                 </Button>
                 <Button
@@ -783,7 +783,7 @@ const MatchSchedule = ({
                   className="rounded-xl text-sm text-destructive border-destructive/30 hover:bg-destructive/10"
                   onClick={() => setShowClearDialog(true)}
                 >
-                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  <Trash className="w-3.5 h-3.5 mr-1.5" />
                   Clear All
                 </Button>
               </>
@@ -808,7 +808,7 @@ const MatchSchedule = ({
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                  <Warning className="w-5 h-5 text-destructive" />
                 </div>
                 <div>
                   <p className="font-display font-bold text-sm text-destructive">
@@ -865,7 +865,7 @@ const MatchSchedule = ({
           <div className="h-1 bg-hero-gradient" />
           <div className="flex items-start gap-4 px-5 py-4">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Zap className="w-5 h-5 text-primary" />
+              <Lightning className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-display font-bold text-sm text-foreground mb-1">
@@ -899,7 +899,7 @@ const MatchSchedule = ({
               </Badge>
             </div>
             <div className="relative">
-              <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Funnel className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
                 placeholder="Filter by pool..."
                 value={poolFilter}
@@ -916,7 +916,7 @@ const MatchSchedule = ({
                     {unscheduledMatches.length === 0 ? (
                       <Check className="w-6 h-6 text-primary" />
                     ) : (
-                      <Inbox className="w-6 h-6 text-muted-foreground opacity-60" />
+                      <Tray className="w-6 h-6 text-muted-foreground opacity-60" />
                     )}
                   </div>
                   <p className="font-display font-bold text-sm text-foreground mb-1">
@@ -994,7 +994,7 @@ const MatchSchedule = ({
                 onClick={() => scrollCourts("left")}
                 disabled={!canScrollLeft}
               >
-                <ChevronLeft className="w-4 h-4" />
+                <CaretLeft className="w-4 h-4" />
               </Button>
               <Button
                 variant="outline"
@@ -1003,7 +1003,7 @@ const MatchSchedule = ({
                 onClick={() => scrollCourts("right")}
                 disabled={!canScrollRight}
               >
-                <ChevronRight className="w-4 h-4" />
+                <CaretRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -1063,7 +1063,7 @@ const MatchSchedule = ({
                     {courtMatches.length === 0 && !isDropTarget ? (
                       <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
                         <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
-                          <Inbox className="w-6 h-6 text-muted-foreground/50" />
+                          <Tray className="w-6 h-6 text-muted-foreground/50" />
                         </div>
                         <p className="font-display font-bold text-sm text-muted-foreground mb-1">No matches yet</p>
                         <p className="text-xs text-muted-foreground leading-relaxed max-w-[200px]">
@@ -1175,7 +1175,7 @@ const MatchSchedule = ({
                 </div>
                 {scheduledMatches.length > 0 && (
                   <p className="text-xs text-amber-600 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <Warning className="w-3.5 h-3.5 shrink-0" />
                     Existing assignments will be preserved.
                   </p>
                 )}
@@ -1208,9 +1208,9 @@ const MatchSchedule = ({
               }}
             >
               {isAutoScheduling ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <Zap className="w-4 h-4 mr-2" />
+                <Lightning className="w-4 h-4 mr-2" />
               )}
               {isAutoScheduling ? "Scheduling..." : "Auto-Schedule"}
             </AlertDialogAction>
@@ -1233,7 +1233,7 @@ const MatchSchedule = ({
                   </div>
                 </div>
                 <p className="text-xs text-destructive flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <Warning className="w-3.5 h-3.5 shrink-0" />
                   This action cannot be undone.
                 </p>
               </div>
@@ -1261,9 +1261,9 @@ const MatchSchedule = ({
               }}
             >
               {isClearing ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash className="w-4 h-4 mr-2" />
               )}
               {isClearing ? "Clearing..." : "Clear All"}
             </AlertDialogAction>

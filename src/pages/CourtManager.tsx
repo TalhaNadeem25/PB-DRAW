@@ -27,18 +27,18 @@ import { courtAPI, poolAPI, tournamentAPI } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
-    AlertCircle,
+    Warning,
     ArrowLeft,
     CheckCircle,
     Clock,
-    GripVertical,
-    Loader2,
+    DotsSixVertical,
+    CircleNotch,
     MapPin,
     Plus,
-    Settings,
-    Trash2,
-    Wand2
-} from "lucide-react";
+    Gear,
+    Trash,
+    MagicWand
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -332,7 +332,7 @@ const CourtManager = () => {
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <Warning className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">Tournament Not Found</h2>
             <Button onClick={() => navigate('/tournaments')}>Back to Tournaments</Button>
           </div>
@@ -367,7 +367,7 @@ const CourtManager = () => {
                   size="sm"
                   onClick={() => setIsConfigOpen(true)}
                 >
-                  <Settings className="w-4 h-4 mr-2" />
+                  <Gear className="w-4 h-4 mr-2" />
                   Configure Courts
                 </Button>
                 <Button
@@ -377,9 +377,9 @@ const CourtManager = () => {
                   disabled={autoScheduleMutation.isPending}
                 >
                   {autoScheduleMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
-                    <Wand2 className="w-4 h-4 mr-2" />
+                    <MagicWand className="w-4 h-4 mr-2" />
                   )}
                   Auto-Schedule
                 </Button>
@@ -399,7 +399,7 @@ const CourtManager = () => {
                   disabled={clearScheduleMutation.isPending}
                   className="text-destructive border-destructive/50 hover:bg-destructive/10"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
+                  <Trash className="w-4 h-4 mr-2" />
                   Clear All
                 </Button>
               </div>
@@ -482,7 +482,7 @@ const CourtManager = () => {
                           )}
                         >
                           <div className="flex items-center gap-2 mb-2">
-                            <GripVertical className="w-4 h-4 text-muted-foreground" />
+                            <DotsSixVertical className="w-4 h-4 text-muted-foreground" />
                             <Badge variant="outline" className="text-xs">
                               {match.event?.name || 'Match'}
                             </Badge>
@@ -689,7 +689,7 @@ const CourtManager = () => {
                         className="text-destructive hover:bg-destructive/10"
                         onClick={() => handleRemoveCourt(court.number)}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
@@ -754,7 +754,7 @@ const CourtManager = () => {
                 disabled={updateConfigMutation.isPending}
               >
                 {updateConfigMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
                   <CheckCircle className="w-4 h-4 mr-2" />
                 )}

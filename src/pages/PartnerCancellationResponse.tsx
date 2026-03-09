@@ -8,16 +8,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
   Users,
-  DollarSign,
+  CurrencyDollar,
   UserPlus,
   XCircle,
-  Loader2,
-  AlertCircle,
+  CircleNotch,
+  Warning,
   CheckCircle,
   Clock,
   Calendar,
   Trophy
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { cancellationAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -128,7 +128,7 @@ const PartnerCancellationResponse = () => {
     return (
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-600" />
+          <CircleNotch className="w-12 h-12 animate-spin text-green-600" />
         </div>
       </Layout>
     );
@@ -140,7 +140,7 @@ const PartnerCancellationResponse = () => {
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 text-center">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-600" />
+              <Warning className="w-12 h-12 mx-auto mb-4 text-red-600" />
               <h2 className="text-xl font-display font-bold mb-2">Cancellation Not Found</h2>
               <p className="text-muted-foreground mb-4">
                 This cancellation request could not be found or you don't have permission to view it.
@@ -305,7 +305,7 @@ const PartnerCancellationResponse = () => {
                   >
                     <CardHeader>
                       <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-3 mx-auto">
-                        <DollarSign className="w-6 h-6 text-blue-600" />
+                        <CurrencyDollar className="w-6 h-6 text-blue-600" />
                       </div>
                       <CardTitle className="text-center">Get a Refund</CardTitle>
                       <CardDescription className="text-center">
@@ -357,7 +357,7 @@ const PartnerCancellationResponse = () => {
                 >
                   {respondMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                       Submitting...
                     </>
                   ) : (

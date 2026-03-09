@@ -28,19 +28,19 @@ import { Input } from "@/components/ui/input";
 import {
   Users,
   Trophy,
-  Loader2,
-  AlertCircle,
+  CircleNotch,
+  Warning,
   Calendar,
   MapPin,
   Target,
-  Edit2,
-  Trash2,
+  PencilSimple,
+  Trash,
   UserPlus,
   TrendingUp,
-  Mail,
+  Envelope,
   Check,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { teamAPI, invitationAPI } from "@/services/api";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -206,7 +206,7 @@ const Teams = () => {
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading your teams...</p>
           </div>
         </div>
@@ -236,7 +236,7 @@ const Teams = () => {
             <Card className="border-primary/50 bg-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-primary" />
+                  <Envelope className="w-5 h-5 text-primary" />
                   Pending Invitations
                   <Badge variant="default" className="ml-auto">{invitations.length}</Badge>
                 </CardTitle>
@@ -271,7 +271,7 @@ const Teams = () => {
                             disabled={acceptInvitationMutation.isPending}
                           >
                             {acceptInvitationMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <CircleNotch className="w-4 h-4 animate-spin" />
                             ) : (
                               <>
                                 <Check className="w-4 h-4 mr-1" />
@@ -286,7 +286,7 @@ const Teams = () => {
                             disabled={declineInvitationMutation.isPending}
                           >
                             {declineInvitationMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <CircleNotch className="w-4 h-4 animate-spin" />
                             ) : (
                               <>
                                 <X className="w-4 h-4 mr-1" />
@@ -448,7 +448,7 @@ const Teams = () => {
                             className="flex-1"
                             onClick={() => handleEditClick(team)}
                           >
-                            <Edit2 className="w-4 h-4 mr-1" />
+                            <PencilSimple className="w-4 h-4 mr-1" />
                             Edit
                           </Button>
                           <Button
@@ -457,7 +457,7 @@ const Teams = () => {
                             className="flex-1 text-destructive hover:text-destructive"
                             onClick={() => handleDeleteClick(team)}
                           >
-                            <Trash2 className="w-4 h-4 mr-1" />
+                            <Trash className="w-4 h-4 mr-1" />
                             Delete
                           </Button>
                         </div>
@@ -501,7 +501,7 @@ const Teams = () => {
               >
                 {updateTeamMutation.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                     Updating...
                   </>
                 ) : (
@@ -563,12 +563,12 @@ const Teams = () => {
               >
                 {sendInvitationMutation.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                     Sending...
                   </>
                 ) : (
                   <>
-                    <Mail className="w-4 h-4 mr-2" />
+                    <Envelope className="w-4 h-4 mr-2" />
                     Send Invitation
                   </>
                 )}
@@ -594,7 +594,7 @@ const Teams = () => {
               >
                 {deleteTeamMutation.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                     Deleting...
                   </>
                 ) : (

@@ -6,7 +6,7 @@ import { useSocket } from "@/contexts/SocketContext";
 import { eventAPI, matchAPI, poolAPI, tournamentAPI } from "@/services/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Activity, Calendar, ChevronRight, Eye, MapPin, Radio, Trophy, Users, Zap } from "lucide-react";
+import { Activity, Calendar, CaretRight, Eye, MapPin, Radio, Trophy, Users, Lightning } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -172,7 +172,7 @@ const Live = () => {
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                       <span className="flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-secondary" />
+                        <Lightning className="w-4 h-4 text-secondary" />
                         {tournament.events?.length || 0} Events
                       </span>
                       <span className="flex items-center gap-2">
@@ -182,7 +182,7 @@ const Live = () => {
                     </div>
                     <Button variant="default" size="lg" className="w-full shadow-glow group-hover:shadow-glow-lg transition-all">
                       View Live Matches
-                      <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      <CaretRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
                     <Button
                       variant="outline"

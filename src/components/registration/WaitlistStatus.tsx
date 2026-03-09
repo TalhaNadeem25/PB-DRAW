@@ -2,7 +2,7 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
-import { Clock, Users, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { Clock, Users, CheckCircle, Warning, ArrowRight } from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 
@@ -77,7 +77,7 @@ export default function WaitlistStatus({ entry }: WaitlistStatusProps) {
                 'bg-yellow-600'
               }>
                 {isPromoted && <CheckCircle className="w-3 h-3 mr-1" />}
-                {isExpired && <AlertCircle className="w-3 h-3 mr-1" />}
+                {isExpired && <Warning className="w-3 h-3 mr-1" />}
                 {isWaiting && <Clock className="w-3 h-3 mr-1" />}
                 {isPromoted ? 'Promoted' : isExpired ? 'Expired' : `#${entry.position}`}
               </Badge>

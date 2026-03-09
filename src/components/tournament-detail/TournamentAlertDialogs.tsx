@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { CircleNotch } from "@phosphor-icons/react";
 
 export interface TournamentAlertDialogsProps {
   isDeleteDialogOpen: boolean;
@@ -67,7 +67,7 @@ export default function TournamentAlertDialogs({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => { setIsDeleteDialogOpen(false); setEventToDelete(null); }}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={onConfirmDeleteEvent} disabled={deleteEventPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleteEventPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>) : "Yes, Delete Event"}
+              {deleteEventPending ? (<><CircleNotch className="w-4 h-4 mr-2 animate-spin" />Deleting...</>) : "Yes, Delete Event"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -84,7 +84,7 @@ export default function TournamentAlertDialogs({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsDeleteTournamentDialogOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={onConfirmDeleteTournament} disabled={deleteTournamentPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleteTournamentPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>) : "Yes, Delete Tournament"}
+              {deleteTournamentPending ? (<><CircleNotch className="w-4 h-4 mr-2 animate-spin" />Deleting...</>) : "Yes, Delete Tournament"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -101,7 +101,7 @@ export default function TournamentAlertDialogs({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsStartTournamentDialogOpen(false)}>No</AlertDialogCancel>
             <AlertDialogAction onClick={onConfirmStartTournament} disabled={startTournamentPending} className="bg-court-green text-white hover:bg-court-green-dark">
-              {startTournamentPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Starting...</>) : "Yes, Start Tournament"}
+              {startTournamentPending ? (<><CircleNotch className="w-4 h-4 mr-2 animate-spin" />Starting...</>) : "Yes, Start Tournament"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -118,7 +118,7 @@ export default function TournamentAlertDialogs({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsCompleteTournamentDialogOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={onConfirmCompleteTournament} disabled={completeTournamentPending} className="bg-foreground text-background hover:bg-foreground/90">
-              {completeTournamentPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Completing...</>) : "Yes, Complete Tournament"}
+              {completeTournamentPending ? (<><CircleNotch className="w-4 h-4 mr-2 animate-spin" />Completing...</>) : "Yes, Complete Tournament"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Loader2, XCircle } from "lucide-react";
+import { Warning, CircleNotch, XCircle } from "@phosphor-icons/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cancellationAPI } from "@/services/api";
 import { toast } from "sonner";
@@ -85,7 +85,7 @@ export default function BulkRefundDialog({
         <div className="space-y-5 py-2">
           {/* Warning */}
           <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
-            <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <Warning className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
             <div className="text-sm">
               <p className="font-semibold text-destructive mb-1">Irreversible Action</p>
               <ul className="text-muted-foreground space-y-1">
@@ -136,7 +136,7 @@ export default function BulkRefundDialog({
           >
             {bulkRefundMutation.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 Processing Refunds...
               </>
             ) : (

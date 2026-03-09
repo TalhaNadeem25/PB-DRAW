@@ -10,20 +10,20 @@ import { authAPI } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
-  CalendarDays,
-  ChevronUp,
-  Loader2,
+  CalendarDots,
+  CaretUp,
+  CircleNotch,
   Lock,
   MapPin,
   Moon,
-  Pencil,
-  Save,
+  PencilSimple,
+  FloppyDisk,
   Sun,
   Target,
   Trophy,
   User,
-  Zap
-} from "lucide-react";
+  Lightning
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ const AVAILABILITY_OPTIONS = [
   { id: "morning", label: "Morning", icon: Sun },
   { id: "afternoon", label: "Afternoon", icon: Sun },
   { id: "evening", label: "Evening", icon: Moon },
-  { id: "weekends", label: "Weekends", icon: CalendarDays },
+  { id: "weekends", label: "Weekends", icon: CalendarDots },
 ];
 
 const PREFERRED_SIDE_OPTIONS = ["Left", "Right", "Both"] as const;
@@ -216,7 +216,7 @@ const Profile = () => {
               size="sm"
               className="absolute bottom-3 right-3 rounded-lg gap-1.5 bg-card/90 border border-border shadow-sm"
             >
-              <Pencil className="w-4 h-4" />
+              <PencilSimple className="w-4 h-4" />
               Edit Cover
             </Button>
           </div>
@@ -413,7 +413,7 @@ const Profile = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-display font-bold text-foreground">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-primary" />
+                      <Lightning className="w-5 h-5 text-primary" />
                     </div>
                     Pickleball Stats
                   </CardTitle>
@@ -426,7 +426,7 @@ const Profile = () => {
                       </span>
                       <span className="font-display font-bold text-2xl text-foreground">
                         {formData.skillLevel}
-                        <ChevronUp className="w-5 h-5 text-primary inline-block ml-0.5" />
+                        <CaretUp className="w-5 h-5 text-primary inline-block ml-0.5" />
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">Skill level</p>
@@ -499,7 +499,7 @@ const Profile = () => {
             <CardContent>
               {statsLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <CircleNotch className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : tournaments.length > 0 ? (
                 <div className="space-y-3">
@@ -567,12 +567,12 @@ const Profile = () => {
                 >
                   {updateMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                       Saving...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
+                      <FloppyDisk className="w-4 h-4 mr-2" />
                       Save Changes
                     </>
                   )}

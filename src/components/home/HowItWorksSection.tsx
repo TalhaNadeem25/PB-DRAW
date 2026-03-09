@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Award, BarChart3, Search, TrendingUp, Trophy, User, Users } from "lucide-react";
+import { Medal, ChartBar, MagnifyingGlass, TrendingUp, Trophy, User, Users } from "@phosphor-icons/react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 

@@ -1,20 +1,20 @@
 import { cn } from "@/lib/utils";
 import {
-    BarChart3,
+    ChartBar,
     Calendar,
-    ClipboardList,
+    ClipboardText,
     Clock,
-    FlaskConical,
+    Flask,
     GitBranch,
-    Layers,
-    LayoutDashboard,
-    ListOrdered,
-    RefreshCcw,
-    Settings,
-    Sparkles,
+    Stack,
+    SquaresFour,
+    ListNumbers,
+    ArrowsCounterClockwise,
+    Gear,
+    Sparkle,
     Trophy,
     Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 
 export type DashboardSection =
@@ -46,9 +46,9 @@ const sidebarCategories: SidebarCategory[] = [
   {
     title: "1. Setup Phase",
     items: [
-      { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+      { id: "dashboard", label: "Overview", icon: SquaresFour },
       { id: "events", label: "Events", icon: Trophy },
-      { id: "waitlist", label: "Waitlist", icon: ListOrdered },
+      { id: "waitlist", label: "Waitlist", icon: ListNumbers },
       { id: "planner", label: "Planner", icon: Calendar },
     ],
   },
@@ -56,8 +56,8 @@ const sidebarCategories: SidebarCategory[] = [
     title: "2. Pre-Tournament",
     items: [
       { id: "registrations", label: "Players & Check-in", icon: Users },
-      { id: "ai-planner", label: "AI Planner (Beta)", icon: Sparkles },
-      { id: "pools", label: "Pool Setup", icon: Layers },
+      { id: "ai-planner", label: "AI Planner (Beta)", icon: Sparkle },
+      { id: "pools", label: "Pool Setup", icon: Stack },
       { id: "schedule", label: "Court Scheduling", icon: Clock },
     ],
   },
@@ -71,13 +71,13 @@ const sidebarCategories: SidebarCategory[] = [
   {
     title: "4. Post-Tournament",
     items: [
-      { id: "refunds", label: "Refunds", icon: RefreshCcw },
+      { id: "refunds", label: "Refunds", icon: ArrowsCounterClockwise },
     ],
   },
   {
     title: "Test Panel",
     items: [
-      { id: "test", label: "Test Data", icon: FlaskConical },
+      { id: "test", label: "Test Data", icon: Flask },
     ],
   }
 ];
@@ -140,8 +140,8 @@ const TournamentDashboardSidebar = ({
         to={`/tournaments/${tournamentId}/edit`}
         className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-bold border-l-4 border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200 uppercase font-display tracking-widest"
       >
-        <Settings className="w-5 h-5 shrink-0" />
-        Settings
+        <Gear className="w-5 h-5 shrink-0" />
+        Gear
       </Link>
     </nav>
   );

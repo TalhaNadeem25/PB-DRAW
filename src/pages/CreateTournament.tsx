@@ -37,20 +37,20 @@ import { format } from "date-fns";
 import {
     ArrowLeft,
     ArrowRight,
-    Award,
+    Medal,
     Brain,
-    CalendarIcon,
+    CalendarBlank,
     Check,
     Clock,
-    DollarSign,
-    Loader2,
+    CurrencyDollar,
+    CircleNotch,
     MapPin,
     Plus,
-    Sparkles,
-    Trash2,
+    Sparkle,
+    Trash,
     Trophy,
     Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -377,7 +377,7 @@ const CreateTournament = () => {
                       </div>
                       <div className="flex-1">
                         <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-primary/20 rounded-full mb-2">
-                          <Sparkles className="w-3 h-3 text-primary" />
+                          <Sparkle className="w-3 h-3 text-primary" />
                           <span className="text-xs font-bold text-primary">AI-POWERED</span>
                         </div>
                         <h3 className="font-display font-bold text-lg mb-1">
@@ -389,7 +389,7 @@ const CreateTournament = () => {
                       </div>
                       <Button asChild variant="outline" className="border-primary/30 hover:bg-primary/10 flex-shrink-0">
                         <Link to="/tournament-planner">
-                          <Sparkles className="w-4 h-4 mr-2" />
+                          <Sparkle className="w-4 h-4 mr-2" />
                           Try AI Planner
                         </Link>
                       </Button>
@@ -494,7 +494,7 @@ const CreateTournament = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <CalendarIcon className="w-5 h-5 text-primary" />
+                      <CalendarBlank className="w-5 h-5 text-primary" />
                       Dates
                     </CardTitle>
                     <CardDescription>
@@ -514,7 +514,7 @@ const CreateTournament = () => {
                                 !startDate && "text-muted-foreground"
                               )}
                             >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              <CalendarBlank className="mr-2 h-4 w-4" />
                               {startDate ? format(startDate, "PPP") : "Pick a date"}
                             </Button>
                           </PopoverTrigger>
@@ -541,7 +541,7 @@ const CreateTournament = () => {
                                 !endDate && "text-muted-foreground"
                               )}
                             >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              <CalendarBlank className="mr-2 h-4 w-4" />
                               {endDate ? format(endDate, "PPP") : "Pick a date"}
                             </Button>
                           </PopoverTrigger>
@@ -568,7 +568,7 @@ const CreateTournament = () => {
                                 !registrationDeadline && "text-muted-foreground"
                               )}
                             >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              <CalendarBlank className="mr-2 h-4 w-4" />
                               {registrationDeadline
                                 ? format(registrationDeadline, "PPP")
                                 : "Pick a date"}
@@ -766,7 +766,7 @@ const CreateTournament = () => {
                                   {event.maxPlayers} {event.gameType === "Singles" ? "players" : "teams"}
                                 </div>
                                 <div className="flex items-center gap-1 text-sm font-medium text-primary">
-                                  <DollarSign className="w-4 h-4" />
+                                  <CurrencyDollar className="w-4 h-4" />
                                   {event.entryFee}
                                 </div>
                               </div>
@@ -775,7 +775,7 @@ const CreateTournament = () => {
                                 size="icon"
                                 onClick={() => removeEvent(index)}
                               >
-                                <Trash2 className="w-4 h-4 text-destructive" />
+                                <Trash className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
                           </div>
@@ -937,7 +937,7 @@ const CreateTournament = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="w-5 h-5 text-primary" />
+                      <CurrencyDollar className="w-5 h-5 text-primary" />
                       Registration Fee
                     </CardTitle>
                     <CardDescription>
@@ -948,7 +948,7 @@ const CreateTournament = () => {
                     <div className="space-y-2">
                       <Label htmlFor="tournamentFee">Tournament Entry Fee ($)</Label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <CurrencyDollar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="tournamentFee"
                           type="number"
@@ -967,7 +967,7 @@ const CreateTournament = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-primary" />
+                      <Medal className="w-5 h-5 text-primary" />
                       Prize Information
                     </CardTitle>
                     <CardDescription>
@@ -978,7 +978,7 @@ const CreateTournament = () => {
                     <div className="space-y-2">
                       <Label htmlFor="prizeTotal">Total Prize Pool ($)</Label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <CurrencyDollar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="prizeTotal"
                           type="number"
@@ -1212,7 +1212,7 @@ const CreateTournament = () => {
                 >
                   {createTournamentMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                       Creating...
                     </>
                   ) : (

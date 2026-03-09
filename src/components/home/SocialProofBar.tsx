@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { statsAPI } from "@/services/api";
-import { MapPin, Trophy, Users } from "lucide-react";
+import { MapPin, Trophy, Users } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 
 const SocialProofBar = () => {

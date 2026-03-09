@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CreditCard, AlertCircle, CheckCircle2, Lock } from "lucide-react";
+import { CircleNotch, CreditCard, Warning, CheckCircle, Lock } from "@phosphor-icons/react";
 import { paymentAPI } from "@/services/api";
 import { toast } from "sonner";
 
@@ -108,7 +108,7 @@ const PaymentForm = ({
 
           {error && (
             <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
+              <Warning className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -132,7 +132,7 @@ const PaymentForm = ({
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <CircleNotch className="w-5 h-5 mr-2 animate-spin" />
                 Processing…
               </>
             ) : (
@@ -199,7 +199,7 @@ const PaymentForm = ({
 
         {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <Warning className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -223,12 +223,12 @@ const PaymentForm = ({
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 Processing Payment...
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-4 h-4 mr-2" />
+                <CheckCircle className="w-4 h-4 mr-2" />
                 Pay ${amount.toFixed(2)}
               </>
             )}

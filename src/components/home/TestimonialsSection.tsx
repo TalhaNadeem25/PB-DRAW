@@ -1,4 +1,4 @@
-import { Star, Quote } from "lucide-react";
+import { Star, Quotess } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 
@@ -63,7 +63,7 @@ const TestimonialsSection = () => {
               className="bg-card p-8 rounded-2xl border border-border shadow-sm flex flex-col min-w-[300px] md:min-w-0 snap-center relative"
             >
               {/* Decorative quote mark */}
-              <Quote className="absolute top-6 right-6 w-8 h-8 text-primary/10" />
+              <Quotes className="absolute top-6 right-6 w-8 h-8 text-primary/10" />
 
               <div className="flex gap-1 mb-6">
                 {[1,2,3,4,5].map(star => <Star key={star} className="w-5 h-5 text-amber fill-amber" />)}

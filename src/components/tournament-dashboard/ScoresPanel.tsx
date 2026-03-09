@@ -9,7 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ClipboardList, Calendar, Check, X, Edit2, Loader2, ChevronDown, ChevronRight, Trophy, Users, Layers, Activity } from "lucide-react";
+import { ClipboardText, Calendar, Check, X, PencilSimple, CircleNotch, CaretDown, CaretRight, Trophy, Users, Stack, Activity } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { poolAPI, matchAPI } from "@/services/api";
@@ -257,7 +257,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                       onClick={() => handleSaveScore(match._id)}
                       disabled={updateScoreMutation.isPending}
                     >
-                      {updateScoreMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : <><Check className="w-4 h-4 mr-1" /> Save</>}
+                      {updateScoreMutation.isPending ? <CircleNotch className="w-4 h-4 animate-spin mx-auto" /> : <><Check className="w-4 h-4 mr-1" /> Save</>}
                     </Button>
                     <Button
                       size="icon"
@@ -306,7 +306,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                       });
                     }}
                   >
-                    <Edit2 className="w-3 h-3 mr-1.5" />
+                    <PencilSimple className="w-3 h-3 mr-1.5" />
                     {isCompleted ? "Edit" : "Score"}
                   </Button>
                 </div>
@@ -340,7 +340,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
         <Card className="glass-card-hover rounded-3xl border border-border/50 bg-gradient-to-br from-background to-muted/30 relative z-10 shadow-xl overflow-hidden">
           <CardContent className="py-20 text-center relative">
             <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6 shadow-inner ring-1 ring-primary/20">
-              <ClipboardList className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+              <ClipboardText className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
             </div>
             <h3 className="text-2xl font-display font-bold mb-3 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">No Events Yet</h3>
             <p className="text-muted-foreground max-w-sm mx-auto text-lg">
@@ -379,7 +379,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
           <CardContent className="py-20 flex flex-col items-center justify-center gap-4">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 animate-pulse" />
-              <Loader2 className="w-10 h-10 animate-spin text-primary relative z-10 drop-shadow-sm" />
+              <CircleNotch className="w-10 h-10 animate-spin text-primary relative z-10 drop-shadow-sm" />
             </div>
             <span className="text-muted-foreground font-medium text-lg mt-2 tracking-wide">Gathering matches…</span>
           </CardContent>
@@ -389,7 +389,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
           <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:32px_32px]" />
           <CardContent className="py-20 text-center relative z-10">
             <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6 shadow-inner ring-1 ring-primary/20">
-              <ClipboardList className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+              <ClipboardText className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
             </div>
             <h3 className="text-2xl font-display font-bold mb-3 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">No Matches Generated</h3>
             <p className="text-muted-foreground max-w-md mx-auto text-lg leading-relaxed">
@@ -437,7 +437,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                         <span className="text-primary font-bold mr-1.5 text-sm">{eventCompleted}</span> / {eventMatchCount} done
                       </Badge>
                       <div className="w-9 h-9 rounded-full bg-background flex items-center justify-center border border-border/50 shrink-0 group-data-[state=open]/event:bg-primary group-data-[state=open]/event:border-primary transition-all duration-300 shadow-sm">
-                        <ChevronDown className="w-4 h-4 text-muted-foreground group-data-[state=open]/event:text-primary-foreground group-data-[state=open]/event:rotate-180 transition-transform duration-500" />
+                        <CaretDown className="w-4 h-4 text-muted-foreground group-data-[state=open]/event:text-primary-foreground group-data-[state=open]/event:rotate-180 transition-transform duration-500" />
                       </div>
                     </button>
                   </CollapsibleTrigger>
@@ -470,7 +470,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                                   <Badge variant="secondary" className="rounded-xl text-xs sm:text-sm ml-auto shadow-inner bg-background font-semibold px-2 sm:px-3">
                                     <span className={poolCompleted === poolMatchCount && poolMatchCount > 0 ? "text-primary" : ""}>{poolCompleted}</span> / {poolMatchCount}
                                   </Badge>
-                                  <ChevronDown className="w-4 h-4 text-muted-foreground ml-1 sm:ml-2 group-data-[state=open]/pool:rotate-180 group-data-[state=open]/pool:text-primary transition-all duration-300 shrink-0" />
+                                  <CaretDown className="w-4 h-4 text-muted-foreground ml-1 sm:ml-2 group-data-[state=open]/pool:rotate-180 group-data-[state=open]/pool:text-primary transition-all duration-300 shrink-0" />
                                 </button>
                               </CollapsibleTrigger>
                               <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 origin-top transition-all duration-300">
@@ -483,7 +483,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                                       </div>
                                       <div className="flex items-center gap-2 sm:gap-3 mb-2 sticky top-0 bg-background/90 backdrop-blur-sm pb-2 z-10 -mx-2 px-2 sm:mx-0 sm:px-0">
                                         <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 shadow-inner sm:hidden">
-                                          <Layers className="w-4 h-4 text-primary" />
+                                          <Stack className="w-4 h-4 text-primary" />
                                         </div>
                                         <h4 className="text-sm font-bold tracking-wider uppercase text-muted-foreground drop-shadow-sm">
                                           {round != null ? `Round ${round}` : "Other matches"}

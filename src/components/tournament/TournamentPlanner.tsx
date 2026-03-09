@@ -20,11 +20,11 @@ import {
   Clock,
   Calendar,
   Users,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
+  CircleNotch,
+  CaretLeft,
+  CaretRight,
   Info,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { format, addMinutes, startOfDay, setHours, setMinutes, isSameDay, parseISO, isToday } from 'date-fns';
 import { matchAPI, poolAPI } from '@/services/api';
 import { cn } from '@/lib/utils';
@@ -246,7 +246,7 @@ const TournamentPlanner = ({ tournament, events }: TournamentPlannerProps) => {
             {/* Date Navigation */}
             <div className="flex items-center gap-2 ml-auto">
               <Button variant="outline" size="icon" onClick={() => navigateDate('prev')}>
-                <ChevronLeft className="w-4 h-4" />
+                <CaretLeft className="w-4 h-4" />
               </Button>
               <Button
                 variant={isToday(selectedDate) ? "default" : "outline"}
@@ -260,7 +260,7 @@ const TournamentPlanner = ({ tournament, events }: TournamentPlannerProps) => {
                 {format(selectedDate, 'EEEE, MMM dd, yyyy')}
               </div>
               <Button variant="outline" size="icon" onClick={() => navigateDate('next')}>
-                <ChevronRight className="w-4 h-4" />
+                <CaretRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -306,7 +306,7 @@ const TournamentPlanner = ({ tournament, events }: TournamentPlannerProps) => {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <CircleNotch className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -15,18 +15,18 @@ import { loadStripe } from "@stripe/stripe-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
-  AlertCircle,
+  Warning,
   ArrowLeft,
   Calendar,
-  CheckCircle2,
-  DollarSign,
-  Loader2,
+  CheckCircle,
+  CurrencyDollar,
+  CircleNotch,
   MapPin,
   Target,
   Trophy,
   UserPlus,
   Users
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -268,7 +268,7 @@ const EventRegistration = () => {
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">
               {isPreparingPayment ? "Preparing payment..." : "Loading registration..."}
             </p>
@@ -284,7 +284,7 @@ const EventRegistration = () => {
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-destructive" />
+              <Warning className="w-8 h-8 text-destructive" />
             </div>
             <h2 className="text-2xl font-display font-bold mb-2">Event Not Found</h2>
             <p className="text-muted-foreground mb-6">
@@ -356,7 +356,7 @@ const EventRegistration = () => {
                     <Card className="border-red-500 bg-red-50">
                       <CardHeader>
                         <CardTitle className="text-red-900 flex items-center gap-2">
-                          <AlertCircle className="w-5 h-5" />
+                          <Warning className="w-5 h-5" />
                           Event Full
                         </CardTitle>
                         <CardDescription className="text-red-700">
@@ -376,7 +376,7 @@ const EventRegistration = () => {
                     <Card className="glass-card border-border/50 shadow-lg">
                     {isPromotedFromWaitlist && (
                       <div className="mx-6 mt-6 rounded-lg bg-green-500/10 border border-green-500/30 px-4 py-3 flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                        <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
                         <div className="text-sm">
                           <p className="font-semibold text-green-700">Your waitlist spot was approved!</p>
                           <p className="text-green-600">
@@ -406,7 +406,7 @@ const EventRegistration = () => {
                       {/* Player Info */}
                       <div className="glass rounded-xl p-5 border border-border/50">
                         <Label className="text-sm font-medium mb-3 flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                          <CheckCircle className="w-4 h-4 text-primary" />
                           Your Information
                         </Label>
                         <div className="space-y-3">
@@ -467,7 +467,7 @@ const EventRegistration = () => {
 
                           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                             <div className="flex gap-3">
-                              <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                              <Warning className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                               <div className="text-sm">
                                 <p className="font-medium text-blue-600 mb-1">Partner Information</p>
                                 <p className="text-muted-foreground">
@@ -487,17 +487,17 @@ const EventRegistration = () => {
                       >
                         {createTeamMutation.isPending ? (
                           <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                             {requiresPartner ? 'Creating Team...' : 'Setting up registration...'}
                           </>
                         ) : totalFee > 0 ? (
                           <>
                             {requiresPartner ? 'Create Team &' : ''} Continue to Payment
-                            <DollarSign className="w-4 h-4 ml-2" />
+                            <CurrencyDollar className="w-4 h-4 ml-2" />
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            <CheckCircle className="w-4 h-4 mr-2" />
                             Complete Registration
                           </>
                         )}
@@ -589,7 +589,7 @@ const EventRegistration = () => {
                         <div className="rounded-xl border border-primary/30 bg-primary/5 px-5 py-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                              <DollarSign className="w-5 h-5 text-primary" />
+                              <CurrencyDollar className="w-5 h-5 text-primary" />
                             </div>
                             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fees</p>
                           </div>
@@ -625,7 +625,7 @@ const EventRegistration = () => {
                             <p className="text-3xl font-display font-black text-green-600 mt-0.5">Free</p>
                           </div>
                           <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                            <DollarSign className="w-6 h-6 text-green-600" />
+                            <CurrencyDollar className="w-6 h-6 text-green-600" />
                           </div>
                         </div>
                       )}
@@ -646,7 +646,7 @@ const EventRegistration = () => {
               <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-2xl">
-                    <DollarSign className="w-6 h-6 text-primary" />
+                    <CurrencyDollar className="w-6 h-6 text-primary" />
                     Complete Payment
                   </CardTitle>
                   <CardDescription>
@@ -694,7 +694,7 @@ const EventRegistration = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                      <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
                       <p className="text-muted-foreground">Loading payment form...</p>
                     </div>
                   )}

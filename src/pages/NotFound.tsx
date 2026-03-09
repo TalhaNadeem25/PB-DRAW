@@ -1,6 +1,6 @@
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Home, Trophy } from "lucide-react";
+import { Question, House, Trophy } from "@phosphor-icons/react";
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -55,7 +55,7 @@ const NotFound = () => {
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild variant="hero" className="hover-lift shadow-glow">
               <Link to="/">
-                <Home className="w-4 h-4 mr-2" />
+                <House className="w-4 h-4 mr-2" />
                 Go Home
               </Link>
             </Button>
@@ -67,7 +67,7 @@ const NotFound = () => {
             </Button>
             <Button asChild variant="outline" className="hover-lift glass">
               <Link to="/help">
-                <HelpCircle className="w-4 h-4 mr-2" />
+                <Question className="w-4 h-4 mr-2" />
                 Get Help
               </Link>
             </Button>
@@ -76,7 +76,7 @@ const NotFound = () => {
 
         {/* Help text */}
         <div className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <HelpCircle className="w-4 h-4" />
+          <Question className="w-4 h-4" />
           <span>Need help? Contact support@picklix.com</span>
         </div>
       </div>

@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
-  Sparkles, Loader2, Send, User, Bot, Copy,
+  Sparkle, CircleNotch, PaperPlaneTilt, User, Robot, Copy,
   Calendar, MapPin, Users, Trophy, Clock,
-  RotateCcw, CheckCircle2, Plus
-} from 'lucide-react';
+  ArrowCounterClockwise, CheckCircle, Plus
+} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -193,13 +193,13 @@ function CreateTournamentCard({ data, onCreated }: { data: any; onCreated: (id: 
 
         {created ? (
           <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle className="w-4 h-4" />
             Tournament created successfully!
           </div>
         ) : (
           <Button onClick={handleCreate} disabled={creating} size="sm" className="w-full">
             {creating ? (
-              <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Creating...</>
+              <><CircleNotch className="w-3.5 h-3.5 mr-2 animate-spin" />Creating...</>
             ) : (
               <><Plus className="w-3.5 h-3.5 mr-2" />Create This Tournament</>
             )}
@@ -215,7 +215,7 @@ function SuggestEventsCard({ data }: { data: any[] }) {
   return (
     <div className="mt-3 rounded-xl border border-border bg-muted/30 overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-primary" />
+        <Sparkle className="w-4 h-4 text-primary" />
         <span className="font-semibold text-sm">Suggested Events</span>
       </div>
       <div className="p-3 grid gap-2">
@@ -336,7 +336,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
     },
   });
 
-  const handleSend = (text?: string) => {
+  const handlePaperPlaneTilt = (text?: string) => {
     const value = (text ?? input).trim();
     if (!value || chatMutation.isPending) return;
 
@@ -354,7 +354,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handlePaperPlaneTilt();
     }
   };
 
@@ -379,7 +379,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full py-12 text-center">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <Sparkles className="w-8 h-8 text-primary" />
+              <Sparkle className="w-8 h-8 text-primary" />
             </div>
             <h2 className="text-xl font-display font-bold mb-2">Ask Picklix AI anything</h2>
             <p className="text-sm text-muted-foreground max-w-sm mb-8">
@@ -389,10 +389,10 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
               {STARTER_PROMPTS.map((prompt, i) => (
                 <button
                   key={i}
-                  onClick={() => handleSend(prompt)}
+                  onClick={() => handlePaperPlaneTilt(prompt)}
                   className="flex items-start gap-2 p-3 rounded-xl border border-border/60 bg-card/50 hover:bg-card hover:border-primary/40 transition-all text-sm text-left group"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                  <Sparkle className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <span>{prompt}</span>
                 </button>
               ))}
@@ -407,7 +407,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Bot className="w-4 h-4 text-primary" />
+                    <Robot className="w-4 h-4 text-primary" />
                   </div>
                 )}
 
@@ -467,7 +467,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
             {chatMutation.isPending && (
               <div className="flex gap-3 justify-start">
                 <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-primary" />
+                  <Robot className="w-4 h-4 text-primary" />
                 </div>
                 <div className="bg-card border border-border/60 rounded-2xl rounded-bl-sm px-4 py-3">
                   <div className="flex gap-1 items-center h-5">
@@ -491,7 +491,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
               className="flex-shrink-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mb-0.5"
               title="New conversation"
             >
-              <RotateCcw className="w-4 h-4" />
+              <ArrowCounterClockwise className="w-4 h-4" />
             </button>
           )}
           <div className="flex-1 relative">
@@ -506,15 +506,15 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
               disabled={chatMutation.isPending}
             />
             <Button
-              onClick={() => handleSend()}
+              onClick={() => handlePaperPlaneTilt()}
               disabled={!input.trim() || chatMutation.isPending}
               size="icon"
               className="absolute right-2 bottom-2 h-8 w-8"
             >
               {chatMutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <CircleNotch className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Send className="w-3.5 h-3.5" />
+                <PaperPlaneTilt className="w-3.5 h-3.5" />
               )}
             </Button>
           </div>

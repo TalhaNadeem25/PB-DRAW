@@ -2,7 +2,7 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Brain, RotateCcw, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, Brain, ArrowCounterClockwise, Trophy } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -210,7 +210,7 @@ const SkillQuiz = () => {
                   </Link>
                 </Button>
                 <Button variant="outline" className="font-display uppercase tracking-widest font-bold h-14 rounded-xl" onClick={handleRetake}>
-                  <RotateCcw className="w-4 h-4 mr-2" /> Retake Quiz
+                  <ArrowCounterClockwise className="w-4 h-4 mr-2" /> Retake Quiz
                 </Button>
               </div>
             </div>

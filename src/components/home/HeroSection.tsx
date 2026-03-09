@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { CaretRight } from "@phosphor-icons/react";
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 
@@ -106,7 +106,7 @@ const HeroSection = () => {
             >
               <Link to="/tournaments" className="inline-flex items-center gap-2">
                 Browse Tournaments
-                <ChevronRight className="w-5 h-5" />
+                <CaretRight className="w-5 h-5" />
               </Link>
             </Button>
           </motion.div>

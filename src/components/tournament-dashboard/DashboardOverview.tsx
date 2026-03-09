@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 import {
   Users,
-  DollarSign,
+  CurrencyDollar,
   GitBranch,
-  LayoutGrid,
-  MessageSquare,
-  Download,
-  CheckCircle2,
+  SquaresFour,
+  Chat,
+  DownloadSimpleSimple,
+  CheckCircle,
   Circle,
   Clock,
   Activity,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +58,7 @@ const DashboardOverview = ({
         <div className="glass-card-hover rounded-2xl p-6 group">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-lg bg-primary/10 group-hover:bg-hero-gradient group-hover:shadow-glow transition-all duration-300 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
+              <CurrencyDollar className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Revenue</div>
@@ -140,17 +140,17 @@ const DashboardOverview = ({
             tab="brackets"
           />
           <QuickAction
-            icon={LayoutGrid}
+            icon={SquaresFour}
             label="Court Manager"
             to={`/tournaments/${tournament._id}/courts`}
           />
           <QuickAction
-            icon={MessageSquare}
+            icon={Chat}
             label="Broadcast"
             to={`/tournaments/${tournament._id}/communications`}
           />
           <QuickAction
-            icon={Download}
+            icon={DownloadSimple}
             label="Export"
             to={`/tournaments/${tournament._id}`}
             tab="dashboard"
@@ -226,7 +226,7 @@ const DashboardOverview = ({
             {tasks.map((task, i) => (
               <div key={i} className="flex items-center gap-3">
                 {task.done ? (
-                  <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-primary shrink-0" />
                 ) : (
                   <Circle className="w-5 h-5 text-muted-foreground/40 shrink-0" />
                 )}

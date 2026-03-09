@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, ChevronRight, CreditCard, Settings, Grid3X3, Moon, Sun } from "lucide-react";
+import { List, X, Trophy, User, SignIn, SignOut, UserCircle, House, SquaresFour, Users, Radio, ChartBar, Sparkle, CaretRight, CreditCard, Gear, GridNine, Moon, Sun } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -47,15 +47,15 @@ const Navbar = () => {
     { href: "/live", label: "Live", icon: Radio, isLive: true },
     { href: "/tournaments", label: "Tournaments", icon: Trophy },
     ...(user?.role === 'organizer' || user?.role === 'admin'
-      ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkles }]
+      ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkle }]
       : []
     ),
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard", label: "Dashboard", icon: SquaresFour },
   ];
 
   const authenticatedNavLinks = isAuthenticated
     ? [
-        { href: "/", label: "Home", icon: Home },
+        { href: "/", label: "House", icon: House },
         ...navLinks,
       ]
     : navLinks;
@@ -225,13 +225,13 @@ const Navbar = () => {
                         <DropdownMenuItem asChild className="p-0 focus:bg-transparent cursor-pointer group">
                           <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-all duration-150">
                             <div className="w-7 h-7 rounded-lg bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center shrink-0 transition-colors">
-                              <LayoutDashboard className="w-3.5 h-3.5 text-primary" />
+                              <SquaresFour className="w-3.5 h-3.5 text-primary" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[11px] font-display font-black text-foreground uppercase tracking-widest leading-none">Player Hub</p>
                               <p className="text-[10px] text-muted-foreground mt-0.5">Matches & rankings</p>
                             </div>
-                            <ChevronRight className="w-3.5 h-3.5 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
+                            <CaretRight className="w-3.5 h-3.5 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
                           </Link>
                         </DropdownMenuItem>
 
@@ -239,13 +239,13 @@ const Navbar = () => {
                           <DropdownMenuItem asChild className="p-0 focus:bg-transparent cursor-pointer group">
                             <Link to="/analytics" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-all duration-150">
                               <div className="w-7 h-7 rounded-lg bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center shrink-0 transition-colors">
-                                <Grid3X3 className="w-3.5 h-3.5 text-primary" />
+                                <GridNine className="w-3.5 h-3.5 text-primary" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-[11px] font-display font-black text-foreground uppercase tracking-widest leading-none">Organizer HQ</p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">Manage tournaments</p>
                               </div>
-                              <ChevronRight className="w-3.5 h-3.5 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
+                              <CaretRight className="w-3.5 h-3.5 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
                             </Link>
                           </DropdownMenuItem>
                         )}
@@ -259,7 +259,7 @@ const Navbar = () => {
                               <p className="text-[11px] font-display font-black text-foreground uppercase tracking-widest leading-none">Payments</p>
                               <p className="text-[10px] text-muted-foreground mt-0.5">Receipts & history</p>
                             </div>
-                            <ChevronRight className="w-3.5 h-3.5 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
+                            <CaretRight className="w-3.5 h-3.5 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150 shrink-0" />
                           </Link>
                         </DropdownMenuItem>
                       </div>
@@ -270,15 +270,15 @@ const Navbar = () => {
                           to="/profile"
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[9px] font-display font-black text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all uppercase tracking-[0.15em] rounded-bl-xl rounded-tl-sm"
                         >
-                          <Settings className="w-3 h-3" />
-                          Settings
+                          <Gear className="w-3 h-3" />
+                          Gear
                         </Link>
                         <div className="w-px bg-border/40 self-stretch" />
                         <button
                           onClick={handleLogout}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[9px] font-display font-black text-destructive hover:bg-destructive/10 transition-all uppercase tracking-[0.15em] rounded-br-xl rounded-tr-sm"
                         >
-                          <LogOut className="w-3 h-3" />
+                          <SignOut className="w-3 h-3" />
                           Sign Out
                         </button>
                       </div>
@@ -292,7 +292,7 @@ const Navbar = () => {
                   </Button>
                   <Button variant="ghost" size="sm" className="hover:bg-accent/50" asChild>
                     <Link to="/login">
-                      <LogIn className="w-4 h-4 mr-1.5" />
+                      <SignIn className="w-4 h-4 mr-1.5" />
                       Log In
                     </Link>
                   </Button>
@@ -415,7 +415,7 @@ const Navbar = () => {
                           onClick={() => setIsOpen(false)}
                           className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
                         >
-                          <BarChart className="w-5 h-5" />
+                          <ChartBar className="w-5 h-5" />
                           Analytics
                         </Link>
                       )}
@@ -441,7 +441,7 @@ const Navbar = () => {
                         onClick={handleLogout} 
                         className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
-                        <LogOut className="w-4 h-4 mr-2" />
+                        <SignOut className="w-4 h-4 mr-2" />
                         Log Out
                       </Button>
                     </>
@@ -455,7 +455,7 @@ const Navbar = () => {
                       </div>
                       <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                         <Link to="/login" onClick={() => setIsOpen(false)}>
-                          <LogIn className="w-4 h-4 mr-2" />
+                          <SignIn className="w-4 h-4 mr-2" />
                           Log In
                         </Link>
                       </Button>

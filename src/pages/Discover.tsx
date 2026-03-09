@@ -16,17 +16,17 @@ import { tournamentAPI } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
-    Award,
+    Medal,
     Calendar,
-    ChevronRight,
+    CaretRight,
     Clock,
-    DollarSign,
-    Filter,
+    CurrencyDollar,
+    Funnel,
     MapPin,
-    Search,
-    Sparkles,
+    MagnifyingGlass,
+    Sparkle,
     Trophy
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -96,7 +96,7 @@ const Discover = () => {
         <div className="border-b border-border/60 bg-card/50">
           <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
             <div className="flex items-center gap-3 mb-2">
-              <Sparkles className="w-6 h-6 text-primary" />
+              <Sparkle className="w-6 h-6 text-primary" />
               <Badge variant="secondary" className="px-2.5 py-0.5">Discover</Badge>
             </div>
             <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
@@ -114,7 +114,7 @@ const Discover = () => {
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
               <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <MagnifyingGlass className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <Input
                   placeholder="Search tournaments by name, location..."
                   value={searchQuery}
@@ -127,7 +127,7 @@ const Discover = () => {
               <div className="flex gap-3">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[150px] h-12 bg-muted/50 border-0 rounded-xl">
-                    <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <Funnel className="w-4 h-4 mr-2 text-muted-foreground" />
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -141,7 +141,7 @@ const Discover = () => {
 
                 <Select value={skillLevelFilter} onValueChange={setSkillLevelFilter}>
                   <SelectTrigger className="w-[150px] h-12 bg-muted/50 border-0 rounded-xl">
-                    <Award className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <Medal className="w-4 h-4 mr-2 text-muted-foreground" />
                     <SelectValue placeholder="Level" />
                   </SelectTrigger>
                   <SelectContent>
@@ -230,7 +230,7 @@ const Discover = () => {
                     <div className="flex items-center justify-between pt-2">
                       {tournament.entryFee ? (
                         <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                          <DollarSign className="w-4 h-4" />
+                          <CurrencyDollar className="w-4 h-4" />
                           <span>${tournament.entryFee}</span>
                         </div>
                       ) : (
@@ -239,7 +239,7 @@ const Discover = () => {
 
                       {tournament.events && tournament.events.length > 0 && (
                         <div className="flex items-center gap-1.5">
-                          <Award className="w-4 h-4 text-muted-foreground" />
+                          <Medal className="w-4 h-4 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">
                             {[...new Set(tournament.events.map((e: any) => e.skillLevel).filter(Boolean))].slice(0, 3).join(', ')}
                           </span>
@@ -263,7 +263,7 @@ const Discover = () => {
                         }}
                       >
                         View Details & Register
-                        <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        <CaretRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     )}
                   </CardContent>

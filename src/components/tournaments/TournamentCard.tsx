@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { MapPin, Trophy, Users } from "lucide-react";
+import { MapPin, Trophy, Users } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 

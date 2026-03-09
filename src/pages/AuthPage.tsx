@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { Apple, ArrowRight, Chrome, Eye, EyeOff, Loader2, Trophy, User } from 'lucide-react';
+import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch, Trophy, User } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -212,7 +212,7 @@ const AuthPage = () => {
                         className="absolute right-4 text-muted-foreground hover:text-foreground"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? <EyeSlash className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
@@ -235,7 +235,7 @@ const AuthPage = () => {
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <><Loader2 className="w-5 h-5 animate-spin mr-2" />Signing In...</>
+                      <><CircleNotch className="w-5 h-5 animate-spin mr-2" />Signing In...</>
                     ) : (
                       <><span>Sign In</span><ArrowRight className="w-5 h-5 ml-2" /></>
                     )}
@@ -251,11 +251,11 @@ const AuthPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                      <Chrome className="w-4 h-4" />
+                      <GoogleChromeLogo className="w-4 h-4" />
                       <span className="text-sm font-semibold text-foreground">Google</span>
                     </button>
                     <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                      <Apple className="w-4 h-4 text-foreground" />
+                      <AppStoreLogo className="w-4 h-4 text-foreground" />
                       <span className="text-sm font-semibold text-foreground">Apple</span>
                     </button>
                   </div>
@@ -333,7 +333,7 @@ const AuthPage = () => {
                       <Label htmlFor="signup-password" className="text-sm font-semibold">Password</Label>
                       <Input id="signup-password" type={showPassword ? 'text' : 'password'} value={signupData.password} onChange={(e) => handleSignupChange('password', e.target.value)} className="h-11 pr-10" placeholder="Min 6 chars" required />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-muted-foreground">
-                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        {showPassword ? <EyeSlash className="size-4" /> : <Eye className="size-4" />}
                       </button>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -373,7 +373,7 @@ const AuthPage = () => {
                   </div>
 
                   <Button type="submit" disabled={isLoading} className="w-full h-12 mt-2 font-display font-bold uppercase tracking-widest rounded-xl shadow-glow">
-                    {isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Processing...</> : <><User className="mr-2 h-4 w-4" /> Create Account</>}
+                    {isLoading ? <><CircleNotch className="mr-2 h-5 w-5 animate-spin" />Processing...</> : <><User className="mr-2 h-4 w-4" /> Create Account</>}
                   </Button>
                 </form>
               </TabsContent>

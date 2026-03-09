@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Trophy, AlertCircle, Info } from "lucide-react";
+import { CircleNotch, Trophy, Warning, Info } from "@phosphor-icons/react";
 import { eventAPI, poolAPI, playoffAPI } from "@/services/api";
 import { formatEventSkillLevel } from "@/types/tournament";
 import PlayoffBracket from "./PlayoffBracket";
@@ -114,7 +114,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
   if (eventsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CircleNotch className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -122,7 +122,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
   if (!events || events.length === 0) {
     return (
       <Alert>
-        <AlertCircle className="h-4 w-4" />
+        <Warning className="h-4 w-4" />
         <AlertDescription>
           No events have been created for this tournament yet. Brackets will be available once events are added and pools are set up.
         </AlertDescription>
@@ -175,7 +175,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
               <Label>Select Pool</Label>
               {poolsLoading ? (
                 <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <CircleNotch className="w-6 h-6 animate-spin text-primary" />
                 </div>
               ) : pools.length > 0 ? (
                 <Select value={selectedPoolId || undefined} onValueChange={handlePoolChange}>
@@ -194,7 +194,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
                 </Select>
               ) : (
                 <Alert>
-                  <AlertCircle className="h-4 w-4" />
+                  <Warning className="h-4 w-4" />
                   <AlertDescription>
                     No pools have been created for this event yet.
                   </AlertDescription>
@@ -210,7 +210,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
         <div className="space-y-6">
           {poolsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <CircleNotch className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
             <>
@@ -224,7 +224,7 @@ const BracketViewer = ({ tournamentId }: BracketViewerProps) => {
               {/* Playoff Bracket */}
               {playoffsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <CircleNotch className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : playoffs.length > 0 ? (
                 <>

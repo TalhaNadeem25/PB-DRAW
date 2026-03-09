@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trophy, Mail, ArrowLeft, Loader2, Check } from 'lucide-react';
+import { Trophy, Envelope, ArrowLeft, CircleNotch, Check } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 
@@ -76,7 +76,7 @@ const ForgotPassword = () => {
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <Envelope className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                         <Input
                           id="email"
                           type="email"
@@ -103,7 +103,7 @@ const ForgotPassword = () => {
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        <CircleNotch className="w-5 h-5 animate-spin mr-2" />
                         Sending...
                       </>
                     ) : (
@@ -178,7 +178,7 @@ const ForgotPassword = () => {
           <div className="flex flex-col items-center justify-center w-full p-12">
             <div className="rounded-3xl p-8 max-w-md text-center border border-border bg-card shadow-sm">
               <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Mail className="w-10 h-10 text-primary" />
+                <Envelope className="w-10 h-10 text-primary" />
               </div>
               <h2 className="text-2xl font-display font-bold text-foreground mb-4">
                 Account Recovery

@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Printer, Download, Calendar, MapPin, Users, Clock } from "lucide-react";
+import { Printer, DownloadSimple, Calendar, MapPin, Users, Clock } from "@phosphor-icons/react";
 import { format } from "date-fns";
 
 interface Match {

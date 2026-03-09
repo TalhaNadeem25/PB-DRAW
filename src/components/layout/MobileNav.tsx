@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { PlusCircle, Radio, Search, User, Users } from "lucide-react";
+import { PlusCircle, Radio, MagnifyingGlass, User, Users } from "@phosphor-icons/react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -7,7 +7,7 @@ const MobileNav = () => {
   const location = useLocation();
 
   const navItems = [
-    { href: "/tournaments", label: "Explore", icon: Search },
+    { href: "/tournaments", label: "Explore", icon: MagnifyingGlass },
     { href: "/live", label: "Live", icon: Radio },
     { href: "/create-tournament", label: "Host", icon: PlusCircle },
     { href: "/teams", label: "Partner", icon: Users },
@@ -43,7 +43,7 @@ const MobileNav = () => {
               >
                 <item.icon
                   className={cn("w-5 h-5", isActive && "fill-primary/20")}
-                  strokeWidth={isActive ? 2.5 : 2}
+                  weight={isActive ? "bold" : "regular"}
                 />
                 <span className="text-[10px] font-display font-bold tracking-wide uppercase">
                   {item.label}

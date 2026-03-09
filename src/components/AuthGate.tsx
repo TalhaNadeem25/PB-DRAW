@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
 import { Link, useLocation } from "react-router-dom";
-import { UserPlus, LogIn } from "lucide-react";
+import { UserPlus, SignIn } from "@phosphor-icons/react";
 
 interface AuthGateProps {
   title: string;
@@ -42,7 +42,7 @@ export default function AuthGate({ title, description, icon }: AuthGateProps) {
               </Button>
               <Button asChild variant="outline" className="rounded-xl font-display font-bold uppercase tracking-widest">
                 <Link to={loginTo}>
-                  <LogIn className="w-4 h-4 mr-2" />
+                  <SignIn className="w-4 h-4 mr-2" />
                   Log in
                 </Link>
               </Button>

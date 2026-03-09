@@ -20,13 +20,13 @@ import {
   ArrowLeft,
   Calendar,
   Copy,
-  Loader2,
+  CircleNotch,
   MapPin,
   Radio,
   Trophy,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
+  WifiHigh,
+  WifiSlash,
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -215,7 +215,7 @@ const Spectator = () => {
     return (
       <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <CircleNotch className="w-12 h-12 animate-spin text-primary" />
         </div>
       </Layout>
     );
@@ -443,7 +443,7 @@ const Spectator = () => {
               {/* Match cards */}
               {matchesLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <CircleNotch className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : sortedMatches.length === 0 ? (
                 <div className="glass-card rounded-2xl p-12 text-center">

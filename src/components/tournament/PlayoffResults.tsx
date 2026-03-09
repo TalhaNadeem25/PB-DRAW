@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Trophy } from "lucide-react";
+import { CircleNotch, Trophy } from "@phosphor-icons/react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { playoffAPI } from "@/services/api";
 import ResultsPodium from "./ResultsPodium";
@@ -98,7 +98,7 @@ const PlayoffResults = ({ eventId, poolId, poolName, eventName }: PlayoffResults
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CircleNotch className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }

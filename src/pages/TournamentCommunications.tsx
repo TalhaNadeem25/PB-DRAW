@@ -27,17 +27,17 @@ import {
 } from "@/components/ui/dialog";
 import {
   ArrowLeft,
-  Send,
+  PaperPlaneTilt,
   Users,
-  Mail,
-  History,
+  Envelope,
+  ClockCounterClockwise,
   FileText,
-  Loader2,
+  CircleNotch,
   CheckCircle,
-  AlertCircle,
+  Warning,
   Clock,
   Eye,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { tournamentAPI, communicationAPI } from "@/services/api";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -205,7 +205,7 @@ const TournamentCommunications = () => {
     return (
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <CircleNotch className="w-8 h-8 animate-spin text-primary" />
         </div>
       </Layout>
     );
@@ -216,7 +216,7 @@ const TournamentCommunications = () => {
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <Warning className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">Tournament Not Found</h2>
             <Button onClick={() => navigate('/tournaments')}>Back to Tournaments</Button>
           </div>
@@ -250,11 +250,11 @@ const TournamentCommunications = () => {
           <Tabs defaultValue="compose" className="space-y-6">
             <TabsList className="glass-card p-1">
               <TabsTrigger value="compose" className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
+                <Envelope className="w-4 h-4" />
                 Compose
               </TabsTrigger>
               <TabsTrigger value="history" className="flex items-center gap-2">
-                <History className="w-4 h-4" />
+                <ClockCounterClockwise className="w-4 h-4" />
                 History
               </TabsTrigger>
             </TabsList>
@@ -314,7 +314,7 @@ const TournamentCommunications = () => {
                       disabled={previewMutation.isPending}
                     >
                       {previewMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
                         <Eye className="w-4 h-4 mr-2" />
                       )}
@@ -395,9 +395,9 @@ const TournamentCommunications = () => {
                         disabled={sendMutation.isPending || !subject || !message}
                       >
                         {sendMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                         ) : (
-                          <Send className="w-4 h-4 mr-2" />
+                          <PaperPlaneTilt className="w-4 h-4 mr-2" />
                         )}
                         Send Message
                       </Button>
@@ -419,11 +419,11 @@ const TournamentCommunications = () => {
                 <CardContent>
                   {historyLoading ? (
                     <div className="flex justify-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <CircleNotch className="w-8 h-8 animate-spin text-primary" />
                     </div>
                   ) : history.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
-                      <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <Envelope className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>No messages sent yet</p>
                     </div>
                   ) : (
@@ -461,9 +461,9 @@ const TournamentCommunications = () => {
                                 {comm.status === 'sent' ? (
                                   <CheckCircle className="w-3 h-3 mr-1" />
                                 ) : comm.status === 'sending' ? (
-                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  <CircleNotch className="w-3 h-3 mr-1 animate-spin" />
                                 ) : (
-                                  <AlertCircle className="w-3 h-3 mr-1" />
+                                  <Warning className="w-3 h-3 mr-1" />
                                 )}
                                 {comm.status}
                               </Badge>
@@ -537,7 +537,7 @@ const TournamentCommunications = () => {
 
                 {recipientPreview.count === 0 && (
                   <div className="text-center py-4 text-muted-foreground">
-                    <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <Warning className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>No recipients match the selected criteria</p>
                   </div>
                 )}
@@ -553,9 +553,9 @@ const TournamentCommunications = () => {
                 disabled={sendMutation.isPending || !recipientPreview?.count}
               >
                 {sendMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4 mr-2" />
+                  <PaperPlaneTilt className="w-4 h-4 mr-2" />
                 )}
                 Send to {recipientPreview?.count || 0} Recipients
               </Button>

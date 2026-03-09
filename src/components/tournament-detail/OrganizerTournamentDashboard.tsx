@@ -17,7 +17,7 @@ import TournamentDashboardSidebar, {
   MobileDashboardNav,
   type DashboardSection,
 } from "@/components/tournament-dashboard/TournamentDashboardSidebar";
-import { ChevronRight, Layers, Trophy } from "lucide-react";
+import { CaretRight, Stack, Trophy } from "@phosphor-icons/react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 
@@ -94,7 +94,7 @@ export default function OrganizerTournamentDashboard({
           <div className="space-y-6 animate-fade-in">
             <div>
               <h2 className="font-display font-bold text-2xl flex items-center gap-2">
-                <Layers className="w-6 h-6 text-primary" />
+                <Stack className="w-6 h-6 text-primary" />
                 Pools
               </h2>
               <p className="text-muted-foreground mt-1">
@@ -122,7 +122,7 @@ export default function OrganizerTournamentDashboard({
                     <Button asChild className="shrink-0">
                       <Link to={`/tournaments/${id}/events/${event._id}/pools`}>
                         Manage pools
-                        <ChevronRight className="w-4 h-4 ml-1" />
+                        <CaretRight className="w-4 h-4 ml-1" />
                       </Link>
                     </Button>
                   </div>
@@ -130,7 +130,7 @@ export default function OrganizerTournamentDashboard({
               </div>
             ) : (
               <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-                <Layers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                <Stack className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
                 <p className="text-muted-foreground font-medium">No events yet</p>
                 <p className="text-sm text-muted-foreground mt-1">
                   Add events in the Events tab, then come back here to manage pools for each event.

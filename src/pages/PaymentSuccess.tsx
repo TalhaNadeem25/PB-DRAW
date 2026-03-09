@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Home, Trophy, Calendar, Users, Sparkles, Ticket, ArrowRight } from "lucide-react";
+import { CheckCircle, House, Trophy, Calendar, Users, Sparkle, Ticket, ArrowRight } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 
 const PaymentSuccess = () => {
@@ -50,10 +50,10 @@ const PaymentSuccess = () => {
           <div className="relative z-10 pt-6 text-center">
             <div className="relative mx-auto mb-6">
               <div className="w-24 h-24 rounded-full bg-hero-gradient flex items-center justify-center shadow-glow animate-pulse-glow">
-                <CheckCircle2 className="w-14 h-14 text-primary-foreground" />
+                <CheckCircle className="w-14 h-14 text-primary-foreground" />
               </div>
               <div className="absolute -top-2 -right-2">
-                <Sparkles className="w-8 h-8 text-secondary animate-bounce" />
+                <Sparkle className="w-8 h-8 text-secondary animate-bounce" />
               </div>
             </div>
             <h1 className="text-3xl md:text-4xl font-display font-bold text-gradient mb-2">
@@ -66,7 +66,7 @@ const PaymentSuccess = () => {
             {/* Success message */}
             <div className="bg-primary/5 border border-primary/20 p-6 rounded-xl space-y-3">
               <div className="flex items-center gap-3 text-primary">
-                <CheckCircle2 className="w-5 h-5" />
+                <CheckCircle className="w-5 h-5" />
                 <span className="font-semibold">Registration Confirmed</span>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -123,7 +123,7 @@ const PaymentSuccess = () => {
               </Button>
               <Button variant="ghost" className="h-12" asChild>
                 <Link to="/">
-                  <Home className="w-4 h-4 mr-2" />
+                  <House className="w-4 h-4 mr-2" />
                   Home
                 </Link>
               </Button>

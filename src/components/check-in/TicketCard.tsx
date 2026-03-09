@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle, Clock, Copy, Download, MapPin, Maximize2 } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Copy, DownloadSimple, MapPin, ArrowsOut } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -132,7 +132,7 @@ export default function TicketCard({ payment, compact = false }: TicketCardProps
                           className="w-48 h-48 object-contain transition-opacity group-hover:opacity-80"
                         />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 backdrop-blur-[1px] rounded-lg">
-                          <Maximize2 className="w-8 h-8 text-green-900 drop-shadow-md" />
+                          <ArrowsOut className="w-8 h-8 text-green-900 drop-shadow-md" />
                         </div>
                       </div>
                     </DialogTrigger>
@@ -192,7 +192,7 @@ export default function TicketCard({ payment, compact = false }: TicketCardProps
                   onClick={handleDownloadPDF}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                  <DownloadSimple className="w-4 h-4 mr-2" />
                   Download PDF Ticket
                 </Button>
               </div>
@@ -258,7 +258,7 @@ export default function TicketCard({ payment, compact = false }: TicketCardProps
                 onClick={handleDownloadPDF}
                 className="shrink-0"
               >
-                <Download className="w-3 h-3 mr-1" />
+                <DownloadSimple className="w-3 h-3 mr-1" />
                 PDF
               </Button>
             )}

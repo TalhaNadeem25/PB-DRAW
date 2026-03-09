@@ -8,19 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import {
   ArrowRight,
-  Award,
+  Medal,
   Calendar,
   Clock,
-  Loader2,
+  CircleNotch,
   MapPin,
-  Medal,
   Ticket,
   Trophy,
   TrendingUp,
   UserPlus,
   Users,
   XCircle,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Link, useNavigate } from "react-router-dom";
 
 export interface PlayerDashboardStats {
@@ -216,7 +215,7 @@ const PlayerDashboard = ({
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Award className="w-4 h-4 text-primary" />
+                  <Medal className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-[11px] font-display font-semibold tracking-wider text-muted-foreground uppercase">
                   Rating
@@ -502,7 +501,7 @@ const PlayerDashboard = ({
           <CardContent>
             {ticketsLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             ) : ticketsData && Array.isArray(ticketsData) && ticketsData.length > 0 ? (
               <div className="space-y-4">
@@ -611,7 +610,7 @@ const PlayerDashboard = ({
           <CardContent>
             {teamsLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             ) : myTeams.length > 0 ? (
               <div className="space-y-3">

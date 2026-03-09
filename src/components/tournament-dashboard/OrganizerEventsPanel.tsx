@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Trash2, Settings, Trophy, Loader2, Users, Mail, CheckCircle } from "lucide-react";
+import { Plus, Trash, Gear, Trophy, CircleNotch, Users, Envelope, CheckCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -108,7 +108,7 @@ function WaitlistDialogContent({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -124,7 +124,7 @@ function WaitlistDialogContent({
             <div className="min-w-0">
               <div className="font-medium truncate">{entry.user?.name ?? "—"}</div>
               <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
-                <Mail className="w-3 h-3 shrink-0" />
+                <Envelope className="w-3 h-3 shrink-0" />
                 {entry.user?.email ?? "—"}
               </div>
             </div>
@@ -136,7 +136,7 @@ function WaitlistDialogContent({
                 onClick={() => approveMutation.mutate(entry._id)}
                 disabled={approveMutation.isPending}
               >
-                {approveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                {approveMutation.isPending ? <CircleNotch className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
                 Approve
               </Button>
             )}
@@ -383,7 +383,7 @@ const OrganizerEventsPanel = ({
               <Button onClick={onCreateEvent} disabled={createEventPending}>
                 {createEventPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                     Creating...
                   </>
                 ) : (
@@ -445,7 +445,7 @@ const OrganizerEventsPanel = ({
                       </Button>
                     )}
                     <Button variant="outline" onClick={() => openEditEvent(event)}>
-                      <Settings className="w-4 h-4 mr-1" />
+                      <Gear className="w-4 h-4 mr-1" />
                       Settings
                     </Button>
                     <Button asChild>
@@ -459,7 +459,7 @@ const OrganizerEventsPanel = ({
                       onClick={() => onDeleteEvent(event._id, event.name)}
                       title="Delete event"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
@@ -607,7 +607,7 @@ const OrganizerEventsPanel = ({
             >
               {updateEventMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
                 </>
               ) : (

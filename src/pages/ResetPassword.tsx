@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trophy, Lock, Loader2, Eye, EyeOff, Check } from 'lucide-react';
+import { Trophy, Lock, CircleNotch, Eye, EyeSlash, Check } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 
@@ -174,7 +174,7 @@ const ResetPassword = () => {
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        <CircleNotch className="w-5 h-5 animate-spin mr-2" />
                         Resetting Password...
                       </>
                     ) : (

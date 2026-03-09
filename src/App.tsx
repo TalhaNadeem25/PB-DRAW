@@ -13,12 +13,11 @@ import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { setOnUnauthorized } from "@/services/api";
-import { Users, Ticket } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import { Users, Ticket, CircleNotch } from "@phosphor-icons/react";
 
 const PageFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" aria-label="Loading" />
+    <CircleNotch className="w-8 h-8 animate-spin text-primary" aria-label="Loading" />
   </div>
 );
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import api from '@/services/api';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { CircleNotch } from '@phosphor-icons/react';
 
 export const ConnectAccountButton = () => {
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export const ConnectAccountButton = () => {
 
   return (
     <Button onClick={handleConnect} disabled={loading} size="lg">
-      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {loading && <CircleNotch className="mr-2 h-4 w-4 animate-spin" />}
       {loading ? 'Loading...' : 'Connect Stripe Account'}
     </Button>
   );

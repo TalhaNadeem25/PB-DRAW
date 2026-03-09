@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { toast } from 'sonner';
-import { Trophy, AlertCircle } from 'lucide-react';
+import { Trophy, Warning } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 
 export const NotificationListener = () => {
@@ -30,7 +30,7 @@ export const NotificationListener = () => {
       } else if (type === 'partner-invitation' && data?.actionUrl) {
         toast(title, {
           description: message,
-          icon: <AlertCircle className="w-5 h-5" />,
+          icon: <Warning className="w-5 h-5" />,
           duration: 8000,
           action: {
             label: 'Accept',
@@ -40,7 +40,7 @@ export const NotificationListener = () => {
       } else {
         toast(title, {
           description: message,
-          icon: <AlertCircle className="w-5 h-5" />,
+          icon: <Warning className="w-5 h-5" />,
           duration: 4000,
         });
       }

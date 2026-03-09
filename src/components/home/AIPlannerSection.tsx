@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Brain, Zap, TrendingUp, Target, ArrowRight } from "lucide-react";
+import { Sparkle, Brain, Lightning, TrendingUp, Target, ArrowRight } from "@phosphor-icons/react";
 
 const AIPlannerSection = () => {
   const features = [
@@ -40,7 +40,7 @@ const AIPlannerSection = () => {
           {/* Header */}
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+              <Sparkle className="w-4 h-4 text-primary animate-pulse" />
               <span className="text-sm font-bold text-primary">NEW: AI-POWERED PLANNING</span>
             </div>
 
@@ -81,7 +81,7 @@ const AIPlannerSection = () => {
               <div className="grid lg:grid-cols-2 gap-8 items-center">
                 <div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full mb-4">
-                    <Sparkles className="w-3 h-3 text-primary" />
+                    <Sparkle className="w-3 h-3 text-primary" />
                     <span className="text-xs font-bold text-primary">EXAMPLE QUESTIONS</span>
                   </div>
                   <h3 className="font-display font-bold text-2xl lg:text-3xl mb-4">
@@ -93,7 +93,7 @@ const AIPlannerSection = () => {
                   </p>
                   <Button asChild size="lg" className="bg-hero-gradient hover:shadow-glow">
                     <Link to="/tournament-planner">
-                      <Sparkles className="w-5 h-5 mr-2" />
+                      <Sparkle className="w-5 h-5 mr-2" />
                       Try AI Planner Free
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Link>
@@ -114,7 +114,7 @@ const AIPlannerSection = () => {
                       className="flex items-start gap-3 p-4 rounded-xl bg-background/50 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:bg-background/80 transition-all duration-200 animate-fade-in"
                       style={{ animationDelay: `${(idx + 4) * 100}ms` }}
                     >
-                      <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <Sparkle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{question}</span>
                     </div>
                   ))}

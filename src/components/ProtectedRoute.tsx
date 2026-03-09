@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { CircleNotch } from '@phosphor-icons/react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CircleNotch className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }

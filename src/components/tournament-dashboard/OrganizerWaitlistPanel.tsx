@@ -9,7 +9,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { waitlistAPI } from "@/services/api";
-import { CheckCircle, ListOrdered, Loader2, Mail } from "lucide-react";
+import { CheckCircle, ListNumbers, CircleNotch, Envelope } from "@phosphor-icons/react";
 import { useState } from "react";
 
 interface OrganizerWaitlistPanelProps {
@@ -56,11 +56,11 @@ export default function OrganizerWaitlistPanel({
     return (
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-3">
-          <ListOrdered className="w-8 h-8 text-primary" />
+          <ListNumbers className="w-8 h-8 text-primary" />
           <h2 className="font-display font-bold text-2xl">Waitlist</h2>
         </div>
         <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-          <ListOrdered className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+          <ListNumbers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
           <p className="text-muted-foreground font-medium">Waitlist is not enabled</p>
           <p className="text-sm text-muted-foreground mt-1">
             Enable the waitlist in tournament Settings so players can join when events are full. You can then approve them here to send a payment link.
@@ -75,7 +75,7 @@ export default function OrganizerWaitlistPanel({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="font-display font-bold text-2xl flex items-center gap-2">
-            <ListOrdered className="w-6 h-6 text-primary" />
+            <ListNumbers className="w-6 h-6 text-primary" />
             Waitlist
           </h2>
           <p className="text-muted-foreground mt-1">
@@ -100,7 +100,7 @@ export default function OrganizerWaitlistPanel({
 
       {!selectedEventId ? (
         <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-          <ListOrdered className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+          <ListNumbers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
           <p className="text-muted-foreground font-medium">Select an event</p>
           <p className="text-sm text-muted-foreground mt-1">
             Choose an event from the dropdown above to see who is on the waitlist.
@@ -108,11 +108,11 @@ export default function OrganizerWaitlistPanel({
         </div>
       ) : isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
+          <CircleNotch className="w-10 h-10 animate-spin text-muted-foreground" />
         </div>
       ) : entries.length === 0 ? (
         <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-          <ListOrdered className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+          <ListNumbers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
           <p className="text-muted-foreground font-medium">No one on the waitlist</p>
           <p className="text-sm text-muted-foreground mt-1">
             When this event is full, players can join the waitlist. They will appear here.
@@ -133,7 +133,7 @@ export default function OrganizerWaitlistPanel({
                   <div className="min-w-0">
                     <div className="font-medium truncate">{entry.user?.name ?? "—"}</div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
-                      <Mail className="w-3 h-3 shrink-0" />
+                      <Envelope className="w-3 h-3 shrink-0" />
                       {entry.user?.email ?? "—"}
                     </div>
                   </div>
@@ -146,7 +146,7 @@ export default function OrganizerWaitlistPanel({
                       disabled={approveMutation.isPending}
                     >
                       {approveMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <CircleNotch className="w-4 h-4 animate-spin" />
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4 mr-1" />

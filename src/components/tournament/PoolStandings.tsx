@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Medal, Award, TrendingUp, TrendingDown, Trash2 } from "lucide-react";
+import { Trophy, Medal, Medal as AwardIcon, TrendingUp, TrendingDown, Trash } from "@phosphor-icons/react";
 import {
   Table,
   TableBody,
@@ -94,7 +94,7 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
       case 3:
         return (
           <Badge className="bg-orange-600 text-white hover:bg-orange-700 gap-1">
-            <Award className="w-3 h-3" />
+            <AwardIcon className="w-3 h-3" />
             #3 Seed
           </Badge>
         );
@@ -236,7 +236,7 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
                               className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                               title="Remove from pool"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash className="w-3.5 h-3.5" />
                             </Button>
                           )}
                         </div>

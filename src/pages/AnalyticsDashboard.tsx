@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { analyticsAPI, tournamentAPI } from '@/services/api';
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, FileSpreadsheet, FileText, TrendingUp, Trophy, Users } from 'lucide-react';
+import { CurrencyDollar, FileXls, FileText, TrendingUp, Trophy, Users } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from 'sonner';
@@ -139,7 +139,7 @@ const AnalyticsDashboard = () => {
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleExportCSV} variant="outline" size="sm">
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  <FileXls className="w-4 h-4 mr-2" />
                   CSV
                 </Button>
                 <Button onClick={handleExportPDF} variant="outline" size="sm">
@@ -203,7 +203,7 @@ const AnalyticsDashboard = () => {
             <Card className="glass-card-hover rounded-2xl border-border/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-5 w-5 text-primary" />
+                <CurrencyDollar className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-display font-bold">

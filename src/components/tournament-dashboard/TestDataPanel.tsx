@@ -11,13 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  FlaskConical,
-  Loader2,
+  Flask,
+  CircleNotch,
   Users,
-  Trash2,
-  AlertTriangle,
-  CheckCircle2,
-} from "lucide-react";
+  Trash,
+  Warning,
+  CheckCircle,
+} from "@phosphor-icons/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventAPI, testDataAPI } from "@/services/api";
 import { toast } from "sonner";
@@ -77,7 +77,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
     <div className="space-y-6 animate-fade-in">
       {/* Warning Banner */}
       <div className="flex items-start gap-3 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
-        <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+        <Warning className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
         <div>
           <p className="font-display font-bold text-sm text-yellow-700">Testing Only</p>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -91,7 +91,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
       <div className="glass-card rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <FlaskConical className="w-5 h-5 text-primary" />
+            <Flask className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h3 className="font-display font-bold text-lg">Generate Test Registrations</h3>
@@ -107,7 +107,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
             <Label className="font-display font-semibold text-sm">Event</Label>
             {eventsLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <CircleNotch className="w-4 h-4 animate-spin" />
                 Loading events...
               </div>
             ) : (
@@ -150,7 +150,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
             >
               {generateMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <CircleNotch className="w-4 h-4 animate-spin" />
                   Generating...
                 </>
               ) : (
@@ -186,7 +186,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
         {/* Success indicator */}
         {generateMutation.isSuccess && (
           <div className="mt-4 flex items-center gap-2 text-sm text-green-600 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle className="w-4 h-4" />
             {(generateMutation.data as any)?.message}
           </div>
         )}
@@ -197,7 +197,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-destructive" />
+              <Trash className="w-5 h-5 text-destructive" />
             </div>
             <div>
               <h3 className="font-display font-bold text-lg">Clear All Test Data</h3>
@@ -214,12 +214,12 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
           >
             {clearMutation.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <CircleNotch className="w-4 h-4 animate-spin" />
                 Clearing...
               </>
             ) : (
               <>
-                <Trash2 className="w-4 h-4" />
+                <Trash className="w-4 h-4" />
                 Clear Test Data
               </>
             )}
@@ -228,7 +228,7 @@ const TestDataPanel = ({ tournamentId }: TestDataPanelProps) => {
 
         {clearMutation.isSuccess && (
           <div className="mt-4 flex items-center gap-2 text-sm text-green-600 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle className="w-4 h-4" />
             {(clearMutation.data as any)?.message}
           </div>
         )}

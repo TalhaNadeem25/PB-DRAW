@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Check, CheckCheck, Trash2, Trophy, Calendar, Users, AlertCircle, Clock, X, CreditCard } from 'lucide-react';
+import { Bell, Check, Checks, Trash, Trophy, Calendar, Users, Warning, Clock, X, CreditCard } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -50,7 +50,7 @@ const getNotificationIcon = (type: string) => {
     case 'check-in-reminder':
       return Clock;
     default:
-      return AlertCircle;
+      return Warning;
   }
 };
 
@@ -221,7 +221,7 @@ export const NotificationCenter = () => {
               onClick={handleMarkAllAsRead}
               className="text-xs hover:bg-accent/50"
             >
-              <CheckCheck className="h-4 w-4 mr-1" />
+              <Checks className="h-4 w-4 mr-1" />
               Mark all read
             </Button>
           )}

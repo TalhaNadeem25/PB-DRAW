@@ -27,16 +27,16 @@ import { loadStripe } from "@stripe/stripe-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
-    AlertCircle,
+    Warning,
     ArrowLeft,
     Calendar,
     Check,
-    ChevronUp,
+    CaretUp,
     Clock,
     FileText,
     Hash,
-    Loader2,
-    Mail,
+    CircleNotch,
+    Envelope,
     MapPin,
     Phone,
     ShieldCheck,
@@ -45,7 +45,7 @@ import {
     User,
     UserPlus,
     Users
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -340,7 +340,7 @@ const Register = () => {
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading registration...</p>
           </div>
         </div>
@@ -354,7 +354,7 @@ const Register = () => {
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-destructive" />
+              <Warning className="w-8 h-8 text-destructive" />
             </div>
             <h2 className="text-2xl font-display font-bold mb-2">Tournament Not Found</h2>
             <p className="text-muted-foreground mb-6">The tournament you're trying to register for doesn't exist.</p>
@@ -485,7 +485,7 @@ const Register = () => {
               </div>
               {organizer?.email && (
                 <p className="text-sm text-white flex items-center gap-2 mb-2 truncate">
-                  <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                  <Envelope className="w-4 h-4 text-slate-400 shrink-0" />
                   {organizer.email}
                 </p>
               )}
@@ -794,7 +794,7 @@ const Register = () => {
                       <ShoppingBag className="w-5 h-5" />
                       Registration Summary
                     </h3>
-                    <ChevronUp className="w-5 h-5 text-primary-foreground opacity-80" />
+                    <CaretUp className="w-5 h-5 text-primary-foreground opacity-80" />
                   </div>
                 </div>
                 <div className="p-5 space-y-4">
@@ -841,7 +841,7 @@ const Register = () => {
                       >
                         {createAllTeamsMutation.isPending ? (
                           <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            <CircleNotch className="w-5 h-5 mr-2 animate-spin" />
                             Creating…
                           </>
                         ) : (

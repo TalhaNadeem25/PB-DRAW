@@ -9,15 +9,15 @@ import {
   MapPin,
   Play,
   Plus,
-  Sparkles,
+  Sparkle,
   Target,
   TrendingUp,
   Trophy,
   Users,
-  Zap,
-} from "lucide-react";
+  Lightning,
+  CircleNotch,
+} from "@phosphor-icons/react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 
 export interface OrganizerDashboardProps {
   myTournaments: any[];
@@ -92,12 +92,12 @@ export default function OrganizerDashboard({
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="flex-shrink-0">
               <div className="w-20 h-20 bg-hero-gradient rounded-2xl flex items-center justify-center shadow-glow">
-                <Sparkles className="w-10 h-10 text-primary-foreground" />
+                <Sparkle className="w-10 h-10 text-primary-foreground" />
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full mb-3">
-                <Sparkles className="w-3 h-3 text-primary" />
+                <Sparkle className="w-3 h-3 text-primary" />
                 <span className="text-xs font-bold text-primary">NEW FEATURE</span>
               </div>
               <h3 className="font-display font-bold text-2xl mb-2">
@@ -112,7 +112,7 @@ export default function OrganizerDashboard({
                   <span className="text-sm">Smart Event Suggestions</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-primary" />
+                  <Lightning className="w-4 h-4 text-primary" />
                   <span className="text-sm">Court Calculations</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export default function OrganizerDashboard({
               </div>
               <Button asChild size="lg" className="bg-hero-gradient hover:shadow-glow">
                 <Link to="/tournament-planner">
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Sparkle className="w-4 h-4 mr-2" />
                   Try AI Planner Now
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
@@ -185,7 +185,7 @@ export default function OrganizerDashboard({
         <CardContent>
           {tournamentsLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : activeTournaments.length > 0 ? (
             <div className="space-y-4">

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { AlertCircle, Bell, Settings } from "lucide-react";
+import { Warning, Bell, Gear } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -47,7 +47,7 @@ const Dashboard = () => {
         <div className="min-h-screen bg-background flex items-center justify-center">
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 text-center">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <Warning className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <h2 className="text-xl font-bold mb-2">Please log in</h2>
               <p className="text-muted-foreground mb-4">You need to be logged in to view your dashboard.</p>
               <Button asChild>
@@ -92,7 +92,7 @@ const Dashboard = () => {
                 </Button>
                 <Button variant="outline" size="icon" className="w-9 h-9 sm:w-10 sm:h-10" asChild>
                   <Link to="/profile">
-                    <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <Gear className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Link>
                 </Button>
               </div>

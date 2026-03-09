@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, XCircle, ExternalLink, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowSquareOut, Warning } from '@phosphor-icons/react';
 import api from '@/services/api';
 import { ConnectAccountButton } from './ConnectAccountButton';
 import { toast } from 'sonner';
@@ -66,7 +66,7 @@ export const ConnectAccountStatus = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="text-yellow-500" />
+            <Warning className="text-yellow-500" />
             Payment Setup Required
           </CardTitle>
           <CardDescription>
@@ -167,7 +167,7 @@ export const ConnectAccountStatus = () => {
 
           <div className="flex gap-2">
             <Button onClick={handleViewDashboard} variant="outline">
-              <ExternalLink className="w-4 h-4 mr-2" />
+              <ArrowSquareOut className="w-4 h-4 mr-2" />
               View Stripe Dashboard
             </Button>
           </div>

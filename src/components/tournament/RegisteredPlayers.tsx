@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { tournamentAPI, teamAPI, eventAPI, cancellationAPI } from "@/services/api";
-import { Loader2, Users, Mail, Star, Calendar, CheckCircle2, XCircle, ArrowRight, DollarSign, AlertTriangle, User, Info, ChevronDown } from "lucide-react";
+import { CircleNotch, Users, Envelope, Star, Calendar, CheckCircle, XCircle, ArrowRight, CurrencyDollar, Warning, User, Info, CaretDown } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -153,7 +153,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CircleNotch className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -239,7 +239,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                 className="font-semibold text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
                               >
                                 {player.name}
-                                <ChevronDown className="w-3 h-3 opacity-70" />
+                                <CaretDown className="w-3 h-3 opacity-70" />
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-52">
@@ -263,7 +263,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => handleRefundClick(player, "player")}
                                 >
-                                  <DollarSign className="w-4 h-4" />
+                                  <CurrencyDollar className="w-4 h-4" />
                                   Refund & remove
                                 </DropdownMenuItem>
                               )}
@@ -272,7 +272,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                         </TableCell>
                         <TableCell>
                           <a href={`mailto:${player.email}`} className="text-primary hover:underline flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
+                            <Envelope className="w-3 h-3" />
                             {player.email}
                           </a>
                         </TableCell>
@@ -285,7 +285,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                         <TableCell>
                           {player.paymentStatus === 'paid' ? (
                             <Badge variant="default" className="bg-court-green text-white flex items-center gap-1 w-fit">
-                              <CheckCircle2 className="w-3 h-3" />
+                              <CheckCircle className="w-3 h-3" />
                               Paid
                             </Badge>
                           ) : (
@@ -316,7 +316,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                 onClick={() => handleRefundClick(player, 'player')}
                                 className="flex items-center gap-1 border-destructive/30 text-destructive hover:bg-destructive/10"
                               >
-                                <DollarSign className="w-3 h-3" />
+                                <CurrencyDollar className="w-3 h-3" />
                                 Refund
                               </Button>
                             )}
@@ -351,7 +351,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                 className="font-semibold text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
                               >
                                 {team.teamName}
-                                <ChevronDown className="w-3 h-3 opacity-70" />
+                                <CaretDown className="w-3 h-3 opacity-70" />
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-52">
@@ -369,7 +369,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => handleRefundClick(team, "team")}
                                 >
-                                  <DollarSign className="w-4 h-4" />
+                                  <CurrencyDollar className="w-4 h-4" />
                                   Refund & remove
                                 </DropdownMenuItem>
                               )}
@@ -386,7 +386,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                     className="font-medium text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded text-left"
                                   >
                                     {team.players[0].name}
-                                    <ChevronDown className="w-3 h-3 opacity-70" />
+                                    <CaretDown className="w-3 h-3 opacity-70" />
                                   </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-52">
@@ -403,7 +403,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                               <a href={`mailto:${team.players[0].email}`} className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5">
-                                <Mail className="w-3 h-3" />
+                                <Envelope className="w-3 h-3" />
                                 {team.players[0].email}
                               </a>
                             </div>
@@ -421,7 +421,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                     className="font-medium text-primary hover:underline cursor-pointer inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded text-left"
                                   >
                                     {team.players[1].name}
-                                    <ChevronDown className="w-3 h-3 opacity-70" />
+                                    <CaretDown className="w-3 h-3 opacity-70" />
                                   </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-52">
@@ -438,7 +438,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                               <a href={`mailto:${team.players[1].email}`} className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5">
-                                <Mail className="w-3 h-3" />
+                                <Envelope className="w-3 h-3" />
                                 {team.players[1].email}
                               </a>
                             </div>
@@ -459,7 +459,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                         <TableCell>
                           {team.paymentStatus === 'paid' ? (
                             <Badge variant="default" className="bg-court-green text-white flex items-center gap-1 w-fit">
-                              <CheckCircle2 className="w-3 h-3" />
+                              <CheckCircle className="w-3 h-3" />
                               Paid
                             </Badge>
                           ) : team.paymentStatus === 'partially_paid' ? (
@@ -495,7 +495,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
                                 onClick={() => handleRefundClick(team, 'team')}
                                 className="flex items-center gap-1 border-destructive/30 text-destructive hover:bg-destructive/10"
                               >
-                                <DollarSign className="w-3 h-3" />
+                                <CurrencyDollar className="w-3 h-3" />
                                 Refund
                               </Button>
                             )}
@@ -656,7 +656,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
             >
               {(moveTeamMutation.isPending || movePlayerMutation.isPending) ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Moving...
                 </>
               ) : (
@@ -682,7 +682,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-destructive" />
+              <CurrencyDollar className="w-5 h-5 text-destructive" />
               Issue Refund
             </DialogTitle>
             <DialogDescription>
@@ -721,7 +721,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
             </div>
             {refundConfirmStep === "confirm" && (
               <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-fade-in">
-                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <Warning className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                 <p className="text-sm text-destructive font-medium">
                   Are you sure? This will process a full refund via Stripe and remove the {refundTarget?.type === 'team' ? 'team' : 'player'} from the event. This action cannot be undone.
                 </p>
@@ -752,7 +752,7 @@ const RegisteredPlayers = ({ tournamentId }: RegisteredPlayersProps) => {
             >
               {refundMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Processing...
                 </>
               ) : refundConfirmStep === "confirm" ? (

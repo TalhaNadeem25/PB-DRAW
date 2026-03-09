@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, Trophy, Trash2, Calendar, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Heart, ShareNetwork, Trophy, Trash, Calendar, CheckCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ExportButtons from "@/components/tournament/ExportButtons";
@@ -113,7 +113,7 @@ const DashboardTopBar = ({
             className="h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm border-foreground/30 hover:bg-foreground hover:text-background transition-colors"
             onClick={onCompleteTournament}
           >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
+            <CheckCircle className="w-4 h-4 mr-2" />
             <span className="whitespace-nowrap">Complete Tournament</span>
           </Button>
         )}
@@ -145,7 +145,7 @@ const DashboardTopBar = ({
           size="icon"
           className="h-12 w-12 rounded-xl border-border bg-card hover:bg-muted/50 hover:border-primary/50 transition-colors shrink-0"
         >
-          <Share2 className="w-5 h-5 text-muted-foreground" />
+          <ShareNetwork className="w-5 h-5 text-muted-foreground" />
         </Button>
 
         <Button
@@ -154,7 +154,7 @@ const DashboardTopBar = ({
           className="h-12 w-12 rounded-xl border-border bg-card hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive text-muted-foreground transition-colors shrink-0"
           onClick={onDeleteTournament}
         >
-          <Trash2 className="w-5 h-5" />
+          <Trash className="w-5 h-5" />
         </Button>
       </div>
     </div>

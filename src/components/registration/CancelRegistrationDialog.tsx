@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription } from '../ui/alert';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
-import { AlertTriangle, DollarSign, Calendar, Users, Loader2, XCircle, Info } from 'lucide-react';
+import { Warning, CurrencyDollar, Calendar, Users, CircleNotch, XCircle, Info } from '@phosphor-icons/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../hooks/use-toast';
 import { cancellationAPI } from '../../services/api';
@@ -130,14 +130,14 @@ export default function CancelRegistrationDialog({
 
         {loadingPreview ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+            <CircleNotch className="w-8 h-8 animate-spin text-green-600" />
           </div>
         ) : refundPreview ? (
           <div className="space-y-6">
             {/* Refund Summary */}
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border-2 border-green-200">
               <div className="flex items-center gap-2 mb-4">
-                <DollarSign className="w-5 h-5 text-green-700" />
+                <CurrencyDollar className="w-5 h-5 text-green-700" />
                 <h3 className="text-lg font-semibold text-green-900">Refund Summary</h3>
               </div>
 
@@ -212,7 +212,7 @@ export default function CancelRegistrationDialog({
             {/* Confirmation Step Warning */}
             {confirmStep === 'confirm' && (
               <Alert variant="destructive" className="animate-pulse">
-                <AlertTriangle className="w-5 h-5" />
+                <Warning className="w-5 h-5" />
                 <AlertDescription>
                   <strong>Final Confirmation:</strong> This action cannot be undone. Are you absolutely sure you want to cancel your registration?
                 </AlertDescription>
@@ -236,7 +236,7 @@ export default function CancelRegistrationDialog({
           </div>
         ) : (
           <Alert variant="destructive">
-            <AlertTriangle className="w-4 h-4" />
+            <Warning className="w-4 h-4" />
             <AlertDescription>
               {refundPreviewError && (refundPreviewError as any)?.response?.data?.message
                 ? (refundPreviewError as any).response.data.message
@@ -261,7 +261,7 @@ export default function CancelRegistrationDialog({
           >
             {requestCancellation.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 Processing...
               </>
             ) : confirmStep === 'confirm' ? (
@@ -271,7 +271,7 @@ export default function CancelRegistrationDialog({
               </>
             ) : (
               <>
-                <AlertTriangle className="w-4 h-4 mr-2" />
+                <Warning className="w-4 h-4 mr-2" />
                 Continue to Cancel
               </>
             )}

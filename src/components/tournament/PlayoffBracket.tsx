@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trophy, Users, Loader2, Edit2, Check, X } from "lucide-react";
+import { Trophy, Users, CircleNotch, PencilSimple, Check, X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { formatMatchFormatShort } from "@/constants/matchFormat";
 
@@ -190,7 +190,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
                 handleEditClick(match);
               }}
             >
-              <Edit2 className="w-3 h-3" />
+              <PencilSimple className="w-3 h-3" />
             </Button>
           )}
         </div>
@@ -616,7 +616,7 @@ const PlayoffBracket = ({ matches, onUpdateScore, isUpdating }: PlayoffBracketPr
             <Button onClick={handleSaveScore} disabled={isUpdating || !editingMatch?.team2}>
               {isUpdating ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
                 </>
               ) : (

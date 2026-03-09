@@ -1,4 +1,4 @@
-import { Clock, MapPin, Trophy, CheckCircle, XCircle, ArrowRight, Timer } from "lucide-react";
+import { Clock, MapPin, Trophy, CheckCircle, XCircle, ArrowRight, Timer } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

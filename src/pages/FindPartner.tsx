@@ -25,18 +25,18 @@ import {
     Calendar,
     Check,
     Clock,
-    Filter,
-    Loader2,
+    Funnel,
+    CircleNotch,
     MapPin,
-    MessageSquare,
-    Search,
-    Send,
+    Chat,
+    MagnifyingGlass,
+    PaperPlaneTilt,
     Star,
     Trophy,
     UserPlus,
     Users,
     X
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -251,11 +251,11 @@ const FindPartner = () => {
           >
             <TabsList className="grid grid-cols-2 w-full max-w-md mb-6 bg-muted/50 border border-border p-1.5 rounded-xl">
               <TabsTrigger value="browse" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">
-                <Search className="w-4 h-4" />
+                <MagnifyingGlass className="w-4 h-4" />
                 Browse Players
               </TabsTrigger>
               <TabsTrigger value="requests" className="gap-2 relative rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all">
-                <MessageSquare className="w-4 h-4" />
+                <Chat className="w-4 h-4" />
                 Requests
                 {receivedRequests.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-[10px] font-bold rounded-full flex items-center justify-center text-primary-foreground">
@@ -270,7 +270,7 @@ const FindPartner = () => {
                 {/* Filters */}
                 <div className="glass-card-hover rounded-2xl p-6 animate-fade-in">
                   <h3 className="font-display font-bold text-lg flex items-center gap-2 mb-6">
-                    <Filter className="w-5 h-5 text-primary" />
+                    <Funnel className="w-5 h-5 text-primary" />
                     Filters
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -426,7 +426,7 @@ const FindPartner = () => {
                   {/* Received Requests */}
                   <div className="glass-card-hover rounded-2xl p-6 animate-fade-in">
                     <h3 className="font-display font-bold text-lg flex items-center gap-2 mb-6">
-                      <MessageSquare className="w-5 h-5 text-primary" />
+                      <Chat className="w-5 h-5 text-primary" />
                       Received Requests
                       {receivedRequests.length > 0 && (
                         <Badge variant="secondary" className="ml-auto">{receivedRequests.length}</Badge>
@@ -435,11 +435,11 @@ const FindPartner = () => {
                     <div>
                       {isLoadingRequests ? (
                         <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                          <CircleNotch className="w-6 h-6 animate-spin text-primary" />
                         </div>
                       ) : receivedRequests.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
-                          <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                          <Chat className="w-10 h-10 mx-auto mb-3 opacity-50" />
                           <p>No pending requests</p>
                         </div>
                       ) : (
@@ -504,17 +504,17 @@ const FindPartner = () => {
                   {/* Sent Requests */}
                   <div className="glass-card-hover rounded-2xl p-6 animate-fade-in">
                     <h3 className="font-display font-bold text-lg flex items-center gap-2 mb-6">
-                      <Send className="w-5 h-5 text-primary" />
+                      <PaperPlaneTilt className="w-5 h-5 text-primary" />
                       Sent Requests
                     </h3>
                     <div>
                       {isLoadingRequests ? (
                         <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                          <CircleNotch className="w-6 h-6 animate-spin text-primary" />
                         </div>
                       ) : sentRequests.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
-                          <Send className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                          <PaperPlaneTilt className="w-10 h-10 mx-auto mb-3 opacity-50" />
                           <p>No sent requests</p>
                         </div>
                       ) : (
@@ -637,12 +637,12 @@ const FindPartner = () => {
             <Button onClick={handleSendRequest} disabled={isSending}>
               {isSending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4 mr-2" />
+                  <PaperPlaneTilt className="w-4 h-4 mr-2" />
                   Send Request
                 </>
               )}

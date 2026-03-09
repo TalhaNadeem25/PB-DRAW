@@ -7,11 +7,11 @@ import {
   Calendar,
   Clock,
   MapPin,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
+  CheckCircle,
+  Warning,
+  CircleNotch,
   Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { matchAPI } from "@/services/api";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -105,9 +105,9 @@ const MatchCheckInCard = ({ match }: MatchCheckInCardProps) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2">
               {checkInStatus.team1Status === 'checked-in' ? (
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle className="w-4 h-4 text-green-600" />
               ) : checkInStatus.team1Status === 'no-show' ? (
-                <AlertCircle className="w-4 h-4 text-red-600" />
+                <Warning className="w-4 h-4 text-red-600" />
               ) : (
                 <Clock className="w-4 h-4 text-orange-600" />
               )}
@@ -124,9 +124,9 @@ const MatchCheckInCard = ({ match }: MatchCheckInCardProps) => {
             </div>
             <div className="flex items-center gap-2">
               {checkInStatus.team2Status === 'checked-in' ? (
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle className="w-4 h-4 text-green-600" />
               ) : checkInStatus.team2Status === 'no-show' ? (
-                <AlertCircle className="w-4 h-4 text-red-600" />
+                <Warning className="w-4 h-4 text-red-600" />
               ) : (
                 <Clock className="w-4 h-4 text-orange-600" />
               )}
@@ -153,12 +153,12 @@ const MatchCheckInCard = ({ match }: MatchCheckInCardProps) => {
           >
             {checkInMutation.isPending || isCheckingIn ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 Checking in...
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-4 h-4 mr-2" />
+                <CheckCircle className="w-4 h-4 mr-2" />
                 Check In for Match
               </>
             )}
@@ -167,7 +167,7 @@ const MatchCheckInCard = ({ match }: MatchCheckInCardProps) => {
 
         {isPastDeadline && checkInStatus.team1Status === 'pending' && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-            <AlertCircle className="w-4 h-4 inline mr-2" />
+            <Warning className="w-4 h-4 inline mr-2" />
             Check-in deadline has passed
           </div>
         )}

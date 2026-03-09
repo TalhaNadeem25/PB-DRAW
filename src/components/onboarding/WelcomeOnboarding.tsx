@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trophy, User, Users, ChevronRight } from "lucide-react";
+import { Trophy, User, Users, CaretRight } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 
 const ONBOARDING_DISMISSED_KEY = "picklix_welcome_dismissed";
@@ -66,7 +66,7 @@ export default function WelcomeOnboarding({ open, onOpenChange }: WelcomeOnboard
           </Button>
           <Button className="w-full sm:w-auto" asChild>
             <Link to="/profile" onClick={handleDismiss}>
-              Complete profile <ChevronRight className="w-4 h-4 ml-1" />
+              Complete profile <CaretRight className="w-4 h-4 ml-1" />
             </Link>
           </Button>
         </DialogFooter>

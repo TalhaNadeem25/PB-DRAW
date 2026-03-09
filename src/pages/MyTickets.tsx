@@ -1,7 +1,7 @@
 import Layout from '@/components/layout/Layout';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { Calendar, CheckCircle, Download, Loader2, Search, Ticket } from 'lucide-react';
+import { Calendar, CheckCircle, DownloadSimpleSimple, CircleNotch, MagnifyingGlass, Ticket } from '@phosphor-icons/react';
 import { useState } from 'react';
 import TicketCard from '../components/check-in/TicketCard';
 import { Button } from '../components/ui/button';
@@ -38,7 +38,7 @@ interface TicketData {
 }
 
 export default function MyTickets() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setMagnifyingGlassTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'all'>('upcoming');
 
   // Fetch user's tickets
@@ -53,13 +53,13 @@ export default function MyTickets() {
 
   // Filter tickets based on search and tab
   const filteredTickets = tickets?.filter((ticket) => {
-    // Search filter
-    const matchesSearch =
+    // MagnifyingGlass filter
+    const matchesMagnifyingGlass =
       ticket.tournament.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.events.some(e => e.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       ticket.ticketCode.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (!matchesSearch) return false;
+    if (!matchesMagnifyingGlass) return false;
 
     // Tab filter
     const tournamentDate = new Date(ticket.tournament.startDate);
@@ -71,8 +71,8 @@ export default function MyTickets() {
     return true; // 'all' tab
   });
 
-  // Download all PDFs
-  const handleDownloadAll = () => {
+  // DownloadSimple all PDFs
+  const handleDownloadSimpleAll = () => {
     filteredTickets?.forEach((ticket) => {
       if (ticket.ticketPdfUrl) {
         window.open(ticket.ticketPdfUrl, '_blank');
@@ -93,7 +93,7 @@ export default function MyTickets() {
         <div className="h-24" />
         <div className="flex flex-col items-center justify-center py-20">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 animate-pulse">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <CircleNotch className="w-8 h-8 animate-spin text-primary" />
           </div>
           <p className="text-muted-foreground">Loading tickets...</p>
         </div>
@@ -167,27 +167,27 @@ export default function MyTickets() {
         </div>
       </div>
 
-      {/* Search and Actions */}
+      {/* MagnifyingGlass and Actions */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search by tournament, event, or ticket code..."
+            placeholder="MagnifyingGlass by tournament, event, or ticket code..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setMagnifyingGlassTerm(e.target.value)}
             className="pl-10 border-border rounded-xl"
           />
         </div>
 
         {filteredTickets && filteredTickets.length > 0 && (
           <Button
-            onClick={handleDownloadAll}
+            onClick={handleDownloadSimpleAll}
             variant="outline"
             className="shrink-0"
           >
-            <Download className="w-4 h-4 mr-2" />
-            Download All PDFs
+            <DownloadSimple className="w-4 h-4 mr-2" />
+            DownloadSimple All PDFs
           </Button>
         )}
       </div>
@@ -239,7 +239,7 @@ export default function MyTickets() {
         <div className="space-y-3 text-sm text-muted-foreground">
           <div className="flex items-start gap-2">
             <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-            <p><strong className="text-foreground">Save your tickets:</strong> Download the PDF or save this page for offline access</p>
+            <p><strong className="text-foreground">Save your tickets:</strong> DownloadSimple the PDF or save this page for offline access</p>
           </div>
           <div className="flex items-start gap-2">
             <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />

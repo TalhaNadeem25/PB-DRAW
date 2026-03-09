@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Globe, Mail, ThumbsUp, ChevronRight } from "lucide-react";
+import { Globe, Envelope, ThumbsUp, CaretRight } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -20,7 +20,7 @@ const Footer = () => {
             asChild
           >
             <Link to="/tournaments" className="inline-flex items-center gap-2">
-              Browse Tournaments <ChevronRight className="w-4 h-4" />
+              Browse Tournaments <CaretRight className="w-4 h-4" />
             </Link>
           </Button>
         </div>
@@ -55,7 +55,7 @@ const Footer = () => {
                   <Globe className="w-5 h-5" />
                 </a>
                 <a href="#" className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all" aria-label="Email">
-                  <Mail className="w-5 h-5" />
+                  <Envelope className="w-5 h-5" />
                 </a>
                 <a href="#" className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all" aria-label="Social">
                   <ThumbsUp className="w-5 h-5" />

@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Printer, Trophy } from "lucide-react";
+import { Printer, Trophy } from "@phosphor-icons/react";
 import { format } from "date-fns";
 
 interface Team {

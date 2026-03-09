@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Home, RefreshCw } from "lucide-react";
+import { Warning, House, ArrowsCounterClockwise } from "@phosphor-icons/react";
 
 interface Props {
   children: ReactNode;
@@ -28,7 +28,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen bg-background flex items-center justify-center p-6">
           <div className="max-w-md w-full text-center space-y-6">
             <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-8 h-8 text-destructive" />
+              <Warning className="w-8 h-8 text-destructive" />
             </div>
             <div>
               <h1 className="text-xl font-display font-bold text-foreground mb-2">
@@ -45,14 +45,14 @@ export default class ErrorBoundary extends Component<Props, State> {
                 className="rounded-xl"
                 onClick={() => window.location.reload()}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <ArrowsCounterClockwise className="w-4 h-4 mr-2" />
                 Refresh page
               </Button>
               <Button
                 className="rounded-xl bg-hero-gradient text-primary-foreground"
                 onClick={() => (window.location.href = "/")}
               >
-                <Home className="w-4 h-4 mr-2" />
+                <House className="w-4 h-4 mr-2" />
                 Go home
               </Button>
             </div>

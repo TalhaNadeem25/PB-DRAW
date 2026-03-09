@@ -16,12 +16,12 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  CalendarIcon,
+  CalendarBlank,
   ArrowLeft,
-  Loader2,
-  Save,
+  CircleNotch,
+  FloppyDisk,
   Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { tournamentAPI } from "@/services/api";
@@ -172,7 +172,7 @@ const EditTournament = () => {
     return (
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <CircleNotch className="w-8 h-8 animate-spin text-primary" />
         </div>
       </Layout>
     );
@@ -368,7 +368,7 @@ const EditTournament = () => {
                               !startDate && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            <CalendarBlank className="mr-2 h-4 w-4" />
                             {startDate ? format(startDate, "PPP") : "Pick a date"}
                           </Button>
                         </PopoverTrigger>
@@ -394,7 +394,7 @@ const EditTournament = () => {
                               !endDate && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            <CalendarBlank className="mr-2 h-4 w-4" />
                             {endDate ? format(endDate, "PPP") : "Pick a date"}
                           </Button>
                         </PopoverTrigger>
@@ -420,7 +420,7 @@ const EditTournament = () => {
                               !registrationDeadline && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            <CalendarBlank className="mr-2 h-4 w-4" />
                             {registrationDeadline
                               ? format(registrationDeadline, "PPP")
                               : "Pick a date"}
@@ -454,12 +454,12 @@ const EditTournament = () => {
                 >
                   {updateMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                       Saving...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
+                      <FloppyDisk className="w-4 h-4 mr-2" />
                       Save Changes
                     </>
                   )}

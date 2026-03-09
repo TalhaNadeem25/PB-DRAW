@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
+import { CheckCircle, XCircle, CircleNotch, Envelope } from "@phosphor-icons/react";
 import Layout from "@/components/layout/Layout";
 import { authAPI } from "@/services/api";
 
@@ -46,7 +46,7 @@ const VerifyEmail = () => {
             <div className="mx-auto mb-4">
               {status === "loading" && (
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  <CircleNotch className="w-8 h-8 text-primary animate-spin" />
                 </div>
               )}
               {status === "success" && (

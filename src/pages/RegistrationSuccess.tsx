@@ -1,7 +1,7 @@
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Calendar, CalendarPlus, Check, Share2, Ticket } from "lucide-react";
+import { ArrowRight, Calendar, CalendarPlus, Check, ShareNetwork, Ticket } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 import { Link, useLocation } from "react-router-dom";

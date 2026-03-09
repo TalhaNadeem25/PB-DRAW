@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, Zap, Brain, TrendingUp, ArrowRight, Plus } from "lucide-react";
+import { Sparkle, Lightning, Brain, TrendingUp, ArrowRight, Plus } from "@phosphor-icons/react";
 import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
 import { tournamentAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,7 +87,7 @@ const TournamentPlanner = () => {
             <div className="border-b border-border/60 bg-card/50">
               <div className="container mx-auto px-4 py-6">
                 <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-6 h-6 text-primary" />
+                  <Sparkle className="w-6 h-6 text-primary" />
                   <span className="text-sm font-medium text-muted-foreground">AI-Powered Planning</span>
                 </div>
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
@@ -99,7 +99,7 @@ const TournamentPlanner = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="text-center mb-16 animate-fade-in">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6">
-                <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                <Sparkle className="w-4 h-4 text-primary animate-pulse" />
                 <span className="text-sm font-semibold text-primary">AI-Powered Tournament Planning</span>
               </div>
 
@@ -144,7 +144,7 @@ const TournamentPlanner = () => {
                         variant="default"
                         size="lg"
                       >
-                        <Sparkles className="w-5 h-5 mr-2" />
+                        <Sparkle className="w-5 h-5 mr-2" />
                         Start Planning with AI
                       </Button>
 
@@ -204,7 +204,7 @@ const TournamentPlanner = () => {
                     "How do I handle skill level divisions?"
                   ].map((question, idx) => (
                     <div key={idx} className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <Sparkle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{question}</span>
                     </div>
                   ))}

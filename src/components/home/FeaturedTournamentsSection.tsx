@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { tournamentAPI } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, MapPin, Users } from "lucide-react";
+import { CaretLeft, CaretRight, MapPin, Users } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -57,14 +57,14 @@ const FeaturedTournamentsSection = () => {
             className="w-12 h-12 rounded-full border-2 border-border bg-background flex items-center justify-center hover:border-primary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <CaretLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => scroll("right")}
             className="w-12 h-12 rounded-full border-2 border-border bg-background flex items-center justify-center hover:border-primary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
             aria-label="Scroll right"
           >
-            <ChevronRight className="w-5 h-5" />
+            <CaretRight className="w-5 h-5" />
           </button>
         </div>
       </motion.div>

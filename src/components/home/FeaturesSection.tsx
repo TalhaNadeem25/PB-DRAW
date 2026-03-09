@@ -1,4 +1,4 @@
-import { Trophy, Users, LayoutGrid, Award, BarChart3, Shield, Zap, Globe } from "lucide-react";
+import { Trophy, Users, SquaresFour, Medal, ChartBar, Shield, Lightning, Globe } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 
 const features = [
@@ -9,13 +9,13 @@ const features = [
     accent: "primary",
   },
   {
-    icon: LayoutGrid,
+    icon: SquaresFour,
     title: "Pool Play Management",
     description: "Automatically generate round-robin pools and track every match with ease.",
     accent: "secondary",
   },
   {
-    icon: Award,
+    icon: Medal,
     title: "Bracket Generation",
     description: "Generate single elimination brackets automatically from pool results.",
     accent: "primary",
@@ -27,7 +27,7 @@ const features = [
     accent: "secondary",
   },
   {
-    icon: BarChart3,
+    icon: ChartBar,
     title: "Live Scoring",
     description: "Real-time score entry and automatic bracket advancement.",
     accent: "primary",
@@ -74,7 +74,7 @@ const FeaturesSection = () => {
           className="text-center mb-20 max-w-3xl mx-auto"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/20 mb-6">
-            <Zap className="w-4 h-4 text-secondary" />
+            <Lightning className="w-4 h-4 text-secondary" />
             <span className="text-sm font-medium">Powerful Features</span>
           </div>
 

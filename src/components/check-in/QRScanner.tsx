@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Camera, CameraOff, FlipHorizontal, Keyboard, CheckCircle, XCircle, Scan } from 'lucide-react';
+import { Camera, CameraSlash, ArrowsHorizontal, Keyboard, CheckCircle, XCircle, Scan } from '@phosphor-icons/react';
 
 interface QRScannerProps {
   onScanSuccess: (ticketCode: string) => void;
@@ -226,7 +226,7 @@ export default function QRScanner({ onScanSuccess, onScanError, isScanning = fal
               variant="outline"
               className="flex-1"
             >
-              <CameraOff className="w-4 h-4 mr-2" />
+              <CameraSlash className="w-4 h-4 mr-2" />
               Stop Scanner
             </Button>
           )}
@@ -237,7 +237,7 @@ export default function QRScanner({ onScanSuccess, onScanError, isScanning = fal
               variant="outline"
               size="icon"
             >
-              <FlipHorizontal className="w-4 h-4" />
+              <ArrowsHorizontal className="w-4 h-4" />
             </Button>
           )}
 

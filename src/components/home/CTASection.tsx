@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { statsAPI } from "@/services/api";
-import { ArrowRight, Trophy, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Trophy, Sparkle, Star } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 
 const CTASection = () => {
@@ -58,7 +58,7 @@ const CTASection = () => {
               transition={{ delay: 0.3 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 mb-8"
             >
-              <Sparkles className="w-4 h-4 text-secondary" />
+              <Sparkle className="w-4 h-4 text-secondary" />
               <span className="text-sm font-medium text-primary-foreground">Start for free today</span>
             </motion.div>
             

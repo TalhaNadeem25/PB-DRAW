@@ -10,16 +10,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DollarSign,
+  CurrencyDollar,
   Clock,
-  CheckCircle2,
+  CheckCircle,
   TrendingUp,
-  Search,
-  Loader2,
+  MagnifyingGlass,
+  CircleNotch,
   XCircle,
-  RefreshCcw,
-  AlertTriangle,
-} from "lucide-react";
+  ArrowsCounterClockwise,
+  Warning,
+} from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { cancellationAPI } from "@/services/api";
 import { cn } from "@/lib/utils";
@@ -111,7 +111,7 @@ const RefundsPanel = ({ tournamentId, tournamentName }: RefundsPanelProps) => {
         <div className="glass-card-hover rounded-2xl p-5 group">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-green-500/10 group-hover:bg-hero-gradient flex items-center justify-center transition-all duration-300">
-              <DollarSign className="w-5 h-5 text-green-600 group-hover:text-white transition-colors" />
+              <CurrencyDollar className="w-5 h-5 text-green-600 group-hover:text-white transition-colors" />
             </div>
             <span className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
               Total Refunded
@@ -139,7 +139,7 @@ const RefundsPanel = ({ tournamentId, tournamentName }: RefundsPanelProps) => {
         <div className="glass-card-hover rounded-2xl p-5 group">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-hero-gradient flex items-center justify-center transition-all duration-300">
-              <CheckCircle2 className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
+              <CheckCircle className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
             </div>
             <span className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
               Processed
@@ -168,7 +168,7 @@ const RefundsPanel = ({ tournamentId, tournamentName }: RefundsPanelProps) => {
           className="rounded-xl gap-2 font-display"
           onClick={() => setIsIssueRefundOpen(true)}
         >
-          <DollarSign className="w-4 h-4" />
+          <CurrencyDollar className="w-4 h-4" />
           Issue Refund
         </Button>
         <Button
@@ -185,7 +185,7 @@ const RefundsPanel = ({ tournamentId, tournamentName }: RefundsPanelProps) => {
           className="rounded-xl ml-auto"
           onClick={() => refetch()}
         >
-          <RefreshCcw className="w-4 h-4" />
+          <ArrowsCounterClockwise className="w-4 h-4" />
         </Button>
       </div>
 
@@ -194,7 +194,7 @@ const RefundsPanel = ({ tournamentId, tournamentName }: RefundsPanelProps) => {
         {/* Filter bar */}
         <div className="px-5 py-4 border-b border-border/40 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search by name or email..."
               value={searchQuery}
@@ -219,12 +219,12 @@ const RefundsPanel = ({ tournamentId, tournamentName }: RefundsPanelProps) => {
         {/* Table */}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <CircleNotch className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-              <RefreshCcw className="w-8 h-8 text-muted-foreground" />
+              <ArrowsCounterClockwise className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="font-display font-bold text-lg mb-1">No cancellations or refunds yet</h3>
             <p className="text-sm text-muted-foreground">

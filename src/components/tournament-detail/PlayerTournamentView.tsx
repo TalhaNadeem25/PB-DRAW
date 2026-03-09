@@ -20,13 +20,13 @@ import {
   Clock,
   Heart,
   Image as ImageIcon,
-  Mail,
+  Envelope,
   MapPin,
   Phone,
-  Share2,
+  ShareNetwork,
   Trophy,
   Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import Layout from "@/components/layout/Layout";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";

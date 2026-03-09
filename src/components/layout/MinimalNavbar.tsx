@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, LogIn } from "lucide-react";
+import { Trophy, SignIn } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,7 +62,7 @@ const MinimalNavbar = () => {
               ) : (
                 <Button variant="ghost" size="sm" asChild className="gap-1.5 text-sm">
                   <Link to="/login">
-                    <LogIn className="w-4 h-4" />
+                    <SignIn className="w-4 h-4" />
                     Sign In
                   </Link>
                 </Button>

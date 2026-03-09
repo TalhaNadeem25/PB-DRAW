@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Award, Crown, Sparkles } from "lucide-react";
+import { Trophy, Medal, Medal as AwardIcon, Crown, Sparkle } from "@phosphor-icons/react";
 
 interface Team {
   _id: string;
@@ -96,7 +96,7 @@ const ResultsPodium = ({ results, poolName, eventName, showScores = false }: Res
         <div className="flex items-center justify-center gap-2">
           <Crown className="w-6 h-6 text-primary" />
           <CardTitle className="text-center text-2xl">Tournament Champions</CardTitle>
-          <Sparkles className="w-6 h-6 text-primary" />
+          <Sparkle className="w-6 h-6 text-primary" />
         </div>
         {(eventName || poolName) && (
           <CardDescription className="text-center text-base">

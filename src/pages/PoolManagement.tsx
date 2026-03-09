@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Users, Trophy, Shuffle, Loader2, AlertCircle, Edit2, Check, X, Trash2, Calendar, Clock } from "lucide-react";
+import { ArrowLeft, Plus, Users, Trophy, Shuffle, CircleNotch, Warning, PencilSimple, Check, X, Trash, Calendar, Clock } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { eventAPI, poolAPI, teamAPI, matchAPI, playoffAPI } from "@/services/api";
@@ -567,7 +567,7 @@ const PoolManagement = () => {
       <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading pool management...</p>
           </div>
         </div>
@@ -580,7 +580,7 @@ const PoolManagement = () => {
       <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <Warning className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h2 className="text-2xl font-display font-bold mb-2">Event Not Found</h2>
             <Button onClick={() => navigate(`/tournaments/${id}`)}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -716,7 +716,7 @@ const PoolManagement = () => {
                       className="bg-court-green text-white hover:bg-court-green-dark shadow-lg"
                     >
                       {createPoolMutation.isPending
-                        ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating…</>
+                        ? <><CircleNotch className="w-4 h-4 animate-spin mr-2" />Creating…</>
                         : `Create ${poolCount} Pool${poolCount > 1 ? 's' : ''}`}
                     </Button>
                   </DialogFooter>
@@ -783,7 +783,7 @@ const PoolManagement = () => {
                             }}
                             title="Remove pool"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash className="w-4 h-4" />
                           </Button>
                         </div>
                       ))}
@@ -815,7 +815,7 @@ const PoolManagement = () => {
                         disabled={autoAssignMutation.isPending}
                       >
                         {autoAssignMutation.isPending
-                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          ? <CircleNotch className="w-3 h-3 animate-spin" />
                           : <Shuffle className="w-3 h-3" />}
                         Auto-assign
                       </Button>
@@ -953,7 +953,7 @@ const PoolManagement = () => {
                                 className="bg-amber-600 text-white hover:bg-amber-700 shadow-lg shrink-0 rounded-xl"
                               >
                                 {completeEventPlayoffsMutation.isPending ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <CircleNotch className="w-4 h-4 animate-spin" />
                                 ) : (
                                   "Complete event playoffs"
                                 )}
@@ -987,7 +987,7 @@ const PoolManagement = () => {
                           >
                             {generateEventPlayoffsMutation.isPending ? (
                               <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                                 Generating...
                               </>
                             ) : eventPlayoffs.length > 0 ? (
@@ -1211,7 +1211,7 @@ const PoolManagement = () => {
                                     disabled={generateDisabled}
                                   >
                                     {generateEventPlayoffsMutation.isPending ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                      <CircleNotch className="w-4 h-4 animate-spin" />
                                     ) : (
                                       "Generate"
                                     )}
@@ -1379,7 +1379,7 @@ const PoolManagement = () => {
                                   onClick={() => selectedPool?._id && regenerateMatchesMutation.mutate(selectedPool._id)}
                                   disabled={regenerateMatchesMutation.isPending}
                                 >
-                                  {regenerateMatchesMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Shuffle className="w-3 h-3" />}
+                                  {regenerateMatchesMutation.isPending ? <CircleNotch className="w-3 h-3 animate-spin" /> : <Shuffle className="w-3 h-3" />}
                                   Regenerate matches
                                 </Button>
                               </div>
@@ -1402,7 +1402,7 @@ const PoolManagement = () => {
                                       onClick={() => setIsCompletePoolConfirmOpen(true)}
                                       disabled={completePoolPlayMutation.isPending}
                                     >
-                                      {completePoolPlayMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Complete pool"}
+                                      {completePoolPlayMutation.isPending ? <CircleNotch className="w-4 h-4 animate-spin" /> : "Complete pool"}
                                     </Button>
                                   </div>
                                   <AlertDialog open={isCompletePoolConfirmOpen} onOpenChange={setIsCompletePoolConfirmOpen}>
@@ -1732,7 +1732,7 @@ const PoolManagement = () => {
                                                             }
                                                           }}
                                                         >
-                                                          <Edit2 className="w-4 h-4 mr-1" />
+                                                          <PencilSimple className="w-4 h-4 mr-1" />
                                                           {isCompleted ? 'Edit Score' : 'Enter Score'}
                                                         </Button>
                                                       )}
@@ -1835,7 +1835,7 @@ const PoolManagement = () => {
             >
               {updateMatchScheduleMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
                 </>
               ) : (
@@ -1865,7 +1865,7 @@ const PoolManagement = () => {
             >
               {deletePoolMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Removing…
                 </>
               ) : (

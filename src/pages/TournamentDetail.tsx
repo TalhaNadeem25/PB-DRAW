@@ -8,7 +8,7 @@ import { useSocket } from "@/contexts/SocketContext";
 import { eventAPI, favoritesAPI, tournamentAPI } from "@/services/api";
 import type { GameType, TournamentFormat } from "@/types/tournament";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { Warning, ArrowLeft, CircleNotch } from "@phosphor-icons/react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -241,7 +241,7 @@ const TournamentDetail = () => {
       <Layout variant="minimal">
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading tournament details...</p>
           </div>
         </div>
@@ -255,7 +255,7 @@ const TournamentDetail = () => {
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-destructive" />
+              <Warning className="w-8 h-8 text-destructive" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Tournament Not Found</h2>
             <p className="text-muted-foreground mb-6">

@@ -13,12 +13,12 @@ import {
   Users,
   CheckCircle,
   Clock,
-  Search,
-  Download,
-  AlertCircle,
-  Loader2,
-  Undo
-} from 'lucide-react';
+  MagnifyingGlass,
+  DownloadSimple,
+  Warning,
+  CircleNotch,
+  ArrowCounterClockwise
+} from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import { useToast } from '../hooks/use-toast';
 
@@ -221,7 +221,7 @@ export default function OrganizerScanner() {
                 >
                   {manualCheckInMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                       Checking In...
                     </>
                   ) : (
@@ -237,7 +237,7 @@ export default function OrganizerScanner() {
 
           {/* Instructions */}
           <Alert className="bg-blue-50 border-blue-200">
-            <AlertCircle className="w-4 h-4 text-blue-600" />
+            <Warning className="w-4 h-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
               <strong>How to use:</strong> Point the camera at the player's QR code ticket. The system will automatically scan and check them in. Make sure there's good lighting for best results.
             </AlertDescription>
@@ -253,7 +253,7 @@ export default function OrganizerScanner() {
                 <Badge variant="secondary">{recentScans.length}</Badge>
               </CardTitle>
               <div className="relative mt-2">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   type="text"
                   placeholder="Search..."
@@ -308,7 +308,7 @@ export default function OrganizerScanner() {
       {recentScans.length > 0 && (
         <div className="mt-6 flex justify-end">
           <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
+            <DownloadSimple className="w-4 h-4 mr-2" />
             Export Check-In Log (CSV)
           </Button>
         </div>

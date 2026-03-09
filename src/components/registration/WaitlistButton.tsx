@@ -3,7 +3,7 @@ import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Users, CheckCircle, XCircle, Loader2, AlertCircle, CreditCard } from 'lucide-react';
+import { Clock, Users, CheckCircle, XCircle, CircleNotch, Warning, CreditCard } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../hooks/use-toast';
 import { waitlistAPI } from '../../services/api';
@@ -106,7 +106,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
   if (loadingPosition) {
     return (
       <div className="flex items-center justify-center p-4">
-        <Loader2 className="w-6 h-6 animate-spin text-green-600" />
+        <CircleNotch className="w-6 h-6 animate-spin text-green-600" />
       </div>
     );
   }
@@ -132,7 +132,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
           >
             {joinWaitlist.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                 Joining Waitlist...
               </>
             ) : (
@@ -190,7 +190,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
         {waitlistPosition.status === 'promoted' && (
           <>
             <Alert className="bg-card border-green-500">
-              <AlertCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <Warning className="w-4 h-4 text-green-600 dark:text-green-400" />
               <AlertDescription className="text-green-800 dark:text-green-300">
                 <strong>A spot is now available for you!</strong>
                 <br />
@@ -272,7 +272,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
             >
               {leaveWaitlist.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Leaving...
                 </>
               ) : (
@@ -299,7 +299,7 @@ export default function WaitlistButton({ eventId, isEventFull, tournamentId, onP
             >
               {joinWaitlist.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
                   Rejoining...
                 </>
               ) : (

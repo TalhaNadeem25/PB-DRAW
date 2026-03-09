@@ -19,12 +19,12 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Check,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Search,
+  CaretLeft,
+  CaretRight,
+  Funnel,
+  MagnifyingGlass,
   Trophy
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import WelcomeOnboarding, { getWelcomeDismissed } from "@/components/onboarding/WelcomeOnboarding";
@@ -154,7 +154,7 @@ const Tournaments = () => {
                 "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                 skillFilter === val ? "border-primary bg-primary text-white" : "border-muted-foreground group-hover:border-primary text-transparent"
               )}>
-                <Check className="w-3 h-3" strokeWidth={3} />
+                <Check className="w-3 h-3" weight="bold" />
               </div>
               <span className="text-sm font-medium">{val === "all" ? "All Levels" : val}</span>
             </label>
@@ -208,7 +208,7 @@ const Tournaments = () => {
                 "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                 formatFilter === val ? "border-primary bg-primary text-white" : "border-muted-foreground group-hover:border-primary text-transparent"
               )}>
-                <Check className="w-3 h-3" strokeWidth={3} />
+                <Check className="w-3 h-3" weight="bold" />
               </div>
               <span className="text-sm font-medium capitalize">{val === "all" ? "All Formats" : val}</span>
             </label>
@@ -231,7 +231,7 @@ const Tournaments = () => {
             
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative max-w-2xl">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Search by tournament name or venue"
                   value={searchQuery}
@@ -246,7 +246,7 @@ const Tournaments = () => {
                 <Drawer>
                   <DrawerTrigger asChild>
                     <Button variant="outline" className="w-full h-14 rounded-xl flex items-center gap-2 shadow-sm border-border bg-card text-foreground font-display uppercase font-bold tracking-wide">
-                      <Filter className="w-5 h-5" />
+                      <Funnel className="w-5 h-5" />
                       Filters {activeFiltersCount > 0 && <Badge className="ml-2 bg-primary">{activeFiltersCount}</Badge>}
                     </Button>
                   </DrawerTrigger>
@@ -273,7 +273,7 @@ const Tournaments = () => {
             <aside className="hidden md:block w-[280px] shrink-0 sticky top-28 bg-card p-6 rounded-2xl border border-border shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-display font-bold text-xl uppercase tracking-tight flex items-center gap-2">
-                  <Filter className="w-5 h-5 text-primary" /> Filters
+                  <Funnel className="w-5 h-5 text-primary" /> Filters
                 </h2>
                 {activeFiltersCount > 0 && (
                   <button 
@@ -322,7 +322,7 @@ const Tournaments = () => {
               ) : error ? (
                 <div className="text-center py-20 bg-card rounded-2xl border border-border">
                   <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
-                    <Search className="w-8 h-8 text-destructive" />
+                    <MagnifyingGlass className="w-8 h-8 text-destructive" />
                   </div>
                   <h3 className="text-xl font-display font-bold uppercase tracking-tight mb-2">
                     Error loading tournaments
@@ -355,7 +355,7 @@ const Tournaments = () => {
                         disabled={currentPage === 1}
                         className="w-10 h-10 rounded-xl"
                       >
-                        <ChevronLeft className="w-5 h-5" />
+                        <CaretLeft className="w-5 h-5" />
                       </Button>
                       
                       <div className="flex items-center gap-1 mx-2">
@@ -391,7 +391,7 @@ const Tournaments = () => {
                         disabled={currentPage === totalPages}
                         className="w-10 h-10 rounded-xl"
                       >
-                        <ChevronRight className="w-5 h-5" />
+                        <CaretRight className="w-5 h-5" />
                       </Button>
                     </div>
                   )}

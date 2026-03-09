@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle } from "lucide-react";
+import { CircleNotch, Warning } from "@phosphor-icons/react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { eventAPI, poolAPI, matchAPI } from "@/services/api";
 import MatchSchedule from "./MatchSchedule";
@@ -73,7 +73,7 @@ const TournamentSchedule = ({ tournamentId, tournamentStartDate }: TournamentSch
   if (eventsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CircleNotch className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -81,7 +81,7 @@ const TournamentSchedule = ({ tournamentId, tournamentStartDate }: TournamentSch
   if (!events || events.length === 0) {
     return (
       <Alert>
-        <AlertCircle className="h-4 w-4" />
+        <Warning className="h-4 w-4" />
         <AlertDescription>
           No events have been created for this tournament yet. Create events and pools to start scheduling matches.
         </AlertDescription>
@@ -92,7 +92,7 @@ const TournamentSchedule = ({ tournamentId, tournamentStartDate }: TournamentSch
   if (matchesLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <CircleNotch className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
