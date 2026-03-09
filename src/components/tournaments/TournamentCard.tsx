@@ -133,7 +133,7 @@ const TournamentCard = ({
           {status !== 'completed' && (
             <>
               <div className="flex justify-between items-end mb-1 text-sm font-bold">
-                <span className="text-foreground flex items-center gap-1.5 text-xs"><Users className="w-3.5 h-3.5 text-muted-foreground"/> {spotsFilled}/{spotsTotal} filled</span>
+                <span className="text-foreground flex items-center gap-1.5 text-xs"><Users className="w-3.5 h-3.5 text-muted-foreground"/> {spotsFilled} registered</span>
               </div>
               <div className="w-full bg-muted rounded-full h-1.5 mb-5 overflow-hidden">
                 <motion.div

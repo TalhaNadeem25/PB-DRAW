@@ -103,14 +103,65 @@ export const createPaymentIntent = async (req, res, next) => {
       });
     }
 
-    // Use event.entryFee (per-event fee); tournament.entryFee is deprecated
-    const amount = event.entryFee || tournament.entryFee || 0;
+    // Total = tournament registration fee (one-time) + event entry fee
+    const tournamentFee = tournament.entryFee || 0;
+    const eventFee = event.entryFee || 0;
+    const amount = tournamentFee + eventFee;
 
     if (amount === 0) {
-      // Free tournament - no payment needed
+      // Free tournament - no Stripe payment, but create a Payment record and ticket so it shows on My Tickets
       team.paymentStatus = 'paid';
       team.registrationConfirmed = true;
       await team.save();
+
+      // Update event team count (same as paid flow)
+      const eventForCount = await Event.findById(eventId);
+      if (eventForCount) {
+        const teamObjectId = (team._id || teamId).toString();
+        const alreadyInEvent = eventForCount.teams.some(id => id.toString() === teamObjectId);
+        if (!alreadyInEvent) {
+          eventForCount.teams.push(team._id || teamId);
+        }
+        eventForCount.currentTeams = eventForCount.teams.length;
+        await eventForCount.save();
+      }
+
+      const payment = await Payment.create({
+        user: req.user.id,
+        team: teamId,
+        event: eventId,
+        events: [eventId],
+        tournament: tournament._id,
+        amount: 0,
+        status: 'completed',
+        metadata: {
+          description: `Free entry for ${tournament.name} - ${event.name}`,
+          receiptEmail: req.user.email
+        }
+      });
+
+      try {
+        const userDoc = await User.findById(req.user.id).select('name email').lean();
+        const ticketCode = generateTicketCode();
+        const qrCodeUrl = await generateQRCode(ticketCode, payment._id.toString());
+        const ticketPdfUrl = await generateTicketPDF({
+          ticketCode,
+          qrCodeUrl,
+          playerName: userDoc?.name || req.user.email,
+          tournamentName: tournament.name,
+          eventNames: [event.name],
+          tournamentLocation: tournament.location || '',
+          eventDate: tournament.startDate,
+          paymentId: payment._id.toString()
+        });
+        payment.ticketCode = ticketCode;
+        payment.qrCodeUrl = qrCodeUrl;
+        payment.ticketPdfUrl = ticketPdfUrl;
+        await payment.save();
+        console.log(`✅ Free ticket generated for payment ${payment._id}: ${ticketCode}`);
+      } catch (ticketError) {
+        console.error('❌ Failed to generate free ticket:', ticketError);
+      }
 
       return res.status(200).json({
         success: true,
@@ -175,7 +226,9 @@ export const createPaymentIntent = async (req, res, next) => {
       data: {
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
-        amount: amount,
+        amount,
+        tournamentFee,
+        eventFee,
         paymentId: payment._id,
         requiresPayment: true
       }
@@ -328,7 +381,8 @@ export const createMultiEventPaymentIntent = async (req, res, next) => {
     }
 
     // Calculate total amount and breakdown
-    let totalAmount = 0;
+    const tournamentFee = tournament.entryFee || 0;
+    let totalAmount = tournamentFee; // tournament fee charged once
     const eventBreakdown = [];
 
     // Add team-based events (doubles/mixed)
@@ -455,7 +509,8 @@ export const createMultiEventPaymentIntent = async (req, res, next) => {
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         amount: totalAmount,
-        eventBreakdown: eventBreakdown,
+        tournamentFee,
+        eventBreakdown,
         paymentId: payment._id,
         requiresPayment: true
       }

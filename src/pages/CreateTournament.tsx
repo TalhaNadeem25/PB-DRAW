@@ -90,6 +90,7 @@ const CreateTournament = () => {
   // Step 4: Rules & Prizes
   const [checkInWindow, setCheckInWindow] = useState("30");
   const [refereeType, setRefereeType] = useState("");
+  const [tournamentFee, setTournamentFee] = useState<number | string>(0);
   const [prizeTotal, setPrizeTotal] = useState<number | string>("");
   const [prizeFirst, setPrizeFirst] = useState("");
   const [prizeSecond, setPrizeSecond] = useState("");
@@ -260,6 +261,7 @@ const CreateTournament = () => {
         endTime: playEndTime,
         checkInWindow: Number(checkInWindow),
       },
+      entryFee: Number(tournamentFee) || 0,
       refereeType: refereeType || undefined,
       prizePool: prizeTotal !== "" && Number(prizeTotal) >= 0 ? {
         total: Number(prizeTotal),
@@ -928,6 +930,36 @@ const CreateTournament = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                      Registration Fee
+                    </CardTitle>
+                    <CardDescription>
+                      Set a one-time tournament registration fee charged per player, in addition to per-event fees
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tournamentFee">Tournament Entry Fee ($)</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="tournamentFee"
+                          type="number"
+                          min={0}
+                          className="pl-9"
+                          placeholder="0"
+                          value={tournamentFee}
+                          onChange={(e) => setTournamentFee(e.target.value === "" ? "" : Number(e.target.value))}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">Enter 0 for no tournament-level fee. Players will also pay per-event fees set on each event.</p>
                     </div>
                   </CardContent>
                 </Card>

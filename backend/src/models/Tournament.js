@@ -95,7 +95,7 @@ const tournamentSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  // DEPRECATED: Use event.entryFee instead - fees are now set per event, not per tournament
+  // Tournament-level registration fee charged once per player, in addition to per-event fees
   entryFee: {
     type: Number,
     default: 0,

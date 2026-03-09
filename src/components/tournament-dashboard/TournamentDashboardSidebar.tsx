@@ -8,6 +8,7 @@ import {
     GitBranch,
     Layers,
     LayoutDashboard,
+    ListOrdered,
     RefreshCcw,
     Settings,
     Sparkles,
@@ -19,6 +20,7 @@ import { Link } from "react-router-dom";
 export type DashboardSection =
   | "dashboard"
   | "events"
+  | "waitlist"
   | "pools"
   | "registrations"
   | "planner"
@@ -46,6 +48,7 @@ const sidebarCategories: SidebarCategory[] = [
     items: [
       { id: "dashboard", label: "Overview", icon: LayoutDashboard },
       { id: "events", label: "Events", icon: Trophy },
+      { id: "waitlist", label: "Waitlist", icon: ListOrdered },
       { id: "planner", label: "Planner", icon: Calendar },
     ],
   },

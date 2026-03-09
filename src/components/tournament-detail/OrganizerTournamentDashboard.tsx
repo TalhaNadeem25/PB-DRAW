@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import DashboardOverview, { type ActivityItem } from "@/components/tournament-dashboard/DashboardOverview";
 import DashboardTopBar from "@/components/tournament-dashboard/DashboardTopBar";
 import OrganizerEventsPanel from "@/components/tournament-dashboard/OrganizerEventsPanel";
+import OrganizerWaitlistPanel from "@/components/tournament-dashboard/OrganizerWaitlistPanel";
 import TournamentDashboardSidebar, {
   MobileDashboardNav,
   type DashboardSection,
@@ -80,6 +81,14 @@ export default function OrganizerTournamentDashboard({
             onDeleteEvent={onDeleteEvent}
           />
         );
+      case "waitlist":
+        return (
+          <OrganizerWaitlistPanel
+            tournamentId={id}
+            tournament={tournament}
+            events={tournament.events || []}
+          />
+        );
       case "pools":
         return (
           <div className="space-y-6 animate-fade-in">
@@ -106,7 +115,7 @@ export default function OrganizerTournamentDashboard({
                           {event.format?.replace("-", " ") ?? "—"}
                         </Badge>
                         <span>
-                          {(event.currentTeams || 0)} / {event.maxTeams || "—"} {(event.format || "").toLowerCase() === "singles" ? "players" : "teams"}
+                          {(event.currentTeams || 0)} {(event.format || "").toLowerCase() === "singles" ? "players" : "teams"} registered
                         </span>
                       </div>
                     </div>

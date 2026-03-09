@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, Heart, ChevronRight, CreditCard, Settings, Grid3X3, Moon, Sun } from "lucide-react";
+import { Menu, X, Trophy, User, LogIn, LogOut, UserCircle, Home, LayoutDashboard, Users, Radio, BarChart, Sparkles, ChevronRight, CreditCard, Settings, Grid3X3, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -46,7 +46,6 @@ const Navbar = () => {
   const navLinks = [
     { href: "/live", label: "Live", icon: Radio, isLive: true },
     { href: "/tournaments", label: "Tournaments", icon: Trophy },
-    { href: "/find-partner", label: "Partner", icon: Heart, isNew: true },
     ...(user?.role === 'organizer' || user?.role === 'admin'
       ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkles }]
       : []

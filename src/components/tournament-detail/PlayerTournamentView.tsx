@@ -271,9 +271,9 @@ export default function PlayerTournamentView({
                             <div className="flex items-center gap-4">
                               <div className="text-right">
                                 <div className="text-sm text-muted-foreground">
-                                  {(event.format || "").toLowerCase() === "singles" ? "Players" : "Teams"}
+                                  {(event.format || "").toLowerCase() === "singles" ? "Players" : "Teams"} Registered
                                 </div>
-                                <div className="font-semibold">{event.currentTeams || 0}/{event.maxTeams}</div>
+                                <div className="font-semibold">{event.currentTeams || 0}</div>
                               </div>
                               <div className="text-right">
                                 <div className="text-sm text-muted-foreground">Entry Fee</div>

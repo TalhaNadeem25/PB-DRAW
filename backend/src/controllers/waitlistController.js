@@ -136,9 +136,9 @@ export const getWaitlistPosition = async (req, res, next) => {
     });
 
     if (!waitlistEntry) {
-      return res.status(404).json({
-        success: false,
-        message: 'You are not on the waitlist for this event'
+      return res.status(200).json({
+        success: true,
+        data: null
       });
     }
 

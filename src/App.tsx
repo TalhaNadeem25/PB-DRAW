@@ -13,7 +13,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { setOnUnauthorized } from "@/services/api";
-import { Users, Ticket, UserPlus } from "lucide-react";
+import { Users, Ticket } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
 const PageFallback = () => (
@@ -30,7 +30,6 @@ const CreateTournament = lazy(() => import("./pages/CreateTournament"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const EditTournament = lazy(() => import("./pages/EditTournament"));
 const EventRegistration = lazy(() => import("./pages/EventRegistration"));
-const FindPartner = lazy(() => import("./pages/FindPartner"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Index = lazy(() => import("./pages/Index"));
 const Live = lazy(() => import("./pages/Live"));
@@ -194,22 +193,6 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requireRole={['organizer', 'admin']}>
                   <CourtManager />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/find-partner"
-              element={
-                <ProtectedRoute
-                  unauthenticatedFallback={
-                    <AuthGate
-                      title="Find a Partner"
-                      description="Sign in to search for partners and join doubles events together."
-                      icon={<UserPlus className="w-7 h-7" />}
-                    />
-                  }
-                >
-                  <FindPartner />
                 </ProtectedRoute>
               }
             />

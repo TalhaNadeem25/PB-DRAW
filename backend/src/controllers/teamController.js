@@ -2,6 +2,7 @@ import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
 import Waitlist from '../models/Waitlist.js';
+import Invitation from '../models/Invitation.js';
 import { joinWaitlist } from './waitlistController.js';
 
 // @desc    Get all teams for an event OR for current user
@@ -14,6 +15,8 @@ export const getTeams = async (req, res, next) => {
     // If eventId is provided in params, filter by event
     if (req.params.eventId) {
       query.event = req.params.eventId;
+      // Exclude unpaid (abandoned checkout) teams from event rosters
+      query.paymentStatus = { $ne: 'unpaid' };
     }
 
     // If userId=me query param, filter by current user's teams
@@ -85,17 +88,26 @@ export const createTeam = async (req, res, next) => {
     }
 
     // Guard against duplicate registration — must run before the "event full" check
-    // so the waitlist path also cannot create duplicates
     const alreadyRegistered = await Team.findOne({
       event: req.params.eventId,
       players: req.user.id,
-      paymentStatus: { $ne: 'refunded' }
     });
     if (alreadyRegistered) {
-      return res.status(409).json({
-        success: false,
-        message: 'You are already registered for this event'
-      });
+      if (alreadyRegistered.paymentStatus === 'unpaid') {
+        // Abandoned checkout — clean up the ghost team and let the user retry
+        await Event.findByIdAndUpdate(req.params.eventId, {
+          $pull: { teams: alreadyRegistered._id },
+          $inc: { currentTeams: -1 }
+        });
+        await Invitation.deleteMany({ team: alreadyRegistered._id, status: 'pending' });
+        await alreadyRegistered.deleteOne();
+      } else {
+        // Paid or partially paid — genuinely registered
+        return res.status(409).json({
+          success: false,
+          message: 'You are already registered for this event'
+        });
+      }
     }
 
     // Check if event is full

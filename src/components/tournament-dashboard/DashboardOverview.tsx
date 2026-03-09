@@ -88,10 +88,7 @@ const DashboardOverview = ({
             <div className="flex-1">
               <div className="text-sm text-muted-foreground">Registrations</div>
               <div className="font-display font-bold text-3xl">
-                {currentPlayers}{" "}
-                <span className="text-lg text-muted-foreground font-normal">
-                  / {maxPlayers}
-                </span>
+                {currentPlayers}
               </div>
             </div>
             {/* Avatar stack placeholder */}
@@ -127,7 +124,7 @@ const DashboardOverview = ({
             />
           </div>
           <div className="text-xs text-muted-foreground mt-2">
-            {Math.round(registrationPercent)}% capacity filled
+            {currentPlayers} registered
           </div>
         </div>
       </div>
@@ -192,7 +189,7 @@ const DashboardOverview = ({
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                       <span>
-                        {teams}/{max} teams
+                        {teams} registered
                       </span>
                       <span>${event.entryFee} entry</span>
                     </div>

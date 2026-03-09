@@ -46,7 +46,8 @@ export default function MyTickets() {
     queryKey: ['my-tickets'],
     queryFn: async () => {
       const response = await axios.get('/api/check-in/my-tickets');
-      return response.data.data;
+      const data = response.data?.data ?? response.data;
+      return Array.isArray(data) ? data : [];
     },
   });
 

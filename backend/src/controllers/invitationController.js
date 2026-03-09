@@ -3,6 +3,7 @@ import Team from '../models/Team.js';
 import User from '../models/User.js';
 import Event from '../models/Event.js';
 import { sendTeamInvitationEmail } from '../services/emailService.js';
+import { createNotification } from './notificationController.js';
 
 // @desc    Create/send team invitation
 // @route   POST /api/teams/:teamId/invitations
@@ -88,6 +89,27 @@ export const sendInvitation = async (req, res, next) => {
       invitee: inviteeUser?._id || null,
       message
     });
+
+    // Send in-app notification if invitee has an account
+    if (inviteeUser) {
+      try {
+        const inviter = await User.findById(req.user.id, 'name');
+        const io = req.app.get('io');
+        await createNotification(io, inviteeUser._id, {
+          type: 'partner-invitation',
+          title: `Partner Invitation — ${event.name}`,
+          message: `${inviter.name} invited you to join team "${team.name}" for ${event.name} at ${event.tournament.name}.`,
+          data: {
+            invitationId: invitation._id,
+            teamId: team._id,
+            eventId: event._id,
+            actionUrl: `/invitations/${invitation._id}/accept`
+          }
+        });
+      } catch (notifError) {
+        console.error('Failed to send in-app invitation notification:', notifError);
+      }
+    }
 
     // Send invitation email (only if sendEmail is true)
     if (sendEmail) {

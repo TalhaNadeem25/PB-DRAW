@@ -147,10 +147,10 @@ const EventRegistration = () => {
       setCreatedTeam(data.data);
 
       // Check if payment is required
-      const entryFee = event?.entryFee || 0;
-      console.log('Entry fee:', entryFee);
+      const totalFee = (tournament?.entryFee || 0) + (event?.entryFee || 0);
+      console.log('Total fee (tournament + event):', totalFee);
 
-      if (entryFee > 0) {
+      if (totalFee > 0) {
         // Create payment intent
         setIsPreparingPayment(true);
         try {
@@ -300,7 +300,9 @@ const EventRegistration = () => {
     );
   }
 
+  const tournamentFee = tournament?.entryFee || 0;
   const entryFee = event.entryFee || 0;
+  const totalFee = tournamentFee + entryFee;
   const requiresPartner = event.format !== 'singles';
 
   return (
@@ -488,7 +490,7 @@ const EventRegistration = () => {
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             {requiresPartner ? 'Creating Team...' : 'Setting up registration...'}
                           </>
-                        ) : entryFee > 0 ? (
+                        ) : totalFee > 0 ? (
                           <>
                             {requiresPartner ? 'Create Team &' : ''} Continue to Payment
                             <DollarSign className="w-4 h-4 ml-2" />
@@ -582,17 +584,48 @@ const EventRegistration = () => {
                         </div>
                       </div>
 
-                      {/* Entry Fee — prominent */}
-                      {entryFee > 0 && (
-                        <div className="rounded-xl border border-primary/30 bg-primary/5 px-5 py-4 flex items-center justify-between">
+                      {/* Fee Breakdown */}
+                      {totalFee > 0 ? (
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 px-5 py-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <DollarSign className="w-5 h-5 text-primary" />
+                            </div>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fees</p>
+                          </div>
+                          {tournamentFee > 0 && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Tournament Entry</span>
+                              <span className="font-medium">${tournamentFee.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {entryFee > 0 && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Event Entry</span>
+                              <span className="font-medium">${entryFee.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {tournamentFee > 0 && entryFee > 0 && (
+                            <div className="border-t border-primary/20 pt-2 flex items-center justify-between">
+                              <span className="font-semibold text-sm">Total</span>
+                              <span className="text-2xl font-display font-black text-primary">${totalFee.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {(tournamentFee === 0 || entryFee === 0) && (
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-sm">Total</span>
+                              <span className="text-2xl font-display font-black text-primary">${totalFee.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-green-500/30 bg-green-500/5 px-5 py-4 flex items-center justify-between">
                           <div>
                             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Entry Fee</p>
-                            <p className="text-3xl font-display font-black text-primary mt-0.5">
-                              ${entryFee.toFixed(2)}
-                            </p>
+                            <p className="text-3xl font-display font-black text-green-600 mt-0.5">Free</p>
                           </div>
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <DollarSign className="w-6 h-6 text-primary" />
+                          <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                            <DollarSign className="w-6 h-6 text-green-600" />
                           </div>
                         </div>
                       )}
@@ -644,7 +677,7 @@ const EventRegistration = () => {
                         eventId={eventId || ''}
                         tournamentName={tournament.name}
                         eventName={event.name}
-                        amount={entryFee}
+                        amount={totalFee}
                         onSuccess={handlePaymentSuccess}
                         onCancel={handlePaymentCancel}
                       />

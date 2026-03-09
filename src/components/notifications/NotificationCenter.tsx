@@ -23,6 +23,7 @@ interface Notification {
     tournamentId?: string;
     eventId?: string;
     matchId?: string;
+    invitationId?: string;
     actionUrl?: string;
     result?: string;
   };
@@ -288,6 +289,20 @@ export const NotificationCenter = () => {
                               Pay Now
                             </Link>
                           </Button>
+                        )}
+                        {notification.type === 'partner-invitation' && notification.data?.actionUrl && (
+                          <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              asChild
+                              size="sm"
+                              className="h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                              <Link to={notification.data.actionUrl}>
+                                <Check className="h-3 w-3 mr-1" />
+                                Accept
+                              </Link>
+                            </Button>
+                          </div>
                         )}
                       </div>
                       {!notification.read && (

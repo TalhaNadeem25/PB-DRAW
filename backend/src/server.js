@@ -31,7 +31,7 @@ import checkInRoutes from './routes/checkInRoutes.js';
 import aiPlannerRoutes from './routes/aiPlannerRoutes.js';
 import cancellationRoutes from './routes/cancellationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
-import partnerRoutes from './routes/partnerRoutes.js';
+// import partnerRoutes from './routes/partnerRoutes.js'; // disabled: Find Partner removed for now
 import communicationRoutes from './routes/communicationRoutes.js';
 import courtRoutes from './routes/courtRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
@@ -84,7 +84,7 @@ app.use('/api', apiLimiter);
 app.get('/api', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to Pickle Rally API',
+    message: 'Welcome to Picklix API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -111,7 +111,7 @@ app.use('/api/check-in', checkInRoutes);
 app.use('/api/ai-planner', aiPlannerRoutes);
 app.use('/api/cancellations', cancellationRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/partners', partnerRoutes);
+// app.use('/api/partners', partnerRoutes); // disabled: Find Partner removed for now
 app.use('/api/stats', statsRoutes);
 app.use('/api/communications', communicationRoutes);
 app.use('/api/court-management', courtRoutes);
@@ -187,7 +187,7 @@ server.listen(PORT, () => {
   console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
   console.log(`🔌 Socket.IO ready for connections`);
-  console.log(`🎾 Pickle Rally Backend is ready!\n`);
+  console.log(`🎾 Picklix Backend is ready!\n`);
 
   // Start cron jobs
   startWaitlistExpirationJob();
