@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkle, Brain, Lightning, TrendingUp, Target, ArrowRight } from "@phosphor-icons/react";
+import { Sparkle, Brain, Lightning, TrendUp, Target, ArrowRight } from "@phosphor-icons/react";
 
 const AIPlannerSection = () => {
   const features = [
@@ -16,7 +16,7 @@ const AIPlannerSection = () => {
       description: "Calculate required courts based on players, time, and match duration"
     },
     {
-      icon: TrendingUp,
+      icon: TrendUp,
       title: "Schedule Optimization",
       description: "Generate schedules that maximize court usage and minimize wait times"
     },

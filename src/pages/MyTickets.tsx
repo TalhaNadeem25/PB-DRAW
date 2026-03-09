@@ -1,7 +1,7 @@
 import Layout from '@/components/layout/Layout';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { Calendar, CheckCircle, DownloadSimpleSimple, CircleNotch, MagnifyingGlass, Ticket } from '@phosphor-icons/react';
+import { Calendar, CheckCircle, DownloadSimple, CircleNotch, MagnifyingGlass, Ticket } from '@phosphor-icons/react';
 import { useState } from 'react';
 import TicketCard from '../components/check-in/TicketCard';
 import { Button } from '../components/ui/button';

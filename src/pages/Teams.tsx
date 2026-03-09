@@ -36,7 +36,7 @@ import {
   PencilSimple,
   Trash,
   UserPlus,
-  TrendingUp,
+  TrendUp,
   Envelope,
   Check,
   X,
@@ -408,7 +408,7 @@ const Teams = () => {
                       {(team.stats.wins > 0 || team.stats.losses > 0) && (
                         <div>
                           <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3" />
+                            <TrendUp className="w-3 h-3" />
                             Record
                           </Label>
                           <div className="grid grid-cols-3 gap-2 mt-1">

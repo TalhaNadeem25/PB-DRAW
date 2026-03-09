@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Medal, ChartBar, MagnifyingGlass, TrendingUp, Trophy, User, Users } from "@phosphor-icons/react";
+import { Medal, ChartBar, MagnifyingGlass, TrendUp, Trophy, User, Users } from "@phosphor-icons/react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -8,20 +8,20 @@ const HowItWorksSection = () => {
 
   const features = [
     {
-      icon: Search,
-      bgIcon: Search,
+      icon: MagnifyingGlass,
+      bgIcon: MagnifyingGlass,
       title: "Find Events",
       description: "Browse local and national tournaments that match your skill level and availability.",
     },
     {
-      icon: Award,
+      icon: Medal,
       bgIcon: Trophy,
       title: "Compete",
       description: "Seamless registration, instant bracket updates, and real-time court assignments sent to your phone.",
     },
     {
-      icon: BarChart3,
-      bgIcon: TrendingUp,
+      icon: ChartBar,
+      bgIcon: TrendUp,
       title: "Win",
       description: "Climb the global rankings. Get detailed match analytics and share your victories with the community.",
     },

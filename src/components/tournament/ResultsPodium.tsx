@@ -62,7 +62,7 @@ const ResultsPodium = ({ results, poolName, eventName, showScores = false }: Res
       case 3:
         return {
           title: "3rd Place",
-          icon: Award,
+          icon: AwardIcon,
           bgColor: "bg-gradient-to-br from-orange-400 to-orange-600",
           textColor: "text-orange-600",
           borderColor: "border-orange-500",
@@ -73,7 +73,7 @@ const ResultsPodium = ({ results, poolName, eventName, showScores = false }: Res
       default:
         return {
           title: `${place}th Place`,
-          icon: Award,
+          icon: AwardIcon,
           bgColor: "bg-gradient-to-br from-blue-400 to-blue-600",
           textColor: "text-blue-600",
           borderColor: "border-blue-500",

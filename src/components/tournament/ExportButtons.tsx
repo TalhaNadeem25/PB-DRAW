@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Printer, FileText, Trophy, ClipboardCheck, DownloadSimple } from "@phosphor-icons/react";
+import { Printer, FileText, Trophy, ClipboardText, DownloadSimple } from "@phosphor-icons/react";
 import PrintableSchedule from "./PrintableSchedule";
 import PrintableBracket from "./PrintableBracket";
 import PrintableCheckIn from "./PrintableCheckIn";
@@ -109,7 +109,7 @@ const ExportButtons = ({
           </DropdownMenuItem>
           
           <DropdownMenuItem onClick={() => setShowCheckIn(true)}>
-            <ClipboardCheck className="h-4 w-4 mr-2" />
+            <ClipboardText className="h-4 w-4 mr-2" />
             Check-In List
           </DropdownMenuItem>
           

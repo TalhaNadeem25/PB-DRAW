@@ -13,7 +13,7 @@ import {
   CurrencyDollar,
   Clock,
   CheckCircle,
-  TrendingUp,
+  TrendUp,
   MagnifyingGlass,
   CircleNotch,
   XCircle,
@@ -152,7 +152,7 @@ const RefundsPanel = ({ tournamentId, tournamentName }: RefundsPanelProps) => {
         <div className="glass-card-hover rounded-2xl p-5 group">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 group-hover:bg-hero-gradient flex items-center justify-center transition-all duration-300">
-              <TrendingUp className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
+              <TrendUp className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
             </div>
             <span className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
               Total Requests

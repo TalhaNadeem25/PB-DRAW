@@ -9,7 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ClipboardText, Calendar, Check, X, PencilSimple, CircleNotch, CaretDown, CaretRight, Trophy, Users, Stack, Activity } from "@phosphor-icons/react";
+import { ClipboardText, Calendar, Check, X, PencilSimple, CircleNotch, CaretDown, CaretRight, Trophy, Users, Stack, Pulse } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { poolAPI, matchAPI } from "@/services/api";
@@ -369,7 +369,7 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
           </p>
         </div>
         <Badge variant="secondary" className="rounded-2xl px-5 py-2 font-bold text-sm shadow-inner backdrop-blur-md bg-background/80 border border-primary/20 relative z-10 flex items-center gap-2 mt-2 sm:mt-0">
-          <Activity className="w-4 h-4 text-primary animate-pulse" />
+          <Pulse className="w-4 h-4 text-primary animate-pulse" />
           <span><span className="text-primary">{totalCompleted}</span> / {totalMatches} completed</span>
         </Badge>
       </div>

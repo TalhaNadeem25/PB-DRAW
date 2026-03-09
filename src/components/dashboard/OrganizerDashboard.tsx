@@ -11,7 +11,7 @@ import {
   Plus,
   Sparkle,
   Target,
-  TrendingUp,
+  TrendUp,
   Trophy,
   Users,
   Lightning,
@@ -116,7 +116,7 @@ export default function OrganizerDashboard({
                   <span className="text-sm">Court Calculations</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <TrendUp className="w-4 h-4 text-primary" />
                   <span className="text-sm">Schedule Optimization</span>
                 </div>
               </div>

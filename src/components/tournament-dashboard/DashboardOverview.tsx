@@ -5,11 +5,11 @@ import {
   GitBranch,
   SquaresFour,
   Chat,
-  DownloadSimpleSimple,
+  DownloadSimple,
   CheckCircle,
   Circle,
   Clock,
-  Activity,
+  Pulse,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -299,7 +299,7 @@ const DashboardOverview = ({
           </div>
         ) : (
           <div className="glass-card-hover rounded-2xl p-8 text-center text-muted-foreground">
-            <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <Pulse className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">
               No activity yet. Events will appear here in real-time.
             </p>

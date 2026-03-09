@@ -6,7 +6,7 @@ import { useSocket } from "@/contexts/SocketContext";
 import { eventAPI, matchAPI, poolAPI, tournamentAPI } from "@/services/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Activity, Calendar, CaretRight, Eye, MapPin, Radio, Trophy, Users, Lightning } from "@phosphor-icons/react";
+import { Pulse, Calendar, CaretRight, Eye, MapPin, Radio, Trophy, Users, Lightning } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -125,7 +125,7 @@ const Live = () => {
         <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {liveTournaments.length === 0 ? (
             <div className="glass-card-hover rounded-2xl p-8 max-w-2xl mx-auto text-center animate-fade-in">
-              <Activity className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <Pulse className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-2xl font-display font-bold mb-3">No Live Tournaments</h3>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 There are no tournaments in progress right now. Check back later or browse upcoming tournaments!

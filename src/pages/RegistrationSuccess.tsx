@@ -124,7 +124,7 @@ const RegistrationSuccess = () => {
 
                 <div className="flex gap-4">
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0">
-                    <Share2 className="w-5 h-5 text-primary" />
+                    <ShareNetwork className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground">Invite friends</h4>

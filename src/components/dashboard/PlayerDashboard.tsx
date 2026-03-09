@@ -15,7 +15,7 @@ import {
   MapPin,
   Ticket,
   Trophy,
-  TrendingUp,
+  TrendUp,
   UserPlus,
   Users,
   XCircle,
@@ -182,7 +182,7 @@ const PlayerDashboard = ({
                   <p className="font-display font-bold text-4xl mt-1">{winRate}%</p>
                 </div>
                 <div className="inline-flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-medium">
-                  <TrendingUp className="w-3.5 h-3.5" />
+                  <TrendUp className="w-3.5 h-3.5" />
                   <span>
                     {stats.matchesWon}W / {stats.matchesPlayed}M
                   </span>

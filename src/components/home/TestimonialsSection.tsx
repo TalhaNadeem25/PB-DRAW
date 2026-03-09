@@ -1,4 +1,4 @@
-import { Star, Quotess } from "@phosphor-icons/react";
+import { Star, Quotes } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 

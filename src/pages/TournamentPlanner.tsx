@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkle, Lightning, Brain, TrendingUp, ArrowRight, Plus } from "@phosphor-icons/react";
+import { Sparkle, Lightning, Brain, TrendUp, ArrowRight, Plus } from "@phosphor-icons/react";
 import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
 import { tournamentAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,7 +67,7 @@ const TournamentPlanner = () => {
       description: "Instantly calculate required courts based on players, time, and match duration"
     },
     {
-      icon: TrendingUp,
+      icon: TrendUp,
       title: "Schedule Optimization",
       description: "Generate optimal schedules that maximize court usage and minimize wait times"
     },

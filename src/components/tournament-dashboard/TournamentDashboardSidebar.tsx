@@ -65,7 +65,7 @@ const sidebarCategories: SidebarCategory[] = [
     title: "3. Day-Of",
     items: [
       { id: "brackets", label: "Live Brackets & Play", icon: GitBranch },
-      { id: "scores", label: "Input Scores", icon: ClipboardList },
+      { id: "scores", label: "Input Scores", icon: ClipboardText },
     ],
   },
   {
@@ -133,7 +133,7 @@ const TournamentDashboardSidebar = ({
         to="/analytics"
         className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-bold border-l-4 border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200 uppercase font-display tracking-widest"
       >
-        <BarChart3 className="w-5 h-5 shrink-0" />
+        <ChartBar className="w-5 h-5 shrink-0" />
         Analytics
       </Link>
       <Link

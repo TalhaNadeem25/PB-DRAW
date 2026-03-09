@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Printer, ClipboardCheck } from "@phosphor-icons/react";
+import { Printer, ClipboardText } from "@phosphor-icons/react";
 import { format } from "date-fns";
 
 interface Player {
@@ -130,7 +130,7 @@ const PrintableCheckIn = ({ tournament, teams, events = [], onClose }: Printable
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5 text-primary" />
+              <ClipboardText className="h-5 w-5 text-primary" />
               Print Check-In List
             </CardTitle>
             <div className="flex gap-2">

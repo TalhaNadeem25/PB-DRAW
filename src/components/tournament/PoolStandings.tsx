@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Medal, Medal as AwardIcon, TrendingUp, TrendingDown, Trash } from "@phosphor-icons/react";
+import { Trophy, Medal, Medal as AwardIcon, TrendUp, TrendDown, Trash } from "@phosphor-icons/react";
 import {
   Table,
   TableBody,
@@ -191,8 +191,8 @@ const PoolStandings = ({ teams, poolName, showPlayoffIndicators = true, onRemove
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
-                        {pointDiff > 0 && <TrendingUp className="w-4 h-4 text-green-600" />}
-                        {pointDiff < 0 && <TrendingDown className="w-4 h-4 text-red-600" />}
+                        {pointDiff > 0 && <TrendUp className="w-4 h-4 text-green-600" />}
+                        {pointDiff < 0 && <TrendDown className="w-4 h-4 text-red-600" />}
                         <span className={`font-semibold ${
                           pointDiff > 0 ? 'text-green-600' :
                           pointDiff < 0 ? 'text-red-600' :
