@@ -29,7 +29,7 @@ const AccordionTrigger = React.forwardRef<
       {...props}
     >
       {children}
- aretChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300" />
+ <CaretDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300" />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));

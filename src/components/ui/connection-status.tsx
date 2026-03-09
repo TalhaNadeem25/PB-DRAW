@@ -25,7 +25,7 @@ export const ConnectionStatus = () => {
         </>
       ) : (
         <>
-          <WifiOff className="w-4 h-4 animate-pulse" />
+          <WifiSlash className="w-4 h-4 animate-pulse" />
           <span>Reconnecting...</span>
         </>
       )}
