@@ -1,5 +1,5 @@
 import { useSocket } from '@/contexts/SocketContext';
-import { Wifi, WifiOff } from 'lucide-react';
+import { Wifi, WifiSlash } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 export const ConnectionStatus = () => {
