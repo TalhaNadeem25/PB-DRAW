@@ -2,11 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { leagueAPI } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -18,6 +21,7 @@ import {
   Users,
   Gear,
   ClipboardText,
+  CalendarBlank,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -149,9 +153,9 @@ export default function CreateLeague() {
     description: "",
     location: "",
     address: "",
-    startDate: "",
-    endDate: "",
-    registrationDeadline: "",
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
+    registrationDeadline: undefined as Date | undefined,
     maxPlayers: 32,
     entryFee: 0,
     leagueType: "",
@@ -175,9 +179,9 @@ export default function CreateLeague() {
         description: form.description,
         location: form.location,
         address: form.address,
-        startDate: form.startDate || undefined,
-        endDate: form.endDate || undefined,
-        registrationDeadline: form.registrationDeadline || undefined,
+        startDate: form.startDate?.toISOString(),
+        endDate: form.endDate?.toISOString(),
+        registrationDeadline: form.registrationDeadline?.toISOString(),
         maxPlayers: Number(form.maxPlayers),
         entryFee: Number(form.entryFee),
         leagueType: form.leagueType,
@@ -328,34 +332,85 @@ export default function CreateLeague() {
                         <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
                           Start Date
                         </Label>
-                        <Input
-                          type="date"
-                          value={form.startDate}
-                          onChange={(e) => set("startDate", e.target.value)}
-                          className="rounded-xl"
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal rounded-xl border-border/50",
+                                !form.startDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarBlank className="mr-2 h-4 w-4" />
+                              {form.startDate ? format(form.startDate, "MMM d, yyyy") : "Pick a date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={form.startDate}
+                              onSelect={(d) => set("startDate", d)}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div>
                         <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
                           End Date
                         </Label>
-                        <Input
-                          type="date"
-                          value={form.endDate}
-                          onChange={(e) => set("endDate", e.target.value)}
-                          className="rounded-xl"
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal rounded-xl border-border/50",
+                                !form.endDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarBlank className="mr-2 h-4 w-4" />
+                              {form.endDate ? format(form.endDate, "MMM d, yyyy") : "Pick a date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={form.endDate}
+                              onSelect={(d) => set("endDate", d)}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div>
                         <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
                           Reg. Deadline
                         </Label>
-                        <Input
-                          type="date"
-                          value={form.registrationDeadline}
-                          onChange={(e) => set("registrationDeadline", e.target.value)}
-                          className="rounded-xl"
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal rounded-xl border-border/50",
+                                !form.registrationDeadline && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarBlank className="mr-2 h-4 w-4" />
+                              {form.registrationDeadline ? format(form.registrationDeadline, "MMM d, yyyy") : "Pick a date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={form.registrationDeadline}
+                              onSelect={(d) => set("registrationDeadline", d)}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -576,11 +631,21 @@ export default function CreateLeague() {
                       { label: "Address", value: form.address || "—" },
                       {
                         label: "Dates",
-                        value: [form.startDate, form.endDate].filter(Boolean).join(" → ") || "—",
+                        value:
+                          form.startDate || form.endDate
+                            ? [
+                                form.startDate ? format(form.startDate, "MMM d, yyyy") : null,
+                                form.endDate ? format(form.endDate, "MMM d, yyyy") : null,
+                              ]
+                                .filter(Boolean)
+                                .join(" → ")
+                            : "—",
                       },
                       {
                         label: "Registration Deadline",
-                        value: form.registrationDeadline || "—",
+                        value: form.registrationDeadline
+                          ? format(form.registrationDeadline, "MMM d, yyyy")
+                          : "—",
                       },
                       { label: "Max Players", value: String(form.maxPlayers) },
                       {
