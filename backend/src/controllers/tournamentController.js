@@ -1,5 +1,6 @@
 import Tournament from '../models/Tournament.js';
 import Event from '../models/Event.js';
+import Payment from '../models/Payment.js';
 import cloudinary from '../config/cloudinary.js';
 
 // Location filter: state code -> regex for tournament location field
@@ -350,6 +351,25 @@ export const getTournamentRegistrations = async (req, res, next) => {
       })
       .select('name format skillLevel entryFee teams registeredPlayers');
 
+    // Fetch all completed payments for this tournament in one query
+    const payments = await Payment.find({
+      tournament: req.params.id,
+      status: 'completed'
+    }).select('_id team user event events status amount');
+
+    // Build lookup maps
+    const paymentByTeam = {};
+    const paymentByUserEvent = {};
+    for (const p of payments) {
+      if (p.team) paymentByTeam[p.team.toString()] = p._id.toString();
+      if (p.user) {
+        const evIds = p.events?.length ? p.events : (p.event ? [p.event] : []);
+        for (const evId of evIds) {
+          paymentByUserEvent[`${p.user.toString()}:${evId.toString()}`] = p._id.toString();
+        }
+      }
+    }
+
     // Format the response data
     const registrations = events.map(event => ({
       eventId: event._id,
@@ -369,15 +389,16 @@ export const getTournamentRegistrations = async (req, res, next) => {
             skillLevel: player.skillLevel
           })),
           paymentStatus: team.paymentStatus,
+          paymentId: paymentByTeam[team._id.toString()] || null,
           registeredAt: team.createdAt
         })),
-      // Singles registrations
       registeredPlayers: event.registeredPlayers.map(reg => ({
         playerId: reg.player._id,
         name: reg.player.name,
         email: reg.player.email,
         skillLevel: reg.player.skillLevel,
         paymentStatus: reg.paymentStatus,
+        paymentId: paymentByUserEvent[`${reg.player._id.toString()}:${event._id.toString()}`] || null,
         registeredAt: reg.registeredAt
       }))
     }));
