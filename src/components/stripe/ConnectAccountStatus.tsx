@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, XCircle, ArrowSquareOut, Warning } from '@phosphor-icons/react';
+import { CheckCircle, XCircle, ArrowSquareOut, Warning, Trash } from '@phosphor-icons/react';
 import api from '@/services/api';
 import { ConnectAccountButton } from './ConnectAccountButton';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 
 export const ConnectAccountStatus = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['stripe-connect-status'],
@@ -39,6 +40,15 @@ export const ConnectAccountStatus = () => {
       setSearchParams(searchParams);
     }
   }, [searchParams, refetch, setSearchParams]);
+
+  const disconnectMutation = useMutation({
+    mutationFn: () => api.delete('/stripe/connect/disconnect'),
+    onSuccess: () => {
+      toast.success('Stripe account disconnected');
+      queryClient.invalidateQueries({ queryKey: ['stripe-connect-status'] });
+    },
+    onError: () => toast.error('Failed to disconnect Stripe account'),
+  });
 
   const handleViewDashboard = async () => {
     try {
@@ -165,10 +175,23 @@ export const ConnectAccountStatus = () => {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button onClick={handleViewDashboard} variant="outline">
               <ArrowSquareOut className="w-4 h-4 mr-2" />
               View Stripe Dashboard
+            </Button>
+            <Button
+              variant="outline"
+              className="text-destructive hover:text-destructive border-destructive/40 hover:bg-destructive/10"
+              onClick={() => {
+                if (confirm('Disconnect your Stripe account? You will need to reconnect to accept payments.')) {
+                  disconnectMutation.mutate();
+                }
+              }}
+              disabled={disconnectMutation.isPending}
+            >
+              <Trash className="w-4 h-4 mr-2" />
+              {disconnectMutation.isPending ? 'Disconnecting...' : 'Disconnect'}
             </Button>
           </div>
 
