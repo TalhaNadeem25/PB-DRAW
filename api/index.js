@@ -32,6 +32,7 @@ import partnerRoutes from '../backend/src/routes/partnerRoutes.js';
 import communicationRoutes from '../backend/src/routes/communicationRoutes.js';
 import courtRoutes from '../backend/src/routes/courtRoutes.js';
 import testDataRoutes from '../backend/src/routes/testDataRoutes.js';
+import leagueRoutes from '../backend/src/routes/leagueRoutes.js';
 import { protect, authorize } from '../backend/src/middleware/auth.js';
 import { assignMatchToCourt } from '../backend/src/controllers/courtController.js';
 
@@ -96,6 +97,7 @@ app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/communications', communicationRoutes);
 app.use('/api/court-management', courtRoutes);
+app.use('/api/leagues', leagueRoutes);
 app.use('/api', testDataRoutes);
 
 // Nested routes (must come before standalone routes)

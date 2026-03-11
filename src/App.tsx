@@ -53,6 +53,10 @@ const TournamentPlanner = lazy(() => import("./pages/TournamentPlanner"));
 const Tournaments = lazy(() => import("./pages/Tournaments"));
 const Spectator = lazy(() => import("./pages/Spectator"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const Leagues = lazy(() => import("./pages/Leagues"));
+const CreateLeague = lazy(() => import("./pages/CreateLeague"));
+const LeagueDetail = lazy(() => import("./pages/LeagueDetail"));
+const LeagueManage = lazy(() => import("./pages/LeagueManage"));
 
 const queryClient = new QueryClient();
 
@@ -109,6 +113,24 @@ function AppRoutes() {
               }
             />
             <Route path="/tournaments" element={<Tournaments />} />
+            <Route path="/leagues" element={<Leagues />} />
+            <Route
+              path="/leagues/create"
+              element={
+                <ProtectedRoute requireRole={['organizer', 'admin']}>
+                  <CreateLeague />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/leagues/:id" element={<LeagueDetail />} />
+            <Route
+              path="/leagues/:id/manage"
+              element={
+                <ProtectedRoute requireRole={['organizer', 'admin']}>
+                  <LeagueManage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/tournaments/:id" element={<ErrorBoundary><TournamentDetail /></ErrorBoundary>} />
             <Route path="/tournaments/:id/register" element={<Register />} />
             <Route path="/tournaments/:tournamentId/register/:eventId" element={<EventRegistration />} />

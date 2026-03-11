@@ -37,6 +37,7 @@ import communicationRoutes from './routes/communicationRoutes.js';
 import courtRoutes from './routes/courtRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import testDataRoutes from './routes/testDataRoutes.js';
+import leagueRoutes from './routes/leagueRoutes.js';
 import { assignMatchToCourt } from './controllers/courtController.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
 
@@ -115,6 +116,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 // app.use('/api/partners', partnerRoutes); // disabled: Find Partner removed for now
 app.use('/api/stats', statsRoutes);
+app.use('/api/leagues', leagueRoutes);
 app.use('/api/communications', communicationRoutes);
 app.use('/api/court-management', courtRoutes);
 app.use('/api', testDataRoutes);

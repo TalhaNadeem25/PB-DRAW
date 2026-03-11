@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { List, X, Trophy, User, SignIn, SignOut, UserCircle, House, SquaresFour, Users, Radio, ChartBar, Sparkle, CaretRight, CreditCard, Gear, GridNine, Moon, Sun } from "@phosphor-icons/react";
+import { List, X, Trophy, User, SignIn, SignOut, UserCircle, House, SquaresFour, Users, Radio, ChartBar, Sparkle, CaretRight, CreditCard, Gear, GridNine, Moon, Sun, Medal } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -46,6 +46,7 @@ const Navbar = () => {
   const navLinks = [
     { href: "/live", label: "Live", icon: Radio, isLive: true },
     { href: "/tournaments", label: "Tournaments", icon: Trophy },
+    { href: "/leagues", label: "Leagues", icon: Medal },
     ...(user?.role === 'organizer' || user?.role === 'admin'
       ? [{ href: "/tournament-planner", label: "AI Planner", icon: Sparkle }]
       : []

@@ -808,6 +808,76 @@ export const testDataAPI = {
   },
 };
 
+// Leagues
+export const leagueAPI = {
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    leagueType?: string;
+    playerGroup?: string;
+    status?: string;
+  }) => {
+    const response = await api.get('/leagues', { params });
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await api.get(`/leagues/${id}`);
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post('/leagues', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: any) => {
+    const response = await api.put(`/leagues/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/leagues/${id}`);
+    return response.data;
+  },
+
+  register: async (id: string) => {
+    const response = await api.post(`/leagues/${id}/register`);
+    return response.data;
+  },
+
+  unregister: async (id: string) => {
+    const response = await api.delete(`/leagues/${id}/register`);
+    return response.data;
+  },
+
+  getPlayers: async (id: string) => {
+    const response = await api.get(`/leagues/${id}/players`);
+    return response.data;
+  },
+
+  updateStandings: async (id: string, standings: any[]) => {
+    const response = await api.put(`/leagues/${id}/standings`, { standings });
+    return response.data;
+  },
+
+  addSession: async (id: string, data: { date: string; notes?: string }) => {
+    const response = await api.post(`/leagues/${id}/sessions`, data);
+    return response.data;
+  },
+
+  updateSession: async (id: string, sessionId: string, data: any) => {
+    const response = await api.put(`/leagues/${id}/sessions/${sessionId}`, data);
+    return response.data;
+  },
+
+  updateStatus: async (id: string, status: string) => {
+    const response = await api.put(`/leagues/${id}/status`, { status });
+    return response.data;
+  },
+};
+
 // Newsletter
 export const newsletterAPI = {
   subscribe: async (email: string) => {
