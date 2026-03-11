@@ -12,12 +12,13 @@ export const ConnectAccountStatus = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['stripe-connect-status'],
     queryFn: async () => {
       const response = await api.get('/stripe/connect/status');
       return response.data;
-    }
+    },
+    retry: false,
   });
 
   // Handle return from Stripe onboarding
@@ -70,8 +71,40 @@ export const ConnectAccountStatus = () => {
     );
   }
 
+  // API error — show recovery UI with disconnect option
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <XCircle className="text-destructive" />
+            Stripe Connection Error
+          </CardTitle>
+          <CardDescription>
+            Your Stripe account could not be verified. This usually happens when switching between test and live mode. Disconnect and reconnect to fix this.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            variant="outline"
+            className="text-destructive hover:text-destructive border-destructive/40 hover:bg-destructive/10"
+            onClick={() => {
+              if (confirm('Disconnect your Stripe account so you can reconnect with the correct keys?')) {
+                disconnectMutation.mutate();
+              }
+            }}
+            disabled={disconnectMutation.isPending}
+          >
+            <Trash className="w-4 h-4 mr-2" />
+            {disconnectMutation.isPending ? 'Disconnecting...' : 'Disconnect & Reconnect'}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Not connected yet
-  if (!data.connected) {
+  if (!data?.connected) {
     return (
       <Card>
         <CardHeader>
@@ -106,7 +139,7 @@ export const ConnectAccountStatus = () => {
   }
 
   // Connected but not onboarded
-  if (!data.onboarded) {
+  if (!data?.onboarded) {
     return (
       <Card>
         <CardHeader>
@@ -120,7 +153,7 @@ export const ConnectAccountStatus = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {data.requirements && data.requirements.currently_due?.length > 0 && (
+            {data?.requirements && data.requirements.currently_due?.length > 0 && (
               <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 p-4">
                 <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                   Missing information:
@@ -164,13 +197,13 @@ export const ConnectAccountStatus = () => {
             <div className="rounded-lg border p-3">
               <p className="text-sm text-muted-foreground">Charges</p>
               <p className="text-lg font-semibold">
-                {data.chargesEnabled ? 'Enabled' : 'Disabled'}
+                {data?.chargesEnabled ? 'Enabled' : 'Disabled'}
               </p>
             </div>
             <div className="rounded-lg border p-3">
               <p className="text-sm text-muted-foreground">Payouts</p>
               <p className="text-lg font-semibold">
-                {data.payoutsEnabled ? 'Enabled' : 'Disabled'}
+                {data?.payoutsEnabled ? 'Enabled' : 'Disabled'}
               </p>
             </div>
           </div>

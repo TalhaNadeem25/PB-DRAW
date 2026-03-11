@@ -97,7 +97,23 @@ export const getConnectAccountStatus = async (req, res, next) => {
       });
     }
 
-    const account = await getStripe().accounts.retrieve(user.stripeConnectAccountId);
+    let account;
+    try {
+      account = await getStripe().accounts.retrieve(user.stripeConnectAccountId);
+    } catch (stripeError) {
+      // Account doesn't exist in this mode (e.g. test account used with live keys)
+      // Clear the stale account ID so the user can reconnect
+      user.stripeConnectAccountId = null;
+      user.stripeConnectOnboarded = false;
+      user.stripeConnectOnboardingCompleted = null;
+      await user.save();
+      return res.json({
+        success: true,
+        connected: false,
+        onboarded: false,
+        reconnectRequired: true,
+      });
+    }
 
     const isOnboarded = account.details_submitted &&
                         account.charges_enabled &&
