@@ -1,6 +1,6 @@
 import Layout from '@/components/layout/Layout';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/services/api';
 import { Calendar, CheckCircle, DownloadSimple, CircleNotch, MagnifyingGlass, Ticket } from '@phosphor-icons/react';
 import { useState } from 'react';
 import TicketCard from '../components/check-in/TicketCard';
@@ -45,7 +45,7 @@ export default function MyTickets() {
   const { data: tickets, isLoading, error } = useQuery<TicketData[]>({
     queryKey: ['my-tickets'],
     queryFn: async () => {
-      const response = await axios.get('/api/check-in/my-tickets');
+      const response = await api.get('/check-in/my-tickets');
       const data = response.data?.data ?? response.data;
       return Array.isArray(data) ? data : [];
     },
