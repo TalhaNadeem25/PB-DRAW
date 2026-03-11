@@ -1,10 +1,30 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Globe, Envelope, ThumbsUp, CaretRight } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { newsletterAPI } from "@/services/api";
+import { toast } from "sonner";
 
 const Footer = () => {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!email) return;
+    setLoading(true);
+    try {
+      const res = await newsletterAPI.subscribe(email);
+      toast.success(res.message || "Successfully subscribed!");
+      setEmail("");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Subscription failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-card border-t border-border/60">
       {/* CTA Strip */}
@@ -115,10 +135,17 @@ const Footer = () => {
                 <Input
                   type="email"
                   placeholder="Email Address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
                   className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-0 text-foreground placeholder:text-muted-foreground"
                 />
-                <Button className="bg-primary text-primary-foreground font-display font-black uppercase tracking-widest py-3 rounded-lg text-sm hover:brightness-110 transition-all">
-                  Subscribe
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={loading || !email}
+                  className="bg-primary text-primary-foreground font-display font-black uppercase tracking-widest py-3 rounded-lg text-sm hover:brightness-110 transition-all"
+                >
+                  {loading ? "Subscribing..." : "Subscribe"}
                 </Button>
               </div>
 

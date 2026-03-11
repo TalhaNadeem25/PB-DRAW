@@ -2,6 +2,7 @@ import Layout from "@/components/layout/Layout";
 import CancelRegistrationDialog from "@/components/registration/CancelRegistrationDialog";
 import OrganizerDashboard from "@/components/dashboard/OrganizerDashboard";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
+import NewsletterSubscribersPanel from "@/components/dashboard/NewsletterSubscribersPanel";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -61,6 +62,7 @@ const Dashboard = () => {
   }
 
   const isOrganizer = user.role === "organizer" || user.role === "admin";
+  const isSuperAdmin = user.email === "nadeemtalha24@gmail.com";
 
   return (
     <Layout>
@@ -101,6 +103,11 @@ const Dashboard = () => {
         </motion.div>
 
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          {isSuperAdmin && (
+            <div className="mb-8">
+              <NewsletterSubscribersPanel />
+            </div>
+          )}
           {dashboardLoading ? (
             <div className="space-y-8" aria-busy="true" aria-label="Loading dashboard">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">

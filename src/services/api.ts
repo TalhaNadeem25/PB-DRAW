@@ -808,4 +808,16 @@ export const testDataAPI = {
   },
 };
 
+// Newsletter
+export const newsletterAPI = {
+  subscribe: async (email: string) => {
+    const response = await api.post('/newsletter/subscribe', { email });
+    return response.data;
+  },
+  getSubscribers: async () => {
+    const response = await api.get('/newsletter/subscribers');
+    return response.data;
+  },
+};
+
 export default api;

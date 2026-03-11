@@ -31,6 +31,7 @@ import checkInRoutes from './routes/checkInRoutes.js';
 import aiPlannerRoutes from './routes/aiPlannerRoutes.js';
 import cancellationRoutes from './routes/cancellationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import newsletterRoutes from './routes/newsletterRoutes.js';
 // import partnerRoutes from './routes/partnerRoutes.js'; // disabled: Find Partner removed for now
 import communicationRoutes from './routes/communicationRoutes.js';
 import courtRoutes from './routes/courtRoutes.js';
@@ -111,6 +112,7 @@ app.use('/api/check-in', checkInRoutes);
 app.use('/api/ai-planner', aiPlannerRoutes);
 app.use('/api/cancellations', cancellationRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 // app.use('/api/partners', partnerRoutes); // disabled: Find Partner removed for now
 app.use('/api/stats', statsRoutes);
 app.use('/api/communications', communicationRoutes);
