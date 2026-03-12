@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { picklixAIAPI, tournamentAPI, eventAPI } from '@/services/api';
+import { picklixAIAPI, tournamentAPI, eventAPI, leagueAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -26,11 +26,12 @@ interface PicklixAIChatInterfaceProps {
 }
 
 const STARTER_PROMPTS = [
-  'Create a one-day tournament for 32 players on 6 courts',
-  'Plan a mixed doubles event for intermediate players',
+  'Create a one-day doubles tournament for 32 players',
+  'Set up a weekly ladder league for mixed players',
   'How many courts do I need for 48 players in 5 hours?',
   'Suggest events for a 64-player weekend tournament',
-  'Generate a schedule for 4 events on 8 courts starting at 8 AM',
+  'What\'s the best format for a beginner-friendly tournament?',
+  'Create a 3.5+ traditional league starting next month',
 ];
 
 function MarkdownMessage({ text }: { text: string }) {
@@ -202,6 +203,83 @@ function CreateTournamentCard({ data, onCreated }: { data: any; onCreated: (id: 
               <><CircleNotch className="w-3.5 h-3.5 mr-2 animate-spin" />Creating...</>
             ) : (
               <><Plus className="w-3.5 h-3.5 mr-2" />Create This Tournament</>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Action card: create-league
+function CreateLeagueCard({ data, onCreated }: { data: any; onCreated: (id: string) => void }) {
+  const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState(false);
+
+  const handleCreate = async () => {
+    setCreating(true);
+    try {
+      const res = await leagueAPI.create(data);
+      const leagueId = res.data?._id || res._id;
+      setCreated(true);
+      toast.success('League created! Redirecting...');
+      onCreated(leagueId);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to create league');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 overflow-hidden">
+      <div className="px-4 py-3 border-b border-primary/20 flex items-center gap-2">
+        <Trophy className="w-4 h-4 text-primary" />
+        <span className="font-semibold text-sm text-primary">League Plan</span>
+      </div>
+      <div className="p-4 space-y-3">
+        <div>
+          <p className="text-lg font-bold">{data.name}</p>
+          {data.description && <p className="text-sm text-muted-foreground mt-0.5">{data.description}</p>}
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {data.startDate && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{data.startDate}{data.endDate ? ` – ${data.endDate}` : ''}</span>
+            </div>
+          )}
+          {data.maxPlayers && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Users className="w-3.5 h-3.5" />
+              <span>{data.maxPlayers} players max</span>
+            </div>
+          )}
+          {data.location && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>{data.location}</span>
+            </div>
+          )}
+          {data.leagueType && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="capitalize">{data.leagueType.replace('-', ' ')}</span>
+              {data.playerGroup && <span>· {data.playerGroup}</span>}
+            </div>
+          )}
+        </div>
+        {created ? (
+          <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+            <CheckCircle className="w-4 h-4" />
+            League created successfully!
+          </div>
+        ) : (
+          <Button onClick={handleCreate} disabled={creating} size="sm" className="w-full">
+            {creating ? (
+              <><CircleNotch className="w-3.5 h-3.5 mr-2 animate-spin" />Creating...</>
+            ) : (
+              <><Plus className="w-3.5 h-3.5 mr-2" />Create This League</>
             )}
           </Button>
         )}
@@ -431,6 +509,12 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
                     <CreateTournamentCard
                       data={msg.data}
                       onCreated={(id) => setTimeout(() => navigate(`/tournaments/${id}`), 1500)}
+                    />
+                  )}
+                  {msg.role === 'assistant' && msg.action === 'create-league' && msg.data && (
+                    <CreateLeagueCard
+                      data={msg.data}
+                      onCreated={(id) => setTimeout(() => navigate(`/leagues/${id}`), 1500)}
                     />
                   )}
                   {msg.role === 'assistant' && msg.action === 'suggest-events' && Array.isArray(msg.data) && (

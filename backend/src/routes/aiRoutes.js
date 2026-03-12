@@ -4,6 +4,6 @@ import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/chat', protect, authorize('organizer', 'admin'), picklixChat);
+router.post('/chat', protect, picklixChat);
 
 export default router;
