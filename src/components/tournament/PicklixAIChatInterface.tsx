@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { picklixAIAPI, tournamentAPI, eventAPI, leagueAPI } from '@/services/api';
+import { picklixAIAPI, tournamentAPI, eventAPI, leagueAPI, communicationAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
   Sparkle, CircleNotch, PaperPlaneTilt, User, Robot, Copy,
   Calendar, MapPin, Users, Trophy, Clock,
-  ArrowCounterClockwise, CheckCircle, Plus
+  ArrowCounterClockwise, CheckCircle, Plus,
+  Megaphone, PencilSimple, Eye, EyeSlash
 } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -373,6 +374,266 @@ function CalculateCourtsCard({ data }: { data: any }) {
   );
 }
 
+// Action card: add-events
+function AddEventsCard({ data }: { data: any }) {
+  const [adding, setAdding] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleAdd = async () => {
+    setAdding(true);
+    try {
+      await Promise.all(
+        (data.events || []).map((ev: any) => eventAPI.create(data.tournamentId, ev))
+      );
+      setDone(true);
+      toast.success(`Added ${data.events?.length || 0} event(s) to ${data.tournamentName || 'tournament'}`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to add events');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 overflow-hidden">
+      <div className="px-4 py-3 border-b border-primary/20 flex items-center gap-2">
+        <Plus className="w-4 h-4 text-primary" />
+        <span className="font-semibold text-sm text-primary">Add Events</span>
+        {data.tournamentName && (
+          <span className="text-xs text-muted-foreground ml-1">→ {data.tournamentName}</span>
+        )}
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="grid gap-2">
+          {(data.events || []).map((ev: any, i: number) => (
+            <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-background/60 text-xs">
+              <div>
+                <p className="font-medium">{ev.name}</p>
+                <p className="text-muted-foreground">
+                  {ev.format} · Skill {ev.skillLevel} · {ev.playFormat} · max {ev.maxTeams} teams
+                </p>
+              </div>
+              {ev.entryFee != null && (
+                <span className="font-semibold text-primary">${ev.entryFee}</span>
+              )}
+            </div>
+          ))}
+        </div>
+        {done ? (
+          <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+            <CheckCircle className="w-4 h-4" />
+            Events added successfully!
+          </div>
+        ) : (
+          <Button onClick={handleAdd} disabled={adding} size="sm" className="w-full">
+            {adding ? (
+              <><CircleNotch className="w-3.5 h-3.5 mr-2 animate-spin" />Adding Events...</>
+            ) : (
+              <><Plus className="w-3.5 h-3.5 mr-2" />Add Events to Tournament</>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Action card: publish-tournament
+function PublishTournamentCard({ data }: { data: any }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const isPublish = data.action !== 'unpublish';
+
+  const handleAction = async () => {
+    setLoading(true);
+    try {
+      await tournamentAPI.update(data.tournamentId, {
+        status: isPublish ? 'active' : 'upcoming',
+      });
+      setDone(true);
+      toast.success(
+        isPublish
+          ? `${data.tournamentName || 'Tournament'} is now live!`
+          : `${data.tournamentName || 'Tournament'} has been unpublished.`
+      );
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to update tournament');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 overflow-hidden">
+      <div className="px-4 py-3 border-b border-primary/20 flex items-center gap-2">
+        {isPublish ? <Eye className="w-4 h-4 text-primary" /> : <EyeSlash className="w-4 h-4 text-primary" />}
+        <span className="font-semibold text-sm text-primary">
+          {isPublish ? 'Publish Tournament' : 'Unpublish Tournament'}
+        </span>
+      </div>
+      <div className="p-4 space-y-3">
+        <p className="text-sm">
+          <span className="font-medium">{data.tournamentName || 'Tournament'}</span>
+          {isPublish
+            ? ' will be set to active and visible to players.'
+            : ' will be set back to upcoming (hidden from public listings).'}
+        </p>
+        {done ? (
+          <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+            <CheckCircle className="w-4 h-4" />
+            {isPublish ? 'Tournament published!' : 'Tournament unpublished!'}
+          </div>
+        ) : (
+          <Button onClick={handleAction} disabled={loading} size="sm" className="w-full">
+            {loading ? (
+              <><CircleNotch className="w-3.5 h-3.5 mr-2 animate-spin" />{isPublish ? 'Publishing...' : 'Unpublishing...'}</>
+            ) : (
+              <>{isPublish ? <Eye className="w-3.5 h-3.5 mr-2" /> : <EyeSlash className="w-3.5 h-3.5 mr-2" />}{isPublish ? 'Publish Tournament' : 'Unpublish Tournament'}</>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Action card: update-tournament
+function UpdateTournamentCard({ data }: { data: any }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleApply = async () => {
+    setLoading(true);
+    try {
+      await tournamentAPI.update(data.tournamentId, data.updates);
+      setDone(true);
+      toast.success(`${data.tournamentName || 'Tournament'} updated successfully!`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to update tournament');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateEntries = Object.entries(data.updates || {});
+
+  const fieldLabel: Record<string, string> = {
+    name: 'Name',
+    description: 'Description',
+    maxPlayers: 'Max Players',
+    entryFee: 'Entry Fee',
+    location: 'Location',
+    address: 'Address',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    registrationDeadline: 'Registration Deadline',
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 overflow-hidden">
+      <div className="px-4 py-3 border-b border-primary/20 flex items-center gap-2">
+        <PencilSimple className="w-4 h-4 text-primary" />
+        <span className="font-semibold text-sm text-primary">Update Tournament</span>
+        {data.tournamentName && (
+          <span className="text-xs text-muted-foreground ml-1">→ {data.tournamentName}</span>
+        )}
+      </div>
+      <div className="p-4 space-y-3">
+        {updateEntries.length > 0 && (
+          <div className="grid gap-1.5">
+            {updateEntries.map(([key, value]) => (
+              <div key={key} className="flex items-center justify-between py-1 px-2 rounded-lg bg-background/60 text-xs">
+                <span className="text-muted-foreground">{fieldLabel[key] || key}</span>
+                <span className="font-medium">{String(value)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {done ? (
+          <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+            <CheckCircle className="w-4 h-4" />
+            Changes applied successfully!
+          </div>
+        ) : (
+          <Button onClick={handleApply} disabled={loading} size="sm" className="w-full">
+            {loading ? (
+              <><CircleNotch className="w-3.5 h-3.5 mr-2 animate-spin" />Applying...</>
+            ) : (
+              <><PencilSimple className="w-3.5 h-3.5 mr-2" />Apply Changes</>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Action card: send-announcement
+function SendAnnouncementCard({ data }: { data: any }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleSend = async () => {
+    setLoading(true);
+    try {
+      await communicationAPI.send(data.tournamentId, {
+        subject: data.subject,
+        message: data.message,
+        recipientType: 'all',
+      });
+      setDone(true);
+      toast.success('Announcement sent to all participants!');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg || 'Failed to send announcement');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 overflow-hidden">
+      <div className="px-4 py-3 border-b border-primary/20 flex items-center gap-2">
+        <Megaphone className="w-4 h-4 text-primary" />
+        <span className="font-semibold text-sm text-primary">Send Announcement</span>
+        {data.tournamentName && (
+          <span className="text-xs text-muted-foreground ml-1">→ {data.tournamentName}</span>
+        )}
+      </div>
+      <div className="p-4 space-y-3">
+        {data.subject && (
+          <div className="text-xs">
+            <span className="text-muted-foreground font-medium">Subject: </span>
+            <span className="font-semibold">{data.subject}</span>
+          </div>
+        )}
+        {data.message && (
+          <p className="text-xs text-muted-foreground bg-background/60 rounded-lg px-3 py-2 line-clamp-3">
+            {data.message}
+          </p>
+        )}
+        {done ? (
+          <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+            <CheckCircle className="w-4 h-4" />
+            Announcement sent!
+          </div>
+        ) : (
+          <Button onClick={handleSend} disabled={loading} size="sm" className="w-full">
+            {loading ? (
+              <><CircleNotch className="w-3.5 h-3.5 mr-2 animate-spin" />Sending...</>
+            ) : (
+              <><Megaphone className="w-3.5 h-3.5 mr-2" />Send to All Participants</>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -525,6 +786,18 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
                   )}
                   {msg.role === 'assistant' && msg.action === 'calculate-courts' && msg.data && (
                     <CalculateCourtsCard data={msg.data} />
+                  )}
+                  {msg.role === 'assistant' && msg.action === 'add-events' && msg.data && (
+                    <AddEventsCard data={msg.data} />
+                  )}
+                  {msg.role === 'assistant' && msg.action === 'publish-tournament' && msg.data && (
+                    <PublishTournamentCard data={msg.data} />
+                  )}
+                  {msg.role === 'assistant' && msg.action === 'update-tournament' && msg.data && (
+                    <UpdateTournamentCard data={msg.data} />
+                  )}
+                  {msg.role === 'assistant' && msg.action === 'send-announcement' && msg.data && (
+                    <SendAnnouncementCard data={msg.data} />
                   )}
 
                   {/* Copy button for assistant messages */}

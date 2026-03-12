@@ -1,3 +1,6 @@
+import Tournament from '../models/Tournament.js';
+import League from '../models/League.js';
+
 const PICKLIX_SYSTEM_PROMPT = `You are Picklix AI, an expert pickleball platform assistant built into Picklix — a platform for hosting and joining pickleball tournaments and leagues.
 
 You help organizers do EVERYTHING: create tournaments, create leagues, plan events, generate schedules, calculate courts, set pricing, manage registrations, and understand analytics.
@@ -14,7 +17,7 @@ CRITICAL: You MUST always respond with valid JSON in this exact format:
 OR if you are suggesting a specific action the user can take with one click:
 {
   "message": "Your conversational response here",
-  "action": "create-tournament" | "create-league" | "suggest-events" | "generate-schedule" | "calculate-courts",
+  "action": "create-tournament" | "create-league" | "suggest-events" | "generate-schedule" | "calculate-courts" | "add-events" | "publish-tournament" | "update-tournament" | "send-announcement",
   "data": { ... action-specific data ... }
 }
 
@@ -106,6 +109,46 @@ For "calculate-courts":
   "reasoning": "Explanation of the calculation"
 }
 
+For "add-events":
+{
+  "tournamentId": "the tournament _id from organizer's existing tournaments",
+  "tournamentName": "Tournament name for display",
+  "events": [
+    {
+      "name": "Mixed Doubles 3.5+",
+      "format": "singles" | "doubles" | "mixed-doubles",
+      "skillLevel": "3.5",
+      "maxTeams": 16,
+      "entryFee": 45,
+      "playFormat": "round-robin" | "single-elimination" | "double-elimination"
+    }
+  ]
+}
+
+For "publish-tournament":
+{
+  "tournamentId": "the tournament _id",
+  "tournamentName": "Tournament name for display",
+  "action": "publish" | "unpublish"
+}
+
+For "update-tournament":
+{
+  "tournamentId": "the tournament _id",
+  "tournamentName": "Tournament name for display",
+  "updates": {
+    // any subset of: name, description, maxPlayers, entryFee, location, address, startDate, endDate, registrationDeadline
+  }
+}
+
+For "send-announcement":
+{
+  "tournamentId": "the tournament _id",
+  "tournamentName": "Tournament name for display",
+  "subject": "Email subject line",
+  "message": "Full message body to send to all participants"
+}
+
 ---
 
 PLATFORM KNOWLEDGE — FEATURES YOU KNOW ABOUT:
@@ -164,7 +207,12 @@ RULES:
 - For create-league: playerType must be one of: scramble, partner
 - For create-league: playerGroup must be one of: mens, womens, mixed, coed
 - When the user asks about navigating the app, explain where things are (e.g., "go to Dashboard > Players & Check-in tab")
-- You can answer general pickleball questions too (rules, scoring, strategy)`;
+- You can answer general pickleball questions too (rules, scoring, strategy)
+- When the user asks to "add events", "add divisions", or similar to an existing tournament, use "add-events" action with the correct tournamentId from their existing tournaments list
+- When the user says "publish", "go live", "activate" a tournament, use "publish-tournament" action
+- When the user asks to change/update fields on an existing tournament, use "update-tournament"
+- When the user wants to message/email/announce to participants, use "send-announcement"
+- Always use the exact MongoDB _id from the organizer's existing tournaments when referencing them`;
 
 export const picklixChat = async (req, res, next) => {
   try {
@@ -179,6 +227,23 @@ export const picklixChat = async (req, res, next) => {
       return res.status(500).json({ success: false, message: 'AI service not configured' });
     }
 
+    // Fetch organizer's existing tournaments and leagues for context
+    let organizerContextStr = '';
+    if (req.user) {
+      const [myTournaments, myLeagues] = await Promise.all([
+        Tournament.find({ organizer: req.user.id }).select('_id name status startDate maxPlayers').limit(10).lean(),
+        League.find({ organizer: req.user.id }).select('_id name status startDate maxPlayers').limit(10).lean()
+      ]);
+      if (myTournaments.length) {
+        organizerContextStr += '\n\nORGANIZER\'S EXISTING TOURNAMENTS (use these IDs for actions):\n' +
+          myTournaments.map(t => `- ID: ${t._id} | Name: "${t.name}" | Status: ${t.status} | Date: ${t.startDate ? new Date(t.startDate).toDateString() : 'TBD'}`).join('\n');
+      }
+      if (myLeagues.length) {
+        organizerContextStr += '\n\nORGANIZER\'S EXISTING LEAGUES:\n' +
+          myLeagues.map(l => `- ID: ${l._id} | Name: "${l.name}" | Status: ${l.status}`).join('\n');
+      }
+    }
+
     // Build conversation context from history (last 8 turns)
     const recentHistory = Array.isArray(history) ? history.slice(-8) : [];
     const historyText = recentHistory
@@ -186,7 +251,7 @@ export const picklixChat = async (req, res, next) => {
       .join('\n');
 
     const fullPrompt = [
-      PICKLIX_SYSTEM_PROMPT,
+      PICKLIX_SYSTEM_PROMPT + organizerContextStr,
       historyText || null,
       `User: ${message}`,
       'Respond with JSON only.'
