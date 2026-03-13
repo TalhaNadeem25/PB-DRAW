@@ -876,6 +876,21 @@ export const leagueAPI = {
     const response = await api.put(`/leagues/${id}/status`, { status });
     return response.data;
   },
+
+  generateMatches: async (leagueId: string, sessionId: string) => {
+    const response = await api.post(`/leagues/${leagueId}/sessions/${sessionId}/generate-matches`);
+    return response.data;
+  },
+
+  getSessionMatches: async (leagueId: string, sessionId: string) => {
+    const response = await api.get(`/leagues/${leagueId}/sessions/${sessionId}/matches`);
+    return response.data;
+  },
+
+  enterScore: async (leagueId: string, matchId: string, score1: number, score2: number) => {
+    const response = await api.put(`/leagues/${leagueId}/matches/${matchId}/score`, { score1, score2 });
+    return response.data;
+  },
 };
 
 // Newsletter

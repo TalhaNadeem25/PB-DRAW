@@ -57,6 +57,13 @@ export default function LeagueManage() {
   // Standings editing
   const [editedStandings, setEditedStandings] = useState<Record<string, any>>({});
 
+  // Session matches
+  const [sessionMatches, setSessionMatches] = useState<Record<string, any[]>>({});
+  const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [scoreInputs, setScoreInputs] = useState<Record<string, { score1: string; score2: string }>>({});
+  const [savingScore, setSavingScore] = useState<string | null>(null);
+  const [generatingMatches, setGeneratingMatches] = useState<string | null>(null);
+
   const { data, isLoading } = useQuery({
     queryKey: ["league", id],
     queryFn: () => leagueAPI.getById(id!),
@@ -218,6 +225,57 @@ export default function LeagueManage() {
       });
     },
   });
+
+  const loadSessionMatches = async (sessionId: string) => {
+    try {
+      const res = await leagueAPI.getSessionMatches(id!, sessionId);
+      setSessionMatches(prev => ({ ...prev, [sessionId]: res.data }));
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to load matches", variant: "destructive" });
+    }
+  };
+
+  const handleToggleSession = (sessionId: string) => {
+    if (expandedSession === sessionId) {
+      setExpandedSession(null);
+    } else {
+      setExpandedSession(sessionId);
+      loadSessionMatches(sessionId);
+    }
+  };
+
+  const handleGenerateMatches = async (sessionId: string) => {
+    setGeneratingMatches(sessionId);
+    try {
+      await leagueAPI.generateMatches(id!, sessionId);
+      toast({ title: "Matches generated!", description: "Round-robin schedule created." });
+      await loadSessionMatches(sessionId);
+      queryClient.invalidateQueries({ queryKey: ["league", id] });
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.response?.data?.message || "Failed to generate matches", variant: "destructive" });
+    } finally {
+      setGeneratingMatches(null);
+    }
+  };
+
+  const handleEnterScore = async (matchId: string, sessionId: string) => {
+    const inputs = scoreInputs[matchId];
+    if (!inputs || inputs.score1 === "" || inputs.score2 === "") {
+      toast({ title: "Enter both scores", variant: "destructive" });
+      return;
+    }
+    setSavingScore(matchId);
+    try {
+      await leagueAPI.enterScore(id!, matchId, Number(inputs.score1), Number(inputs.score2));
+      toast({ title: "Score saved! Standings updated." });
+      await loadSessionMatches(sessionId);
+      queryClient.invalidateQueries({ queryKey: ["league", id] });
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.response?.data?.message || "Failed to save score", variant: "destructive" });
+    } finally {
+      setSavingScore(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -514,74 +572,145 @@ export default function LeagueManage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {league.sessions.map((session: any, i: number) => (
-                  <div
-                    key={session._id ?? i}
-                    className="glass-card rounded-xl p-4 border border-border/50 flex items-start gap-4"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0 shadow-sm">
-                      <span className="font-display font-black text-sm text-white">
-                        {session.sessionNumber ?? i + 1}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-display font-bold text-sm uppercase tracking-wide text-foreground">
-                          Session {session.sessionNumber ?? i + 1}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-[10px] font-display font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
-                            SESSION_STATUS_COLORS[session.status] ?? SESSION_STATUS_COLORS.upcoming
+                {league.sessions.map((session: any, i: number) => {
+                  const sid = session._id;
+                  const isExpanded = expandedSession === sid;
+                  const matches: any[] = sessionMatches[sid] || [];
+                  const pendingCount = matches.filter(m => m.status === 'pending').length;
+                  const completedCount = matches.filter(m => m.status === 'completed').length;
+                  return (
+                    <div key={sid ?? i} className="glass-card rounded-xl border border-border/50 overflow-hidden">
+                      {/* Session header - clickable to expand */}
+                      <div
+                        className="p-4 flex items-start gap-4 cursor-pointer hover:bg-accent/10 transition-colors"
+                        onClick={() => handleToggleSession(sid)}
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0 shadow-sm">
+                          <span className="font-display font-black text-sm text-white">{session.sessionNumber ?? i + 1}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-display font-bold text-sm uppercase tracking-wide text-foreground">
+                              Session {session.sessionNumber ?? i + 1}
+                            </span>
+                            <span className={cn("text-[10px] font-display font-bold uppercase tracking-widest px-2 py-0.5 rounded-full", SESSION_STATUS_COLORS[session.status] ?? SESSION_STATUS_COLORS.upcoming)}>
+                              {session.status}
+                            </span>
+                            {matches.length > 0 && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {completedCount}/{matches.length} matches done
+                              </span>
+                            )}
+                          </div>
+                          {session.date && (
+                            <p className="text-xs text-muted-foreground mt-1">{format(new Date(session.date), "EEEE, MMM d, yyyy")}</p>
                           )}
-                        >
-                          {session.status}
-                        </span>
+                          {session.notes && <p className="text-xs text-muted-foreground mt-1">{session.notes}</p>}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                          {session.status === "upcoming" && (
+                            <Button
+                              variant="outline" size="sm"
+                              onClick={() => updateSessionMutation.mutate({ sessionId: sid, status: "active" })}
+                              className="h-8 text-xs font-display font-bold uppercase tracking-wide border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+                            >
+                              Mark Active
+                            </Button>
+                          )}
+                          {session.status === "active" && (
+                            <Button
+                              variant="outline" size="sm"
+                              onClick={() => updateSessionMutation.mutate({ sessionId: sid, status: "completed" })}
+                              className="h-8 text-xs font-display font-bold uppercase tracking-wide border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
+                            >
+                              <Check className="w-3.5 h-3.5 mr-1" />
+                              Complete
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      {session.date && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(new Date(session.date), "EEEE, MMM d, yyyy")}
-                        </p>
-                      )}
-                      {session.notes && (
-                        <p className="text-xs text-muted-foreground mt-1">{session.notes}</p>
+
+                      {/* Expanded: matches */}
+                      {isExpanded && (
+                        <div className="border-t border-border/40 p-4 space-y-4">
+                          {/* Generate matches button */}
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground font-display font-bold uppercase tracking-wide">
+                              Round-Robin Matches {matches.length > 0 ? `(${matches.length} total)` : ""}
+                            </p>
+                            <Button
+                              size="sm" variant="outline"
+                              onClick={() => handleGenerateMatches(sid)}
+                              disabled={generatingMatches === sid}
+                              className="h-8 text-xs font-display font-bold uppercase tracking-wide"
+                            >
+                              {generatingMatches === sid ? "Generating..." : matches.length > 0 ? "Regenerate" : "Generate Matches"}
+                            </Button>
+                          </div>
+
+                          {matches.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">No matches yet. Click "Generate Matches" to create the round-robin schedule.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {/* Group by round */}
+                              {Array.from(new Set(matches.map(m => m.round))).sort((a, b) => a - b).map(round => (
+                                <div key={round}>
+                                  <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Round {round}</p>
+                                  <div className="space-y-1.5">
+                                    {matches.filter(m => m.round === round).map((match: any) => {
+                                      const mid = match._id;
+                                      const inputs = scoreInputs[mid] ?? { score1: match.score1 ?? "", score2: match.score2 ?? "" };
+                                      const isDone = match.status === 'completed';
+                                      return (
+                                        <div key={mid} className={cn("flex items-center gap-3 p-3 rounded-xl text-sm", isDone ? "bg-emerald-500/5 border border-emerald-500/20" : "bg-muted/30 border border-border/40")}>
+                                          <span className={cn("font-medium flex-1 text-right text-xs", match.winner?._id === match.player1?._id && "font-bold text-primary")}>
+                                            {match.player1?.name ?? "Player"}
+                                          </span>
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <Input
+                                              type="number" min={0}
+                                              value={inputs.score1}
+                                              onChange={e => setScoreInputs(prev => ({ ...prev, [mid]: { ...inputs, score1: e.target.value } }))}
+                                              className="w-14 h-8 text-center text-sm rounded-lg"
+                                              disabled={isDone}
+                                            />
+                                            <span className="text-muted-foreground font-bold text-xs">vs</span>
+                                            <Input
+                                              type="number" min={0}
+                                              value={inputs.score2}
+                                              onChange={e => setScoreInputs(prev => ({ ...prev, [mid]: { ...inputs, score2: e.target.value } }))}
+                                              className="w-14 h-8 text-center text-sm rounded-lg"
+                                              disabled={isDone}
+                                            />
+                                          </div>
+                                          <span className={cn("font-medium flex-1 text-xs", match.winner?._id === match.player2?._id && "font-bold text-primary")}>
+                                            {match.player2?.name ?? "Player"}
+                                          </span>
+                                          {isDone ? (
+                                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                                          ) : (
+                                            <Button
+                                              size="sm" variant="outline"
+                                              onClick={() => handleEnterScore(mid, sid)}
+                                              disabled={savingScore === mid}
+                                              className="h-7 px-2 text-xs font-display font-bold uppercase tracking-wide shrink-0"
+                                            >
+                                              {savingScore === mid ? "..." : "Save"}
+                                            </Button>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      {session.status === "upcoming" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            updateSessionMutation.mutate({
-                              sessionId: session._id,
-                              status: "active",
-                            })
-                          }
-                          className="h-8 text-xs font-display font-bold uppercase tracking-wide border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
-                        >
-                          Mark Active
-                        </Button>
-                      )}
-                      {session.status === "active" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            updateSessionMutation.mutate({
-                              sessionId: session._id,
-                              status: "completed",
-                            })
-                          }
-                          className="h-8 text-xs font-display font-bold uppercase tracking-wide border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
-                        >
-                          <Check className="w-3.5 h-3.5 mr-1" />
-                          Complete
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
