@@ -1,4 +1,4 @@
-# Pre-Launch Checklist — Pickle Rally
+# Pre-Launch Checklist — Picklix
 
 Use this list before going live. Tick off as you complete each item.
 
@@ -94,7 +94,7 @@ Use this list before going live. Tick off as you complete each item.
   You have a VerifyEmail page; consider requiring verified email before allowing registration or payment to reduce fake signups and support load.
 
 - [ ] **Documentation**  
-  Add a short “Deploying Pickle Rally” section to the README (or a separate DEPLOYMENT.md) listing required env vars for frontend and backend so you (or a teammate) can redeploy later.
+  Add a short “Deploying Picklix” section to the README (or a separate DEPLOYMENT.md) listing required env vars for frontend and backend so you (or a teammate) can redeploy later.
 
 ---
 

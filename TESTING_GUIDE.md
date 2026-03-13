@@ -1,4 +1,4 @@
-# 🧪 Testing Guide - Pickle Rally Integration
+# 🧪 Testing Guide - Picklix Integration
 
 ## What's Been Connected
 
@@ -29,7 +29,7 @@ npm run dev
 ✅ MongoDB Connected: cluster0.ypjgvcy.mongodb.net
 🚀 Server running in development mode on port 5000
 📡 API available at http://localhost:5000/api
-🎾 Pickle Rally Backend is ready!
+🎾 Picklix Backend is ready!
 ```
 
 ### Step 2: Start the Frontend

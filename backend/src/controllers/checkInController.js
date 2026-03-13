@@ -166,10 +166,14 @@ export const getMyTickets = async (req, res, next) => {
     })
       .populate('tournament', 'name location startDate status')
       .populate('events', 'name')
+      .populate('event', 'name')
       .populate('teams', 'name')
+      .populate('team', 'name')
       .sort({ createdAt: -1 });
 
     const validPayments = payments.filter(p => p.tournament != null);
+    const eventsList = (p) => (p.events && p.events.length ? p.events : p.event ? [p.event] : []);
+    const teamsList = (p) => (p.teams && p.teams.length ? p.teams : p.team ? [p.team] : []);
 
     res.status(200).json({
       success: true,
@@ -186,11 +190,11 @@ export const getMyTickets = async (req, res, next) => {
           startDate: p.tournament.startDate,
           status: p.tournament.status
         },
-        events: p.events.filter(e => e != null).map(e => ({
+        events: eventsList(p).map(e => ({
           id: e._id,
           name: e.name
         })),
-        teams: p.teams.filter(t => t != null).map(t => ({
+        teams: teamsList(p).map(t => ({
           id: t._id,
           name: t.name
         })),

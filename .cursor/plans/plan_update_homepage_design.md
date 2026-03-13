@@ -67,7 +67,7 @@ The provided HTML design includes:
 - **Changes**:
   - Update to fixed top-0 positioning (remove top-4 offset)
   - Add glass effect styling (backdrop-blur with semi-transparent background)
-  - Update logo to match new design (SVG icon + "Pickle Rally" text)
+  - Update logo to match new design (SVG icon + "Picklix" text)
   - Simplify navigation links to match new design
   - Keep existing authentication logic and dropdown menus
   - Use existing color system (primary/secondary from CSS variables)

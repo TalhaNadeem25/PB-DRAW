@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Pickle Rally platform now includes an automated email system that sends transactional emails to users. Currently implemented:
+The Picklix platform now includes an automated email system that sends transactional emails to users. Currently implemented:
 
 - ✅ **Ticket Purchase Confirmation** - Sent when a player successfully pays for tournament entry
 - ✅ **Welcome Email** - Ready to use for new user registrations
@@ -30,7 +30,7 @@ Gmail is the easiest option for development and small-scale deployments.
 
 1. Go to https://myaccount.google.com/apppasswords
 2. Select "Mail" as the app
-3. Select "Other" as the device, enter "Pickle Rally"
+3. Select "Other" as the device, enter "Picklix"
 4. Click "Generate"
 5. Copy the 16-character password (no spaces)
 
@@ -185,7 +185,7 @@ export const sendTournamentReminderEmail = async ({ to, tournamentName, eventDat
 
   try {
     const info = await transport.sendMail({
-      from: `"Pickle Rally" <${process.env.EMAIL_FROM}>`,
+      from: `"Picklix" <${process.env.EMAIL_FROM}>`,
       to: to,
       subject: `Reminder: ${tournamentName} is tomorrow!`,
       html: emailHtml,

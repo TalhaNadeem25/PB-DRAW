@@ -358,7 +358,7 @@ Give this to your test users:
 ```markdown
 # Welcome Test User!
 
-Thank you for helping test Pickle Rally!
+Thank you for helping test Picklix!
 
 ## Your Test Account
 - Email: [provided separately]

@@ -2,10 +2,10 @@ import { cn } from "@/lib/utils";
 import { tournamentAPI } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CaretLeft, CaretRight, MapPin, Users } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import TournamentCard from "@/components/tournaments/TournamentCard";
 
 const CARD_WIDTH = 344;
 
@@ -75,16 +75,14 @@ const FeaturedTournamentsSection = () => {
         className="flex gap-6 px-4 md:px-6 max-w-[1200px] mx-auto overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory"
       >
         {tournaments.map((tournament: any, index: number) => {
-          const spotsFilled = tournament.currentPlayers || 0;
-          const spotsTotal = tournament.maxPlayers || 64;
-          const isFillingFast = spotsTotal - spotsFilled <= 10;
-          const isLive = tournament.status === "in-progress";
-
-          let dateLabel = "";
+          let startDateLabel = "";
+          let endDateLabel = "";
           try {
-            dateLabel = `${format(new Date(tournament.startDate), "MMM dd")}–${format(new Date(tournament.endDate), "MMM dd")}`;
+            startDateLabel = format(new Date(tournament.startDate), "MMM dd");
+            endDateLabel = format(new Date(tournament.endDate), "MMM dd");
           } catch {
-            dateLabel = "";
+            startDateLabel = "";
+            endDateLabel = "";
           }
 
           return (
@@ -94,84 +92,29 @@ const FeaturedTournamentsSection = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="min-w-[320px] md:min-w-[400px] bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col overflow-hidden snap-start"
+              className="min-w-[320px] md:min-w-[360px] snap-start"
             >
-              <div
-                className="relative h-56 w-full bg-cover bg-center bg-muted"
-                style={tournament.imageUrl ? { backgroundImage: `url('${tournament.imageUrl}')` } : {}}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <span
-                    className={`px-3 py-1 rounded bg-white font-display font-black text-[10px] uppercase tracking-widest ${
-                      isLive ? "text-amber-500" : "text-primary"
-                    }`}
-                  >
-                    {isLive ? "LIVE" : "OPEN"}
-                  </span>
-                </div>
-                {isFillingFast && (
-                  <div className="absolute top-4 right-4">
-                    <span className="font-display font-bold text-xs text-white bg-black/50 backdrop-blur-md px-3 py-1 rounded-full flex items-center justify-center gap-1.5 border border-white/20">
-                      {isLive && <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />}
-                      Filling Fast
-                    </span>
-                  </div>
-                )}
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <h4 className="text-2xl font-display font-black uppercase tracking-tight leading-none mb-1 shadow-sm line-clamp-1">
-                    {tournament.name}
-                  </h4>
-                  <p className="font-medium text-sm text-white/90 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-primary" />
-                    {tournament.location}
-                    {dateLabel && ` • ${dateLabel}`}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col bg-card">
-                <div className="flex justify-between items-center mb-4 text-sm font-semibold text-muted-foreground">
-                  <span className="bg-muted px-2 py-1 rounded-md">
-                    {tournament.skillLevel || "All Levels"}
-                  </span>
-                  <span className="text-foreground font-bold">
-                    {tournament.entryFee ? `$${tournament.entryFee}` : "Free"}
-                  </span>
-                </div>
-
-                <div className="mt-auto">
-                  <div className="flex justify-between items-end mb-2 text-sm font-bold">
-                    <span className="text-foreground flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      {spotsFilled}/{spotsTotal} filled
-                    </span>
-                    <span className="text-muted-foreground font-medium text-xs">
-                      {spotsTotal - spotsFilled} spots left
-                    </span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2 mb-6 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${Math.min((spotsFilled / spotsTotal) * 100, 100)}%` }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-                      className={`h-2 rounded-full ${isFillingFast ? "bg-amber-400" : "bg-primary"}`}
-                    />
-                  </div>
-                  <Link
-                    to={`/tournaments/${tournament._id}`}
-                    className="block w-full bg-foreground text-background hover:bg-primary font-display font-bold uppercase tracking-widest text-sm transition-colors py-4 rounded-xl text-center"
-                  >
-                    Register Now &rarr;
-                  </Link>
-                </div>
-              </div>
+              <TournamentCard
+                id={tournament._id}
+                name={tournament.name}
+                location={tournament.location}
+                startDate={startDateLabel}
+                endDate={endDateLabel}
+                playerCount={tournament.currentPlayers || 0}
+                maxPlayers={tournament.maxPlayers || 64}
+                eventCount={tournament.events?.length || 0}
+                status={tournament.status}
+                entryFee={tournament.entryFee}
+                skillLevel={tournament.skillLevel}
+                imageUrl={tournament.imageUrl}
+                organizerId={tournament.organizer?._id || tournament.organizer}
+                registrationDeadline={tournament.registrationDeadline}
+              />
             </motion.div>
           );
         })}
       </div>
+
       {/* Carousel dots — mobile only */}
       {tournaments.length > 1 && (
         <div className="flex md:hidden items-center justify-center gap-2 pt-2 pb-4">

@@ -41,7 +41,7 @@ const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || "all");
   const [locationFilter, setLocationFilter] = useState("all");
-  const [skillFilter, setSkillFilter] = useState(searchParams.get('skill') || "all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
   const [formatFilter, setFormatFilter] = useState("all");
   const [sortOption, setSortOption] = useState("soonest");
@@ -51,7 +51,7 @@ const Tournaments = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, locationFilter, skillFilter, priceFilter, formatFilter, sortOption]);
+  }, [searchQuery, statusFilter, locationFilter, dateFilter, priceFilter, formatFilter, sortOption]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: [
@@ -59,24 +59,42 @@ const Tournaments = () => {
       searchQuery,
       statusFilter,
       locationFilter,
-      skillFilter,
+      dateFilter,
       priceFilter,
       formatFilter,
       sortOption,
       currentPage,
     ],
-    queryFn: () =>
-      tournamentAPI.getAll({
+    queryFn: () => {
+      const now = new Date();
+      let startDateFrom: string | undefined;
+      let startDateTo: string | undefined;
+      if (dateFilter === "week") {
+        startDateFrom = now.toISOString();
+        const end = new Date(now); end.setDate(end.getDate() + 7);
+        startDateTo = end.toISOString();
+      } else if (dateFilter === "month") {
+        startDateFrom = now.toISOString();
+        const end = new Date(now); end.setDate(end.getDate() + 30);
+        startDateTo = end.toISOString();
+      } else if (dateFilter === "3months") {
+        startDateFrom = now.toISOString();
+        const end = new Date(now); end.setMonth(end.getMonth() + 3);
+        startDateTo = end.toISOString();
+      }
+      return tournamentAPI.getAll({
         status: statusFilter !== "all" ? statusFilter : undefined,
         search: searchQuery || undefined,
         limit: itemsPerPage,
         page: currentPage,
         sort: sortOption as "soonest" | "popular",
         location: locationFilter !== "all" && locationFilter !== "near" ? locationFilter : undefined,
-        skillLevel: skillFilter !== "all" ? skillFilter : undefined,
         entryFeeMax: priceFilter !== "all" ? priceFilter : undefined,
         format: formatFilter !== "all" ? formatFilter : undefined,
-      }),
+        startDateFrom,
+        startDateTo,
+      });
+    },
   });
 
   const tournaments = data?.data || [];
@@ -104,7 +122,7 @@ const Tournaments = () => {
   const activeFiltersCount =
     (statusFilter !== "all" ? 1 : 0) +
     (locationFilter !== "all" ? 1 : 0) +
-    (skillFilter !== "all" ? 1 : 0) +
+    (dateFilter !== "all" ? 1 : 0) +
     (priceFilter !== "all" ? 1 : 0) +
     (formatFilter !== "all" ? 1 : 0);
 
@@ -130,7 +148,7 @@ const Tournaments = () => {
       <div className="space-y-3">
         <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Location</h3>
         <div className="space-y-2">
-          {["all", "near", "ca", "fl", "tx"].map((val) => (
+          {[{ val: "all", label: "All Locations" }, { val: "near", label: "Near Me" }].map(({ val, label }) => (
             <label key={val} onClick={() => setLocationFilter(val)} className="flex items-center gap-2 cursor-pointer group">
               <div className={cn(
                 "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
@@ -138,25 +156,30 @@ const Tournaments = () => {
               )}>
                 {locationFilter === val && <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />}
               </div>
-              <span className="text-sm font-medium">{val === "all" ? "All Locations" : val === "near" ? "Near Me" : val.toUpperCase()}</span>
+              <span className="text-sm font-medium">{label}</span>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Skill Level */}
+      {/* Date */}
       <div className="space-y-3">
-        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Skill Level</h3>
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">Date</h3>
         <div className="space-y-2">
-          {["all", "2.5", "3.0", "3.5", "4.0", "4.5"].map((val) => (
-            <label key={val} onClick={() => setSkillFilter(val)} className="flex items-center gap-2 cursor-pointer group">
+          {[
+            { val: "all", label: "Any Date" },
+            { val: "week", label: "Next 7 Days" },
+            { val: "month", label: "Next 30 Days" },
+            { val: "3months", label: "Next 3 Months" },
+          ].map(({ val, label }) => (
+            <label key={val} onClick={() => setDateFilter(val)} className="flex items-center gap-2 cursor-pointer group">
               <div className={cn(
-                "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                skillFilter === val ? "border-primary bg-primary text-white" : "border-muted-foreground group-hover:border-primary text-transparent"
+                "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
+                dateFilter === val ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary"
               )}>
-                <Check className="w-3 h-3" weight="bold" />
+                {dateFilter === val && <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />}
               </div>
-              <span className="text-sm font-medium">{val === "all" ? "All Levels" : val}</span>
+              <span className="text-sm font-medium">{label}</span>
             </label>
           ))}
         </div>
@@ -280,7 +303,7 @@ const Tournaments = () => {
                     onClick={() => {
                       setStatusFilter("all");
                       setLocationFilter("all");
-                      setSkillFilter("all");
+                      setDateFilter("all");
                       setPriceFilter("all");
                       setFormatFilter("all");
                       setSortOption("soonest");
@@ -422,7 +445,7 @@ const Tournaments = () => {
                         setSearchQuery("");
                         setStatusFilter("all");
                         setLocationFilter("all");
-                        setSkillFilter("all");
+                        setDateFilter("all");
                         setPriceFilter("all");
                         setFormatFilter("all");
                         setSortOption("soonest");

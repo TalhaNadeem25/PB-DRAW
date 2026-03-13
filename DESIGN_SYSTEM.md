@@ -1,8 +1,8 @@
-# PicklePlay Design System — Full Reference
+# Picklix Design System — Full Reference
 
 ## App Overview
 
-A pickleball tournament management platform called **PicklePlay** (branded as "PICKLE RALLY" in footer). Built with React + TypeScript + Vite + Tailwind CSS + shadcn/ui. All pages wrap in `<Layout>` which provides a fixed Navbar + Footer.
+A pickleball tournament management platform called **Picklix**. Built with React + TypeScript + Vite + Tailwind CSS + shadcn/ui. All pages wrap in `<Layout>` which provides a fixed Navbar + Footer.
 
 ---
 

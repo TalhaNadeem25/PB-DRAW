@@ -1,4 +1,4 @@
-# Pickle Rally - Comprehensive Testing Checklist
+# Picklix - Comprehensive Testing Checklist
 
 ## Pre-Testing Setup
 

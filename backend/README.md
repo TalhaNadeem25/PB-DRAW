@@ -1,6 +1,6 @@
-# Pickle Rally Backend API
+# Picklix Backend API
 
-RESTful API for Pickle Rally - A pickleball tournament management platform.
+RESTful API for Picklix - A pickleball tournament management platform.
 
 ## 🚀 Getting Started
 

@@ -120,7 +120,7 @@ export const generateTicketPDF = async ({
 
       doc.on('error', reject);
 
-      // PDF Design - PickleRally Branded Ticket
+      // PDF Design - Picklix Branded Ticket
       // Header with court green accent
       doc
         .rect(0, 0, doc.page.width, 10)
@@ -133,7 +133,7 @@ export const generateTicketPDF = async ({
         .fontSize(36)
         .font('Helvetica-Bold')
         .fillColor('#111827')
-        .text('PickleRally', { align: 'center' });
+        .text('Picklix', { align: 'center' });
 
       doc
         .moveDown(0.3)
@@ -271,7 +271,7 @@ export const generateTicketPDF = async ({
       doc
         .fontSize(8)
         .fillColor('#d1d5db')
-        .text('© 2025 PickleRally. All rights reserved.', { align: 'center' });
+        .text('© 2025 Picklix. All rights reserved.', { align: 'center' });
 
       // Bottom accent bar
       doc

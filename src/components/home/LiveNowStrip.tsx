@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 
 // In a real app this would fetch live tournaments
-const liveTournaments = [
-  { id: 1, name: "Desert Open 2026", url: "/tournaments/1" }
-];
+const liveTournaments: { id: number; name: string; url: string }[] = [];
 
 const LiveNowStrip = () => {
   if (liveTournaments.length === 0) return null;

@@ -1,7 +1,7 @@
-# Pickle Rally - Project Status
+# Picklix - Project Status
 
 ## 📋 Project Overview
-**Pickle Rally** (also branded as "PICKLEPLAY") is a pickleball tournament management platform built with React, TypeScript, Vite, and shadcn-ui. The application allows users to create, manage, and participate in pickleball tournaments with pool play functionality.
+**Picklix** is a pickleball tournament management platform built with React, TypeScript, Vite, and shadcn-ui. The application allows users to create, manage, and participate in pickleball tournaments with pool play functionality.
 
 ---
 

@@ -77,7 +77,7 @@ app.use(xss());
 app.get('/api', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to Pickle Rally API - Serverless',
+    message: 'Welcome to Picklix API - Serverless',
     version: '1.0.0'
   });
 });

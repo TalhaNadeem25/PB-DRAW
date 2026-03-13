@@ -1,8 +1,8 @@
-# 🚀 Pickle Rally - Quick Start Guide
+# 🚀 Picklix - Quick Start Guide
 
 ## What's Been Built
 
-Your Pickle Rally app now has:
+Your Picklix app now has:
 - ✅ **Frontend**: Complete React + TypeScript UI
 - ✅ **Backend**: Complete Node.js + Express + MongoDB API
 
@@ -41,7 +41,7 @@ You should see:
 ✅ MongoDB Connected: localhost
 🚀 Server running in development mode on port 5000
 📡 API available at http://localhost:5000/api
-🎾 Pickle Rally Backend is ready!
+🎾 Picklix Backend is ready!
 ```
 
 Test it: Open http://localhost:5000/api in your browser

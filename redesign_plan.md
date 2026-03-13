@@ -1,4 +1,4 @@
-# Pickle Rally — Redesign Vision & Audit Plan
+# Picklix — Redesign Vision & Audit Plan
 
 ## Part 1: Architecture & Global Design
 - [x] Shift design language from "Sports app trying to look techy" to "Premium sports marketplace"

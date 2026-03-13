@@ -8,7 +8,7 @@ const productionUrl = 'https://pickletournaments.vercel.app';
 
 const config: CapacitorConfig = {
   appId: 'com.picklerally.app',
-  appName: 'Pickle Rally',
+  appName: 'Picklix',
   webDir: 'dist',
   server: useLiveReload
     ? {

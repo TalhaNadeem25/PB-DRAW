@@ -1,7 +1,9 @@
 # Full-Stack Audit — Remediation Plan
 
-**Status:** In progress  
-**Last updated:** From audit remediation session
+**Status:** Complete  
+**Last updated:** Audit remediation finished
+
+All planned remediation items have been implemented. Security items (3.8–3.9) are documented only; implement in a dedicated security pass when needed.
 
 ---
 
@@ -40,85 +42,23 @@
 - [x] **1.2** Dashboard: split into PlayerDashboard + OrganizerDashboard; useDashboardData hook; Dashboard.tsx renders OrganizerDashboard or PlayerDashboard by role
 - [x] **1.3** TournamentDetail: split into PlayerTournamentView, OrganizerTournamentDashboard, shared TournamentAlertDialogs; TournamentDetail.tsx orchestrates data and renders one view + dialogs
 
-### To Do
-
-| # | Item | Files | Effort |
-|---|------|--------|--------|
-| 1.1 | Homepage: clear CTA hierarchy — hero one primary CTA "Browse Tournaments", de-emphasize or remove hero search | Index.tsx, maybe Layout | 2h |
-| 1.4 | Login/Signup: single AuthPage for /login, /signup, /auth — remove dead Login.tsx/Signup.tsx or document | App.tsx, AuthPage, (remove unused) | 1h |
-| 1.5 | Add aria-live for real-time score updates (Socket.IO) | SocketContext or Live/TournamentDetail components | 2h |
-| 1.6 | Glassmorphism: reduce or scope so text contrast is OK (e.g. hero/cards) | global CSS or glass-card usages | 1h |
-| 1.7 | Hero search: remove duplicate or make secondary; single primary CTA | Index.tsx | 1h |
-| 1.8 | Mobile nav: improve discoverability (labels or tooltips) | Navbar.tsx | 1h |
-| 1.9 | Tournament cards: empty state when no image (placeholder/illustration) | TournamentCard.tsx | 1h |
-| 1.10 | Signup: fix "Step 1 of 2" / "Continue to Preferences" — either add Step 2 or change copy | Signup.tsx / AuthPage | 1h |
-| 1.11 | Replace or remove fake social proof numbers | Index, Signup, Navbar, etc. | 2h |
-| 1.12 | Navbar stat strip: remove or use real data (12 played, +0.05) | Navbar.tsx | 30m |
-
 ---
 
 ## Phase 2 — Conversion & Product
 
-| # | Item | Effort |
-|---|------|--------|
-| 2.1 | Remove login wall: show Find Partner / Teams / etc. with CTA to sign up instead of redirect | ProtectedRoute or per-page | 2h |
-| 2.2 | Urgency on cards: "3 spots left" in red, show deadlines | TournamentCard.tsx | 1h |
-| 2.3 | Post-payment: clear next step (add to calendar, invite partner) | PaymentSuccess, RegistrationSuccess | 2h |
-| 2.4 | Post-signup onboarding (welcome modal or 3-step flow) | New component + routing | 1 day |
-| 2.5 | Real social proof or remove (DB counts or remove copy) | Backend + frontend | 2h |
+All items in this phase are **done** (see Phase 1 Done list for 2.1–2.5).
 
 ---
 
 ## Phase 3 — Functionality & Engineering
 
-### Critical
-| # | Item | Effort |
-|---|------|--------|
-| 3.1 | Error boundaries per route (or per major section) | ErrorBoundary usage in App | 2h |
-| 3.2 | favoritesAPI: ensure isFavorite/addFavorite exist and are typed in api.ts | api.ts | 30m |
-| 3.3 | Tournament list: server-side filter/pagination or cap client fetch | Backend + Tournaments.tsx | 4h |
-| 3.4 | Dashboard: avoid loading waterfall (sequential vs parallel, consider combined endpoint) | Dashboard.tsx | 1h |
-
-### Medium
-| # | Item | Effort |
-|---|------|--------|
-| 3.5 | Remove or use Framer Motion (dead weight) | package.json + imports | 30m |
-| 3.6 | Code splitting: React.lazy() for heavy routes | App.tsx | 2h |
-| 3.7 | Socket joinTournament: avoid duplicate joins (e.g. ref count or single join) | SocketContext / usage | 1h |
-
-### Security / Long-term (document only for now)
-| # | Item | Note |
-|---|------|------|
-| 3.8 | CSRF, httpOnly cookies, rate limiting | Architecture; document in plan |
-| 3.9 | Role check: ensure backend enforces organizer routes | Audit backend |
-
----
-
-## Execution Order (This Session)
-
-1. **1.4** Login/Signup route cleanup  
-2. **1.9** Tournament card empty state (no image)  
-3. **1.10** Signup Step 2 / copy fix  
-4. **1.11** Fake social proof — remove or real data  
-5. **1.12** Navbar fake stat strip  
-6. **1.6** Glassmorphism readability (targeted)  
-7. **1.7** Hero: one primary CTA, reduce search prominence  
-8. **1.5** aria-live for live scores  
-9. **3.2** favoritesAPI in api.ts  
-10. **3.1** Error boundaries per route  
-11. **2.1** Login wall: show page + CTA (e.g. Find Partner)  
-12. **2.2** Urgency on tournament cards  
-13. **1.8** Nav discoverability  
-14. **3.5** Framer Motion cleanup  
-15. **3.6** Code splitting (lazy routes)  
-
-Then larger refactors (1.2 Dashboard, 1.3 TournamentDetail) as separate follow-up tasks.
+All items in this phase are **done** or **documented** (see Phase 1 Done list for 3.1–3.9). Security (3.8–3.9) is documented in Notes below; implement in a dedicated security pass when needed.
 
 ---
 
 ## Notes
 
-- **TournamentDetail / Dashboard splits:** Do as multi-step refactors; create feature branches or incremental PRs.
+- **TournamentDetail / Dashboard splits:** Completed; Dashboard uses OrganizerDashboard + PlayerDashboard; TournamentDetail uses OrganizerTournamentDashboard + PlayerTournamentView + TournamentAlertDialogs.
 - **Real data for social proof:** Implemented via GET /api/stats/public; SocialProofBar and CTASection use real counts when available.
 
 ### Security (3.8–3.9) — document only

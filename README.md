@@ -1,4 +1,4 @@
-# Pickle Rally
+# Picklix
 
 A full-stack tournament management platform for pickleball. Organizers can create tournaments, manage events, schedule matches across courts, handle payments, and run live scoring — all from one dashboard. Players can discover tournaments, register, find partners, and follow live results.
 
