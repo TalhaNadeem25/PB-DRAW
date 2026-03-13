@@ -14,6 +14,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { setOnUnauthorized } from "@/services/api";
 import { Users, Ticket, CircleNotch } from "@phosphor-icons/react";
+import { Analytics } from "@vercel/analytics/react";
 
 const PageFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -249,6 +250,7 @@ const App = () => (
           <ErrorBoundary>
             <BrowserRouter>
               <AppRoutes />
+              <Analytics />
             </BrowserRouter>
           </ErrorBoundary>
       </TooltipProvider>
