@@ -21,6 +21,7 @@ import {
   Crown,
   Star,
   Funnel,
+  Gear,
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 
@@ -62,9 +63,12 @@ function LeagueCardSkeleton() {
   );
 }
 
-function LeagueCard({ league }: { league: any }) {
+function LeagueCard({ league, currentUserId }: { league: any; currentUserId?: string }) {
   const playerCount = league.players?.length ?? 0;
   const pct = Math.min(100, Math.round((playerCount / (league.maxPlayers || 32)) * 100));
+  const organizerId = league.organizer?._id ?? league.organizer;
+  const isOwner = currentUserId && organizerId?.toString() === currentUserId;
+  const canRegister = !isOwner && league.status === "open";
 
   return (
     <motion.div
@@ -139,13 +143,42 @@ function LeagueCard({ league }: { league: any }) {
               </div>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all font-display font-bold uppercase tracking-wide text-xs"
-            >
-              View League
-            </Button>
+            {/* CTA button */}
+            {isOwner ? (
+              <Link
+                to={`/leagues/${league._id}/manage`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  size="sm"
+                  className="w-full bg-foreground text-background hover:bg-foreground/90 transition-all font-display font-bold uppercase tracking-wide text-xs gap-2"
+                >
+                  <Gear className="w-3.5 h-3.5" />
+                  Manage League
+                </Button>
+              </Link>
+            ) : canRegister ? (
+              <Link
+                to={`/leagues/${league._id}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  size="sm"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-display font-bold uppercase tracking-wide text-xs gap-2"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Register
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all font-display font-bold uppercase tracking-wide text-xs"
+              >
+                View League
+              </Button>
+            )}
           </div>
         </div>
       </Link>
@@ -325,7 +358,7 @@ export default function Leagues() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
                 >
-                  <LeagueCard league={league} />
+                  <LeagueCard league={league} currentUserId={user?._id} />
                 </motion.div>
               ))}
             </div>
