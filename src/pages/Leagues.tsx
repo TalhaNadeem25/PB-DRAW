@@ -1,397 +1,648 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { SkeletonGrid } from "@/components/ui/skeleton-card";
+import { cn } from "@/lib/utils";
 import { leagueAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
+  Check,
+  CaretLeft,
+  CaretRight,
+  Funnel,
   MagnifyingGlass,
   Trophy,
-  Plus,
   MapPin,
   Users,
-  CalendarBlank,
-  CurrencyDollar,
-  Ladder,
-  UsersThree,
-  Crown,
-  Star,
-  Funnel,
   Gear,
+  Plus,
 } from "@phosphor-icons/react";
-import { format } from "date-fns";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const LEAGUE_TYPE_LABELS: Record<string, string> = {
-  ladder: "Ladder",
-  traditional: "Traditional",
-  "king-of-court": "King of Court",
-  "dupr-session": "DUPR Session",
-};
-
-const PLAYER_GROUP_LABELS: Record<string, string> = {
-  mens: "Men's",
-  womens: "Women's",
-  mixed: "Mixed",
-  coed: "Coed",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  open: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30",
-  active: "bg-primary/15 text-primary border border-primary/30",
-  completed: "bg-muted text-muted-foreground",
-};
-
-function LeagueCardSkeleton() {
-  return (
-    <div className="glass-card rounded-2xl overflow-hidden animate-pulse">
-      <div className="h-36 bg-muted/50" />
-      <div className="p-5 space-y-3">
-        <div className="h-5 bg-muted/50 rounded w-3/4" />
-        <div className="h-4 bg-muted/50 rounded w-1/2" />
-        <div className="flex gap-2">
-          <div className="h-6 bg-muted/50 rounded-full w-20" />
-          <div className="h-6 bg-muted/50 rounded-full w-16" />
-        </div>
-        <div className="h-9 bg-muted/50 rounded-xl" />
-      </div>
-    </div>
-  );
-}
-
-function LeagueCard({ league, currentUserId }: { league: any; currentUserId?: string }) {
-  const playerCount = league.players?.length ?? 0;
-  const pct = Math.min(100, Math.round((playerCount / (league.maxPlayers || 32)) * 100));
+// ─── League Card (matches TournamentCard design) ────────────────────────────
+function LeagueCard({ league }: { league: any }) {
+  const { user } = useAuth();
   const organizerId = league.organizer?._id ?? league.organizer;
-  const isOwner = currentUserId && organizerId?.toString() === currentUserId;
-  const canRegister = !isOwner && league.status === "open";
+  const isOwner =
+    user?._id === organizerId?.toString() || user?.role === "admin";
+
+  const playerCount = league.players?.length ?? 0;
+  const maxPlayers = league.maxPlayers || 32;
+  const spotsRemaining = Math.max(0, maxPlayers - playerCount);
+  const fillPercent = Math.min(100, (playerCount / maxPlayers) * 100);
+  const isFillingFast = spotsRemaining > 0 && spotsRemaining <= 5;
+
+  const locationParts = league.location?.split(",") || [];
+  const shortLocation =
+    locationParts.length >= 2
+      ? `${locationParts[0].trim()}, ${locationParts[locationParts.length - 1].trim()}`
+      : league.location;
+
+  const leagueTypeLabel: Record<string, string> = {
+    ladder: "Ladder",
+    traditional: "Traditional",
+    "king-of-court": "King of Court",
+    "dupr-session": "DUPR Session",
+  };
+
+  const ctaLink = isOwner
+    ? `/leagues/${league._id}/manage`
+    : league.status === "open"
+    ? `/leagues/${league._id}`
+    : `/leagues/${league._id}`;
+
+  const ctaLabel = isOwner
+    ? "Manage League"
+    : league.status === "open"
+    ? "Register Now"
+    : league.status === "active"
+    ? "View Standings"
+    : "View Details";
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden h-full group relative"
     >
-      <Link to={`/leagues/${league._id}`} className="block group">
-        <div className="glass-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/40 hover:shadow-glow transition-all duration-300">
-          {/* Header gradient */}
-          <div className="relative h-32 bg-hero-gradient flex items-end p-4 overflow-hidden">
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white to-transparent" />
-            <div className="relative z-10 flex items-start justify-between w-full gap-2">
-              <div>
-                <h3 className="font-display font-black text-white text-lg leading-tight line-clamp-1 uppercase tracking-tight">
-                  {league.name}
-                </h3>
-                <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
-                  <MapPin className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{league.location}</span>
-                </div>
-              </div>
-              <span
-                className={`shrink-0 text-[10px] font-display font-bold uppercase tracking-widest px-2 py-1 rounded-full ${STATUS_COLORS[league.status] || STATUS_COLORS.draft}`}
-              >
-                {league.status}
-              </span>
+      {/* Shimmer on hover */}
+      <div className="absolute inset-0 z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden rounded-2xl">
+        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      </div>
+
+      {/* Image / header area */}
+      <div className="relative h-48 w-full overflow-hidden bg-muted">
+        {league.image ? (
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+            style={{ backgroundImage: `url('${league.image}')` }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 border-b border-border/50">
+            <div className="rounded-full bg-primary/10 p-4">
+              <Trophy className="w-10 h-10 text-primary/40" />
             </div>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {leagueTypeLabel[league.leagueType] ?? "League"}
+            </span>
           </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
 
-          {/* Body */}
-          <div className="p-4 space-y-3">
-            {/* Badges */}
-            <div className="flex flex-wrap gap-1.5">
-              <span className="px-2.5 py-0.5 bg-primary/10 text-primary text-[11px] font-display font-bold uppercase tracking-wide rounded-full border border-primary/20">
-                {LEAGUE_TYPE_LABELS[league.leagueType] ?? league.leagueType}
-              </span>
-              <span className="px-2.5 py-0.5 bg-accent text-foreground text-[11px] font-display font-bold uppercase tracking-wide rounded-full border border-border/40">
-                {PLAYER_GROUP_LABELS[league.playerGroup] ?? league.playerGroup}
-              </span>
-            </div>
+        {/* Status badge */}
+        <div className="absolute top-4 left-4 flex gap-2">
+          <span className="px-3 py-1 rounded bg-white font-display font-black text-[10px] uppercase tracking-widest text-muted-foreground">
+            {league.status}
+          </span>
+        </div>
 
-            {/* Info row */}
-            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-              {league.startDate && (
-                <div className="flex items-center gap-1.5">
-                  <CalendarBlank className="w-3.5 h-3.5 shrink-0 text-primary/70" />
-                  <span>{format(new Date(league.startDate), "MMM d, yyyy")}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5">
-                <CurrencyDollar className="w-3.5 h-3.5 shrink-0 text-primary/70" />
-                <span>{league.entryFee === 0 ? "Free" : `$${league.entryFee}`}</span>
+        {/* Filling fast badge */}
+        {isFillingFast && league.status === "open" && (
+          <div className="absolute top-4 right-4">
+            <span className="font-display font-bold text-xs text-white bg-destructive/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+              {spotsRemaining} spots left
+            </span>
+          </div>
+        )}
+
+        {/* Name + location */}
+        <div className="absolute bottom-4 left-4 right-4 text-white">
+          <h4 className="text-xl font-display font-black uppercase tracking-tight leading-none mb-1 shadow-sm group-hover:text-primary transition-colors line-clamp-2">
+            {league.name}
+          </h4>
+          <p className="font-medium text-xs text-white/90 flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-primary" />
+            {shortLocation}
+            {league.startDate && (
+              <> • {format(new Date(league.startDate), "MMM dd")}</>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="p-4 flex-1 flex flex-col bg-card">
+        <div className="flex justify-between items-center mb-4 text-sm font-semibold">
+          <span className="bg-muted px-2 py-1 rounded-md text-xs text-foreground">
+            {leagueTypeLabel[league.leagueType] ?? league.leagueType}
+          </span>
+          <span className="text-foreground font-bold">
+            {league.entryFee ? `$${league.entryFee}` : "Free"} Entry
+          </span>
+        </div>
+
+        <div className="mt-auto">
+          {league.status !== "completed" && (
+            <>
+              <div className="flex justify-between items-end mb-1 text-xs font-bold">
+                <span className="text-foreground flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                  {playerCount} / {maxPlayers} registered
+                </span>
               </div>
-            </div>
-
-            {/* Players progress */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Users className="w-3.5 h-3.5 shrink-0" />
-                  <span>
-                    {playerCount} / {league.maxPlayers} players
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-primary">{pct}%</span>
-              </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-hero-gradient rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%` }}
+              <div className="w-full bg-muted rounded-full h-1.5 mb-5 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${fillPercent}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                  className={cn(
+                    "h-full rounded-full",
+                    isFillingFast ? "bg-destructive" : "bg-primary"
+                  )}
                 />
               </div>
-            </div>
+            </>
+          )}
 
-            {/* CTA button */}
-            {isOwner ? (
-              <Link
-                to={`/leagues/${league._id}/manage`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  size="sm"
-                  className="w-full bg-foreground text-background hover:bg-foreground/90 transition-all font-display font-bold uppercase tracking-wide text-xs gap-2"
-                >
-                  <Gear className="w-3.5 h-3.5" />
-                  Manage League
-                </Button>
-              </Link>
-            ) : canRegister ? (
-              <Link
-                to={`/leagues/${league._id}`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  size="sm"
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-display font-bold uppercase tracking-wide text-xs gap-2"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Register
-                </Button>
-              </Link>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all font-display font-bold uppercase tracking-wide text-xs"
-              >
-                View League
-              </Button>
-            )}
-          </div>
+          <Button
+            className="w-full bg-foreground text-background hover:bg-primary font-display font-bold uppercase tracking-widest text-xs transition-colors py-5 rounded-xl shadow-none"
+            asChild
+          >
+            <Link to={ctaLink}>{ctaLabel}</Link>
+          </Button>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
 
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function Leagues() {
   const { user, isAuthenticated } = useAuth();
-  const isOrganizer = isAuthenticated && (user?.role === "organizer" || user?.role === "admin");
+  const isOrganizer =
+    isAuthenticated && (user?.role === "organizer" || user?.role === "admin");
 
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [leagueTypeFilter, setLeagueTypeFilter] = useState("all");
   const [playerGroupFilter, setPlayerGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [page, setPage] = useState(1);
+  const [entryFeeFilter, setEntryFeeFilter] = useState("all");
+  const [sortOption, setSortOption] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["leagues", search, leagueTypeFilter, playerGroupFilter, statusFilter, page],
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, leagueTypeFilter, playerGroupFilter, statusFilter, entryFeeFilter, sortOption]);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: [
+      "leagues",
+      searchQuery,
+      leagueTypeFilter,
+      playerGroupFilter,
+      statusFilter,
+      entryFeeFilter,
+      sortOption,
+      currentPage,
+    ],
     queryFn: () =>
       leagueAPI.getAll({
-        search: search || undefined,
+        search: searchQuery || undefined,
         leagueType: leagueTypeFilter !== "all" ? leagueTypeFilter : undefined,
         playerGroup: playerGroupFilter !== "all" ? playerGroupFilter : undefined,
         status: statusFilter !== "all" ? statusFilter : undefined,
-        page,
-        limit: 12,
+        page: currentPage,
+        limit: itemsPerPage,
       }),
   });
 
   const leagues = data?.data ?? [];
-  const totalPages = data?.pages ?? 1;
+  const totalCount = data?.total ?? 0;
+  const totalPages = Math.max(1, data?.pages ?? 1);
 
-  const leagueTypeOptions = [
-    { value: "all", label: "All Types" },
-    { value: "ladder", label: "Ladder" },
-    { value: "traditional", label: "Traditional" },
-    { value: "king-of-court", label: "King of Court" },
-    { value: "dupr-session", label: "DUPR" },
-  ];
+  const activeFiltersCount =
+    (leagueTypeFilter !== "all" ? 1 : 0) +
+    (playerGroupFilter !== "all" ? 1 : 0) +
+    (statusFilter !== "all" ? 1 : 0) +
+    (entryFeeFilter !== "all" ? 1 : 0);
 
-  const playerGroupOptions = [
-    { value: "all", label: "All Groups" },
-    { value: "mens", label: "Men's" },
-    { value: "womens", label: "Women's" },
-    { value: "mixed", label: "Mixed" },
-    { value: "coed", label: "Coed" },
-  ];
+  const getPageNumbers = (current: number, total: number): (number | "...")[] => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: (number | "...")[] = [1];
+    if (current > 3) pages.push("...");
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i);
+    }
+    if (current < total - 2) pages.push("...");
+    pages.push(total);
+    return pages;
+  };
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "open", label: "Open" },
-    { value: "active", label: "Active" },
-    { value: "completed", label: "Completed" },
-  ];
+  const clearFilters = () => {
+    setLeagueTypeFilter("all");
+    setPlayerGroupFilter("all");
+    setStatusFilter("all");
+    setEntryFeeFilter("all");
+    setSortOption("newest");
+  };
+
+  const FilterOptions = () => (
+    <div className="space-y-6">
+      {/* League Type */}
+      <div className="space-y-3">
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+          League Type
+        </h3>
+        <div className="space-y-2">
+          {[
+            { val: "all", label: "All Types" },
+            { val: "ladder", label: "Ladder" },
+            { val: "traditional", label: "Traditional" },
+            { val: "king-of-court", label: "King of Court" },
+            { val: "dupr-session", label: "DUPR Session" },
+          ].map(({ val, label }) => (
+            <label
+              key={val}
+              onClick={() => setLeagueTypeFilter(val)}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <div
+                className={cn(
+                  "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
+                  leagueTypeFilter === val
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground group-hover:border-primary"
+                )}
+              >
+                {leagueTypeFilter === val && (
+                  <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />
+                )}
+              </div>
+              <span className="text-sm font-medium">{label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Player Group */}
+      <div className="space-y-3">
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+          Player Group
+        </h3>
+        <div className="space-y-2">
+          {[
+            { val: "all", label: "All Groups" },
+            { val: "mens", label: "Men's" },
+            { val: "womens", label: "Women's" },
+            { val: "mixed", label: "Mixed" },
+            { val: "coed", label: "Coed" },
+          ].map(({ val, label }) => (
+            <label
+              key={val}
+              onClick={() => setPlayerGroupFilter(val)}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <div
+                className={cn(
+                  "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
+                  playerGroupFilter === val
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground group-hover:border-primary"
+                )}
+              >
+                {playerGroupFilter === val && (
+                  <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />
+                )}
+              </div>
+              <span className="text-sm font-medium">{label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className="space-y-3">
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+          Status
+        </h3>
+        <div className="space-y-2">
+          {[
+            { val: "all", label: "All" },
+            { val: "open", label: "Open" },
+            { val: "active", label: "Active" },
+            { val: "completed", label: "Completed" },
+          ].map(({ val, label }) => (
+            <label
+              key={val}
+              onClick={() => setStatusFilter(val)}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <div
+                className={cn(
+                  "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
+                  statusFilter === val
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground group-hover:border-primary"
+                )}
+              >
+                {statusFilter === val && (
+                  <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />
+                )}
+              </div>
+              <span className="text-sm font-medium">{label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Entry Fee */}
+      <div className="space-y-3">
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+          Entry Fee
+        </h3>
+        <div className="space-y-2">
+          {[
+            { val: "all", label: "Any Price" },
+            { val: "free", label: "Free" },
+            { val: "paid", label: "Paid" },
+          ].map(({ val, label }) => (
+            <label
+              key={val}
+              onClick={() => setEntryFeeFilter(val)}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <div
+                className={cn(
+                  "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                  entryFeeFilter === val
+                    ? "border-primary bg-primary text-white"
+                    : "border-muted-foreground group-hover:border-primary text-transparent"
+                )}
+              >
+                <Check className="w-3 h-3" weight="bold" />
+              </div>
+              <span className="text-sm font-medium">{label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const filteredLeagues =
+    entryFeeFilter === "free"
+      ? leagues.filter((l: any) => !l.entryFee || l.entryFee === 0)
+      : entryFeeFilter === "paid"
+      ? leagues.filter((l: any) => l.entryFee && l.entryFee > 0)
+      : leagues;
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="relative bg-hero-gradient overflow-hidden py-16 px-4 sm:px-6">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white to-transparent pointer-events-none" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="font-display font-black text-3xl sm:text-4xl md:text-5xl text-white uppercase tracking-tight">
-                LEAGUES
+      <div className="min-h-screen bg-background pt-24 pb-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <h1 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tighter text-foreground">
+                Find Leagues
               </h1>
-              <p className="text-white/70 mt-2 text-sm sm:text-base max-w-lg">
-                Join a pickleball league, compete weekly, climb the standings.
-              </p>
-            </div>
-            {isOrganizer && (
-              <Button
-                asChild
-                size="lg"
-                className="bg-white text-primary hover:bg-white/90 font-display font-black uppercase tracking-wide shadow-md hover:shadow-glow transition-all shrink-0"
-              >
-                <Link to="/leagues/create">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Create League
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Filters */}
-      <section className="sticky top-[4.5rem] z-30 bg-background/95 backdrop-blur-md border-b border-border/50 py-3 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1 min-w-0">
-              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search leagues..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="pl-9 rounded-xl border-border/50 bg-card/60"
-              />
-            </div>
-
-            {/* Filter selects */}
-            <div className="flex gap-2 flex-wrap">
-              {[
-                { value: leagueTypeFilter, setter: setLeagueTypeFilter, options: leagueTypeOptions },
-                { value: playerGroupFilter, setter: setPlayerGroupFilter, options: playerGroupOptions },
-                { value: statusFilter, setter: setStatusFilter, options: statusOptions },
-              ].map((filter, i) => (
-                <select
-                  key={i}
-                  value={filter.value}
-                  onChange={(e) => {
-                    filter.setter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 pr-8 text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  {filter.options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <LeagueCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : leagues.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-hero-gradient flex items-center justify-center shadow-glow">
-              <Trophy className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="font-display font-black text-xl uppercase tracking-tight text-foreground">
-              No leagues found
-            </h3>
-            <p className="text-muted-foreground text-sm max-w-xs text-center">
-              {search || leagueTypeFilter !== "all" || playerGroupFilter !== "all" || statusFilter !== "all"
-                ? "Try adjusting your filters."
-                : "No leagues have been created yet."}
-            </p>
-            {isOrganizer && (
-              <Button asChild className="font-display font-bold uppercase tracking-wide">
-                <Link to="/leagues/create">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First League
-                </Link>
-              </Button>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-sm text-muted-foreground">
-                Showing <span className="font-semibold text-foreground">{leagues.length}</span> of{" "}
-                <span className="font-semibold text-foreground">{data?.total ?? leagues.length}</span> leagues
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {leagues.map((league: any, i: number) => (
-                <motion.div
-                  key={league._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                >
-                  <LeagueCard league={league} currentUserId={user?._id} />
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-10">
+              {isOrganizer && (
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="rounded-xl"
+                  asChild
+                  className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-6 shrink-0"
                 >
-                  Previous
+                  <Link to="/leagues/create">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create League
+                  </Link>
                 </Button>
-                <span className="text-sm text-muted-foreground px-2">
-                  Page {page} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="rounded-xl"
-                >
-                  Next
+              )}
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative max-w-2xl">
+                <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search by league name or location"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 h-14 text-base bg-card border-border rounded-xl shadow-sm"
+                />
+                <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg font-display uppercase tracking-widest font-bold">
+                  Search
                 </Button>
               </div>
-            )}
-          </>
-        )}
-      </section>
+
+              {/* Mobile filter drawer trigger */}
+              <div className="md:hidden">
+                <Drawer>
+                  <DrawerTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full h-14 rounded-xl flex items-center gap-2 shadow-sm border-border bg-card text-foreground font-display uppercase font-bold tracking-wide"
+                    >
+                      <Funnel className="w-5 h-5" />
+                      Filters{" "}
+                      {activeFiltersCount > 0 && (
+                        <Badge className="ml-2 bg-primary">{activeFiltersCount}</Badge>
+                      )}
+                    </Button>
+                  </DrawerTrigger>
+                  <DrawerContent className="px-4">
+                    <DrawerHeader className="text-left px-0">
+                      <DrawerTitle className="font-display font-bold text-2xl uppercase tracking-tight">
+                        Filters
+                      </DrawerTitle>
+                    </DrawerHeader>
+                    <div className="overflow-y-auto max-h-[60vh] py-4">
+                      <FilterOptions />
+                    </div>
+                    <DrawerFooter className="px-0 pt-4 pb-8 border-t border-border">
+                      <DrawerClose asChild>
+                        <Button className="w-full h-14 rounded-xl font-display uppercase tracking-widest font-bold">
+                          Show Results
+                        </Button>
+                      </DrawerClose>
+                    </DrawerFooter>
+                  </DrawerContent>
+                </Drawer>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            {/* Desktop filter sidebar */}
+            <aside className="hidden md:block w-[280px] shrink-0 sticky top-28 bg-card p-6 rounded-2xl border border-border shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-display font-bold text-xl uppercase tracking-tight flex items-center gap-2">
+                  <Funnel className="w-5 h-5 text-primary" /> Filters
+                </h2>
+                {activeFiltersCount > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-xs text-muted-foreground hover:text-primary font-bold uppercase tracking-wider transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+              <FilterOptions />
+            </aside>
+
+            {/* Main content */}
+            <main className="flex-1 min-w-0 w-full">
+              {/* Results header */}
+              <div className="hidden md:flex items-center justify-between mb-6">
+                <div className="text-muted-foreground font-semibold text-sm uppercase tracking-wide">
+                  Showing {filteredLeagues.length} of {totalCount} results
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                    Sort:
+                  </span>
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                    className="bg-card border border-border rounded-lg px-2 py-1.5 text-foreground text-sm font-bold uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:border-primary/50 transition-colors"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="popular">Most Popular</option>
+                  </select>
+                </div>
+              </div>
+
+              {isLoading ? (
+                <SkeletonGrid count={6} className="mt-4" />
+              ) : error ? (
+                <div className="text-center py-20 bg-card rounded-2xl border border-border">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+                    <MagnifyingGlass className="w-8 h-8 text-destructive" />
+                  </div>
+                  <h3 className="text-xl font-display font-bold uppercase tracking-tight mb-2">
+                    Error loading leagues
+                  </h3>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 rounded-xl font-display font-bold uppercase tracking-widest"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : filteredLeagues.length > 0 ? (
+                <div className="space-y-10">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredLeagues.map((league: any, index: number) => (
+                      <div
+                        key={league._id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+                      >
+                        <LeagueCard league={league} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-8 border-t border-border">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="w-10 h-10 rounded-xl"
+                      >
+                        <CaretLeft className="w-5 h-5" />
+                      </Button>
+
+                      <div className="flex items-center gap-1 mx-2">
+                        {pageNumbers.map((page, i) =>
+                          page === "..." ? (
+                            <span
+                              key={`ellipsis-${i}`}
+                              className="w-10 h-10 flex items-center justify-center text-muted-foreground text-sm select-none"
+                            >
+                              …
+                            </span>
+                          ) : (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page as number)}
+                              className={cn(
+                                "w-10 h-10 rounded-xl font-display font-bold text-sm transition-colors",
+                                currentPage === page
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {page}
+                            </button>
+                          )
+                        )}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="w-10 h-10 rounded-xl"
+                      >
+                        <CaretRight className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-32 bg-card rounded-2xl border border-border shadow-sm">
+                  <div className="w-24 h-24 mx-auto mb-6 relative">
+                    <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
+                    <div className="absolute inset-2 rounded-full bg-primary/5 flex items-center justify-center">
+                      <Trophy className="w-10 h-10 text-primary/60" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary/40" />
+                    <div className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full bg-primary/30" />
+                  </div>
+                  <h3 className="text-2xl font-display font-black uppercase tracking-tight mb-2">
+                    No leagues found
+                  </h3>
+                  <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
+                    Try adjusting your search or filters, or create your own league.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      variant="outline"
+                      className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-8"
+                      onClick={() => {
+                        setSearchQuery("");
+                        clearFilters();
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                    {isOrganizer && (
+                      <Button
+                        className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-8"
+                        asChild
+                      >
+                        <Link to="/leagues/create">Create a League</Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      </div>
     </Layout>
   );
 }
