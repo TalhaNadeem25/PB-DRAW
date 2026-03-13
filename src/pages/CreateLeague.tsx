@@ -22,6 +22,7 @@ import {
   Gear,
   ClipboardText,
   CalendarBlank,
+  Medal,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -81,10 +82,60 @@ const PLAYER_GROUPS = [
   },
 ];
 
+const RANKING_TYPES = [
+  {
+    value: "pop",
+    label: "Percentage of Points (POP)",
+    description: "% of points earned vs possible. Tie-breaker: match wins, then previous week's rank. Most fair for recreational leagues.",
+  },
+  {
+    value: "dupr",
+    label: "DUPR Rating",
+    description: "DUPR's official global rating system determines rankings after each game day. Best for competitive leagues.",
+  },
+  {
+    value: "up-down",
+    label: "Up / Down",
+    description: "After each game day, top players move up to a higher group and bottom players move down. Creates exciting movement.",
+  },
+  {
+    value: "custom",
+    label: "Custom",
+    description: "Set your own point values for winning, losing, and playing. Full control over scoring.",
+  },
+];
+
+const SIGNUP_TYPES = [
+  {
+    value: "open",
+    label: "Each Game Day (Open League)",
+    description: "Players sign up each week they want to play. Great for casual leagues where attendance varies.",
+  },
+  {
+    value: "closed",
+    label: "At Session Signup (Closed League)",
+    description: "Players commit and pay for the whole season upfront. Better for competitive, structured leagues.",
+  },
+];
+
+const PLAYER_PLACEMENT = [
+  {
+    value: "bottom",
+    label: "At Bottom",
+    description: "New players join at the lowest group and work their way up. Fair and standard.",
+  },
+  {
+    value: "rating",
+    label: "At Rating",
+    description: "New players start at the position matching their skill rating.",
+  },
+];
+
 const STEPS = [
   { label: "Basic Info", icon: ClipboardText },
   { label: "League Type", icon: Trophy },
   { label: "Settings", icon: Gear },
+  { label: "Rules & Scoring", icon: Medal },
   { label: "Review", icon: Check },
 ];
 
@@ -167,6 +218,14 @@ export default function CreateLeague() {
     contactEmail: "",
     contactPhone: "",
     rules: "",
+    rankingType: "pop",
+    signupType: "open",
+    flexPlay: false,
+    duprIntegration: false,
+    newPlayerPlacement: "bottom",
+    minAge: 0,
+    memberFee: 0,
+    nonMemberFee: 0,
   });
 
   const set = (key: string, value: any) =>
@@ -192,6 +251,14 @@ export default function CreateLeague() {
         contactEmail: form.contactEmail,
         contactPhone: form.contactPhone,
         rules: form.rules,
+        rankingType: form.rankingType,
+        signupType: form.signupType,
+        flexPlay: form.flexPlay,
+        duprIntegration: form.duprIntegration,
+        newPlayerPlacement: form.newPlayerPlacement,
+        minAge: Number(form.minAge),
+        memberFee: Number(form.memberFee),
+        nonMemberFee: Number(form.nonMemberFee),
       }),
     onSuccess: (data) => {
       toast({ title: "League created!", description: "Your league is now live." });
@@ -209,6 +276,7 @@ export default function CreateLeague() {
   const canNext = () => {
     if (step === 0) return form.name.trim() !== "" && form.location.trim() !== "";
     if (step === 1) return form.leagueType !== "" && form.playerType !== "" && form.playerGroup !== "";
+    if (step === 3) return form.rankingType !== "" && form.signupType !== "";
     return true;
   };
 
@@ -614,8 +682,137 @@ export default function CreateLeague() {
                 </div>
               )}
 
-              {/* Step 3: Review */}
+              {/* Step 3: Rules & Scoring */}
               {step === 3 && (
+                <div className="space-y-6">
+                  <h2 className="font-display font-black text-xl uppercase tracking-tight text-foreground">
+                    Rules & Scoring
+                  </h2>
+
+                  <div>
+                    <Label className="font-display font-bold text-xs uppercase tracking-wide mb-3 block text-muted-foreground">
+                      Ranking Type <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="space-y-2">
+                      {RANKING_TYPES.map((t) => (
+                        <RadioCard
+                          key={t.value}
+                          selected={form.rankingType === t.value}
+                          onClick={() => set("rankingType", t.value)}
+                          label={t.label}
+                          description={t.description}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="font-display font-bold text-xs uppercase tracking-wide mb-3 block text-muted-foreground">
+                      Signup / Payment Type <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="space-y-2">
+                      {SIGNUP_TYPES.map((t) => (
+                        <RadioCard
+                          key={t.value}
+                          selected={form.signupType === t.value}
+                          onClick={() => set("signupType", t.value)}
+                          label={t.label}
+                          description={t.description}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="font-display font-bold text-xs uppercase tracking-wide mb-3 block text-muted-foreground">
+                      New Players Start
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {PLAYER_PLACEMENT.map((p) => (
+                        <RadioCard
+                          key={p.value}
+                          selected={form.newPlayerPlacement === p.value}
+                          onClick={() => set("newPlayerPlacement", p.value)}
+                          label={p.label}
+                          description={p.description}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      { key: "flexPlay", label: "Flex Play", desc: "Players arrange their own game times. No fixed schedule." },
+                      { key: "duprIntegration", label: "Count Games Toward DUPR Ratings", desc: "Game results are submitted to DUPR for official ratings." },
+                    ].map(({ key, label, desc }) => (
+                      <div key={key} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/60">
+                        <div>
+                          <p className="font-display font-bold text-sm uppercase tracking-wide text-foreground">{label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => set(key, !(form as any)[key])}
+                          className={cn(
+                            "relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 shrink-0",
+                            (form as any)[key] ? "bg-primary" : "bg-muted"
+                          )}
+                        >
+                          <span className={cn(
+                            "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200",
+                            (form as any)[key] ? "translate-x-5" : "translate-x-0"
+                          )} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+                        Min Age
+                      </Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={form.minAge}
+                        onChange={(e) => set("minAge", Number(e.target.value))}
+                        placeholder="0 = any age"
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+                        Cost to Members ($)
+                      </Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={form.memberFee}
+                        onChange={(e) => set("memberFee", Number(e.target.value))}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+                        Cost to Non-Members ($)
+                      </Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={form.nonMemberFee}
+                        onChange={(e) => set("nonMemberFee", Number(e.target.value))}
+                        className="rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Review */}
+              {step === 4 && (
                 <div className="space-y-5">
                   <h2 className="font-display font-black text-xl uppercase tracking-tight text-foreground">
                     Review & Create
@@ -673,6 +870,25 @@ export default function CreateLeague() {
                         value: form.allowWaitlist ? "Enabled" : "Disabled",
                       },
                       { label: "Contact Email", value: form.contactEmail || "—" },
+                      {
+                        label: "Ranking Type",
+                        value: RANKING_TYPES.find(r => r.value === form.rankingType)?.label || form.rankingType,
+                      },
+                      {
+                        label: "Signup Type",
+                        value: SIGNUP_TYPES.find(s => s.value === form.signupType)?.label || form.signupType,
+                      },
+                      {
+                        label: "New Players Start",
+                        value: form.newPlayerPlacement === "bottom" ? "At Bottom" : "At Rating",
+                      },
+                      { label: "Flex Play", value: form.flexPlay ? "Yes" : "No" },
+                      { label: "DUPR Integration", value: form.duprIntegration ? "Yes" : "No" },
+                      { label: "Min Age", value: form.minAge > 0 ? String(form.minAge) : "Any" },
+                      {
+                        label: "Member / Non-Member Fee",
+                        value: `$${form.memberFee} / $${form.nonMemberFee}`,
+                      },
                     ].map(({ label, value }) => (
                       <div
                         key={label}

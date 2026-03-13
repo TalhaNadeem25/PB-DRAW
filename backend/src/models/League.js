@@ -134,6 +134,43 @@ const leagueSchema = new mongoose.Schema({
       default: 0
     }
   }],
+  rankingType: {
+    type: String,
+    enum: ['dupr', 'pop', 'up-down', 'custom'],
+    default: 'pop'
+  },
+  signupType: {
+    type: String,
+    enum: ['open', 'closed'],
+    default: 'open'
+  },
+  flexPlay: {
+    type: Boolean,
+    default: false
+  },
+  duprIntegration: {
+    type: Boolean,
+    default: false
+  },
+  newPlayerPlacement: {
+    type: String,
+    enum: ['bottom', 'rating'],
+    default: 'bottom'
+  },
+  minAge: {
+    type: Number,
+    default: 0
+  },
+  memberFee: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  nonMemberFee: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   settings: {
     allowWaitlist: {
       type: Boolean,
