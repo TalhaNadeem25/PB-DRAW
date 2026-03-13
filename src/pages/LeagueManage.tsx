@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState, useCallback } from "react";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import { leagueAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CaretLeft,
+  ArrowLeft,
   Users,
   Trophy,
   CalendarBlank,
@@ -27,27 +27,1168 @@ import {
   FloppyDisk,
   Trash,
   Check,
+  SquaresFour,
+  ListNumbers,
+  CheckCircle,
+  ShareNetwork,
+  Calendar,
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const TABS = ["Players", "Standings", "Sessions", "Settings"];
+// ─── Types ───────────────────────────────────────────────────────────────────
+type LeagueSection = "overview" | "players" | "sessions" | "standings" | "settings";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 const SKILL_LEVELS = [2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
 
 const SESSION_STATUS_COLORS: Record<string, string> = {
   upcoming: "bg-muted text-muted-foreground",
   active: "bg-primary/15 text-primary border border-primary/30",
-  completed: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30",
+  completed:
+    "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30",
 };
 
+const leagueStatusConfig: Record<string, { label: string; className: string; dotClass: string }> = {
+  draft: {
+    label: "Draft",
+    className: "bg-card text-muted-foreground border-border/80 border-2",
+    dotClass: "bg-muted-foreground",
+  },
+  open: {
+    label: "Registration Open",
+    className: "bg-primary text-primary-foreground border-transparent",
+    dotClass: "bg-background animate-[blink_2s_ease-in-out_infinite]",
+  },
+  active: {
+    label: "Active",
+    className: "bg-destructive text-destructive-foreground border-transparent",
+    dotClass: "bg-white animate-pulse",
+  },
+  completed: {
+    label: "Completed",
+    className: "bg-foreground text-background border-transparent",
+    dotClass: "bg-background",
+  },
+};
+
+const sidebarCategories = [
+  {
+    title: "1. Management",
+    items: [
+      { id: "overview" as LeagueSection, label: "Overview", icon: SquaresFour },
+      { id: "players" as LeagueSection, label: "Players", icon: Users },
+      { id: "sessions" as LeagueSection, label: "Sessions", icon: CalendarBlank },
+    ],
+  },
+  {
+    title: "2. Performance",
+    items: [
+      { id: "standings" as LeagueSection, label: "Standings", icon: ListNumbers },
+    ],
+  },
+  {
+    title: "3. Configuration",
+    items: [
+      { id: "settings" as LeagueSection, label: "Settings", icon: Gear },
+    ],
+  },
+];
+
+const flatSidebarItems = sidebarCategories.flatMap((c) => c.items);
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+function LeagueSidebar({
+  activeSection,
+  onSectionChange,
+}: {
+  activeSection: LeagueSection;
+  onSectionChange: (s: LeagueSection) => void;
+}) {
+  return (
+    <nav className="bg-card border-none sm:border-r-2 sm:border-border sm:shadow-none shadow-sm sm:w-64 hidden lg:block p-3 space-y-4">
+      {sidebarCategories.map((category) => (
+        <div key={category.title} className="space-y-1">
+          <h4 className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 font-display">
+            {category.title}
+          </h4>
+          {category.items.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSectionChange(item.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 border-l-4",
+                  isActive
+                    ? "border-primary bg-primary/10 text-foreground font-bold"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                )}
+              >
+                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary" : "")} />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+// ─── Mobile nav ───────────────────────────────────────────────────────────────
+function MobileLeagueNav({
+  activeSection,
+  onSectionChange,
+}: {
+  activeSection: LeagueSection;
+  onSectionChange: (s: LeagueSection) => void;
+}) {
+  return (
+    <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 px-4 border-b-2 border-border/50 mb-6 bg-card sticky top-14 z-20">
+      <div className="flex gap-4 min-w-max px-2">
+        {flatSidebarItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeSection === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onSectionChange(item.id)}
+              className={cn(
+                "flex items-center gap-2 px-2 py-4 text-sm font-bold whitespace-nowrap transition-all duration-200 border-b-4",
+                isActive
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              )}
+            >
+              <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "")} />
+              <span className="font-display tracking-widest uppercase">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Top bar ──────────────────────────────────────────────────────────────────
+function LeagueTopBar({
+  league,
+  onActivate,
+  onComplete,
+  onDelete,
+}: {
+  league: any;
+  onActivate: () => void;
+  onComplete: () => void;
+  onDelete: () => void;
+}) {
+  const statusInfo =
+    leagueStatusConfig[league.status as keyof typeof leagueStatusConfig] ||
+    leagueStatusConfig.draft;
+
+  return (
+    <div className="flex flex-col gap-4 mb-6 animate-fade-in">
+      {/* Name + status + date */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 sm:gap-6 min-w-0 bg-card p-6 rounded-xl border-2 border-border shadow-sm">
+        <Link
+          to={`/leagues/${league._id}`}
+          className="shrink-0 w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors border border-border/80 self-start"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
+            <h1 className="font-display font-black text-3xl sm:text-4xl truncate uppercase tracking-tight text-foreground">
+              {league.name}
+            </h1>
+            <Badge
+              variant="outline"
+              className={cn(
+                "font-bold text-xs uppercase tracking-widest px-2 py-0.5",
+                statusInfo.className
+              )}
+            >
+              <span className={cn("w-2 h-2 rounded-full mr-2", statusInfo.dotClass)} />
+              {statusInfo.label}
+            </Badge>
+          </div>
+          {(league.startDate || league.endDate) && (
+            <div className="flex items-center gap-2 text-sm text-primary font-bold tracking-widest uppercase mt-3">
+              <Calendar className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">
+                {league.startDate
+                  ? format(new Date(league.startDate), "MMM dd, yyyy")
+                  : "TBD"}{" "}
+                –{" "}
+                {league.endDate
+                  ? format(new Date(league.endDate), "MMM dd, yyyy")
+                  : "TBD"}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+        {(league.status === "draft" || league.status === "open") && (
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm"
+            onClick={onActivate}
+          >
+            <Trophy className="w-4 h-4 mr-2" />
+            <span className="whitespace-nowrap">Activate League</span>
+          </Button>
+        )}
+
+        {league.status === "active" && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm border-foreground/30 hover:bg-foreground hover:text-background transition-colors"
+            onClick={onComplete}
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            <span className="whitespace-nowrap">Complete League</span>
+          </Button>
+        )}
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-12 w-12 rounded-xl border-border bg-card hover:bg-muted/50 hover:border-primary/50 transition-colors shrink-0"
+        >
+          <ShareNetwork className="w-5 h-5 text-muted-foreground" />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-12 w-12 rounded-xl border-border bg-card hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive text-muted-foreground transition-colors shrink-0"
+          onClick={onDelete}
+        >
+          <Trash className="w-5 h-5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Overview section ─────────────────────────────────────────────────────────
+function OverviewSection({ league }: { league: any }) {
+  const totalSessions = league.sessions?.length ?? 0;
+  const completedSessions = league.sessions?.filter((s: any) => s.status === "completed").length ?? 0;
+  const totalPlayers = league.players?.length ?? 0;
+  const maxPlayers = league.maxPlayers ?? 32;
+  const topPlayer = league.standings?.[0];
+
+  const stats = [
+    {
+      label: "Players",
+      value: `${totalPlayers} / ${maxPlayers}`,
+      icon: Users,
+      color: "text-primary",
+    },
+    {
+      label: "Sessions",
+      value: `${completedSessions} / ${totalSessions}`,
+      icon: CalendarBlank,
+      color: "text-emerald-500",
+    },
+    {
+      label: "League Type",
+      value: league.leagueType?.replace("-", " ") ?? "—",
+      icon: Trophy,
+      color: "text-amber-500",
+    },
+    {
+      label: "Skill Range",
+      value:
+        league.skillLevel?.min && league.skillLevel?.max
+          ? `${league.skillLevel.min} – ${league.skillLevel.max}`
+          : "All levels",
+      icon: ListNumbers,
+      color: "text-violet-500",
+    },
+  ];
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+          <SquaresFour className="w-6 h-6 text-primary" />
+          Overview
+        </h2>
+        <p className="text-muted-foreground mt-1">
+          At-a-glance summary of your league.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {stats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <div
+              key={s.label}
+              className="glass-card rounded-2xl border border-border/50 p-5 flex flex-col gap-2"
+            >
+              <Icon className={cn("w-5 h-5", s.color)} />
+              <p className="text-2xl font-display font-black text-foreground capitalize">
+                {s.value}
+              </p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-display font-bold">
+                {s.label}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {topPlayer && (
+        <div className="glass-card rounded-2xl border border-border/50 p-6">
+          <p className="text-xs font-display font-bold uppercase tracking-widest text-muted-foreground mb-3">
+            Current Leader
+          </p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-hero-gradient flex items-center justify-center shrink-0">
+              <span className="text-lg font-display font-black text-white">
+                {topPlayer.player?.name?.charAt(0)?.toUpperCase() ?? "#"}
+              </span>
+            </div>
+            <div>
+              <p className="font-display font-black text-xl uppercase">
+                {topPlayer.player?.name ?? "Unknown"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {topPlayer.wins ?? 0}W – {topPlayer.losses ?? 0}L &nbsp;·&nbsp;{" "}
+                {topPlayer.points ?? 0} pts
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {league.description && (
+        <div className="glass-card rounded-2xl border border-border/50 p-6">
+          <p className="text-xs font-display font-bold uppercase tracking-widest text-muted-foreground mb-2">
+            Description
+          </p>
+          <p className="text-sm text-foreground leading-relaxed">{league.description}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Players section ───────────────────────────────────────────────────────────
+function PlayersSection({
+  league,
+  onRemovePlayer,
+  removing,
+}: {
+  league: any;
+  onRemovePlayer: (playerId: string) => void;
+  removing: boolean;
+}) {
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+            <Users className="w-6 h-6 text-primary" />
+            Players
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {league.players?.length ?? 0} of {league.maxPlayers ?? 32} registered
+          </p>
+        </div>
+      </div>
+
+      {!league.players || league.players.length === 0 ? (
+        <div className="glass-card rounded-2xl border border-border/50 text-center py-16 text-muted-foreground">
+          <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-display font-bold uppercase tracking-wide text-sm">No players yet</p>
+        </div>
+      ) : (
+        <div className="glass-card rounded-2xl border border-border/50 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50 bg-muted/30">
+                  {["Player", "Email", "Skill", "Joined", "Payment", ""].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 font-display font-bold text-xs uppercase tracking-wide text-muted-foreground text-left last:text-right"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {league.players.map((entry: any, i: number) => {
+                  const p = entry.player;
+                  const pid = p?._id ?? p;
+                  return (
+                    <tr
+                      key={entry._id ?? i}
+                      className="border-b border-border/30 last:border-0 hover:bg-accent/20 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0">
+                            <span className="text-xs font-display font-black text-white">
+                              {p?.name?.charAt(0)?.toUpperCase() ?? "?"}
+                            </span>
+                          </div>
+                          <span className="font-medium text-foreground">{p?.name ?? "Unknown"}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{p?.email ?? "—"}</td>
+                      <td className="px-4 py-3 text-center text-muted-foreground">{p?.skillLevel ?? "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {entry.joinedAt ? format(new Date(entry.joinedAt), "MMM d, yyyy") : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={cn(
+                            "text-[10px] font-display font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
+                            entry.paymentStatus === "paid"
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                          )}
+                        >
+                          {entry.paymentStatus ?? "unpaid"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={removing}
+                          onClick={() => onRemovePlayer(pid?.toString())}
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive h-7 px-2"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Standings section ─────────────────────────────────────────────────────────
+function StandingsSection({
+  league,
+  editedStandings,
+  setStandingValue,
+  getStandingValue,
+  onSave,
+  saving,
+}: {
+  league: any;
+  editedStandings: Record<string, any>;
+  setStandingValue: (pid: string, field: string, val: any) => void;
+  getStandingValue: (pid: string, field: string) => any;
+  onSave: () => void;
+  saving: boolean;
+}) {
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+            <ListNumbers className="w-6 h-6 text-primary" />
+            Standings
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Edit wins, losses, and points. Ranks auto-calculate by points.
+          </p>
+        </div>
+        <Button
+          onClick={onSave}
+          disabled={saving}
+          className="font-display font-bold uppercase tracking-wide text-xs gap-2"
+        >
+          <FloppyDisk className="w-4 h-4" />
+          {saving ? "Saving..." : "Save Standings"}
+        </Button>
+      </div>
+
+      {!league.players || league.players.length === 0 ? (
+        <div className="glass-card rounded-2xl border border-border/50 text-center py-16 text-muted-foreground">
+          <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-display font-bold uppercase tracking-wide text-sm">No players to rank</p>
+        </div>
+      ) : (
+        <div className="glass-card rounded-2xl border border-border/50 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50 bg-muted/30">
+                  {["Player", "Wins", "Losses", "Points", "Games Played"].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 font-display font-bold text-xs uppercase tracking-wide text-muted-foreground text-left"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {league.players.map((entry: any, i: number) => {
+                  const p = entry.player;
+                  const pid = (p?._id ?? p)?.toString();
+                  return (
+                    <tr
+                      key={entry._id ?? i}
+                      className="border-b border-border/30 last:border-0"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0">
+                            <span className="text-xs font-display font-black text-white">
+                              {p?.name?.charAt(0)?.toUpperCase() ?? "?"}
+                            </span>
+                          </div>
+                          <span className="font-medium text-foreground">{p?.name ?? "Unknown"}</span>
+                        </div>
+                      </td>
+                      {["wins", "losses", "points", "gamesPlayed"].map((field) => (
+                        <td key={field} className="px-4 py-2">
+                          <Input
+                            type="number"
+                            min={0}
+                            value={getStandingValue(pid, field)}
+                            onChange={(e) => setStandingValue(pid, field, e.target.value)}
+                            className="w-20 h-8 rounded-lg text-sm"
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Sessions section ──────────────────────────────────────────────────────────
+function SessionsSection({
+  league,
+  sessionMatches,
+  expandedSession,
+  scoreInputs,
+  savingScore,
+  generatingMatches,
+  onToggleSession,
+  onGenerateMatches,
+  onEnterScore,
+  setScoreInputs,
+  onUpdateSession,
+  onAddSession,
+  sessionDialogOpen,
+  setSessionDialogOpen,
+  sessionDate,
+  setSessionDate,
+  sessionNotes,
+  setSessionNotes,
+  addingSession,
+}: {
+  league: any;
+  sessionMatches: Record<string, any[]>;
+  expandedSession: string | null;
+  scoreInputs: Record<string, { score1: string; score2: string }>;
+  savingScore: string | null;
+  generatingMatches: string | null;
+  onToggleSession: (sid: string) => void;
+  onGenerateMatches: (sid: string) => void;
+  onEnterScore: (matchId: string, sessionId: string) => void;
+  setScoreInputs: React.Dispatch<React.SetStateAction<Record<string, { score1: string; score2: string }>>>;
+  onUpdateSession: (sessionId: string, status: string) => void;
+  onAddSession: () => void;
+  sessionDialogOpen: boolean;
+  setSessionDialogOpen: (v: boolean) => void;
+  sessionDate: string;
+  setSessionDate: (v: string) => void;
+  sessionNotes: string;
+  setSessionNotes: (v: string) => void;
+  addingSession: boolean;
+}) {
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+            <CalendarBlank className="w-6 h-6 text-primary" />
+            Sessions
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {league.sessions?.length ?? 0} total sessions
+          </p>
+        </div>
+        <Button
+          onClick={() => setSessionDialogOpen(true)}
+          className="font-display font-bold uppercase tracking-wide text-xs gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add Session
+        </Button>
+      </div>
+
+      {!league.sessions || league.sessions.length === 0 ? (
+        <div className="glass-card rounded-2xl border border-border/50 text-center py-16 text-muted-foreground">
+          <CalendarBlank className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-display font-bold uppercase tracking-wide text-sm">No sessions yet</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {league.sessions.map((session: any, i: number) => {
+            const sid = session._id;
+            const isExpanded = expandedSession === sid;
+            const matches: any[] = sessionMatches[sid] || [];
+            const completedCount = matches.filter((m) => m.status === "completed").length;
+            return (
+              <div key={sid ?? i} className="glass-card rounded-xl border border-border/50 overflow-hidden">
+                <div
+                  className="p-4 flex items-start gap-4 cursor-pointer hover:bg-accent/10 transition-colors"
+                  onClick={() => onToggleSession(sid)}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0 shadow-sm">
+                    <span className="font-display font-black text-sm text-white">
+                      {session.sessionNumber ?? i + 1}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-display font-bold text-sm uppercase tracking-wide text-foreground">
+                        Session {session.sessionNumber ?? i + 1}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[10px] font-display font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
+                          SESSION_STATUS_COLORS[session.status] ?? SESSION_STATUS_COLORS.upcoming
+                        )}
+                      >
+                        {session.status}
+                      </span>
+                      {matches.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {completedCount}/{matches.length} matches done
+                        </span>
+                      )}
+                    </div>
+                    {session.date && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(session.date), "EEEE, MMM d, yyyy")}
+                      </p>
+                    )}
+                    {session.notes && (
+                      <p className="text-xs text-muted-foreground mt-1">{session.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {session.status === "upcoming" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onUpdateSession(sid, "active")}
+                        className="h-8 text-xs font-display font-bold uppercase tracking-wide border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+                      >
+                        Mark Active
+                      </Button>
+                    )}
+                    {session.status === "active" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onUpdateSession(sid, "completed")}
+                        className="h-8 text-xs font-display font-bold uppercase tracking-wide border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
+                      >
+                        <Check className="w-3.5 h-3.5 mr-1" />
+                        Complete
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="border-t border-border/40 p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground font-display font-bold uppercase tracking-wide">
+                        Round-Robin Matches {matches.length > 0 ? `(${matches.length} total)` : ""}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onGenerateMatches(sid)}
+                        disabled={generatingMatches === sid}
+                        className="h-8 text-xs font-display font-bold uppercase tracking-wide"
+                      >
+                        {generatingMatches === sid
+                          ? "Generating..."
+                          : matches.length > 0
+                          ? "Regenerate"
+                          : "Generate Matches"}
+                      </Button>
+                    </div>
+
+                    {matches.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No matches yet. Click "Generate Matches" to create the round-robin schedule.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {Array.from(new Set(matches.map((m) => m.round)))
+                          .sort((a, b) => a - b)
+                          .map((round) => (
+                            <div key={round}>
+                              <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
+                                Round {round}
+                              </p>
+                              <div className="space-y-1.5">
+                                {matches
+                                  .filter((m) => m.round === round)
+                                  .map((match: any) => {
+                                    const mid = match._id;
+                                    const inputs = scoreInputs[mid] ?? {
+                                      score1: match.score1 ?? "",
+                                      score2: match.score2 ?? "",
+                                    };
+                                    const isDone = match.status === "completed";
+                                    return (
+                                      <div
+                                        key={mid}
+                                        className={cn(
+                                          "flex items-center gap-3 p-3 rounded-xl text-sm",
+                                          isDone
+                                            ? "bg-emerald-500/5 border border-emerald-500/20"
+                                            : "bg-muted/30 border border-border/40"
+                                        )}
+                                      >
+                                        <span
+                                          className={cn(
+                                            "font-medium flex-1 text-right text-xs",
+                                            match.winner?._id === match.player1?._id &&
+                                              "font-bold text-primary"
+                                          )}
+                                        >
+                                          {match.player1?.name ?? "Player"}
+                                        </span>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                          <Input
+                                            type="number"
+                                            min={0}
+                                            value={inputs.score1}
+                                            onChange={(e) =>
+                                              setScoreInputs((prev) => ({
+                                                ...prev,
+                                                [mid]: { ...inputs, score1: e.target.value },
+                                              }))
+                                            }
+                                            className="w-14 h-8 text-center text-sm rounded-lg"
+                                            disabled={isDone}
+                                          />
+                                          <span className="text-muted-foreground font-bold text-xs">
+                                            vs
+                                          </span>
+                                          <Input
+                                            type="number"
+                                            min={0}
+                                            value={inputs.score2}
+                                            onChange={(e) =>
+                                              setScoreInputs((prev) => ({
+                                                ...prev,
+                                                [mid]: { ...inputs, score2: e.target.value },
+                                              }))
+                                            }
+                                            className="w-14 h-8 text-center text-sm rounded-lg"
+                                            disabled={isDone}
+                                          />
+                                        </div>
+                                        <span
+                                          className={cn(
+                                            "font-medium flex-1 text-xs",
+                                            match.winner?._id === match.player2?._id &&
+                                              "font-bold text-primary"
+                                          )}
+                                        >
+                                          {match.player2?.name ?? "Player"}
+                                        </span>
+                                        {isDone ? (
+                                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                                        ) : (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => onEnterScore(mid, sid)}
+                                            disabled={savingScore === mid}
+                                            className="h-7 px-2 text-xs font-display font-bold uppercase tracking-wide shrink-0"
+                                          >
+                                            {savingScore === mid ? "..." : "Save"}
+                                          </Button>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add Session Dialog */}
+      <Dialog open={sessionDialogOpen} onOpenChange={setSessionDialogOpen}>
+        <DialogContent className="glass-card border border-border/50 rounded-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display font-black text-lg uppercase tracking-tight">
+              Add Session
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+                Date
+              </Label>
+              <Input
+                type="date"
+                value={sessionDate}
+                onChange={(e) => setSessionDate(e.target.value)}
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+                Notes
+              </Label>
+              <Textarea
+                value={sessionNotes}
+                onChange={(e) => setSessionNotes(e.target.value)}
+                placeholder="Optional notes for this session..."
+                rows={3}
+                className="rounded-xl resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSessionDialogOpen(false)}
+              className="font-display font-bold uppercase tracking-wide text-xs rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={onAddSession}
+              disabled={addingSession || !sessionDate}
+              className="font-display font-bold uppercase tracking-wide text-xs rounded-xl"
+            >
+              {addingSession ? "Adding..." : "Add Session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Settings section ──────────────────────────────────────────────────────────
+function SettingsSection({
+  settingsForm,
+  setSettingsForm,
+  onSave,
+  saving,
+}: {
+  settingsForm: any;
+  setSettingsForm: (fn: (f: any) => any) => void;
+  onSave: () => void;
+  saving: boolean;
+}) {
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+            <Gear className="w-6 h-6 text-primary" />
+            Settings
+          </h2>
+          <p className="text-muted-foreground mt-1">Update league configuration.</p>
+        </div>
+        <Button
+          onClick={onSave}
+          disabled={saving}
+          className="font-display font-bold uppercase tracking-wide text-xs gap-2"
+        >
+          <FloppyDisk className="w-4 h-4" />
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
+
+      <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              League Name
+            </Label>
+            <Input
+              value={settingsForm.name}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, name: e.target.value }))}
+              className="rounded-xl"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Description
+            </Label>
+            <Textarea
+              value={settingsForm.description}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, description: e.target.value }))}
+              rows={3}
+              className="rounded-xl resize-none"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Location
+            </Label>
+            <Input
+              value={settingsForm.location}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, location: e.target.value }))}
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Address
+            </Label>
+            <Input
+              value={settingsForm.address}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, address: e.target.value }))}
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Start Date
+            </Label>
+            <Input
+              type="date"
+              value={settingsForm.startDate}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, startDate: e.target.value }))}
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              End Date
+            </Label>
+            <Input
+              type="date"
+              value={settingsForm.endDate}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, endDate: e.target.value }))}
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Registration Deadline
+            </Label>
+            <Input
+              type="date"
+              value={settingsForm.registrationDeadline}
+              onChange={(e) =>
+                setSettingsForm((f: any) => ({ ...f, registrationDeadline: e.target.value }))
+              }
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Max Players
+            </Label>
+            <Input
+              type="number"
+              min={4}
+              value={settingsForm.maxPlayers}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, maxPlayers: e.target.value }))}
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Entry Fee ($)
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={settingsForm.entryFee}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, entryFee: e.target.value }))}
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Contact Email
+            </Label>
+            <Input
+              type="email"
+              value={settingsForm.contactEmail}
+              onChange={(e) =>
+                setSettingsForm((f: any) => ({ ...f, contactEmail: e.target.value }))
+              }
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Contact Phone
+            </Label>
+            <Input
+              value={settingsForm.contactPhone}
+              onChange={(e) =>
+                setSettingsForm((f: any) => ({ ...f, contactPhone: e.target.value }))
+              }
+              className="rounded-xl"
+            />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Skill Level Min
+            </Label>
+            <select
+              value={settingsForm.skillLevelMin}
+              onChange={(e) =>
+                setSettingsForm((f: any) => ({ ...f, skillLevelMin: Number(e.target.value) }))
+              }
+              className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              {SKILL_LEVELS.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Skill Level Max
+            </Label>
+            <select
+              value={settingsForm.skillLevelMax}
+              onChange={(e) =>
+                setSettingsForm((f: any) => ({ ...f, skillLevelMax: Number(e.target.value) }))
+              }
+              className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              {SKILL_LEVELS.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+              Status
+            </Label>
+            <select
+              value={settingsForm.status}
+              onChange={(e) => setSettingsForm((f: any) => ({ ...f, status: e.target.value }))}
+              className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              {["draft", "open", "active", "completed"].map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/40">
+          <div>
+            <p className="font-display font-bold text-sm uppercase tracking-wide text-foreground">
+              Allow Waitlist
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Players can join a waitlist when the league is full
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setSettingsForm((f: any) => ({ ...f, allowWaitlist: !f.allowWaitlist }))
+            }
+            className={cn(
+              "relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50",
+              settingsForm.allowWaitlist ? "bg-primary" : "bg-muted"
+            )}
+          >
+            <span
+              className={cn(
+                "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200",
+                settingsForm.allowWaitlist ? "translate-x-5" : "translate-x-0"
+              )}
+            />
+          </button>
+        </div>
+
+        <div>
+          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
+            Rules
+          </Label>
+          <Textarea
+            value={settingsForm.rules}
+            onChange={(e) => setSettingsForm((f: any) => ({ ...f, rules: e.target.value }))}
+            rows={4}
+            className="rounded-xl resize-none"
+            placeholder="League rules..."
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function LeagueManage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("Players");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeSection = (searchParams.get("tab") as LeagueSection) || "overview";
+  const setActiveSection = useCallback(
+    (section: LeagueSection) => {
+      setSearchParams({ tab: section }, { replace: true });
+    },
+    [setSearchParams]
+  );
 
   // Session dialog
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
@@ -60,9 +1201,14 @@ export default function LeagueManage() {
   // Session matches
   const [sessionMatches, setSessionMatches] = useState<Record<string, any[]>>({});
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
-  const [scoreInputs, setScoreInputs] = useState<Record<string, { score1: string; score2: string }>>({});
+  const [scoreInputs, setScoreInputs] = useState<Record<string, { score1: string; score2: string }>>(
+    {}
+  );
   const [savingScore, setSavingScore] = useState<string | null>(null);
   const [generatingMatches, setGeneratingMatches] = useState<string | null>(null);
+
+  // Delete confirm
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["league", id],
@@ -72,16 +1218,12 @@ export default function LeagueManage() {
 
   const league = data?.data;
 
-  // Redirect if not organizer
   const isOrganizer =
     league &&
-    (league.organizer?._id?.toString() === user?._id?.toString() ||
-      user?.role === "admin");
+    (league.organizer?._id?.toString() === user?._id?.toString() || user?.role === "admin");
 
   // Settings form
   const [settingsForm, setSettingsForm] = useState<any | null>(null);
-
-  // Initialize settings form when league loads
   if (league && !settingsForm) {
     setSettingsForm({
       name: league.name ?? "",
@@ -105,15 +1247,19 @@ export default function LeagueManage() {
     });
   }
 
-  // Remove player
+  // ── Mutations ──────────────────────────────────────────────────────────────
   const removePlayerMutation = useMutation({
     mutationFn: async (playerId: string) => {
-      // We do this by calling unregister on behalf — since there's no admin remove endpoint,
-      // we update the league directly
       const currentPlayers = league.players.filter(
         (p: any) => (p.player?._id ?? p.player).toString() !== playerId
       );
-      return leagueAPI.update(id!, { players: currentPlayers.map((p: any) => ({ player: p.player?._id ?? p.player, joinedAt: p.joinedAt, paymentStatus: p.paymentStatus })) });
+      return leagueAPI.update(id!, {
+        players: currentPlayers.map((p: any) => ({
+          player: p.player?._id ?? p.player,
+          joinedAt: p.joinedAt,
+          paymentStatus: p.paymentStatus,
+        })),
+      });
     },
     onSuccess: () => {
       toast({ title: "Player removed" });
@@ -128,10 +1274,9 @@ export default function LeagueManage() {
     },
   });
 
-  // Save standings
   const saveStandingsMutation = useMutation({
     mutationFn: () => {
-      const standings = (league?.players ?? []).map((entry: any, idx: number) => {
+      const standings = (league?.players ?? []).map((entry: any) => {
         const pid = entry.player?._id ?? entry.player;
         const edited = editedStandings[pid] ?? {};
         return {
@@ -143,9 +1288,10 @@ export default function LeagueManage() {
           rank: 0,
         };
       });
-      // Auto-rank by points desc
       standings.sort((a: any, b: any) => b.points - a.points);
-      standings.forEach((s: any, i: number) => { s.rank = i + 1; });
+      standings.forEach((s: any, i: number) => {
+        s.rank = i + 1;
+      });
       return leagueAPI.updateStandings(id!, standings);
     },
     onSuccess: () => {
@@ -161,7 +1307,6 @@ export default function LeagueManage() {
     },
   });
 
-  // Add session
   const addSessionMutation = useMutation({
     mutationFn: () => leagueAPI.addSession(id!, { date: sessionDate, notes: sessionNotes }),
     onSuccess: () => {
@@ -180,7 +1325,6 @@ export default function LeagueManage() {
     },
   });
 
-  // Update session status
   const updateSessionMutation = useMutation({
     mutationFn: ({ sessionId, status }: { sessionId: string; status: string }) =>
       leagueAPI.updateSession(id!, sessionId, { status }),
@@ -197,7 +1341,6 @@ export default function LeagueManage() {
     },
   });
 
-  // Save settings
   const saveSettingsMutation = useMutation({
     mutationFn: () =>
       leagueAPI.update(id!, {
@@ -226,11 +1369,57 @@ export default function LeagueManage() {
     },
   });
 
+  const activateMutation = useMutation({
+    mutationFn: () => leagueAPI.update(id!, { status: "active" }),
+    onSuccess: () => {
+      toast({ title: "League activated!" });
+      queryClient.invalidateQueries({ queryKey: ["league", id] });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Error",
+        description: err?.response?.data?.message ?? "Failed to activate league.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: () => leagueAPI.update(id!, { status: "completed" }),
+    onSuccess: () => {
+      toast({ title: "League completed!" });
+      queryClient.invalidateQueries({ queryKey: ["league", id] });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Error",
+        description: err?.response?.data?.message ?? "Failed to complete league.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => leagueAPI.delete(id!),
+    onSuccess: () => {
+      toast({ title: "League deleted" });
+      navigate("/leagues");
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Error",
+        description: err?.response?.data?.message ?? "Failed to delete league.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const loadSessionMatches = async (sessionId: string) => {
     try {
       const res = await leagueAPI.getSessionMatches(id!, sessionId);
-      setSessionMatches(prev => ({ ...prev, [sessionId]: res.data }));
-    } catch (e) {
+      setSessionMatches((prev) => ({ ...prev, [sessionId]: res.data }));
+    } catch {
       toast({ title: "Error", description: "Failed to load matches", variant: "destructive" });
     }
   };
@@ -252,7 +1441,11 @@ export default function LeagueManage() {
       await loadSessionMatches(sessionId);
       queryClient.invalidateQueries({ queryKey: ["league", id] });
     } catch (e: any) {
-      toast({ title: "Error", description: e?.response?.data?.message || "Failed to generate matches", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: e?.response?.data?.message || "Failed to generate matches",
+        variant: "destructive",
+      });
     } finally {
       setGeneratingMatches(null);
     }
@@ -271,15 +1464,38 @@ export default function LeagueManage() {
       await loadSessionMatches(sessionId);
       queryClient.invalidateQueries({ queryKey: ["league", id] });
     } catch (e: any) {
-      toast({ title: "Error", description: e?.response?.data?.message || "Failed to save score", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: e?.response?.data?.message || "Failed to save score",
+        variant: "destructive",
+      });
     } finally {
       setSavingScore(null);
     }
   };
 
+  const getExistingStanding = (playerId: string) =>
+    league?.standings?.find(
+      (s: any) => (s.player?._id ?? s.player)?.toString() === playerId
+    );
+
+  const getStandingValue = (playerId: string, field: string) => {
+    if (editedStandings[playerId]?.[field] !== undefined)
+      return editedStandings[playerId][field];
+    return getExistingStanding(playerId)?.[field] ?? 0;
+  };
+
+  const setStandingValue = (playerId: string, field: string, value: any) => {
+    setEditedStandings((prev) => ({
+      ...prev,
+      [playerId]: { ...(prev[playerId] ?? {}), [field]: value },
+    }));
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="max-w-5xl mx-auto px-4 py-10 animate-pulse space-y-4">
           <div className="h-8 rounded bg-muted/50 w-1/3" />
           <div className="h-40 rounded-2xl bg-muted/50" />
@@ -290,7 +1506,7 @@ export default function LeagueManage() {
 
   if (!league || !isOrganizer) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="max-w-5xl mx-auto px-4 py-20 text-center">
           <h2 className="font-display font-black text-2xl uppercase">Not authorized</h2>
           <Button asChild className="mt-4" variant="outline">
@@ -301,698 +1517,120 @@ export default function LeagueManage() {
     );
   }
 
-  const getExistingStanding = (playerId: string) => {
-    return league.standings?.find(
-      (s: any) => (s.player?._id ?? s.player)?.toString() === playerId
-    );
-  };
-
-  const getStandingValue = (playerId: string, field: string) => {
-    if (editedStandings[playerId]?.[field] !== undefined) {
-      return editedStandings[playerId][field];
+  const renderSection = () => {
+    switch (activeSection) {
+      case "overview":
+        return <OverviewSection league={league} />;
+      case "players":
+        return (
+          <PlayersSection
+            league={league}
+            onRemovePlayer={(pid) => removePlayerMutation.mutate(pid)}
+            removing={removePlayerMutation.isPending}
+          />
+        );
+      case "sessions":
+        return (
+          <SessionsSection
+            league={league}
+            sessionMatches={sessionMatches}
+            expandedSession={expandedSession}
+            scoreInputs={scoreInputs}
+            savingScore={savingScore}
+            generatingMatches={generatingMatches}
+            onToggleSession={handleToggleSession}
+            onGenerateMatches={handleGenerateMatches}
+            onEnterScore={handleEnterScore}
+            setScoreInputs={setScoreInputs}
+            onUpdateSession={(sessionId, status) =>
+              updateSessionMutation.mutate({ sessionId, status })
+            }
+            onAddSession={() => addSessionMutation.mutate()}
+            sessionDialogOpen={sessionDialogOpen}
+            setSessionDialogOpen={setSessionDialogOpen}
+            sessionDate={sessionDate}
+            setSessionDate={setSessionDate}
+            sessionNotes={sessionNotes}
+            setSessionNotes={setSessionNotes}
+            addingSession={addSessionMutation.isPending}
+          />
+        );
+      case "standings":
+        return (
+          <StandingsSection
+            league={league}
+            editedStandings={editedStandings}
+            setStandingValue={setStandingValue}
+            getStandingValue={getStandingValue}
+            onSave={() => saveStandingsMutation.mutate()}
+            saving={saveStandingsMutation.isPending}
+          />
+        );
+      case "settings":
+        return settingsForm ? (
+          <SettingsSection
+            settingsForm={settingsForm}
+            setSettingsForm={setSettingsForm}
+            onSave={() => saveSettingsMutation.mutate()}
+            saving={saveSettingsMutation.isPending}
+          />
+        ) : null;
+      default:
+        return <OverviewSection league={league} />;
     }
-    const existing = getExistingStanding(playerId);
-    return existing?.[field] ?? 0;
-  };
-
-  const setStandingValue = (playerId: string, field: string, value: any) => {
-    setEditedStandings((prev) => ({
-      ...prev,
-      [playerId]: { ...(prev[playerId] ?? {}), [field]: value },
-    }));
   };
 
   return (
-    <Layout>
-      {/* Header */}
-      <section className="relative bg-hero-gradient overflow-hidden py-8 px-4 sm:px-6">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white to-transparent pointer-events-none" />
-        <div className="max-w-5xl mx-auto relative z-10">
-          <Link
-            to={`/leagues/${id}`}
-            className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-3 transition-colors"
-          >
-            <CaretLeft className="w-4 h-4" />
-            Back to League
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center">
-              <Gear className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight leading-tight">
-                Manage League
-              </h1>
-              <p className="text-white/70 text-sm">{league.name}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+    <Layout variant="minimal">
+      <div className="min-h-screen bg-background">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <LeagueTopBar
+            league={league}
+            onActivate={() => activateMutation.mutate()}
+            onComplete={() => completeMutation.mutate()}
+            onDelete={() => setDeleteDialogOpen(true)}
+          />
 
-      {/* Tabs */}
-      <div className="sticky top-[4.5rem] z-30 bg-background/95 backdrop-blur-md border-b border-border/50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="flex gap-1 overflow-x-auto scrollbar-none py-1">
-            {TABS.map((tab) => {
-              const icons: Record<string, any> = {
-                Players: Users,
-                Standings: Trophy,
-                Sessions: CalendarBlank,
-                Settings: Gear,
-              };
-              const Icon = icons[tab];
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    "shrink-0 flex items-center gap-2 px-4 py-2.5 text-sm font-display font-bold uppercase tracking-wide rounded-xl transition-all duration-200",
-                    activeTab === tab
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab}
-                </button>
-              );
-            })}
+          <MobileLeagueNav activeSection={activeSection} onSectionChange={setActiveSection} />
+
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            <LeagueSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+            <main className="flex-1 min-w-0 font-sans">{renderSection()}</main>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {/* Players Tab */}
-        {activeTab === "Players" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display font-black text-lg uppercase tracking-tight text-foreground">
-                Registered Players ({league.players?.length ?? 0})
-              </h3>
-            </div>
-            {!league.players || league.players.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="font-display font-bold uppercase tracking-wide text-sm">No players yet</p>
-              </div>
-            ) : (
-              <div className="glass-card rounded-2xl border border-border/50 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border/50 bg-muted/30">
-                        {["Player", "Email", "Skill", "Joined", "Payment", ""].map((h) => (
-                          <th
-                            key={h}
-                            className="px-4 py-3 font-display font-bold text-xs uppercase tracking-wide text-muted-foreground text-left last:text-right"
-                          >
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {league.players.map((entry: any, i: number) => {
-                        const p = entry.player;
-                        const pid = p?._id ?? p;
-                        return (
-                          <tr
-                            key={entry._id ?? i}
-                            className="border-b border-border/30 last:border-0 hover:bg-accent/20 transition-colors"
-                          >
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0">
-                                  <span className="text-xs font-display font-black text-white">
-                                    {p?.name?.charAt(0)?.toUpperCase() ?? "?"}
-                                  </span>
-                                </div>
-                                <span className="font-medium text-foreground">{p?.name ?? "Unknown"}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground text-xs">{p?.email ?? "—"}</td>
-                            <td className="px-4 py-3 text-center text-muted-foreground">{p?.skillLevel ?? "—"}</td>
-                            <td className="px-4 py-3 text-muted-foreground text-xs">
-                              {entry.joinedAt ? format(new Date(entry.joinedAt), "MMM d, yyyy") : "—"}
-                            </td>
-                            <td className="px-4 py-3">
-                              <span
-                                className={cn(
-                                  "text-[10px] font-display font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
-                                  entry.paymentStatus === "paid"
-                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                                )}
-                              >
-                                {entry.paymentStatus ?? "unpaid"}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removePlayerMutation.mutate(pid?.toString())}
-                                className="text-destructive hover:bg-destructive/10 hover:text-destructive h-7 px-2"
-                              >
-                                <Trash className="w-3.5 h-3.5" />
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* Standings Tab */}
-        {activeTab === "Standings" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display font-black text-lg uppercase tracking-tight text-foreground">
-                Edit Standings
-              </h3>
-              <Button
-                onClick={() => saveStandingsMutation.mutate()}
-                disabled={saveStandingsMutation.isPending}
-                className="font-display font-bold uppercase tracking-wide text-xs gap-2"
-              >
-                <FloppyDisk className="w-4 h-4" />
-                {saveStandingsMutation.isPending ? "Saving..." : "Save Standings"}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Enter wins, losses, and points for each player. Ranks are auto-calculated by points.
-            </p>
-            {!league.players || league.players.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="font-display font-bold uppercase tracking-wide text-sm">No players to rank</p>
-              </div>
-            ) : (
-              <div className="glass-card rounded-2xl border border-border/50 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border/50 bg-muted/30">
-                        {["Player", "Wins", "Losses", "Points", "Games Played"].map((h) => (
-                          <th
-                            key={h}
-                            className="px-4 py-3 font-display font-bold text-xs uppercase tracking-wide text-muted-foreground text-left"
-                          >
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {league.players.map((entry: any, i: number) => {
-                        const p = entry.player;
-                        const pid = (p?._id ?? p)?.toString();
-                        return (
-                          <tr
-                            key={entry._id ?? i}
-                            className="border-b border-border/30 last:border-0"
-                          >
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0">
-                                  <span className="text-xs font-display font-black text-white">
-                                    {p?.name?.charAt(0)?.toUpperCase() ?? "?"}
-                                  </span>
-                                </div>
-                                <span className="font-medium text-foreground">{p?.name ?? "Unknown"}</span>
-                              </div>
-                            </td>
-                            {["wins", "losses", "points", "gamesPlayed"].map((field) => (
-                              <td key={field} className="px-4 py-2">
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={getStandingValue(pid, field)}
-                                  onChange={(e) => setStandingValue(pid, field, e.target.value)}
-                                  className="w-20 h-8 rounded-lg text-sm"
-                                />
-                              </td>
-                            ))}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* Sessions Tab */}
-        {activeTab === "Sessions" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display font-black text-lg uppercase tracking-tight text-foreground">
-                Sessions ({league.sessions?.length ?? 0})
-              </h3>
-              <Button
-                onClick={() => setSessionDialogOpen(true)}
-                className="font-display font-bold uppercase tracking-wide text-xs gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Session
-              </Button>
-            </div>
-
-            {!league.sessions || league.sessions.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <CalendarBlank className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="font-display font-bold uppercase tracking-wide text-sm">No sessions yet</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {league.sessions.map((session: any, i: number) => {
-                  const sid = session._id;
-                  const isExpanded = expandedSession === sid;
-                  const matches: any[] = sessionMatches[sid] || [];
-                  const pendingCount = matches.filter(m => m.status === 'pending').length;
-                  const completedCount = matches.filter(m => m.status === 'completed').length;
-                  return (
-                    <div key={sid ?? i} className="glass-card rounded-xl border border-border/50 overflow-hidden">
-                      {/* Session header - clickable to expand */}
-                      <div
-                        className="p-4 flex items-start gap-4 cursor-pointer hover:bg-accent/10 transition-colors"
-                        onClick={() => handleToggleSession(sid)}
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0 shadow-sm">
-                          <span className="font-display font-black text-sm text-white">{session.sessionNumber ?? i + 1}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-display font-bold text-sm uppercase tracking-wide text-foreground">
-                              Session {session.sessionNumber ?? i + 1}
-                            </span>
-                            <span className={cn("text-[10px] font-display font-bold uppercase tracking-widest px-2 py-0.5 rounded-full", SESSION_STATUS_COLORS[session.status] ?? SESSION_STATUS_COLORS.upcoming)}>
-                              {session.status}
-                            </span>
-                            {matches.length > 0 && (
-                              <span className="text-[10px] text-muted-foreground">
-                                {completedCount}/{matches.length} matches done
-                              </span>
-                            )}
-                          </div>
-                          {session.date && (
-                            <p className="text-xs text-muted-foreground mt-1">{format(new Date(session.date), "EEEE, MMM d, yyyy")}</p>
-                          )}
-                          {session.notes && <p className="text-xs text-muted-foreground mt-1">{session.notes}</p>}
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                          {session.status === "upcoming" && (
-                            <Button
-                              variant="outline" size="sm"
-                              onClick={() => updateSessionMutation.mutate({ sessionId: sid, status: "active" })}
-                              className="h-8 text-xs font-display font-bold uppercase tracking-wide border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
-                            >
-                              Mark Active
-                            </Button>
-                          )}
-                          {session.status === "active" && (
-                            <Button
-                              variant="outline" size="sm"
-                              onClick={() => updateSessionMutation.mutate({ sessionId: sid, status: "completed" })}
-                              className="h-8 text-xs font-display font-bold uppercase tracking-wide border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
-                            >
-                              <Check className="w-3.5 h-3.5 mr-1" />
-                              Complete
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Expanded: matches */}
-                      {isExpanded && (
-                        <div className="border-t border-border/40 p-4 space-y-4">
-                          {/* Generate matches button */}
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs text-muted-foreground font-display font-bold uppercase tracking-wide">
-                              Round-Robin Matches {matches.length > 0 ? `(${matches.length} total)` : ""}
-                            </p>
-                            <Button
-                              size="sm" variant="outline"
-                              onClick={() => handleGenerateMatches(sid)}
-                              disabled={generatingMatches === sid}
-                              className="h-8 text-xs font-display font-bold uppercase tracking-wide"
-                            >
-                              {generatingMatches === sid ? "Generating..." : matches.length > 0 ? "Regenerate" : "Generate Matches"}
-                            </Button>
-                          </div>
-
-                          {matches.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">No matches yet. Click "Generate Matches" to create the round-robin schedule.</p>
-                          ) : (
-                            <div className="space-y-2">
-                              {/* Group by round */}
-                              {Array.from(new Set(matches.map(m => m.round))).sort((a, b) => a - b).map(round => (
-                                <div key={round}>
-                                  <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Round {round}</p>
-                                  <div className="space-y-1.5">
-                                    {matches.filter(m => m.round === round).map((match: any) => {
-                                      const mid = match._id;
-                                      const inputs = scoreInputs[mid] ?? { score1: match.score1 ?? "", score2: match.score2 ?? "" };
-                                      const isDone = match.status === 'completed';
-                                      return (
-                                        <div key={mid} className={cn("flex items-center gap-3 p-3 rounded-xl text-sm", isDone ? "bg-emerald-500/5 border border-emerald-500/20" : "bg-muted/30 border border-border/40")}>
-                                          <span className={cn("font-medium flex-1 text-right text-xs", match.winner?._id === match.player1?._id && "font-bold text-primary")}>
-                                            {match.player1?.name ?? "Player"}
-                                          </span>
-                                          <div className="flex items-center gap-1.5 shrink-0">
-                                            <Input
-                                              type="number" min={0}
-                                              value={inputs.score1}
-                                              onChange={e => setScoreInputs(prev => ({ ...prev, [mid]: { ...inputs, score1: e.target.value } }))}
-                                              className="w-14 h-8 text-center text-sm rounded-lg"
-                                              disabled={isDone}
-                                            />
-                                            <span className="text-muted-foreground font-bold text-xs">vs</span>
-                                            <Input
-                                              type="number" min={0}
-                                              value={inputs.score2}
-                                              onChange={e => setScoreInputs(prev => ({ ...prev, [mid]: { ...inputs, score2: e.target.value } }))}
-                                              className="w-14 h-8 text-center text-sm rounded-lg"
-                                              disabled={isDone}
-                                            />
-                                          </div>
-                                          <span className={cn("font-medium flex-1 text-xs", match.winner?._id === match.player2?._id && "font-bold text-primary")}>
-                                            {match.player2?.name ?? "Player"}
-                                          </span>
-                                          {isDone ? (
-                                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                                          ) : (
-                                            <Button
-                                              size="sm" variant="outline"
-                                              onClick={() => handleEnterScore(mid, sid)}
-                                              disabled={savingScore === mid}
-                                              className="h-7 px-2 text-xs font-display font-bold uppercase tracking-wide shrink-0"
-                                            >
-                                              {savingScore === mid ? "..." : "Save"}
-                                            </Button>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Add Session Dialog */}
-            <Dialog open={sessionDialogOpen} onOpenChange={setSessionDialogOpen}>
-              <DialogContent className="glass-card border border-border/50 rounded-2xl max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="font-display font-black text-lg uppercase tracking-tight">
-                    Add Session
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-2">
-                  <div>
-                    <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                      Date
-                    </Label>
-                    <Input
-                      type="date"
-                      value={sessionDate}
-                      onChange={(e) => setSessionDate(e.target.value)}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                      Notes
-                    </Label>
-                    <Textarea
-                      value={sessionNotes}
-                      onChange={(e) => setSessionNotes(e.target.value)}
-                      placeholder="Optional notes for this session..."
-                      rows={3}
-                      className="rounded-xl resize-none"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSessionDialogOpen(false)}
-                    className="font-display font-bold uppercase tracking-wide text-xs rounded-xl"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => addSessionMutation.mutate()}
-                    disabled={addSessionMutation.isPending || !sessionDate}
-                    className="font-display font-bold uppercase tracking-wide text-xs rounded-xl"
-                  >
-                    {addSessionMutation.isPending ? "Adding..." : "Add Session"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </motion.div>
-        )}
-
-        {/* Settings Tab */}
-        {activeTab === "Settings" && settingsForm && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-display font-black text-lg uppercase tracking-tight text-foreground">
-                League Settings
-              </h3>
-              <Button
-                onClick={() => saveSettingsMutation.mutate()}
-                disabled={saveSettingsMutation.isPending}
-                className="font-display font-bold uppercase tracking-wide text-xs gap-2"
-              >
-                <FloppyDisk className="w-4 h-4" />
-                {saveSettingsMutation.isPending ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-
-            <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    League Name
-                  </Label>
-                  <Input
-                    value={settingsForm.name}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, name: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Description
-                  </Label>
-                  <Textarea
-                    value={settingsForm.description}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, description: e.target.value }))}
-                    rows={3}
-                    className="rounded-xl resize-none"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Location
-                  </Label>
-                  <Input
-                    value={settingsForm.location}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, location: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Address
-                  </Label>
-                  <Input
-                    value={settingsForm.address}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, address: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Start Date
-                  </Label>
-                  <Input
-                    type="date"
-                    value={settingsForm.startDate}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, startDate: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    End Date
-                  </Label>
-                  <Input
-                    type="date"
-                    value={settingsForm.endDate}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, endDate: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Registration Deadline
-                  </Label>
-                  <Input
-                    type="date"
-                    value={settingsForm.registrationDeadline}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, registrationDeadline: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Max Players
-                  </Label>
-                  <Input
-                    type="number"
-                    min={4}
-                    value={settingsForm.maxPlayers}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, maxPlayers: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Entry Fee ($)
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={settingsForm.entryFee}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, entryFee: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Contact Email
-                  </Label>
-                  <Input
-                    type="email"
-                    value={settingsForm.contactEmail}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, contactEmail: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Contact Phone
-                  </Label>
-                  <Input
-                    value={settingsForm.contactPhone}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, contactPhone: e.target.value }))}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Skill Level Min
-                  </Label>
-                  <select
-                    value={settingsForm.skillLevelMin}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, skillLevelMin: Number(e.target.value) }))}
-                    className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    {SKILL_LEVELS.map((l) => (
-                      <option key={l} value={l}>{l}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Skill Level Max
-                  </Label>
-                  <select
-                    value={settingsForm.skillLevelMax}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, skillLevelMax: Number(e.target.value) }))}
-                    className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    {SKILL_LEVELS.map((l) => (
-                      <option key={l} value={l}>{l}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                    Status
-                  </Label>
-                  <select
-                    value={settingsForm.status}
-                    onChange={(e) => setSettingsForm((f: any) => ({ ...f, status: e.target.value }))}
-                    className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    {["draft", "open", "active", "completed"].map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/40">
-                <div>
-                  <p className="font-display font-bold text-sm uppercase tracking-wide text-foreground">
-                    Allow Waitlist
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Players can join a waitlist when the league is full
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSettingsForm((f: any) => ({ ...f, allowWaitlist: !f.allowWaitlist }))}
-                  className={cn(
-                    "relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50",
-                    settingsForm.allowWaitlist ? "bg-primary" : "bg-muted"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200",
-                      settingsForm.allowWaitlist ? "translate-x-5" : "translate-x-0"
-                    )}
-                  />
-                </button>
-              </div>
-
-              <div>
-                <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-                  Rules
-                </Label>
-                <Textarea
-                  value={settingsForm.rules}
-                  onChange={(e) => setSettingsForm((f: any) => ({ ...f, rules: e.target.value }))}
-                  rows={4}
-                  className="rounded-xl resize-none"
-                  placeholder="League rules..."
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </div>
+      {/* Delete confirmation */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="glass-card border border-border/50 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-black text-lg uppercase tracking-tight text-destructive">
+              Delete League
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete <strong>{league.name}</strong>? This action cannot be
+            undone.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="font-display font-bold uppercase tracking-wide text-xs rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="font-display font-bold uppercase tracking-wide text-xs rounded-xl"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete League"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
