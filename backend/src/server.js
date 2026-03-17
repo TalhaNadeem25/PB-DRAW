@@ -47,10 +47,18 @@ const app = express();
 // Create HTTP server
 const server = http.createServer(app);
 
+// Allowed origins: web frontend + Capacitor mobile apps
+const allowedOrigins = [
+  process.env.CLIENT_URL || 'http://localhost:8080',
+  'capacitor://localhost',
+  'ionic://localhost',
+  'http://localhost',
+];
+
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:8080',
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST']
   }
@@ -68,7 +76,7 @@ connectDB();
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:8080',
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json()); // Body parser

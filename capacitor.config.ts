@@ -16,11 +16,7 @@ const config: CapacitorConfig = {
         url: `http://${devServerIP}:${devServerPort}`,
         cleartext: true
       }
-    : {
-        // Production: Load from deployed app on Vercel
-        url: productionUrl,
-        cleartext: false
-      },
+    : undefined,
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
