@@ -1,5 +1,6 @@
 import AuthGate from "@/components/AuthGate";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import SplashAnimation, { useShouldShowSplash } from "@/components/SplashAnimation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,17 +11,14 @@ import { SocketProvider } from "@/contexts/SocketContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { setOnUnauthorized } from "@/services/api";
-import { Users, Ticket, CircleNotch } from "@phosphor-icons/react";
+import { Users, Ticket } from "@phosphor-icons/react";
 import { Analytics } from "@vercel/analytics/react";
+import { PageSkeleton } from "@/components/ui/skeleton-card";
 
-const PageFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <CircleNotch className="w-8 h-8 animate-spin text-primary" aria-label="Loading" />
-  </div>
-);
+const PageFallback = () => <PageSkeleton />;
 
 const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
 const AnalyticsDashboard = lazy(() => import("./pages/AnalyticsDashboard"));
@@ -238,27 +236,33 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <SocketProvider>
-        <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <ErrorBoundary>
-            <BrowserRouter>
-              <AppRoutes />
-              <Analytics />
-            </BrowserRouter>
-          </ErrorBoundary>
-      </TooltipProvider>
-        </ThemeProvider>
-      </SocketProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-  </HelmetProvider>
-);
+const App = () => {
+  const shouldShowSplash = useShouldShowSplash();
+  const [splashDone, setSplashDone] = useState(!shouldShowSplash);
+
+  return (
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SocketProvider>
+            <ThemeProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                {!splashDone && <SplashAnimation onComplete={() => setSplashDone(true)} />}
+                <ErrorBoundary>
+                  <BrowserRouter>
+                    <AppRoutes />
+                    <Analytics />
+                  </BrowserRouter>
+                </ErrorBoundary>
+              </TooltipProvider>
+            </ThemeProvider>
+          </SocketProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  );
+};
 
 export default App;

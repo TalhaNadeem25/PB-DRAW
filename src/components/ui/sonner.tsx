@@ -1,19 +1,21 @@
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Capacitor } from "@capacitor/core";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
+  const isNative = Capacitor.isNativePlatform();
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group pointer-events-none [&_[data-sonner-toast]]:pointer-events-auto"
-      position="bottom-right"
+      position={isNative ? "bottom-center" : "bottom-right"}
       expand={false}
-      offset="1.5rem"
+      offset={isNative ? "5.5rem" : "1.5rem"}
       gap={8}
       richColors={false}
       closeButton

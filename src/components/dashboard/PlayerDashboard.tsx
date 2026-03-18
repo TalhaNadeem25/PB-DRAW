@@ -3,7 +3,7 @@ import WaitlistStatus from "@/components/registration/WaitlistStatus";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SkeletonGrid } from "@/components/ui/skeleton-card";
+import { SkeletonGrid, SkeletonList } from "@/components/ui/skeleton-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import {
@@ -500,9 +500,7 @@ const PlayerDashboard = ({
           </CardHeader>
           <CardContent>
             {ticketsLoading ? (
-              <div className="flex justify-center py-8">
-                <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
+              <SkeletonList count={3} />
             ) : ticketsData && Array.isArray(ticketsData) && ticketsData.length > 0 ? (
               <div className="space-y-4">
                 {ticketsData.slice(0, 3).map((ticket: any, index: number) => (
@@ -609,9 +607,7 @@ const PlayerDashboard = ({
           </CardHeader>
           <CardContent>
             {teamsLoading ? (
-              <div className="flex justify-center py-8">
-                <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
+              <SkeletonList count={3} />
             ) : myTeams.length > 0 ? (
               <div className="space-y-3">
                 {myTeams.slice(0, 5).map((team) => (

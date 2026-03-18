@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { haptics } from '@/lib/haptics';
 import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch, Trophy, User } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -56,9 +57,11 @@ const AuthPage = () => {
 
     try {
       await login(loginEmail, loginPassword);
+      haptics.success();
       navigate(redirectUrl);
     } catch (error) {
       console.error('Login error:', error);
+      haptics.error();
       setError('Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
@@ -95,9 +98,11 @@ const AuthPage = () => {
         skillLevel: parseFloat(signupData.skillLevel),
         phone: signupData.phone || undefined,
       });
+      haptics.success();
       navigate(redirectUrl, { state: { fromSignup: true } });
     } catch (error) {
       console.error('Signup error:', error);
+      haptics.error();
       setError('Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);

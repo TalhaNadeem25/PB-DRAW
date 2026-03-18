@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { haptics } from "@/lib/haptics";
 import { PlusCircle, Radio, MagnifyingGlass, User, Users } from "@phosphor-icons/react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -25,6 +26,7 @@ const MobileNav = () => {
             <Link
               key={item.href}
               to={item.href}
+              onClick={() => haptics.light()}
               className={cn(
                 "relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"

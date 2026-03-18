@@ -32,6 +32,8 @@ import {
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ─── League Card (matches TournamentCard design) ────────────────────────────
 function LeagueCard({ league }: { league: any }) {
@@ -184,6 +186,7 @@ function LeagueCard({ league }: { league: any }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Leagues() {
+  const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const isOrganizer =
     isAuthenticated && (user?.role === "organizer" || user?.role === "admin");
@@ -406,6 +409,7 @@ export default function Leagues() {
 
   return (
     <Layout>
+      <PullToRefresh onRefresh={() => queryClient.invalidateQueries({ queryKey: ['leagues'] })}>
       <div className="min-h-screen bg-background pt-24 pb-12">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           {/* Header */}
@@ -643,6 +647,7 @@ export default function Leagues() {
           </div>
         </div>
       </div>
+      </PullToRefresh>
     </Layout>
   );
 }

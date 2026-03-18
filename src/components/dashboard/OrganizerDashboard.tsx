@@ -1,4 +1,5 @@
 import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
+import { SkeletonList } from "@/components/ui/skeleton-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -184,9 +185,7 @@ export default function OrganizerDashboard({
         </CardHeader>
         <CardContent>
           {tournamentsLoading ? (
-            <div className="flex justify-center py-8">
-              <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
+            <SkeletonList count={3} />
           ) : activeTournaments.length > 0 ? (
             <div className="space-y-4">
               {activeTournaments.map((tournament: any) => (

@@ -28,8 +28,11 @@ import {
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import WelcomeOnboarding, { getWelcomeDismissed } from "@/components/onboarding/WelcomeOnboarding";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Tournaments = () => {
+  const queryClient = useQueryClient();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const fromSignup = (location.state as { fromSignup?: boolean } | null)?.fromSignup;
@@ -244,6 +247,7 @@ const Tournaments = () => {
   return (
     <Layout>
       <WelcomeOnboarding open={showWelcome} onOpenChange={setShowWelcome} />
+      <PullToRefresh onRefresh={() => queryClient.invalidateQueries({ queryKey: ['tournaments'] })}>
       <div className="min-h-screen bg-background pt-24 pb-12">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           {/* Header */}
@@ -466,6 +470,7 @@ const Tournaments = () => {
           </div>
         </div>
       </div>
+      </PullToRefresh>
     </Layout>
   );
 };
