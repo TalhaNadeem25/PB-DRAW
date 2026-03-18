@@ -101,6 +101,10 @@ const tournamentSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  isFree: {
+    type: Boolean,
+    default: false
+  },
   maxTeams: {
     type: Number,
     min: 2

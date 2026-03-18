@@ -78,6 +78,7 @@ const CreateTournament = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [allowWaitlist, setAllowWaitlist] = useState(false);
+  const [isFree, setIsFree] = useState(false);
 
   // Step 3: Venue & Courts
   const [courtCount, setCourtCount] = useState<number | string>(4);
@@ -126,7 +127,7 @@ const CreateTournament = () => {
             addPlayoffStage: playFormat !== 'round-robin',
             skillLevel: event.skillLevel,
             maxTeams: event.maxPlayers,
-            entryFee: event.entryFee,
+            entryFee: isFree ? 0 : event.entryFee,
             status: "upcoming",
           });
         } catch (error) {
@@ -261,7 +262,8 @@ const CreateTournament = () => {
         endTime: playEndTime,
         checkInWindow: Number(checkInWindow),
       },
-      entryFee: Number(tournamentFee) || 0,
+      entryFee: isFree ? 0 : (Number(tournamentFee) || 0),
+      isFree,
       refereeType: refereeType || undefined,
       prizePool: prizeTotal !== "" && Number(prizeTotal) >= 0 ? {
         total: Number(prizeTotal),
@@ -281,8 +283,9 @@ const CreateTournament = () => {
 
   const canProceed = () => {
     if (step === 1) {
-      // Must be connected to Stripe and have all fields filled
-      return !!stripeStatus?.connected && name && location && address && description && startDate && endDate && registrationDeadline;
+      const basicFieldsFilled = !!(name && location && address && description && startDate && endDate && registrationDeadline);
+      // Free tournaments don't require Stripe
+      return isFree ? basicFieldsFilled : (!!stripeStatus?.connected && basicFieldsFilled);
     }
     if (step === 2) {
       return events.length > 0;
@@ -362,8 +365,37 @@ const CreateTournament = () => {
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <div className="space-y-8 animate-fade-in">
-                {/* Stripe Connect Gate */}
-                <ConnectAccountStatus />
+                {/* Free Tournament Toggle */}
+                <Card className={cn("border-2 transition-colors", isFree ? "border-emerald-500/40 bg-emerald-500/5" : "border-border")}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-display font-bold text-base uppercase tracking-wide flex items-center gap-2">
+                          Free Tournament
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Enable this to create a tournament with no entry fees. Stripe is not required and players can register for free.
+                        </p>
+                        {isFree && (
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-2 uppercase tracking-wide">
+                            ✓ Stripe not required · All fees set to $0
+                          </p>
+                        )}
+                      </div>
+                      <Switch
+                        checked={isFree}
+                        onCheckedChange={(val) => {
+                          setIsFree(val);
+                          if (val) setTournamentFee(0);
+                        }}
+                        className="shrink-0 mt-1"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Stripe Connect Gate — hidden for free tournaments */}
+                {!isFree && <ConnectAccountStatus />}
 
                 {/* AI Planner Promotion Banner */}
                 <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent overflow-hidden relative">
@@ -700,25 +732,28 @@ const CreateTournament = () => {
                             : "Maximum number of teams (pairs) in this event"}
                         </p>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Entry Fee ($)</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="number"
-                            value={newEvent.entryFee}
-                            onChange={(e) =>
-                              setNewEvent({
-                                ...newEvent,
-                                entryFee: parseInt(e.target.value) || 0,
-                              })
-                            }
-                            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <Button onClick={addEvent}>
-                            <Plus className="w-4 h-4" />
-                          </Button>
+                      {!isFree && (
+                        <div className="space-y-2">
+                          <Label>Entry Fee ($)</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              value={newEvent.entryFee}
+                              onChange={(e) =>
+                                setNewEvent({
+                                  ...newEvent,
+                                  entryFee: parseInt(e.target.value) || 0,
+                                })
+                              }
+                              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
+                      <Button onClick={addEvent} className="w-full sm:w-auto">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Event
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -945,22 +980,31 @@ const CreateTournament = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="tournamentFee">Tournament Entry Fee ($)</Label>
-                      <div className="relative">
-                        <CurrencyDollar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="tournamentFee"
-                          type="number"
-                          min={0}
-                          className="pl-9"
-                          placeholder="0"
-                          value={tournamentFee}
-                          onChange={(e) => setTournamentFee(e.target.value === "" ? "" : Number(e.target.value))}
-                        />
+                    {isFree ? (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                        <CurrencyDollar className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                          Free Tournament — all fees are $0
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">Enter 0 for no tournament-level fee. Players will also pay per-event fees set on each event.</p>
-                    </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="tournamentFee">Tournament Entry Fee ($)</Label>
+                        <div className="relative">
+                          <CurrencyDollar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="tournamentFee"
+                            type="number"
+                            min={0}
+                            className="pl-9"
+                            placeholder="0"
+                            value={tournamentFee}
+                            onChange={(e) => setTournamentFee(e.target.value === "" ? "" : Number(e.target.value))}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Enter 0 for no tournament-level fee. Players will also pay per-event fees set on each event.</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
