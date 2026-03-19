@@ -1,6 +1,7 @@
 import AuthGate from "@/components/AuthGate";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SplashAnimation, { useShouldShowSplash } from "@/components/SplashAnimation";
+import { useSwipeBack } from "@/hooks/useSwipeBack";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -61,6 +62,7 @@ const queryClient = new QueryClient();
 
 function AppRoutes() {
   const navigate = useNavigate();
+  useSwipeBack();
   useEffect(() => {
     setOnUnauthorized(() => navigate("/login"));
     return () => setOnUnauthorized(null);

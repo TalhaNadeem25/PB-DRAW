@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { toast as sonnerToast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { leagueAPI } from "@/services/api";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -32,12 +34,15 @@ import {
   CheckCircle,
   ShareNetwork,
   Calendar,
+  Flask,
+  CircleNotch,
+  Warning,
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type LeagueSection = "overview" | "players" | "sessions" | "standings" | "settings";
+type LeagueSection = "overview" | "players" | "sessions" | "standings" | "settings" | "test";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SKILL_LEVELS = [2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
@@ -91,6 +96,12 @@ const sidebarCategories = [
     title: "3. Configuration",
     items: [
       { id: "settings" as LeagueSection, label: "Settings", icon: Gear },
+    ],
+  },
+  {
+    title: "4. Testing",
+    items: [
+      { id: "test" as LeagueSection, label: "Test Data", icon: Flask },
     ],
   },
 ];
@@ -1173,6 +1184,143 @@ function SettingsSection({
   );
 }
 
+// ─── Test Data section ────────────────────────────────────────────────────────
+function LeagueTestDataPanel({ leagueId, onRefresh }: { leagueId: string; onRefresh: () => void }) {
+  const [count, setCount] = useState("8");
+
+  const generateMutation = useMutation({
+    mutationFn: () => leagueAPI.generateTestData(leagueId, parseInt(count, 10)),
+    onSuccess: (data: any) => {
+      sonnerToast.success(data.message || "Test data generated!");
+      onRefresh();
+    },
+    onError: (error: any) => {
+      sonnerToast.error(error.response?.data?.message || "Failed to generate test data");
+    },
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: () => leagueAPI.clearTestData(leagueId),
+    onSuccess: (data: any) => {
+      sonnerToast.success(data.message || "Test data cleared!");
+      onRefresh();
+    },
+    onError: (error: any) => {
+      sonnerToast.error(error.response?.data?.message || "Failed to clear test data");
+    },
+  });
+
+  const canGenerate = parseInt(count, 10) >= 1 && parseInt(count, 10) <= 100 && !generateMutation.isPending;
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+          <Flask className="w-6 h-6 text-primary" />
+          Test Data
+        </h2>
+        <p className="text-muted-foreground mt-1">Generate fake players for testing.</p>
+      </div>
+
+      {/* Warning */}
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
+        <Warning className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="font-display font-bold text-sm text-yellow-700">Testing Only</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Creates fake player accounts and adds them to this league. Use "Clear Test Data" to remove them when done.
+          </p>
+        </div>
+      </div>
+
+      {/* Generate */}
+      <div className="glass-card rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Users className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-display font-bold text-lg">Generate Test Players</h3>
+            <p className="text-sm text-muted-foreground">Add fake players to this league for testing</p>
+          </div>
+        </div>
+        <div className="flex items-end gap-4">
+          <div className="space-y-2 w-40">
+            <Label className="font-display font-semibold text-sm">Number of Players</Label>
+            <Input
+              type="number"
+              min={1}
+              max={100}
+              value={count}
+              onChange={(e) => setCount(e.target.value)}
+              placeholder="8"
+              className="rounded-xl"
+            />
+          </div>
+          <Button onClick={() => generateMutation.mutate()} disabled={!canGenerate} className="gap-2">
+            {generateMutation.isPending ? (
+              <>
+                <CircleNotch className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Users className="w-4 h-4" />
+                Generate
+              </>
+            )}
+          </Button>
+        </div>
+        {generateMutation.isSuccess && (
+          <div className="mt-4 flex items-center gap-2 text-sm text-green-600 animate-fade-in">
+            <CheckCircle className="w-4 h-4" />
+            {(generateMutation.data as any)?.message}
+          </div>
+        )}
+      </div>
+
+      {/* Clear */}
+      <div className="glass-card rounded-2xl p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+              <Trash className="w-5 h-5 text-destructive" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-lg">Clear All Test Data</h3>
+              <p className="text-sm text-muted-foreground">Remove all test players from this league</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => clearMutation.mutate()}
+            disabled={clearMutation.isPending}
+            className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+          >
+            {clearMutation.isPending ? (
+              <>
+                <CircleNotch className="w-4 h-4 animate-spin" />
+                Clearing...
+              </>
+            ) : (
+              <>
+                <Trash className="w-4 h-4" />
+                Clear Test Data
+              </>
+            )}
+          </Button>
+        </div>
+        {clearMutation.isSuccess && (
+          <div className="mt-4 flex items-center gap-2 text-sm text-green-600 animate-fade-in">
+            <CheckCircle className="w-4 h-4" />
+            {(clearMutation.data as any)?.message}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function LeagueManage() {
   const { id } = useParams<{ id: string }>();
@@ -1575,6 +1723,13 @@ export default function LeagueManage() {
             saving={saveSettingsMutation.isPending}
           />
         ) : null;
+      case "test":
+        return (
+          <LeagueTestDataPanel
+            leagueId={id!}
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["league", id] })}
+          />
+        );
       default:
         return <OverviewSection league={league} />;
     }

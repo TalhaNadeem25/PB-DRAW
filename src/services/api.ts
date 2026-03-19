@@ -890,6 +890,16 @@ export const leagueAPI = {
     const response = await api.put(`/leagues/${leagueId}/matches/${matchId}/score`, { score1, score2 });
     return response.data;
   },
+
+  generateTestData: async (leagueId: string, count: number) => {
+    const response = await api.post(`/leagues/${leagueId}/test-data`, { count });
+    return response.data;
+  },
+
+  clearTestData: async (leagueId: string) => {
+    const response = await api.delete(`/leagues/${leagueId}/test-data`);
+    return response.data;
+  },
 };
 
 // Newsletter

@@ -3,6 +3,7 @@ import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 import Payment from '../models/Payment.js';
 import Tournament from '../models/Tournament.js';
+import League from '../models/League.js';
 
 const TEST_EMAIL_DOMAIN = '@test.pickleplay.local';
 
@@ -280,4 +281,118 @@ export const clearTestData = async (req, res, next) => {
   }
 };
 
-export default { generateTestData, clearTestData };
+/**
+ * @desc    Generate test players for a league
+ * @route   POST /api/leagues/:leagueId/test-data
+ * @access  Private (Organizer/Admin)
+ */
+export const generateLeagueTestData = async (req, res, next) => {
+  try {
+    const { leagueId } = req.params;
+    const { count } = req.body;
+
+    if (!count || count < 1 || count > 100) {
+      return res.status(400).json({ success: false, message: 'count (1-100) is required' });
+    }
+
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return res.status(404).json({ success: false, message: 'League not found' });
+    }
+
+    if (league.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const timestamp = Date.now();
+    let created = 0;
+
+    for (let i = 0; i < count; i++) {
+      const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+      const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+      const name = `${firstName} ${lastName}`;
+      const email = `test-${timestamp}-${i}${TEST_EMAIL_DOMAIN}`;
+      const skillLevel = +(2.5 + Math.random() * 2.5).toFixed(1);
+
+      const user = await User.create({
+        name,
+        email,
+        password: 'TestPass123!',
+        role: 'player',
+        skillLevel,
+        isActive: true,
+        isEmailVerified: true,
+      });
+
+      league.players.push({
+        player: user._id,
+        joinedAt: new Date(),
+        paymentStatus: 'paid',
+      });
+
+      created++;
+    }
+
+    await league.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Created ${created} test player registration(s)`,
+      data: { created },
+    });
+  } catch (error) {
+    console.error('Error generating league test data:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to generate test data' });
+  }
+};
+
+/**
+ * @desc    Clear all test players from a league
+ * @route   DELETE /api/leagues/:leagueId/test-data
+ * @access  Private (Organizer/Admin)
+ */
+export const clearLeagueTestData = async (req, res, next) => {
+  try {
+    const { leagueId } = req.params;
+
+    const league = await League.findById(leagueId).populate('players.player');
+    if (!league) {
+      return res.status(404).json({ success: false, message: 'League not found' });
+    }
+
+    if (league.organizer.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const testEmailRegex = new RegExp(TEST_EMAIL_DOMAIN.replace('.', '\\.') + '$');
+    const testPlayerIds = league.players
+      .filter((entry) => testEmailRegex.test(entry.player?.email || ''))
+      .map((entry) => entry.player?._id);
+
+    if (testPlayerIds.length === 0) {
+      return res.status(200).json({ success: true, message: 'No test data found', data: { removed: 0 } });
+    }
+
+    league.players = league.players.filter(
+      (entry) => !testPlayerIds.some((id) => id?.equals(entry.player?._id))
+    );
+    // Also remove test players from standings
+    league.standings = league.standings.filter(
+      (s) => !testPlayerIds.some((id) => id?.equals(s.player))
+    );
+    await league.save();
+
+    await User.deleteMany({ _id: { $in: testPlayerIds } });
+
+    res.status(200).json({
+      success: true,
+      message: `Cleared ${testPlayerIds.length} test player(s) from league`,
+      data: { removed: testPlayerIds.length },
+    });
+  } catch (error) {
+    console.error('Error clearing league test data:', error);
+    next(error);
+  }
+};
+
+export default { generateTestData, clearTestData, generateLeagueTestData, clearLeagueTestData };
