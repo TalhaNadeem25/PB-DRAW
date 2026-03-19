@@ -887,8 +887,8 @@ export const leagueAPI = {
     return response.data;
   },
 
-  enterScore: async (leagueId: string, matchId: string, score1: number, score2: number) => {
-    const response = await api.put(`/leagues/${leagueId}/matches/${matchId}/score`, { score1, score2 });
+  enterScore: async (leagueId: string, matchId: string, score1: number, score2: number, matchFormat?: string) => {
+    const response = await api.put(`/leagues/${leagueId}/matches/${matchId}/score`, { score1, score2, matchFormat });
     return response.data;
   },
 

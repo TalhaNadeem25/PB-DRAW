@@ -1626,9 +1626,33 @@ export default function LeagueManage() {
       toast({ title: "Enter both scores", variant: "destructive" });
       return;
     }
+
+    const s1 = Number(inputs.score1);
+    const s2 = Number(inputs.score2);
+    const fmt = sessionFormats[sessionId] ?? "Game to 11 – Win by 1";
+    const cfg = MATCH_FORMAT_CONFIGS[fmt as MatchFormatLabel];
+
+    if (cfg) {
+      const { points_to_win, win_by, hard_cap } = cfg;
+      const high = Math.max(s1, s2);
+      const diff = high - Math.min(s1, s2);
+      const valid = hard_cap != null
+        ? high >= hard_cap || (high >= points_to_win && diff >= win_by)
+        : high >= points_to_win && diff >= win_by;
+
+      if (!valid) {
+        toast({
+          title: "Invalid score",
+          description: `${fmt}: first to ${points_to_win}, win by ${win_by}${hard_cap ? ` (cap ${hard_cap})` : ""}`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSavingScore(matchId);
     try {
-      await leagueAPI.enterScore(id!, matchId, Number(inputs.score1), Number(inputs.score2));
+      await leagueAPI.enterScore(id!, matchId, s1, s2, fmt);
       toast({ title: "Score saved! Standings updated." });
       await loadSessionMatches(sessionId);
       queryClient.invalidateQueries({ queryKey: ["league", id] });

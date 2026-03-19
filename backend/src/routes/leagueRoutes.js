@@ -3,6 +3,8 @@ import League from '../models/League.js';
 import LeagueMatch from '../models/LeagueMatch.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { generateLeagueTestData, clearLeagueTestData } from '../controllers/testDataController.js';
+import { validateSingleGameScore } from '../utils/matchFormatUtils.js';
+import { MATCH_FORMAT_CONFIGS } from '../constants/matchFormatConfig.js';
 
 const router = express.Router();
 
@@ -446,15 +448,27 @@ router.put('/:id/matches/:matchId/score', protect, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Match not found' });
     }
 
-    const { score1, score2 } = req.body;
+    const { score1, score2, matchFormat } = req.body;
     if (score1 == null || score2 == null) {
       return res.status(400).json({ success: false, message: 'score1 and score2 are required' });
     }
 
-    match.score1 = Number(score1);
-    match.score2 = Number(score2);
+    const s1 = Number(score1);
+    const s2 = Number(score2);
+
+    // Validate against match format if provided
+    if (matchFormat && MATCH_FORMAT_CONFIGS[matchFormat]) {
+      const cfg = MATCH_FORMAT_CONFIGS[matchFormat];
+      const validation = validateSingleGameScore(s1, s2, cfg);
+      if (!validation.valid) {
+        return res.status(400).json({ success: false, message: validation.message });
+      }
+    }
+
+    match.score1 = s1;
+    match.score2 = s2;
     match.status = 'completed';
-    match.winner = Number(score1) > Number(score2) ? match.player1 : match.player2;
+    match.winner = s1 > s2 ? match.player1 : match.player2;
     await match.save();
 
     // Recalculate standings
