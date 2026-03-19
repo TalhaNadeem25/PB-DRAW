@@ -54,6 +54,9 @@ const Tournaments = lazy(() => import("./pages/Tournaments"));
 const Spectator = lazy(() => import("./pages/Spectator"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Leagues = lazy(() => import("./pages/Leagues"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const BlogEditor = lazy(() => import("./pages/BlogEditor"));
 const CreateLeague = lazy(() => import("./pages/CreateLeague"));
 const LeagueDetail = lazy(() => import("./pages/LeagueDetail"));
 const LeagueManage = lazy(() => import("./pages/LeagueManage"));
@@ -226,6 +229,10 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/new" element={<BlogEditor />} />
+            <Route path="/blog/:slug/edit" element={<BlogEditor />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />

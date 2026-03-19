@@ -915,4 +915,32 @@ export const newsletterAPI = {
   },
 };
 
+// Blog
+export const blogAPI = {
+  getAll: async (params?: { page?: number; limit?: number; tag?: string }) => {
+    const response = await api.get('/blog', { params });
+    return response.data;
+  },
+  getDrafts: async () => {
+    const response = await api.get('/blog/drafts');
+    return response.data;
+  },
+  getBySlug: async (slug: string) => {
+    const response = await api.get(`/blog/${slug}`);
+    return response.data;
+  },
+  create: async (data: { title: string; content: string; excerpt?: string; tags?: string[]; status: string }) => {
+    const response = await api.post('/blog', data);
+    return response.data;
+  },
+  update: async (slug: string, data: { title?: string; content?: string; excerpt?: string; tags?: string[]; status?: string }) => {
+    const response = await api.put(`/blog/${slug}`, data);
+    return response.data;
+  },
+  delete: async (slug: string) => {
+    const response = await api.delete(`/blog/${slug}`);
+    return response.data;
+  },
+};
+
 export default api;
