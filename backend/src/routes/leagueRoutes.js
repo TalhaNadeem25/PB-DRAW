@@ -330,7 +330,7 @@ async function recalculateStandings(league) {
 
   // Initialize stats for all registered players
   for (const entry of league.players) {
-    const pid = entry.player.toString();
+    const pid = (entry.player._id ?? entry.player).toString();
     stats[pid] = { wins: 0, losses: 0, gamesPlayed: 0, pointsEarned: 0, pointsPossible: 0 };
   }
 
