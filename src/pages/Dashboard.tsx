@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { Warning, Bell, Gear } from "@phosphor-icons/react";
+import { Warning, Bell, Gear, Article } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -104,7 +104,21 @@ const Dashboard = () => {
 
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {isSuperAdmin && (
-            <div className="mb-8">
+            <div className="mb-8 space-y-4">
+              <div className="flex gap-3">
+                <Button asChild variant="outline" className="gap-2 font-display font-bold uppercase tracking-wide text-xs">
+                  <Link to="/blog/new">
+                    <Article className="w-4 h-4" />
+                    New Blog Post
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="gap-2 font-display font-bold uppercase tracking-wide text-xs">
+                  <Link to="/blog">
+                    <Article className="w-4 h-4" />
+                    Manage Blog
+                  </Link>
+                </Button>
+              </div>
               <NewsletterSubscribersPanel />
             </div>
           )}
