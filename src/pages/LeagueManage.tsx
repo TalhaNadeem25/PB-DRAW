@@ -16,6 +16,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { leagueAPI } from "@/services/api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MATCH_FORMAT_LABELS, MATCH_FORMAT_CONFIGS, type MatchFormatLabel } from "@/constants/matchFormat";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -607,10 +615,12 @@ function SessionsSection({
   scoreInputs,
   savingScore,
   generatingMatches,
+  sessionFormats,
   onToggleSession,
   onGenerateMatches,
   onEnterScore,
   setScoreInputs,
+  onSetSessionFormat,
   onUpdateSession,
   onAddSession,
   sessionDialogOpen,
@@ -627,10 +637,12 @@ function SessionsSection({
   scoreInputs: Record<string, { score1: string; score2: string }>;
   savingScore: string | null;
   generatingMatches: string | null;
+  sessionFormats: Record<string, MatchFormatLabel>;
   onToggleSession: (sid: string) => void;
   onGenerateMatches: (sid: string) => void;
   onEnterScore: (matchId: string, sessionId: string) => void;
   setScoreInputs: React.Dispatch<React.SetStateAction<Record<string, { score1: string; score2: string }>>>;
+  onSetSessionFormat: (sid: string, fmt: MatchFormatLabel) => void;
   onUpdateSession: (sessionId: string, status: string) => void;
   onAddSession: () => void;
   sessionDialogOpen: boolean;
@@ -740,23 +752,44 @@ function SessionsSection({
 
                 {isExpanded && (
                   <div className="border-t border-border/40 p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground font-display font-bold uppercase tracking-wide">
-                        Round-Robin Matches {matches.length > 0 ? `(${matches.length} total)` : ""}
-                      </p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onGenerateMatches(sid)}
-                        disabled={generatingMatches === sid}
-                        className="h-8 text-xs font-display font-bold uppercase tracking-wide"
-                      >
-                        {generatingMatches === sid
-                          ? "Generating..."
-                          : matches.length > 0
-                          ? "Regenerate"
-                          : "Generate Matches"}
-                      </Button>
+                    {/* Format selector + generate button */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
+                          Match Format
+                        </p>
+                        <Select
+                          value={sessionFormats[sid] ?? "Game to 11 – Win by 1"}
+                          onValueChange={(v) => onSetSessionFormat(sid, v as MatchFormatLabel)}
+                        >
+                          <SelectTrigger className="h-8 text-xs rounded-xl w-full sm:w-64">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MATCH_FORMAT_LABELS.map((opt) => (
+                              <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-end gap-2 shrink-0 self-end">
+                        <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5 hidden sm:block">
+                          Matches {matches.length > 0 ? `(${matches.length})` : ""}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onGenerateMatches(sid)}
+                          disabled={generatingMatches === sid}
+                          className="h-8 text-xs font-display font-bold uppercase tracking-wide"
+                        >
+                          {generatingMatches === sid
+                            ? "Generating..."
+                            : matches.length > 0
+                            ? "Regenerate"
+                            : "Generate Matches"}
+                        </Button>
+                      </div>
                     </div>
 
                     {matches.length === 0 ? (
@@ -765,6 +798,18 @@ function SessionsSection({
                       </p>
                     ) : (
                       <div className="space-y-2">
+                        {/* Format info badge */}
+                        {(() => {
+                          const fmt = sessionFormats[sid] ?? "Game to 11 – Win by 1";
+                          const cfg = MATCH_FORMAT_CONFIGS[fmt as MatchFormatLabel];
+                          return cfg ? (
+                            <p className="text-[10px] text-primary font-display font-bold uppercase tracking-widest">
+                              {cfg.games_to_win > 1
+                                ? `Best ${cfg.games_to_win * 2 - 1} of ${cfg.max_games} · First to ${cfg.points_to_win}, win by ${cfg.win_by}`
+                                : `First to ${cfg.points_to_win}, win by ${cfg.win_by}${cfg.hard_cap ? ` (cap ${cfg.hard_cap})` : ""}`}
+                            </p>
+                          ) : null;
+                        })()}
                         {Array.from(new Set(matches.map((m) => m.round)))
                           .sort((a, b) => a - b)
                           .map((round) => (
@@ -1354,6 +1399,7 @@ export default function LeagueManage() {
   );
   const [savingScore, setSavingScore] = useState<string | null>(null);
   const [generatingMatches, setGeneratingMatches] = useState<string | null>(null);
+  const [sessionFormats, setSessionFormats] = useState<Record<string, MatchFormatLabel>>({});
 
   // Delete confirm
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -1686,10 +1732,14 @@ export default function LeagueManage() {
             scoreInputs={scoreInputs}
             savingScore={savingScore}
             generatingMatches={generatingMatches}
+            sessionFormats={sessionFormats}
             onToggleSession={handleToggleSession}
             onGenerateMatches={handleGenerateMatches}
             onEnterScore={handleEnterScore}
             setScoreInputs={setScoreInputs}
+            onSetSessionFormat={(sid, fmt) =>
+              setSessionFormats((prev) => ({ ...prev, [sid]: fmt }))
+            }
             onUpdateSession={(sessionId, status) =>
               updateSessionMutation.mutate({ sessionId, status })
             }
