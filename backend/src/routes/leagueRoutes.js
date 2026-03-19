@@ -2,6 +2,7 @@ import express from 'express';
 import League from '../models/League.js';
 import LeagueMatch from '../models/LeagueMatch.js';
 import { protect, authorize } from '../middleware/auth.js';
+import { generateLeagueTestData, clearLeagueTestData } from '../controllers/testDataController.js';
 
 const router = express.Router();
 
@@ -468,6 +469,18 @@ router.put('/:id/matches/:matchId/score', protect, async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+});
+
+// POST /api/leagues/:id/test-data — generate test players
+router.post('/:id/test-data', protect, authorize('organizer', 'admin'), (req, res, next) => {
+  req.params.leagueId = req.params.id;
+  generateLeagueTestData(req, res, next);
+});
+
+// DELETE /api/leagues/:id/test-data — clear test players
+router.delete('/:id/test-data', protect, authorize('organizer', 'admin'), (req, res, next) => {
+  req.params.leagueId = req.params.id;
+  clearLeagueTestData(req, res, next);
 });
 
 export default router;
