@@ -507,41 +507,17 @@ function PlayersSection({
 }
 
 // ─── Standings section ─────────────────────────────────────────────────────────
-function StandingsSection({
-  league,
-  editedStandings,
-  setStandingValue,
-  getStandingValue,
-  onSave,
-  saving,
-}: {
-  league: any;
-  editedStandings: Record<string, any>;
-  setStandingValue: (pid: string, field: string, val: any) => void;
-  getStandingValue: (pid: string, field: string) => any;
-  onSave: () => void;
-  saving: boolean;
-}) {
+function StandingsSection({ league }: { league: any }) {
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display font-bold text-2xl flex items-center gap-2">
-            <ListNumbers className="w-6 h-6 text-primary" />
-            Standings
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Edit wins, losses, and points. Ranks auto-calculate by points.
-          </p>
-        </div>
-        <Button
-          onClick={onSave}
-          disabled={saving}
-          className="font-display font-bold uppercase tracking-wide text-xs gap-2"
-        >
-          <FloppyDisk className="w-4 h-4" />
-          {saving ? "Saving..." : "Save Standings"}
-        </Button>
+      <div>
+        <h2 className="font-display font-bold text-2xl flex items-center gap-2">
+          <ListNumbers className="w-6 h-6 text-primary" />
+          Standings
+        </h2>
+        <p className="text-muted-foreground mt-1">
+          Auto-calculated from match scores.
+        </p>
       </div>
 
       {!league.players || league.players.length === 0 ? (
@@ -555,7 +531,7 @@ function StandingsSection({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/30">
-                  {["Player", "Wins", "Losses", "Points", "Games Played"].map((h) => (
+                  {["Rank", "Player", "W", "L", "GP", "Points"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 font-display font-bold text-xs uppercase tracking-wide text-muted-foreground text-left"
@@ -569,11 +545,17 @@ function StandingsSection({
                 {league.players.map((entry: any, i: number) => {
                   const p = entry.player;
                   const pid = (p?._id ?? p)?.toString();
+                  const standing = league.standings?.find(
+                    (s: any) => (s.player?._id ?? s.player)?.toString() === pid
+                  );
                   return (
                     <tr
                       key={entry._id ?? i}
                       className="border-b border-border/30 last:border-0"
                     >
+                      <td className="px-4 py-3 font-display font-black text-sm text-muted-foreground">
+                        #{standing?.rank ?? "—"}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-xl bg-hero-gradient flex items-center justify-center shrink-0">
@@ -584,17 +566,10 @@ function StandingsSection({
                           <span className="font-medium text-foreground">{p?.name ?? "Unknown"}</span>
                         </div>
                       </td>
-                      {["wins", "losses", "points", "gamesPlayed"].map((field) => (
-                        <td key={field} className="px-4 py-2">
-                          <Input
-                            type="number"
-                            min={0}
-                            value={getStandingValue(pid, field)}
-                            onChange={(e) => setStandingValue(pid, field, e.target.value)}
-                            className="w-20 h-8 rounded-lg text-sm"
-                          />
-                        </td>
-                      ))}
+                      <td className="px-4 py-3 text-sm font-bold text-emerald-600">{standing?.wins ?? 0}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{standing?.losses ?? 0}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{standing?.gamesPlayed ?? 0}</td>
+                      <td className="px-4 py-3 text-sm font-bold text-primary">{standing?.points ?? 0}</td>
                     </tr>
                   );
                 })}
@@ -1754,16 +1729,7 @@ export default function LeagueManage() {
           />
         );
       case "standings":
-        return (
-          <StandingsSection
-            league={league}
-            editedStandings={editedStandings}
-            setStandingValue={setStandingValue}
-            getStandingValue={getStandingValue}
-            onSave={() => saveStandingsMutation.mutate()}
-            saving={saveStandingsMutation.isPending}
-          />
-        );
+        return <StandingsSection league={league} />;
       case "settings":
         return settingsForm ? (
           <SettingsSection
