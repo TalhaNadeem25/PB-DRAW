@@ -158,10 +158,10 @@ const AuthPage = () => {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 p-1 rounded-xl">
-                <TabsTrigger value="login" className="rounded-lg font-display uppercase font-bold tracking-widest text-xs py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsTrigger value="login" className="rounded-lg font-display uppercase font-bold tracking-widest text-xs py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground">
                   Sign In
                 </TabsTrigger>
-                <TabsTrigger value="signup" className="rounded-lg font-display uppercase font-bold tracking-widest text-xs py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsTrigger value="signup" className="rounded-lg font-display uppercase font-bold tracking-widest text-xs py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground">
                   Create Account
                 </TabsTrigger>
               </TabsList>
