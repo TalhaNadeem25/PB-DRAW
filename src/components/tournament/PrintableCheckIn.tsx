@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Printer, ClipboardText } from "@phosphor-icons/react";
@@ -124,8 +125,8 @@ const PrintableCheckIn = ({ tournament, teams, events = [], onClose }: Printable
   const checkedInTeams = teams.filter(t => t.checkedIn).length;
   const totalPlayers = teams.reduce((sum, t) => sum + (t.players?.length || 0), 0);
 
-  return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm overflow-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-background/80 backdrop-blur-sm overflow-auto">
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -251,7 +252,8 @@ const PrintableCheckIn = ({ tournament, teams, events = [], onClose }: Printable
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

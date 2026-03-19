@@ -88,7 +88,7 @@ const ExportButtons = ({
             Print / Export
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56 z-[9999]">
           <DropdownMenuLabel>Export Options</DropdownMenuLabel>
           <DropdownMenuSeparator />
           

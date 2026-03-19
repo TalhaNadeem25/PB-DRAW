@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -118,8 +119,8 @@ const PrintableSchedule = ({ tournament, matches, events = [], onClose }: Printa
     return acc;
   }, {} as Record<string, Match[]>);
 
-  return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm overflow-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-background/80 backdrop-blur-sm overflow-auto">
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -224,7 +225,8 @@ const PrintableSchedule = ({ tournament, matches, events = [], onClose }: Printa
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

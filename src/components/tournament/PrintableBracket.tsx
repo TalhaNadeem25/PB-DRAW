@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Printer, Trophy } from "@phosphor-icons/react";
@@ -139,8 +140,8 @@ const PrintableBracket = ({ tournament, event, matches, bracketType = 'single-el
 
   const winner = getWinner();
 
-  return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm overflow-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-background/80 backdrop-blur-sm overflow-auto">
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -244,7 +245,8 @@ const PrintableBracket = ({ tournament, event, matches, bracketType = 'single-el
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
