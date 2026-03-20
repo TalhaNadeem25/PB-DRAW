@@ -838,7 +838,7 @@ function SessionsSection({
                                                 [mid]: { ...inputs, score1: String(val) },
                                               }));
                                             }}
-                                            className="w-14 h-8 text-center text-sm rounded-lg"
+                                            className="input-no-spinner w-16 h-10 text-center text-base font-bold rounded-lg"
                                             disabled={isDone}
                                           />
                                           <span className="text-muted-foreground font-bold text-xs">
@@ -856,7 +856,7 @@ function SessionsSection({
                                                 [mid]: { ...inputs, score2: String(val) },
                                               }));
                                             }}
-                                            className="w-14 h-8 text-center text-sm rounded-lg"
+                                            className="input-no-spinner w-16 h-10 text-center text-base font-bold rounded-lg"
                                             disabled={isDone}
                                           />
                                         </div>
