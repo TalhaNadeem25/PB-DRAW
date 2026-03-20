@@ -26,7 +26,7 @@ const Layout = ({ children, variant = "default" }: LayoutProps) => {
       <main className="flex-1 pb-16 md:pb-0">
         {children}
       </main>
-      {variant === "default" && <Footer />}
+      {variant === "default" && <div className="hidden md:block"><Footer /></div>}
       <MobileNav />
     </div>
   );
