@@ -628,6 +628,8 @@ function SessionsSection({
   setSessionNotes: (v: string) => void;
   addingSession: boolean;
 }) {
+  const [confirmCompleteId, setConfirmCompleteId] = useState<string | null>(null);
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -715,7 +717,7 @@ function SessionsSection({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => onUpdateSession(sid, "completed")}
+                        onClick={() => setConfirmCompleteId(sid)}
                         className="h-8 text-xs font-display font-bold uppercase tracking-wide border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white"
                       >
                         <Check className="w-3.5 h-3.5 mr-1" />
@@ -751,19 +753,21 @@ function SessionsSection({
                         <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5 hidden sm:block">
                           Matches {matches.length > 0 ? `(${matches.length})` : ""}
                         </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onGenerateMatches(sid)}
-                          disabled={generatingMatches === sid}
-                          className="h-8 text-xs font-display font-bold uppercase tracking-wide"
-                        >
-                          {generatingMatches === sid
-                            ? "Generating..."
-                            : matches.length > 0
-                            ? "Regenerate"
-                            : "Generate Matches"}
-                        </Button>
+                        {session.status !== "completed" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onGenerateMatches(sid)}
+                            disabled={generatingMatches === sid}
+                            className="h-8 text-xs font-display font-bold uppercase tracking-wide"
+                          >
+                            {generatingMatches === sid
+                              ? "Generating..."
+                              : matches.length > 0
+                              ? "Regenerate"
+                              : "Generate Matches"}
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -946,6 +950,37 @@ function SessionsSection({
               className="font-display font-bold uppercase tracking-wide text-xs rounded-xl"
             >
               {addingSession ? "Adding..." : "Add Session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete session confirmation dialog */}
+      <Dialog open={!!confirmCompleteId} onOpenChange={(open) => { if (!open) setConfirmCompleteId(null); }}>
+        <DialogContent className="glass-card border border-border/50 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-black text-lg uppercase tracking-tight">
+              Complete Session?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This will lock the session. Scores can't be edited and matches can't be regenerated afterward.
+          </p>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" onClick={() => setConfirmCompleteId(null)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold uppercase tracking-wide"
+              onClick={() => {
+                if (confirmCompleteId) {
+                  onUpdateSession(confirmCompleteId, "completed");
+                  setConfirmCompleteId(null);
+                }
+              }}
+            >
+              <Check className="w-4 h-4 mr-1.5" />
+              Yes, Complete
             </Button>
           </DialogFooter>
         </DialogContent>
