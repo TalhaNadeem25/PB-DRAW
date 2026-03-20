@@ -90,7 +90,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Security middleware
 app.use(mongoSanitize());
-app.use(xss());
+// Apply xss-clean to all routes EXCEPT /api/blog, which stores intentional HTML content
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/blog')) return next();
+  return xss()(req, res, next);
+});
 
 // Health check
 app.get('/api', (req, res) => {
