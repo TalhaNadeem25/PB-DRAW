@@ -32,10 +32,10 @@ export default function BlogEditor() {
   const [tagsInput, setTagsInput] = useState("");
   const [status, setStatus] = useState<"draft" | "published">("draft");
 
-  // Load existing post if editing
+  // Load existing post if editing — use admin endpoint so drafts are accessible
   const { data: postData } = useQuery({
     queryKey: ["blog-post-edit", slug],
-    queryFn: () => blogAPI.getBySlug(slug!),
+    queryFn: () => blogAPI.getBySlugAdmin(slug!),
     enabled: isEditing,
   });
 

@@ -58,6 +58,17 @@ router.get('/drafts', protect, blogAdminOnly, async (req, res) => {
   }
 });
 
+// GET /api/blog/admin/:slug — blog admin only, returns any post including drafts
+router.get('/admin/:slug', protect, blogAdminOnly, async (req, res) => {
+  try {
+    const post = await Blog.findOne({ slug: req.params.slug }).populate('author', 'name');
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    res.json({ success: true, data: post });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET /api/blog/:slug — public, single post
 router.get('/:slug', async (req, res) => {
   try {

@@ -929,6 +929,10 @@ export const blogAPI = {
     const response = await api.get(`/blog/${slug}`);
     return response.data;
   },
+  getBySlugAdmin: async (slug: string) => {
+    const response = await api.get(`/blog/admin/${slug}`);
+    return response.data;
+  },
   create: async (data: { title: string; content: string; excerpt?: string; tags?: string[]; status: string }) => {
     const response = await api.post('/blog', data);
     return response.data;
