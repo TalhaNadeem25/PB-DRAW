@@ -22,9 +22,10 @@ export default function BlogPost() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const isAdmin = isBlogAdmin(user);
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["blog-post", slug],
-    queryFn: () => blogAPI.getBySlug(slug!),
+    queryKey: ["blog-post", slug, isAdmin],
+    queryFn: () => isAdmin ? blogAPI.getBySlugAdmin(slug!) : blogAPI.getBySlug(slug!),
     enabled: !!slug,
   });
 
@@ -111,6 +112,13 @@ export default function BlogPost() {
             </div>
           )}
         </div>
+
+        {/* Draft banner */}
+        {post.status === "draft" && (
+          <div className="mb-4 px-4 py-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-700 dark:text-yellow-400 text-xs font-display font-bold uppercase tracking-widest">
+            Draft — not visible to the public
+          </div>
+        )}
 
         {/* Tags */}
         {post.tags?.length > 0 && (
