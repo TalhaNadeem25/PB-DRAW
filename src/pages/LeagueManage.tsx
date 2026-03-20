@@ -887,8 +887,7 @@ function SessionsSection({
                                   })}
                               </div>
                             </div>
-                          ))
-                          );
+                          ));
                         })()}
                       </div>
                     )}
