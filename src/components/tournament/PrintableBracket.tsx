@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Printer, Trophy } from "@phosphor-icons/react";
 import { format } from "date-fns";
+import { printHTML } from "@/lib/printUtils";
 
 interface Team {
   _id: string;
@@ -53,9 +54,6 @@ const PrintableBracket = ({ tournament, event, matches, bracketType = 'single-el
     const content = printRef.current;
     if (!content) return;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
     const styles = `
       <style>
         @media print {
@@ -88,25 +86,7 @@ const PrintableBracket = ({ tournament, event, matches, bracketType = 'single-el
       </style>
     `;
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${tournament.name} - Bracket</title>
-          ${styles}
-        </head>
-        <body>
-          ${content.innerHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    printHTML(`${styles}</head><body>${content.innerHTML}`, `${tournament.name} - Bracket`);
   };
 
   // Organize matches by round

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Printer, ClipboardText } from "@phosphor-icons/react";
 import { format } from "date-fns";
+import { printHTML } from "@/lib/printUtils";
 
 interface Player {
   _id: string;
@@ -56,9 +57,6 @@ const PrintableCheckIn = ({ tournament, teams, events = [], onClose }: Printable
     const content = printRef.current;
     if (!content) return;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
     const styles = `
       <style>
         @media print {
@@ -92,25 +90,7 @@ const PrintableCheckIn = ({ tournament, teams, events = [], onClose }: Printable
       </style>
     `;
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${tournament.name} - Check-In List</title>
-          ${styles}
-        </head>
-        <body>
-          ${content.innerHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    printHTML(`${styles}</head><body>${content.innerHTML}`, `${tournament.name} - Check-In List`);
   };
 
   // Group teams by event

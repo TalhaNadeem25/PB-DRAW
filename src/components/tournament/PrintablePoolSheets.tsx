@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Printer, Table, CaretRight, ArrowLeft } from "@phosphor-icons/react";
 import { poolAPI } from "@/services/api";
 import { format } from "date-fns";
+import { printHTML } from "@/lib/printUtils";
 
 interface Event {
   _id: string;
@@ -46,9 +47,6 @@ export default function PrintablePoolSheets({ tournament, events, onClose }: Pri
     const content = printRef.current;
     if (!content) return;
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
     const styles = `
       <style>
         @media print {
@@ -78,25 +76,7 @@ export default function PrintablePoolSheets({ tournament, events, onClose }: Pri
       </style>
     `;
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${tournament.name} – Pool Sheets</title>
-          ${styles}
-        </head>
-        <body>
-          ${content.innerHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    printHTML(`${styles}</head><body>${content.innerHTML}`, `${tournament.name} – Pool Sheets`);
   };
 
   const isSingles = selectedEvent?.gameType?.toLowerCase().includes("singles");

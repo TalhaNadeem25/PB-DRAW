@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Printer, DownloadSimple, Calendar, MapPin, Users, Clock } from "@phosphor-icons/react";
 import { format } from "date-fns";
+import { printHTML } from "@/lib/printUtils";
 
 interface Match {
   _id: string;
@@ -50,9 +51,6 @@ const PrintableSchedule = ({ tournament, matches, events = [], onClose }: Printa
     const content = printRef.current;
     if (!content) return;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
     const styles = `
       <style>
         @media print {
@@ -81,25 +79,7 @@ const PrintableSchedule = ({ tournament, matches, events = [], onClose }: Printa
       </style>
     `;
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${tournament.name} - Schedule</title>
-          ${styles}
-        </head>
-        <body>
-          ${content.innerHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    printHTML(`${styles}</head><body>${content.innerHTML}`, `${tournament.name} - Schedule`);
   };
 
   const getStatusBadge = (status: string) => {
