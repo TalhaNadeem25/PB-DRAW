@@ -20,7 +20,7 @@ const hostOptions = [
     desc: "Brackets, pools & elimination",
   },
   {
-    href: "/create-league",
+    href: "/leagues/create",
     icon: Users,
     label: "League",
     desc: "Sessions, standings & scheduling",
@@ -63,6 +63,7 @@ const MobileNav = () => {
             {/* Sheet */}
             <motion.div
               key="sheet"
+              data-host-sheet
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -115,7 +116,7 @@ const MobileNav = () => {
       </AnimatePresence>
 
       {/* Nav bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border z-50 px-2 pb-safe">
+      <div className="mobile-nav-bar md:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border z-50 px-2 pb-safe">
         <nav className="flex items-center justify-between h-16">
           {navItems.map((item) => {
             const isHost = item.href === null;
