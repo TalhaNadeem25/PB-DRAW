@@ -102,6 +102,10 @@ const MobileNav = () => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={{ top: 0, bottom: 0.3 }}
+            onDragEnd={(_, info) => { if (info.offset.y > 80) setShowHostSheet(false); }}
             className="md:hidden fixed bottom-0 left-0 right-0 z-[61] bg-background rounded-t-3xl border-t-2 border-border pb-safe"
           >
             <div className="flex justify-center pt-3 pb-1">
@@ -149,6 +153,10 @@ const MobileNav = () => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={{ top: 0, bottom: 0.3 }}
+            onDragEnd={(_, info) => { if (info.offset.y > 80) setShowMeSheet(false); }}
             className="md:hidden fixed bottom-0 left-0 right-0 z-[61] bg-background rounded-t-3xl border-t-2 border-border pb-safe overflow-hidden"
           >
             {/* Handle */}
