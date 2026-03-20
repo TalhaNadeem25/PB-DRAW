@@ -114,7 +114,7 @@ const Footer = () => {
                   { to: "/privacy", label: "Privacy Policy" },
                   { to: "/terms", label: "Terms of Service" },
                   { to: "#", label: "About Us" },
-                  { to: "#", label: "Blog" },
+                  { to: "/blog", label: "Blog" },
                 ].map((link) => (
                   <li key={link.label}>
                     <Link to={link.to} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
