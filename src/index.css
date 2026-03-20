@@ -729,6 +729,138 @@
     background: hsl(var(--background) / 0.8) !important;
   }
 }
+/* ─── iOS Liquid Glass (iOS only via .ios-glass on <html>) ───────────────────
+   Scoped entirely to .ios-glass so desktop/Android are completely unaffected.
+   Uses -webkit-backdrop-filter for WebKit (required on iOS Safari/WKWebView).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Shared mixin values as custom props on the root ── */
+.ios-glass {
+  --lg-blur: blur(48px) saturate(180%);
+  --lg-bg-light: rgba(255, 255, 255, 0.52);
+  --lg-bg-dark:  rgba(22, 22, 26, 0.58);
+  --lg-border-light: rgba(255, 255, 255, 0.65);
+  --lg-border-dark:  rgba(255, 255, 255, 0.10);
+  --lg-specular-light: linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.00) 50%);
+  --lg-specular-dark:  linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.00) 50%);
+  --lg-shadow: 0 1px 0.5px rgba(255,255,255,0.6) inset, 0 4px 16px rgba(0,0,0,0.10), 0 16px 48px rgba(0,0,0,0.12);
+  --lg-shadow-dark: 0 1px 0.5px rgba(255,255,255,0.12) inset, 0 4px 16px rgba(0,0,0,0.28), 0 16px 48px rgba(0,0,0,0.36);
+}
+
+/* ── Core glass mixin applied to all targeted surfaces ── */
+.ios-glass .glass-card,
+.ios-glass .glass,
+.ios-glass .glass-card-hover {
+  background: var(--lg-bg-light) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border: 1px solid var(--lg-border-light) !important;
+  box-shadow: var(--lg-shadow) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Specular highlight — the "glass edge" shimmer on top */
+.ios-glass .glass-card::before,
+.ios-glass .glass::before,
+.ios-glass .glass-card-hover::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: var(--lg-specular-light);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Dark mode */
+.ios-glass.dark .glass-card,
+.ios-glass.dark .glass,
+.ios-glass.dark .glass-card-hover {
+  background: var(--lg-bg-dark) !important;
+  border-color: var(--lg-border-dark) !important;
+  box-shadow: var(--lg-shadow-dark) !important;
+}
+
+.ios-glass.dark .glass-card::before,
+.ios-glass.dark .glass::before,
+.ios-glass.dark .glass-card-hover::before {
+  background: var(--lg-specular-dark);
+}
+
+/* ── Bottom Nav Bar ── */
+.ios-glass .mobile-nav-bar {
+  background: var(--lg-bg-light) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border-top: 1px solid var(--lg-border-light) !important;
+  box-shadow: 0 -1px 0 rgba(255,255,255,0.6) inset, 0 -8px 32px rgba(0,0,0,0.08) !important;
+}
+
+.ios-glass.dark .mobile-nav-bar {
+  background: var(--lg-bg-dark) !important;
+  border-top-color: var(--lg-border-dark) !important;
+  box-shadow: 0 -1px 0 rgba(255,255,255,0.08) inset, 0 -8px 32px rgba(0,0,0,0.30) !important;
+}
+
+/* ── Top Navbar ── */
+.ios-glass .app-navbar {
+  background: var(--lg-bg-light) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border: 1px solid var(--lg-border-light) !important;
+  box-shadow: var(--lg-shadow) !important;
+}
+
+.ios-glass.dark .app-navbar {
+  background: var(--lg-bg-dark) !important;
+  border-color: var(--lg-border-dark) !important;
+  box-shadow: var(--lg-shadow-dark) !important;
+}
+
+/* ── Dialogs & Modal content ── */
+.ios-glass [role="dialog"] > div,
+.ios-glass [data-radix-dialog-content] {
+  background: var(--lg-bg-light) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border: 1px solid var(--lg-border-light) !important;
+  box-shadow: var(--lg-shadow) !important;
+}
+
+.ios-glass.dark [role="dialog"] > div,
+.ios-glass.dark [data-radix-dialog-content] {
+  background: var(--lg-bg-dark) !important;
+  border-color: var(--lg-border-dark) !important;
+  box-shadow: var(--lg-shadow-dark) !important;
+}
+
+/* ── Cards (bg-card) in iOS ── */
+.ios-glass .bg-card {
+  background: var(--lg-bg-light) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border-color: var(--lg-border-light) !important;
+}
+
+.ios-glass.dark .bg-card {
+  background: var(--lg-bg-dark) !important;
+  border-color: var(--lg-border-dark) !important;
+}
+
+/* ── Bottom sheet (Host picker) ── */
+.ios-glass [data-host-sheet] {
+  background: var(--lg-bg-light) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border-top: 1px solid var(--lg-border-light) !important;
+}
+
+.ios-glass.dark [data-host-sheet] {
+  background: var(--lg-bg-dark) !important;
+  border-top-color: var(--lg-border-dark) !important;
+}
+
 /* Safe area utilities for iOS notch / Dynamic Island */
 .pt-safe { padding-top: env(safe-area-inset-top); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }

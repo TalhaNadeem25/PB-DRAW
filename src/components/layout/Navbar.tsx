@@ -70,9 +70,9 @@ const Navbar = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         className={cn(
-          "fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-2xl",
-          scrolled 
-            ? "bg-card/95 backdrop-blur-md shadow-float border border-border/50" 
+          "app-navbar fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-2xl",
+          scrolled
+            ? "bg-card/95 backdrop-blur-md shadow-float border border-border/50"
             : "bg-card/90 backdrop-blur-md border border-border/30"
         )}
       >
