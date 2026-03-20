@@ -8,10 +8,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Printer, FileText, Trophy, ClipboardText, DownloadSimple } from "@phosphor-icons/react";
+import { Printer, FileText, Trophy, ClipboardText, DownloadSimple, Table } from "@phosphor-icons/react";
 import PrintableSchedule from "./PrintableSchedule";
 import PrintableBracket from "./PrintableBracket";
 import PrintableCheckIn from "./PrintableCheckIn";
+import PrintablePoolSheets from "./PrintablePoolSheets";
 
 interface Team {
   _id: string;
@@ -75,6 +76,7 @@ const ExportButtons = ({
   const [showSchedule, setShowSchedule] = useState(false);
   const [showBracket, setShowBracket] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
+  const [showPoolSheets, setShowPoolSheets] = useState(false);
 
   // Use playoff matches if available, otherwise use regular matches
   const bracketMatches = playoffMatches.length > 0 ? playoffMatches : matches.filter(m => m.bracket);
@@ -112,7 +114,18 @@ const ExportButtons = ({
             <ClipboardText className="h-4 w-4 mr-2" />
             Check-In List
           </DropdownMenuItem>
-          
+
+          <DropdownMenuItem
+            onClick={() => setShowPoolSheets(true)}
+            disabled={events.length === 0}
+          >
+            <Table className="h-4 w-4 mr-2" />
+            Pool Sheets
+            {events.length === 0 && (
+              <span className="ml-auto text-xs text-muted-foreground">No events</span>
+            )}
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
           
           <DropdownMenuItem 
@@ -153,6 +166,14 @@ const ExportButtons = ({
           teams={teams}
           events={events}
           onClose={() => setShowCheckIn(false)}
+        />
+      )}
+
+      {showPoolSheets && (
+        <PrintablePoolSheets
+          tournament={tournament}
+          events={events}
+          onClose={() => setShowPoolSheets(false)}
         />
       )}
     </>
