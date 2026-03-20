@@ -1708,7 +1708,10 @@ const PoolManagement = () => {
                                                       {isEditing ? (
                                                         <>
                                                           <Button size="sm" onClick={() => saveScore(match._id)} disabled={updateMatchScoreMutation.isPending}>
-                                                            <Check className="w-4 h-4 mr-1" />Save
+                                                            {updateMatchScoreMutation.isPending
+                                                              ? <><CircleNotch className="w-4 h-4 mr-1 animate-spin" />Saving…</>
+                                                              : <><Check className="w-4 h-4 mr-1" />Save</>
+                                                            }
                                                           </Button>
                                                           <Button size="sm" variant="outline" onClick={() => setEditingMatch(null)}>
                                                             <X className="w-4 h-4 mr-1" />Cancel

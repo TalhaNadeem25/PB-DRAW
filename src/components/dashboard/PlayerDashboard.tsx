@@ -94,7 +94,60 @@ const PlayerDashboard = ({
 }: PlayerDashboardProps) => {
   const navigate = useNavigate();
 
+  const isNewUser =
+    myEventRegistrations.length === 0 &&
+    myTeams.length === 0 &&
+    stats.matchesPlayed === 0;
+
   return (
+    <div className="space-y-8">
+    {isNewUser && (
+      <Card className="border-primary/20 bg-primary/5 rounded-2xl overflow-hidden">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Trophy className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">Get started</h3>
+              <p className="text-sm text-muted-foreground mb-4">You're all set — here's what to do first.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                >
+                  <Medal className="w-5 h-5 text-primary shrink-0" />
+                  <div>
+                    <p className="text-xs font-display font-bold uppercase tracking-wide">1. Complete Profile</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Set your skill level</p>
+                  </div>
+                </Link>
+                <Link
+                  to="/tournaments"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                >
+                  <Calendar className="w-5 h-5 text-primary shrink-0" />
+                  <div>
+                    <p className="text-xs font-display font-bold uppercase tracking-wide">2. Find a Tournament</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Register for an event</p>
+                  </div>
+                </Link>
+                <Link
+                  to="/teams"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                >
+                  <UserPlus className="w-5 h-5 text-primary shrink-0" />
+                  <div>
+                    <p className="text-xs font-display font-bold uppercase tracking-wide">3. Find a Partner</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Connect with players</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )}
     <Tabs defaultValue="overview" className="w-full space-y-8">
       <TabsList className="bg-muted p-1 rounded-xl h-auto">
         <TabsTrigger
@@ -364,11 +417,16 @@ const PlayerDashboard = ({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No event registrations</p>
-                <Button asChild className="mt-4">
-                  <Link to="/tournaments">Find Tournaments</Link>
+              <div className="flex flex-col items-center py-12 px-4 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Trophy className="w-8 h-8 text-primary/60" />
+                </div>
+                <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">No registrations yet</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mb-5">
+                  Find a tournament near you and sign up for your first event.
+                </p>
+                <Button asChild className="font-display font-bold uppercase tracking-widest rounded-xl h-10 px-6 text-xs">
+                  <Link to="/tournaments">Browse Tournaments <ArrowRight className="w-4 h-4 ml-2" /></Link>
                 </Button>
               </div>
             )}
@@ -520,10 +578,17 @@ const PlayerDashboard = ({
                 )}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Ticket className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No tickets yet</p>
-                <p className="text-sm mt-1">Your tickets will appear here after registration</p>
+              <div className="flex flex-col items-center py-12 px-4 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Ticket className="w-8 h-8 text-primary/60" />
+                </div>
+                <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">No tickets yet</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mb-5">
+                  Register for a tournament event and your ticket will show up here for check-in.
+                </p>
+                <Button asChild variant="outline" className="font-display font-bold uppercase tracking-widest rounded-xl h-10 px-6 text-xs">
+                  <Link to="/tournaments">Find a Tournament <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                </Button>
               </div>
             )}
           </CardContent>
@@ -628,16 +693,24 @@ const PlayerDashboard = ({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No teams yet</p>
-                <p className="text-sm mt-1">Register for a tournament to create your first team</p>
+              <div className="flex flex-col items-center py-12 px-4 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-primary/60" />
+                </div>
+                <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">No teams yet</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mb-5">
+                  Register for a doubles event to form a team, or accept a partner invitation.
+                </p>
+                <Button asChild variant="outline" className="font-display font-bold uppercase tracking-widest rounded-xl h-10 px-6 text-xs">
+                  <Link to="/tournaments">Find a Tournament <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
       </TabsContent>
     </Tabs>
+    </div>
   );
 };
 
