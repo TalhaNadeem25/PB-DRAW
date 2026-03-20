@@ -45,6 +45,7 @@ import {
   Flask,
   CircleNotch,
   Warning,
+  XCircle,
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -203,6 +204,7 @@ function LeagueTopBar({
   onComplete: () => void;
   onDelete: () => void;
 }) {
+  const [confirmComplete, setConfirmComplete] = useState(false);
   const statusInfo =
     leagueStatusConfig[league.status as keyof typeof leagueStatusConfig] ||
     leagueStatusConfig.draft;
@@ -267,11 +269,11 @@ function LeagueTopBar({
           <Button
             size="sm"
             variant="outline"
-            className="h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm border-foreground/30 hover:bg-foreground hover:text-background transition-colors"
-            onClick={onComplete}
+            className="h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm border-destructive/40 text-destructive hover:bg-destructive hover:text-white transition-colors"
+            onClick={() => setConfirmComplete(true)}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
-            <span className="whitespace-nowrap">Complete League</span>
+            <span className="whitespace-nowrap">End League</span>
           </Button>
         )}
 
@@ -292,6 +294,36 @@ function LeagueTopBar({
           <Trash className="w-5 h-5" />
         </Button>
       </div>
+
+      {/* End League confirmation dialog */}
+      <Dialog open={confirmComplete} onOpenChange={setConfirmComplete}>
+        <DialogContent className="glass-card border border-border/50 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-black text-lg uppercase tracking-tight text-destructive">
+              End League?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This will permanently close the league. All sessions, scores, and standings will be locked — no edits, no new sessions, no score entry, nothing. This cannot be undone.
+          </p>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" onClick={() => setConfirmComplete(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="font-display font-bold uppercase tracking-wide"
+              onClick={() => {
+                onComplete();
+                setConfirmComplete(false);
+              }}
+            >
+              <CheckCircle className="w-4 h-4 mr-1.5" />
+              Yes, End League
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -642,14 +674,23 @@ function SessionsSection({
             {league.sessions?.length ?? 0} total sessions
           </p>
         </div>
-        <Button
-          onClick={() => setSessionDialogOpen(true)}
-          className="font-display font-bold uppercase tracking-wide text-xs gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Session
-        </Button>
+        {league.status !== "completed" && (
+          <Button
+            onClick={() => setSessionDialogOpen(true)}
+            className="font-display font-bold uppercase tracking-wide text-xs gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Session
+          </Button>
+        )}
       </div>
+
+      {league.status === "completed" && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+          <XCircle className="w-5 h-5 shrink-0" />
+          This league has ended. All sessions and scores are locked.
+        </div>
+      )}
 
       {!league.sessions || league.sessions.length === 0 ? (
         <div className="glass-card rounded-2xl border border-border/50 text-center py-16 text-muted-foreground">
@@ -703,7 +744,7 @@ function SessionsSection({
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    {session.status === "upcoming" && (
+                    {league.status !== "completed" && session.status === "upcoming" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -713,7 +754,7 @@ function SessionsSection({
                         Mark Active
                       </Button>
                     )}
-                    {session.status === "active" && (
+                    {league.status !== "completed" && session.status === "active" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -738,6 +779,7 @@ function SessionsSection({
                         <Select
                           value={sessionFormats[sid] ?? "Game to 11 – Win by 1"}
                           onValueChange={(v) => onSetSessionFormat(sid, v as MatchFormatLabel)}
+                          disabled={league.status === "completed" || session.status === "completed"}
                         >
                           <SelectTrigger className="h-8 text-xs rounded-xl w-full sm:w-64">
                             <SelectValue />
@@ -753,7 +795,7 @@ function SessionsSection({
                         <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5 hidden sm:block">
                           Matches {matches.length > 0 ? `(${matches.length})` : ""}
                         </p>
-                        {session.status !== "completed" && (
+                        {league.status !== "completed" && session.status !== "completed" && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -843,7 +885,7 @@ function SessionsSection({
                                               }));
                                             }}
                                             className="input-no-spinner w-16 h-10 text-center text-base font-bold rounded-lg"
-                                            disabled={isDone}
+                                            disabled={isDone || league.status === "completed"}
                                           />
                                           <span className="text-muted-foreground font-bold text-xs">
                                             vs
@@ -861,7 +903,7 @@ function SessionsSection({
                                               }));
                                             }}
                                             className="input-no-spinner w-16 h-10 text-center text-base font-bold rounded-lg"
-                                            disabled={isDone}
+                                            disabled={isDone || league.status === "completed"}
                                           />
                                         </div>
                                         <span
@@ -875,6 +917,8 @@ function SessionsSection({
                                         </span>
                                         {isDone ? (
                                           <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                                        ) : league.status === "completed" ? (
+                                          <XCircle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
                                         ) : (
                                           <Button
                                             size="sm"
