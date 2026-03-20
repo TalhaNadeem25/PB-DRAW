@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MATCH_FORMAT_LABELS, MATCH_FORMAT_CONFIGS, type MatchFormatLabel } from "@/constants/matchFormat";
+import { MATCH_FORMAT_LABELS, MATCH_FORMAT_CONFIGS, getMaxScore, type MatchFormatLabel } from "@/constants/matchFormat";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -785,9 +785,13 @@ function SessionsSection({
                             </p>
                           ) : null;
                         })()}
-                        {Array.from(new Set(matches.map((m) => m.round)))
-                          .sort((a, b) => a - b)
-                          .map((round) => (
+                        {(() => {
+                          const fmt = sessionFormats[sid] ?? "Game to 11 – Win by 1";
+                          const cfg = MATCH_FORMAT_CONFIGS[fmt as MatchFormatLabel];
+                          const maxScore = getMaxScore(cfg);
+                          return Array.from(new Set(matches.map((m) => m.round)))
+                            .sort((a, b) => a - b)
+                            .map((round) => (
                             <div key={round}>
                               <p className="text-[10px] font-display font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
                                 Round {round}
@@ -825,13 +829,15 @@ function SessionsSection({
                                           <Input
                                             type="number"
                                             min={0}
+                                            max={maxScore}
                                             value={inputs.score1}
-                                            onChange={(e) =>
+                                            onChange={(e) => {
+                                              const val = Math.min(parseInt(e.target.value) || 0, maxScore);
                                               setScoreInputs((prev) => ({
                                                 ...prev,
-                                                [mid]: { ...inputs, score1: e.target.value },
-                                              }))
-                                            }
+                                                [mid]: { ...inputs, score1: String(val) },
+                                              }));
+                                            }}
                                             className="w-14 h-8 text-center text-sm rounded-lg"
                                             disabled={isDone}
                                           />
@@ -841,13 +847,15 @@ function SessionsSection({
                                           <Input
                                             type="number"
                                             min={0}
+                                            max={maxScore}
                                             value={inputs.score2}
-                                            onChange={(e) =>
+                                            onChange={(e) => {
+                                              const val = Math.min(parseInt(e.target.value) || 0, maxScore);
                                               setScoreInputs((prev) => ({
                                                 ...prev,
-                                                [mid]: { ...inputs, score2: e.target.value },
-                                              }))
-                                            }
+                                                [mid]: { ...inputs, score2: String(val) },
+                                              }));
+                                            }}
                                             className="w-14 h-8 text-center text-sm rounded-lg"
                                             disabled={isDone}
                                           />
@@ -879,7 +887,9 @@ function SessionsSection({
                                   })}
                               </div>
                             </div>
-                          ))}
+                          ))
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

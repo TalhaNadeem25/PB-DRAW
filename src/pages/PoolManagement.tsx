@@ -35,7 +35,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import PlayoffBracket from "@/components/tournament/PlayoffBracket";
 import PoolStandings from "@/components/tournament/PoolStandings";
 import PlayoffResults from "@/components/tournament/PlayoffResults";
-import { MATCH_FORMAT_LABELS, formatMatchFormatShort } from "@/constants/matchFormat";
+import { MATCH_FORMAT_LABELS, formatMatchFormatShort, getMaxScore } from "@/constants/matchFormat";
 
 const PoolManagement = () => {
   const { id, eventId } = useParams();
@@ -1616,6 +1616,7 @@ const PoolManagement = () => {
                                                 const isMultiGame = (selectedPool?.matchFormatConfig?.games_to_win ?? 1) > 1;
                                                 const maxGames = selectedPool?.matchFormatConfig?.max_games ?? 3;
                                                 const gamesToWin = selectedPool?.matchFormatConfig?.games_to_win ?? 2;
+                                                const maxScore = getMaxScore(selectedPool?.matchFormatConfig ?? null);
                                                 const isEditing = editingMatch === match._id && !selectedPool?.poolPlayFinalizedAt;
 
                                                 // Compute games-won for display
@@ -1643,9 +1644,10 @@ const PoolManagement = () => {
                                                                   className="input-no-spinner w-14 text-center font-bold"
                                                                   value={g.team1Score}
                                                                   min="0"
+                                                                  max={maxScore}
                                                                   onChange={(e) => {
                                                                     const next = [...editGames];
-                                                                    next[gi] = { ...next[gi], team1Score: parseInt(e.target.value) || 0 };
+                                                                    next[gi] = { ...next[gi], team1Score: Math.min(parseInt(e.target.value) || 0, maxScore) };
                                                                     setEditGames(next);
                                                                   }}
                                                                 />
@@ -1655,9 +1657,10 @@ const PoolManagement = () => {
                                                                   className="input-no-spinner w-14 text-center font-bold"
                                                                   value={g.team2Score}
                                                                   min="0"
+                                                                  max={maxScore}
                                                                   onChange={(e) => {
                                                                     const next = [...editGames];
-                                                                    next[gi] = { ...next[gi], team2Score: parseInt(e.target.value) || 0 };
+                                                                    next[gi] = { ...next[gi], team2Score: Math.min(parseInt(e.target.value) || 0, maxScore) };
                                                                     setEditGames(next);
                                                                   }}
                                                                 />
@@ -1668,9 +1671,9 @@ const PoolManagement = () => {
                                                       ) : (
                                                         /* Single-game edit */
                                                         <div className="flex items-center gap-2">
-                                                          <Input type="number" className="input-no-spinner w-16 text-center text-xl font-bold" value={editScores.team1Score} onChange={(e) => setEditScores({ ...editScores, team1Score: parseInt(e.target.value) || 0 })} min="0" />
+                                                          <Input type="number" className="input-no-spinner w-16 text-center text-xl font-bold" value={editScores.team1Score} onChange={(e) => setEditScores({ ...editScores, team1Score: Math.min(parseInt(e.target.value) || 0, maxScore) })} min="0" max={maxScore} />
                                                           <span className="text-lg font-bold">–</span>
-                                                          <Input type="number" className="input-no-spinner w-16 text-center text-xl font-bold" value={editScores.team2Score} onChange={(e) => setEditScores({ ...editScores, team2Score: parseInt(e.target.value) || 0 })} min="0" />
+                                                          <Input type="number" className="input-no-spinner w-16 text-center text-xl font-bold" value={editScores.team2Score} onChange={(e) => setEditScores({ ...editScores, team2Score: Math.min(parseInt(e.target.value) || 0, maxScore) })} min="0" max={maxScore} />
                                                         </div>
                                                       )
                                                     ) : (

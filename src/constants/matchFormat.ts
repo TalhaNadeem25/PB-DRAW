@@ -47,6 +47,22 @@ export const MATCH_FORMAT_CONFIGS: Record<MatchFormatLabel, MatchFormatConfig> =
   "Best 3 of 5 – Games to 11 (Win by 2)": { games_to_win: 3, max_games: 5, points_to_win: 11, win_by: 2, hard_cap: null },
 };
 
+/**
+ * Returns the maximum score either player can legitimately reach for a given format.
+ * Used to clamp score inputs so organizers can't enter absurd values like 1111111.
+ *
+ * Rules:
+ *  - hard_cap set  → max is the hard cap (e.g. 15 for "Game to 11 Win by 2 Hard Cap")
+ *  - win_by 1      → winner scores exactly points_to_win; loser at most points_to_win - 1
+ *  - win_by 2, no cap → no theoretical max, but we cap at points_to_win + 30 to be safe
+ */
+export function getMaxScore(cfg: MatchFormatConfig | null | undefined): number {
+  if (!cfg) return 99;
+  if (cfg.hard_cap != null) return cfg.hard_cap;
+  if (cfg.win_by === 1) return cfg.points_to_win;
+  return cfg.points_to_win + 30;
+}
+
 /** Short description for display (e.g. "First to 11, win by 2") */
 export function formatMatchFormatShort(label: string | undefined): string {
   if (!label) return "—";
