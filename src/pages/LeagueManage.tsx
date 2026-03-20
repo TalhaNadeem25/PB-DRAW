@@ -56,6 +56,67 @@ type LeagueSection = "overview" | "players" | "sessions" | "standings" | "settin
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SKILL_LEVELS = [2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
 
+const LEAGUE_TYPES = [
+  { value: "ladder", label: "Ladder", description: "Players/Teams move up and down rankings each week based on stats. Each week players/teams are divided into groups based on their ranking." },
+  { value: "traditional", label: "Traditional League", description: "Teams (players if singles) are scheduled to play every other team in the league at least once during the session." },
+  { value: "king-of-court", label: "King of the Court", description: "Players are initially ranked by their rating and moved up/down courts after each game based on win/loss." },
+  { value: "dupr-session", label: "DUPR Session", description: "Run a King of the Court rating session and send results to DUPR." },
+];
+
+const PLAYER_TYPES = [
+  { value: "scramble", label: "Scramble", description: "Players sign up individually. Each week players are put into groups and partner with each of the other players in their group." },
+  { value: "partner", label: "Partner", description: "Players sign up with a partner and stay together for all matches throughout the session." },
+];
+
+const PLAYER_GROUPS = [
+  { value: "mens", label: "Mens", description: "Men Only" },
+  { value: "womens", label: "Womens", description: "Women Only" },
+  { value: "mixed", label: "Mixed", description: "One Male Only & One Female Only" },
+  { value: "coed", label: "Coed", description: "Any Combination of Gender Can Play. NOTE: Players will enter into this bracket with their Doubles Skill" },
+];
+
+const RANKING_TYPES = [
+  { value: "pop", label: "Percentage of Points (POP)", description: "% of points earned vs possible. Tie-breaker: match wins, then previous week's rank. Most fair for recreational leagues." },
+  { value: "dupr", label: "DUPR Rating", description: "DUPR's official global rating system determines rankings after each game day. Best for competitive leagues." },
+  { value: "up-down", label: "Up / Down", description: "After each game day, top players move up to a higher group and bottom players move down. Creates exciting movement." },
+  { value: "custom", label: "Custom", description: "Set your own point values for winning, losing, and playing. Full control over scoring." },
+];
+
+const SIGNUP_TYPES = [
+  { value: "open", label: "Each Game Day (Open League)", description: "Players sign up each week they want to play. Great for casual leagues where attendance varies." },
+  { value: "closed", label: "At Session Signup (Closed League)", description: "Players commit and pay for the whole season upfront. Better for competitive, structured leagues." },
+];
+
+const PLAYER_PLACEMENT = [
+  { value: "bottom", label: "At Bottom", description: "New players join at the lowest group and work their way up. Fair and standard." },
+  { value: "rating", label: "At Rating", description: "New players start at the position matching their skill rating." },
+];
+
+function RadioCard({ selected, onClick, label, description, disabled }: { selected: boolean; onClick: () => void; label: string; description: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50",
+        selected ? "border-primary bg-primary/10" : "border-border/50 bg-card/60 hover:border-primary/40 hover:bg-primary/5",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn("mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors", selected ? "border-primary bg-primary" : "border-border")}>
+          {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+        </div>
+        <div>
+          <p className="font-display font-bold text-sm uppercase tracking-wide text-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 const SESSION_STATUS_COLORS: Record<string, string> = {
   upcoming: "bg-muted text-muted-foreground",
   active: "bg-primary/15 text-primary border border-primary/30",
@@ -1045,8 +1106,29 @@ function SettingsSection({
   onSave: () => void;
   saving: boolean;
 }) {
+  const set = (key: string, value: any) => setSettingsForm((f: any) => ({ ...f, [key]: value }));
+  const selectCls = "w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50";
+
+  function ToggleRow({ label, desc, field }: { label: string; desc: string; field: string }) {
+    return (
+      <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/40">
+        <div>
+          <p className="font-display font-bold text-sm uppercase tracking-wide text-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => set(field, !settingsForm[field])}
+          className={cn("relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50", settingsForm[field] ? "bg-primary" : "bg-muted")}
+        >
+          <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200", settingsForm[field] ? "translate-x-5" : "translate-x-0")} />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-display font-bold text-2xl flex items-center gap-2">
@@ -1055,238 +1137,174 @@ function SettingsSection({
           </h2>
           <p className="text-muted-foreground mt-1">Update league configuration.</p>
         </div>
-        <Button
-          onClick={onSave}
-          disabled={saving}
-          className="font-display font-bold uppercase tracking-wide text-xs gap-2"
-        >
+        <Button onClick={onSave} disabled={saving} className="font-display font-bold uppercase tracking-wide text-xs gap-2">
           <FloppyDisk className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
+      {/* Basic Info */}
       <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-5">
+        <h3 className="font-display font-bold text-sm uppercase tracking-widest text-muted-foreground">Basic Info</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              League Name
-            </Label>
-            <Input
-              value={settingsForm.name}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, name: e.target.value }))}
-              className="rounded-xl"
-            />
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">League Name</Label>
+            <Input value={settingsForm.name} onChange={(e) => set("name", e.target.value)} className="rounded-xl" />
           </div>
           <div className="sm:col-span-2">
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Description
-            </Label>
-            <Textarea
-              value={settingsForm.description}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, description: e.target.value }))}
-              rows={3}
-              className="rounded-xl resize-none"
-            />
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Description</Label>
+            <Textarea value={settingsForm.description} onChange={(e) => set("description", e.target.value)} rows={3} className="rounded-xl resize-none" />
           </div>
           <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Location
-            </Label>
-            <Input
-              value={settingsForm.location}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, location: e.target.value }))}
-              className="rounded-xl"
-            />
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Location</Label>
+            <Input value={settingsForm.location} onChange={(e) => set("location", e.target.value)} className="rounded-xl" />
           </div>
           <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Address
-            </Label>
-            <Input
-              value={settingsForm.address}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, address: e.target.value }))}
-              className="rounded-xl"
-            />
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Address</Label>
+            <Input value={settingsForm.address} onChange={(e) => set("address", e.target.value)} className="rounded-xl" />
           </div>
           <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Start Date
-            </Label>
-            <Input
-              type="date"
-              value={settingsForm.startDate}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, startDate: e.target.value }))}
-              className="rounded-xl"
-            />
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Start Date</Label>
+            <Input type="date" value={settingsForm.startDate} onChange={(e) => set("startDate", e.target.value)} className="rounded-xl" />
           </div>
           <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              End Date
-            </Label>
-            <Input
-              type="date"
-              value={settingsForm.endDate}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, endDate: e.target.value }))}
-              className="rounded-xl"
-            />
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">End Date</Label>
+            <Input type="date" value={settingsForm.endDate} onChange={(e) => set("endDate", e.target.value)} className="rounded-xl" />
           </div>
           <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Registration Deadline
-            </Label>
-            <Input
-              type="date"
-              value={settingsForm.registrationDeadline}
-              onChange={(e) =>
-                setSettingsForm((f: any) => ({ ...f, registrationDeadline: e.target.value }))
-              }
-              className="rounded-xl"
-            />
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Registration Deadline</Label>
+            <Input type="date" value={settingsForm.registrationDeadline} onChange={(e) => set("registrationDeadline", e.target.value)} className="rounded-xl" />
           </div>
           <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Max Players
-            </Label>
-            <Input
-              type="number"
-              min={4}
-              value={settingsForm.maxPlayers}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, maxPlayers: e.target.value }))}
-              className="rounded-xl"
-            />
-          </div>
-          <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Entry Fee ($)
-            </Label>
-            <Input
-              type="number"
-              min={0}
-              step={0.01}
-              value={settingsForm.entryFee}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, entryFee: e.target.value }))}
-              className="rounded-xl"
-            />
-          </div>
-          <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Contact Email
-            </Label>
-            <Input
-              type="email"
-              value={settingsForm.contactEmail}
-              onChange={(e) =>
-                setSettingsForm((f: any) => ({ ...f, contactEmail: e.target.value }))
-              }
-              className="rounded-xl"
-            />
-          </div>
-          <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Contact Phone
-            </Label>
-            <Input
-              value={settingsForm.contactPhone}
-              onChange={(e) =>
-                setSettingsForm((f: any) => ({ ...f, contactPhone: e.target.value }))
-              }
-              className="rounded-xl"
-            />
-          </div>
-          <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Skill Level Min
-            </Label>
-            <select
-              value={settingsForm.skillLevelMin}
-              onChange={(e) =>
-                setSettingsForm((f: any) => ({ ...f, skillLevelMin: Number(e.target.value) }))
-              }
-              className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              {SKILL_LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Skill Level Max
-            </Label>
-            <select
-              value={settingsForm.skillLevelMax}
-              onChange={(e) =>
-                setSettingsForm((f: any) => ({ ...f, skillLevelMax: Number(e.target.value) }))
-              }
-              className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              {SKILL_LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-              Status
-            </Label>
-            <select
-              value={settingsForm.status}
-              onChange={(e) => setSettingsForm((f: any) => ({ ...f, status: e.target.value }))}
-              className="w-full h-10 rounded-xl border border-border/50 bg-card/60 text-sm px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Status</Label>
+            <select value={settingsForm.status} onChange={(e) => set("status", e.target.value)} className={selectCls}>
               {["draft", "open", "active", "completed"].map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
+                <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/40">
           <div>
-            <p className="font-display font-bold text-sm uppercase tracking-wide text-foreground">
-              Allow Waitlist
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Players can join a waitlist when the league is full
-            </p>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Contact Email</Label>
+            <Input type="email" value={settingsForm.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} className="rounded-xl" />
           </div>
-          <button
-            type="button"
-            onClick={() =>
-              setSettingsForm((f: any) => ({ ...f, allowWaitlist: !f.allowWaitlist }))
-            }
-            className={cn(
-              "relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50",
-              settingsForm.allowWaitlist ? "bg-primary" : "bg-muted"
-            )}
-          >
-            <span
-              className={cn(
-                "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200",
-                settingsForm.allowWaitlist ? "translate-x-5" : "translate-x-0"
-              )}
-            />
-          </button>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Contact Phone</Label>
+            <Input value={settingsForm.contactPhone} onChange={(e) => set("contactPhone", e.target.value)} className="rounded-xl" />
+          </div>
         </div>
+      </div>
 
-        <div>
-          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">
-            Rules
-          </Label>
-          <Textarea
-            value={settingsForm.rules}
-            onChange={(e) => setSettingsForm((f: any) => ({ ...f, rules: e.target.value }))}
-            rows={4}
-            className="rounded-xl resize-none"
-            placeholder="League rules..."
-          />
+      {/* League Type */}
+      <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-4">
+        <h3 className="font-display font-bold text-sm uppercase tracking-widest text-muted-foreground">League Type</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {LEAGUE_TYPES.map((t) => (
+            <RadioCard key={t.value} selected={settingsForm.leagueType === t.value} onClick={() => set("leagueType", t.value)} label={t.label} description={t.description} />
+          ))}
         </div>
+      </div>
+
+      {/* Player Type & Group */}
+      <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-5">
+        <h3 className="font-display font-bold text-sm uppercase tracking-widest text-muted-foreground">Player Settings</h3>
+        <div>
+          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-2 block">Player Type</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {PLAYER_TYPES.map((t) => (
+              <RadioCard key={t.value} selected={settingsForm.playerType === t.value} onClick={() => set("playerType", t.value)} label={t.label} description={t.description} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-2 block">Player Group</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {PLAYER_GROUPS.map((g) => (
+              <RadioCard key={g.value} selected={settingsForm.playerGroup === g.value} onClick={() => set("playerGroup", g.value)} label={g.label} description={g.description} />
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Skill Level Min</Label>
+            <select value={settingsForm.skillLevelMin} onChange={(e) => set("skillLevelMin", Number(e.target.value))} className={selectCls}>
+              {SKILL_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Skill Level Max</Label>
+            <select value={settingsForm.skillLevelMax} onChange={(e) => set("skillLevelMax", Number(e.target.value))} className={selectCls}>
+              {SKILL_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Min Age</Label>
+            <Input type="number" min={0} value={settingsForm.minAge} onChange={(e) => set("minAge", e.target.value)} className="rounded-xl" />
+          </div>
+        </div>
+      </div>
+
+      {/* Ranking & Signup */}
+      <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-5">
+        <h3 className="font-display font-bold text-sm uppercase tracking-widest text-muted-foreground">Rules & Scoring</h3>
+        <div>
+          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-2 block">Ranking Type</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {RANKING_TYPES.map((t) => (
+              <RadioCard key={t.value} selected={settingsForm.rankingType === t.value} onClick={() => set("rankingType", t.value)} label={t.label} description={t.description} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-2 block">Signup Type</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {SIGNUP_TYPES.map((t) => (
+              <RadioCard key={t.value} selected={settingsForm.signupType === t.value} onClick={() => set("signupType", t.value)} label={t.label} description={t.description} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-2 block">New Player Placement</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {PLAYER_PLACEMENT.map((t) => (
+              <RadioCard key={t.value} selected={settingsForm.newPlayerPlacement === t.value} onClick={() => set("newPlayerPlacement", t.value)} label={t.label} description={t.description} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Rules</Label>
+          <Textarea value={settingsForm.rules} onChange={(e) => set("rules", e.target.value)} rows={4} className="rounded-xl resize-none" placeholder="League rules..." />
+        </div>
+      </div>
+
+      {/* Registration & Fees */}
+      <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-4">
+        <h3 className="font-display font-bold text-sm uppercase tracking-widest text-muted-foreground">Registration & Fees</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Max Players</Label>
+            <Input type="number" min={4} value={settingsForm.maxPlayers} onChange={(e) => set("maxPlayers", e.target.value)} className="rounded-xl" />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Entry Fee ($)</Label>
+            <Input type="number" min={0} step={0.01} value={settingsForm.entryFee} onChange={(e) => set("entryFee", e.target.value)} className="rounded-xl" />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Member Fee ($)</Label>
+            <Input type="number" min={0} step={0.01} value={settingsForm.memberFee} onChange={(e) => set("memberFee", e.target.value)} className="rounded-xl" />
+          </div>
+          <div>
+            <Label className="font-display font-bold text-xs uppercase tracking-wide mb-1.5 block">Non-Member Fee ($)</Label>
+            <Input type="number" min={0} step={0.01} value={settingsForm.nonMemberFee} onChange={(e) => set("nonMemberFee", e.target.value)} className="rounded-xl" />
+          </div>
+        </div>
+        <ToggleRow label="Allow Waitlist" desc="Players can join a waitlist when the league is full" field="allowWaitlist" />
+      </div>
+
+      {/* Integrations */}
+      <div className="glass-card rounded-2xl p-6 border border-border/50 space-y-3">
+        <h3 className="font-display font-bold text-sm uppercase tracking-widest text-muted-foreground">Features</h3>
+        <ToggleRow label="Flex Play" desc="Allow players to join on a flexible, drop-in basis" field="flexPlay" />
+        <ToggleRow label="DUPR Integration" desc="Send match results to DUPR for rating updates" field="duprIntegration" />
       </div>
     </div>
   );
@@ -1501,6 +1519,17 @@ export default function LeagueManage() {
       skillLevelMax: league.skillLevel?.max ?? 5.0,
       allowWaitlist: league.settings?.allowWaitlist ?? false,
       status: league.status ?? "open",
+      leagueType: league.leagueType ?? "",
+      playerType: league.playerType ?? "",
+      playerGroup: league.playerGroup ?? "",
+      rankingType: league.rankingType ?? "pop",
+      signupType: league.signupType ?? "open",
+      newPlayerPlacement: league.newPlayerPlacement ?? "bottom",
+      flexPlay: league.flexPlay ?? false,
+      duprIntegration: league.duprIntegration ?? false,
+      minAge: league.minAge ?? 0,
+      memberFee: league.memberFee ?? 0,
+      nonMemberFee: league.nonMemberFee ?? 0,
     });
   }
 
@@ -1604,6 +1633,9 @@ export default function LeagueManage() {
         ...settingsForm,
         maxPlayers: Number(settingsForm.maxPlayers),
         entryFee: Number(settingsForm.entryFee),
+        minAge: Number(settingsForm.minAge),
+        memberFee: Number(settingsForm.memberFee),
+        nonMemberFee: Number(settingsForm.nonMemberFee),
         skillLevel: {
           min: Number(settingsForm.skillLevelMin),
           max: Number(settingsForm.skillLevelMax),
