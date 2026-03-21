@@ -730,135 +730,120 @@
   }
 }
 /* ─── iOS Liquid Glass (iOS only via .ios-glass on <html>) ───────────────────
-   Scoped entirely to .ios-glass so desktop/Android are completely unaffected.
-   Uses -webkit-backdrop-filter for WebKit (required on iOS Safari/WKWebView).
+   Scoped to .ios-glass so desktop/Android are completely unaffected.
+   Specular highlight is baked into background-image (no ::before) so it
+   never causes z-index conflicts with card children.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* ── Shared mixin values as custom props on the root ── */
+/* ── CSS variables — light mode defaults ── */
 .ios-glass {
-  --lg-blur: blur(48px) saturate(180%);
-  --lg-bg-light: rgba(255, 255, 255, 0.52);
-  --lg-bg-dark:  rgba(22, 22, 26, 0.58);
-  --lg-border-light: rgba(255, 255, 255, 0.65);
-  --lg-border-dark:  rgba(255, 255, 255, 0.10);
-  --lg-specular-light: linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.00) 50%);
-  --lg-specular-dark:  linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.00) 50%);
-  --lg-shadow: 0 1px 0.5px rgba(255,255,255,0.6) inset, 0 4px 16px rgba(0,0,0,0.10), 0 16px 48px rgba(0,0,0,0.12);
-  --lg-shadow-dark: 0 1px 0.5px rgba(255,255,255,0.12) inset, 0 4px 16px rgba(0,0,0,0.28), 0 16px 48px rgba(0,0,0,0.36);
+  --lg-blur:      blur(40px) saturate(200%);
+  --lg-bg:        rgba(255, 255, 255, 0.55);
+  --lg-border:    rgba(255, 255, 255, 0.72);
+  --lg-specular:  linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.00) 36%);
+  --lg-shadow:
+    0 1px 0 rgba(255,255,255,0.85) inset,
+    0 -1px 0 rgba(0,0,0,0.04) inset,
+    0 2px 8px  rgba(0,0,0,0.06),
+    0 12px 40px rgba(0,0,0,0.10);
+  --lg-sheet-bg:  rgba(242, 242, 247, 0.94);
+  --lg-sheet-border: rgba(255,255,255,0.60);
+  --lg-input-bg:  rgba(255,255,255,0.40);
 }
 
-/* ── Core glass mixin applied to all targeted surfaces ── */
+/* ── CSS variables — dark mode overrides ── */
+.ios-glass.dark {
+  --lg-bg:        rgba(28, 28, 34, 0.70);
+  --lg-border:    rgba(255, 255, 255, 0.10);
+  --lg-specular:  linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.00) 36%);
+  --lg-shadow:
+    0 1px 0 rgba(255,255,255,0.07) inset,
+    0 -1px 0 rgba(0,0,0,0.25) inset,
+    0 2px 8px  rgba(0,0,0,0.28),
+    0 12px 40px rgba(0,0,0,0.36);
+  --lg-sheet-bg:  rgba(24, 24, 30, 0.95);
+  --lg-sheet-border: rgba(255,255,255,0.08);
+  --lg-input-bg:  rgba(255,255,255,0.06);
+}
+
+/* ── Core glass surface — used as a shared pattern ──────────────────────────
+   Specular is a background-image gradient layered over the solid bg color.
+   This avoids ::before z-index issues with card children entirely.           */
 .ios-glass .glass-card,
 .ios-glass .glass,
-.ios-glass .glass-card-hover {
-  background: var(--lg-bg-light) !important;
+.ios-glass .glass-card-hover,
+.ios-glass [class*="bg-card"] {
+  background-image: var(--lg-specular) !important;
+  background-color: var(--lg-bg) !important;
   -webkit-backdrop-filter: var(--lg-blur) !important;
   backdrop-filter: var(--lg-blur) !important;
-  border: 1px solid var(--lg-border-light) !important;
+  border-color: var(--lg-border) !important;
   box-shadow: var(--lg-shadow) !important;
-  position: relative;
-  overflow: hidden;
 }
 
-/* Specular highlight — the "glass edge" shimmer on top */
-.ios-glass .glass-card::before,
-.ios-glass .glass::before,
-.ios-glass .glass-card-hover::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 50% 0;
-  background: var(--lg-specular-light);
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Dark mode */
-.ios-glass.dark .glass-card,
-.ios-glass.dark .glass,
-.ios-glass.dark .glass-card-hover {
-  background: var(--lg-bg-dark) !important;
-  border-color: var(--lg-border-dark) !important;
-  box-shadow: var(--lg-shadow-dark) !important;
-}
-
-.ios-glass.dark .glass-card::before,
-.ios-glass.dark .glass::before,
-.ios-glass.dark .glass-card-hover::before {
-  background: var(--lg-specular-dark);
+/* ── Bottom sheets (Host + Me) ── */
+.ios-glass [data-host-sheet],
+.ios-glass [data-me-sheet] {
+  background-image: var(--lg-specular) !important;
+  background-color: var(--lg-sheet-bg) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border-top-color: var(--lg-sheet-border) !important;
+  box-shadow: var(--lg-shadow) !important;
 }
 
 /* ── Bottom Nav Bar ── */
 .ios-glass .mobile-nav-bar {
-  background: var(--lg-bg-light) !important;
+  background-image: var(--lg-specular) !important;
+  background-color: var(--lg-sheet-bg) !important;
   -webkit-backdrop-filter: var(--lg-blur) !important;
   backdrop-filter: var(--lg-blur) !important;
-  border-top: 1px solid var(--lg-border-light) !important;
-  box-shadow: 0 -1px 0 rgba(255,255,255,0.6) inset, 0 -8px 32px rgba(0,0,0,0.08) !important;
-}
-
-.ios-glass.dark .mobile-nav-bar {
-  background: var(--lg-bg-dark) !important;
-  border-top-color: var(--lg-border-dark) !important;
-  box-shadow: 0 -1px 0 rgba(255,255,255,0.08) inset, 0 -8px 32px rgba(0,0,0,0.30) !important;
+  border-top-color: var(--lg-sheet-border) !important;
+  box-shadow:
+    0 -1px 0 var(--lg-border) inset,
+    0 -8px 32px rgba(0,0,0,0.08) !important;
 }
 
 /* ── Top Navbar ── */
 .ios-glass .app-navbar {
-  background: var(--lg-bg-light) !important;
+  background-image: var(--lg-specular) !important;
+  background-color: var(--lg-bg) !important;
   -webkit-backdrop-filter: var(--lg-blur) !important;
   backdrop-filter: var(--lg-blur) !important;
-  border: 1px solid var(--lg-border-light) !important;
+  border-color: var(--lg-border) !important;
   box-shadow: var(--lg-shadow) !important;
 }
 
-.ios-glass.dark .app-navbar {
-  background: var(--lg-bg-dark) !important;
-  border-color: var(--lg-border-dark) !important;
-  box-shadow: var(--lg-shadow-dark) !important;
-}
-
-/* ── Dialogs & Modal content ── */
-.ios-glass [role="dialog"] > div,
-.ios-glass [data-radix-dialog-content] {
-  background: var(--lg-bg-light) !important;
+/* ── Dialogs / Modals ── */
+.ios-glass [data-radix-dialog-content],
+.ios-glass [data-radix-alert-dialog-content] {
+  background-image: var(--lg-specular) !important;
+  background-color: var(--lg-sheet-bg) !important;
   -webkit-backdrop-filter: var(--lg-blur) !important;
   backdrop-filter: var(--lg-blur) !important;
-  border: 1px solid var(--lg-border-light) !important;
-  box-shadow: var(--lg-shadow) !important;
+  border-color: var(--lg-sheet-border) !important;
+  box-shadow: var(--lg-shadow), 0 0 0 1px var(--lg-border) !important;
 }
 
-.ios-glass.dark [role="dialog"] > div,
-.ios-glass.dark [data-radix-dialog-content] {
-  background: var(--lg-bg-dark) !important;
-  border-color: var(--lg-border-dark) !important;
-  box-shadow: var(--lg-shadow-dark) !important;
+/* ── Inputs, selects, textareas ── */
+.ios-glass input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+.ios-glass select,
+.ios-glass textarea {
+  background-color: var(--lg-input-bg) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  border-color: var(--lg-border) !important;
 }
 
-/* ── Cards (bg-card) in iOS ── */
-.ios-glass .bg-card {
-  background: var(--lg-bg-light) !important;
-  -webkit-backdrop-filter: var(--lg-blur) !important;
-  backdrop-filter: var(--lg-blur) !important;
-  border-color: var(--lg-border-light) !important;
-}
-
-.ios-glass.dark .bg-card {
-  background: var(--lg-bg-dark) !important;
-  border-color: var(--lg-border-dark) !important;
-}
-
-/* ── Bottom sheet (Host picker) ── */
-.ios-glass [data-host-sheet] {
-  background: var(--lg-bg-light) !important;
-  -webkit-backdrop-filter: var(--lg-blur) !important;
-  backdrop-filter: var(--lg-blur) !important;
-  border-top: 1px solid var(--lg-border-light) !important;
-}
-
-.ios-glass.dark [data-host-sheet] {
-  background: var(--lg-bg-dark) !important;
-  border-top-color: var(--lg-border-dark) !important;
+/* ── Page background: subtle gradient so glass has something to blur ── */
+.ios-glass body {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--background)) 0%,
+    hsl(var(--muted)) 50%,
+    hsl(var(--background)) 100%
+  ) !important;
+  background-attachment: fixed !important;
 }
 
 /* Safe area utilities for iOS notch / Dynamic Island */

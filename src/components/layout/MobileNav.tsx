@@ -149,6 +149,7 @@ const MobileNav = () => {
         {showMeSheet && (
           <motion.div
             key="me-sheet"
+            data-me-sheet
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
