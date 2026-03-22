@@ -58,9 +58,8 @@ export const MATCH_FORMAT_CONFIGS: Record<MatchFormatLabel, MatchFormatConfig> =
  */
 export function getMaxScore(cfg: MatchFormatConfig | null | undefined): number {
   if (!cfg) return 99;
-  if (cfg.hard_cap != null) return cfg.hard_cap;
-  if (cfg.win_by === 1) return cfg.points_to_win;
-  return cfg.points_to_win + 30;
+  if (cfg.hard_cap != null) return cfg.hard_cap + 10;
+  return cfg.points_to_win + 10;
 }
 
 /** Short description for display (e.g. "First to 11, win by 2") */
