@@ -26,14 +26,14 @@ const Terms = () => {
                   <section>
                     <h2 className="text-xl font-semibold mb-3">1. Acceptance of Terms</h2>
                     <p className="text-muted-foreground">
-                      By accessing and using Picklix ("the Service"), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Service.
+                      By accessing and using PB Draw ("the Service"), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Service.
                     </p>
                   </section>
 
                   <section>
                     <h2 className="text-xl font-semibold mb-3">2. Description of Service</h2>
                     <p className="text-muted-foreground">
-                      Picklix is a tournament management platform for pickleball events. Our Service allows:
+                      PB Draw is a tournament management platform for pickleball events. Our Service allows:
                     </p>
                     <ul className="list-disc list-inside text-muted-foreground mt-2 space-y-1">
                       <li>Tournament organizers to create and manage pickleball tournaments</li>
@@ -117,14 +117,14 @@ const Terms = () => {
                   <section>
                     <h2 className="text-xl font-semibold mb-3">8. Intellectual Property</h2>
                     <p className="text-muted-foreground">
-                      The Service and its original content, features, and functionality are owned by Picklix and are protected by international copyright, trademark, and other intellectual property laws.
+                      The Service and its original content, features, and functionality are owned by PB Draw and are protected by international copyright, trademark, and other intellectual property laws.
                     </p>
                   </section>
 
                   <section>
                     <h2 className="text-xl font-semibold mb-3">9. Limitation of Liability</h2>
                     <p className="text-muted-foreground">
-                      Picklix shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the Service. This includes but is not limited to:
+                      PB Draw shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the Service. This includes but is not limited to:
                     </p>
                     <ul className="list-disc list-inside text-muted-foreground mt-2 space-y-1">
                       <li>Tournament cancellations or schedule changes</li>
@@ -161,7 +161,7 @@ const Terms = () => {
                       If you have questions about these Terms of Service, please contact us at:
                     </p>
                     <p className="text-muted-foreground mt-2">
-                      Email: support@picklix.com
+                      Email: support@pbdraw.com
                     </p>
                   </section>
                 </div>

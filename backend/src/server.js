@@ -94,7 +94,7 @@ app.use('/api', apiLimiter);
 app.get('/api', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to Picklix API',
+    message: 'Welcome to PB Draw API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -199,7 +199,7 @@ server.listen(PORT, () => {
   console.log(`\n🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
   console.log(`🔌 Socket.IO ready for connections`);
-  console.log(`🎾 Picklix Backend is ready!\n`);
+  console.log(`🎾 PB Draw Backend is ready!\n`);
 
   // Start cron jobs
   startWaitlistExpirationJob();

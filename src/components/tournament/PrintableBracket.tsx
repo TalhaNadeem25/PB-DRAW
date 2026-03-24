@@ -219,7 +219,7 @@ const PrintableBracket = ({ tournament, event, matches, bracketType = 'single-el
 
               {/* Footer */}
               <div className="footer">
-                Generated on {format(new Date(), 'MMMM d, yyyy \'at\' h:mm a')} • Picklix Tournament Management
+                Generated on {format(new Date(), 'MMMM d, yyyy \'at\' h:mm a')} • PB Draw Tournament Management
               </div>
             </div>
           </CardContent>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { picklixAIAPI, tournamentAPI, eventAPI, leagueAPI, communicationAPI } from '@/services/api';
+import { pbdrawAIAPI, tournamentAPI, eventAPI, leagueAPI, communicationAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,7 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-interface PicklixAIChatInterfaceProps {
+interface PBDrawAIChatInterfaceProps {
   initialPrompt?: string;
 }
 
@@ -634,7 +634,7 @@ function SendAnnouncementCard({ data }: { data: any }) {
   );
 }
 
-const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) => {
+const PBDrawAIChatInterface = ({ initialPrompt }: PBDrawAIChatInterfaceProps) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(initialPrompt || '');
@@ -649,7 +649,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
 
   const chatMutation = useMutation({
     mutationFn: ({ message, hist }: { message: string; hist: typeof history }) =>
-      picklixAIAPI.chat(message, hist),
+      pbdrawAIAPI.chat(message, hist),
     onSuccess: (res: any, variables) => {
       const aiData = res.data ?? res;
       const assistantMsg: ChatMessage = {
@@ -668,7 +668,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
       ]);
     },
     onError: (error: any) => {
-      const msg = error?.response?.data?.message || error?.message || 'Failed to reach Picklix AI';
+      const msg = error?.response?.data?.message || error?.message || 'Failed to reach PB Draw AI';
       toast.error(msg);
       // Remove the pending user message on error
       setMessages(prev => prev.filter(m => m.id !== 'pending'));
@@ -720,7 +720,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Sparkle className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-display font-bold mb-2">Ask Picklix AI anything</h2>
+            <h2 className="text-xl font-display font-bold mb-2">Ask PB Draw AI anything</h2>
             <p className="text-sm text-muted-foreground max-w-sm mb-8">
               Describe your tournament in plain English. I'll plan it, generate schedules, suggest events, and more.
             </p>
@@ -857,7 +857,7 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Picklix AI anything... (Enter to send, Shift+Enter for new line)"
+              placeholder="Ask PB Draw AI anything... (Enter to send, Shift+Enter for new line)"
               className="min-h-[44px] max-h-[200px] resize-none pr-12 py-3 text-sm"
               rows={1}
               disabled={chatMutation.isPending}
@@ -877,11 +877,11 @@ const PicklixAIChatInterface = ({ initialPrompt }: PicklixAIChatInterfaceProps) 
           </div>
         </div>
         <p className="text-center text-xs text-muted-foreground mt-2">
-          Picklix AI can make mistakes. Review important details before applying suggestions.
+          PB Draw AI can make mistakes. Review important details before applying suggestions.
         </p>
       </div>
     </div>
   );
 };
 
-export default PicklixAIChatInterface;
+export default PBDrawAIChatInterface;

@@ -64,7 +64,7 @@ const Footer = () => {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-display font-black uppercase italic tracking-tighter text-foreground">
-                  Picklix
+                  PB Draw
                 </h2>
               </div>
               <p className="text-muted-foreground text-sm mb-8 max-w-xs">
@@ -163,7 +163,7 @@ const Footer = () => {
 
           {/* Footer Bottom */}
           <div className="pt-8 sm:pt-12 border-t border-border/30 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 text-muted-foreground text-xs font-bold uppercase tracking-widest text-center sm:text-left">
-            <p>© {new Date().getFullYear()} Picklix. All Rights Reserved.</p>
+            <p>© {new Date().getFullYear()} PB Draw. All Rights Reserved.</p>
             <div className="flex gap-8">
               <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
               <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>

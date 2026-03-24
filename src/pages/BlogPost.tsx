@@ -69,14 +69,14 @@ export default function BlogPost() {
   return (
     <Layout>
       <Helmet>
-        <title>{post.title} | Picklix Blog</title>
+        <title>{post.title} | PB Draw Blog</title>
         <meta name="description" content={post.excerpt || post.title} />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt || post.title} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`https://www.picklixtourney.com/blog/${post.slug}`} />
+        <meta property="og:url" content={`https://www.pbdraw.com/blog/${post.slug}`} />
         <meta property="article:published_time" content={post.publishedAt} />
-        <link rel="canonical" href={`https://www.picklixtourney.com/blog/${post.slug}`} />
+        <link rel="canonical" href={`https://www.pbdraw.com/blog/${post.slug}`} />
       </Helmet>
 
       <div className="max-w-3xl mx-auto px-4 py-10">

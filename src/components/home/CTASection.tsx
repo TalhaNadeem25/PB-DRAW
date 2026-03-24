@@ -71,8 +71,8 @@ const CTASection = () => {
             
             <p className="text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
               {organizersCount > 0
-                ? `Join ${organizersCount}+ organizers who trust Picklix to run professional-grade tournaments.`
-                : "Join organizers who trust Picklix to run professional-grade tournaments."}
+                ? `Join ${organizersCount}+ organizers who trust PB Draw to run professional-grade tournaments.`
+                : "Join organizers who trust PB Draw to run professional-grade tournaments."}
             </p>
             
             {/* CTAs */}

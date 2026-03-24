@@ -39,11 +39,11 @@ export default function Blog() {
   return (
     <Layout>
       <Helmet>
-        <title>Pickleball Blog – Tips, News & Strategy | Picklix</title>
-        <meta name="description" content="Expert pickleball tips, tournament news, strategy guides, and community updates from Picklix." />
-        <meta property="og:title" content="Pickleball Blog – Picklix" />
+        <title>Pickleball Blog – Tips, News & Strategy | PB Draw</title>
+        <meta name="description" content="Expert pickleball tips, tournament news, strategy guides, and community updates from PB Draw." />
+        <meta property="og:title" content="Pickleball Blog – PB Draw" />
         <meta property="og:description" content="Expert pickleball tips, tournament news, and strategy guides." />
-        <link rel="canonical" href="https://www.picklixtourney.com/blog" />
+        <link rel="canonical" href="https://www.pbdraw.com/blog" />
       </Helmet>
 
       <div className="max-w-5xl mx-auto px-4 py-10">

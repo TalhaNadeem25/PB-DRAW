@@ -124,7 +124,7 @@ const AuthPage = () => {
           <div className="relative z-20 flex flex-col justify-end p-16 w-full">
             <div className="flex items-center gap-3 text-primary mb-6 animate-fade-in">
                 <Trophy className="w-10 h-10 fill-current" />
-                <h2 className="text-3xl font-display font-black tracking-tighter text-white">PICKLIX</h2>
+                <h2 className="text-3xl font-display font-black tracking-tighter text-white">PB DRAW</h2>
             </div>
             <h1 className="text-white text-5xl font-display font-black leading-tight mb-4 animate-slide-up">
               Master the court, <br/>manage the game.
@@ -153,7 +153,7 @@ const AuthPage = () => {
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center gap-2 mb-10 text-primary">
                 <Trophy className="w-8 h-8 fill-current" />
-                <span className="text-xl font-bold font-display text-foreground">Picklix</span>
+                <span className="text-xl font-bold font-display text-foreground">PB Draw</span>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

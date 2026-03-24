@@ -72,7 +72,7 @@ const VerifyEmail = () => {
             {status === "success" && (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Your email has been verified. You now have full access to all Picklix features.
+                  Your email has been verified. You now have full access to all PB Draw features.
                 </p>
                 <Button onClick={() => navigate("/dashboard")} className="w-full">
                   Go to Dashboard

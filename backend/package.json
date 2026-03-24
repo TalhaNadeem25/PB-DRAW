@@ -1,7 +1,7 @@
 {
   "name": "pickle-rally-backend",
   "version": "1.0.0",
-  "description": "Backend API for Picklix tournament management platform",
+  "description": "Backend API for PB Draw tournament management platform",
   "main": "src/server.js",
   "type": "module",
   "scripts": {

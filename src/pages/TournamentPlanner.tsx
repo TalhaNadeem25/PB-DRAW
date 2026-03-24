@@ -1,5 +1,5 @@
 import Layout from "@/components/layout/Layout";
-import PicklixAIChatInterface from "@/components/tournament/PicklixAIChatInterface";
+import PBDrawAIChatInterface from "@/components/tournament/PBDrawAIChatInterface";
 import { Sparkle } from "@phosphor-icons/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,8 @@ const TournamentPlanner = () => {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Sparkle className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="font-display font-black text-2xl uppercase tracking-tight">Picklix AI</h1>
-          <p className="text-muted-foreground max-w-sm">Sign in to start chatting with Picklix AI.</p>
+          <h1 className="font-display font-black text-2xl uppercase tracking-tight">PB Draw AI</h1>
+          <p className="text-muted-foreground max-w-sm">Sign in to start chatting with PB Draw AI.</p>
           <Button onClick={() => navigate('/login')}>Sign In</Button>
         </div>
       </Layout>
@@ -34,7 +34,7 @@ const TournamentPlanner = () => {
           </div>
           <div>
             <h1 className="font-display font-black text-base uppercase tracking-tight leading-none">
-              Picklix AI
+              PB Draw AI
             </h1>
             <p className="text-xs text-muted-foreground">
               Create tournaments, leagues, plan events — just ask
@@ -44,7 +44,7 @@ const TournamentPlanner = () => {
 
         {/* Chat takes remaining height */}
         <div className="flex-1 overflow-hidden">
-          <PicklixAIChatInterface />
+          <PBDrawAIChatInterface />
         </div>
       </div>
     </Layout>

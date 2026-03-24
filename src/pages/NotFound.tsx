@@ -77,7 +77,7 @@ const NotFound = () => {
         {/* Help text */}
         <div className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Question className="w-4 h-4" />
-          <span>Need help? Contact support@picklix.com</span>
+          <span>Need help? Contact support@pbdraw.com</span>
         </div>
       </div>
     </div>

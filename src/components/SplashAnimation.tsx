@@ -5,7 +5,7 @@ interface Props {
   onComplete: () => void;
 }
 
-const LETTERS = 'PICKLIX'.split('');
+const LETTERS = 'PB DRAW'.split('');
 
 const css = `
 @keyframes splashFadeScale {
@@ -84,7 +84,7 @@ export default function SplashAnimation({ onComplete }: Props) {
           }} />
           <img
             src="/assets/icon/icon.png"
-            alt="Picklix"
+            alt="PB Draw"
             width={100}
             height={100}
             style={{ position: 'relative', borderRadius: 20, boxShadow: '0 0 40px rgba(255,255,255,0.2)' }}

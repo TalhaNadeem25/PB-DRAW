@@ -5,7 +5,7 @@ import { Capacitor } from '@capacitor/core';
 const getApiUrl = () => {
   // For native mobile apps, use the computer's IP address
   if (Capacitor.isNativePlatform()) {
-    return 'https://www.picklixtourney.com/api';
+    return 'https://www.pbdraw.com/api';
   }
   // For web, use the environment variable or localhost
   return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -206,8 +206,8 @@ export const aiPlannerAPI = {
   },
 };
 
-// Picklix AI (standalone planner chat — no tournament context required)
-export const picklixAIAPI = {
+// PB Draw AI (standalone planner chat — no tournament context required)
+export const pbdrawAIAPI = {
   chat: async (message: string, history?: Array<{ role: 'user' | 'assistant'; content: string }>) => {
     const response = await api.post('/ai/chat', { message, history });
     return response;

@@ -1,7 +1,7 @@
 import Tournament from '../models/Tournament.js';
 import League from '../models/League.js';
 
-const PICKLIX_SYSTEM_PROMPT = `You are Picklix AI, an expert pickleball platform assistant built into Picklix — a platform for hosting and joining pickleball tournaments and leagues.
+const PB DRAW_SYSTEM_PROMPT = `You are PB Draw AI, an expert pickleball platform assistant built into PB Draw — a platform for hosting and joining pickleball tournaments and leagues.
 
 You help organizers do EVERYTHING: create tournaments, create leagues, plan events, generate schedules, calculate courts, set pricing, manage registrations, and understand analytics.
 
@@ -214,7 +214,7 @@ RULES:
 - When the user wants to message/email/announce to participants, use "send-announcement"
 - Always use the exact MongoDB _id from the organizer's existing tournaments when referencing them`;
 
-export const picklixChat = async (req, res, next) => {
+export const pbdrawChat = async (req, res, next) => {
   try {
     const { message, history } = req.body || {};
 
@@ -251,7 +251,7 @@ export const picklixChat = async (req, res, next) => {
       .join('\n');
 
     const fullPrompt = [
-      PICKLIX_SYSTEM_PROMPT + organizerContextStr,
+      PB DRAW_SYSTEM_PROMPT + organizerContextStr,
       historyText || null,
       `User: ${message}`,
       'Respond with JSON only.'

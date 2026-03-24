@@ -4,11 +4,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const useLiveReload = process.env.CAPACITOR_LIVE_RELOAD === 'true';
 const devServerIP = '192.168.1.141'; // Your computer's IP
 const devServerPort = '8080'; // Vite dev server port
-const productionUrl = 'https://pickletournaments.vercel.app';
+const productionUrl = 'https://www.pbdraw.com';
 
 const config: CapacitorConfig = {
-  appId: 'com.picklerally.app',
-  appName: 'Picklix',
+  appId: 'com.pbdraw.app',
+  appName: 'PB Draw',
   webDir: 'dist',
   server: useLiveReload
     ? {

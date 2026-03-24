@@ -323,7 +323,7 @@ export const sendTicketPurchaseEmail = async ({
       <body>
         <div class="email-container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">Tournament Registration Confirmation</p>
           </div>
 
@@ -414,7 +414,7 @@ export const sendTicketPurchaseEmail = async ({
               For questions regarding this tournament, please contact the organizer directly.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -423,7 +423,7 @@ export const sendTicketPurchaseEmail = async ({
     `;
 
     const emailText = `
-Picklix - Tournament Registration Confirmed
+PB Draw - Tournament Registration Confirmed
 
 Hi ${playerName},
 
@@ -455,11 +455,11 @@ View your tournaments: ${process.env.CLIENT_URL}/dashboard
 
 Questions? Contact the tournament organizer at ${organizerEmail}
 
-© ${new Date().getFullYear()} Picklix
+© ${new Date().getFullYear()} PB Draw
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
       subject: `Registration Confirmed: ${tournamentName} - ${eventName}`,
       text: emailText,
@@ -623,7 +623,7 @@ export const sendWelcomeEmail = async ({ to, name, role }) => {
       <body>
         <div class="email-container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">🎾 Welcome to Your Pickleball Tournament Hub</p>
           </div>
 
@@ -638,7 +638,7 @@ export const sendWelcomeEmail = async ({ to, name, role }) => {
             </p>
 
             <p class="greeting">
-              Welcome to Picklix - your all-in-one platform for pickleball tournaments! We're excited to have you join our community.
+              Welcome to PB Draw - your all-in-one platform for pickleball tournaments! We're excited to have you join our community.
             </p>
 
             <div class="highlight-box">
@@ -661,16 +661,16 @@ export const sendWelcomeEmail = async ({ to, name, role }) => {
 
             <p class="greeting" style="margin-bottom: 0;">
               See you on the court!<br>
-              <strong>The Picklix Team</strong>
+              <strong>The PB Draw Team</strong>
             </p>
           </div>
 
           <div class="footer">
             <p class="footer-text">
-              You're receiving this email because you created an account on Picklix.
+              You're receiving this email because you created an account on PB Draw.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -679,9 +679,9 @@ export const sendWelcomeEmail = async ({ to, name, role }) => {
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
-      subject: 'Welcome to Picklix! 🎾',
+      subject: 'Welcome to PB Draw! 🎾',
       html: emailHtml,
     });
 
@@ -894,7 +894,7 @@ export const sendTeamInvitationEmail = async ({
       <body>
         <div class="email-container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">🎾 Team Invitation</p>
           </div>
 
@@ -944,7 +944,7 @@ export const sendTeamInvitationEmail = async ({
               You're receiving this email because ${inviterName} invited you to join their team.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -953,7 +953,7 @@ export const sendTeamInvitationEmail = async ({
     `;
 
     const emailText = `
-Picklix - Team Invitation
+PB Draw - Team Invitation
 
 Hi ${inviteeName || 'there'},
 
@@ -969,11 +969,11 @@ Decline: ${declineUrl}
 
 Note: You'll need to create an account or log in to accept this invitation.
 
-© ${new Date().getFullYear()} Picklix
+© ${new Date().getFullYear()} PB Draw
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
       subject: `Team Invitation: ${teamName} - ${eventName}`,
       text: emailText,
@@ -1121,7 +1121,7 @@ export const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
       <body>
         <div class="email-container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">Password Reset Request</p>
           </div>
 
@@ -1130,7 +1130,7 @@ export const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
 
             <p class="greeting">
               Hi ${name},<br><br>
-              We received a request to reset your password for your Picklix account. Click the button below to choose a new password.
+              We received a request to reset your password for your PB Draw account. Click the button below to choose a new password.
             </p>
 
             <div style="text-align: center;">
@@ -1161,7 +1161,7 @@ export const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
               This is an automated message, please do not reply to this email.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -1170,11 +1170,11 @@ export const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
     `;
 
     const emailText = `
-Picklix - Password Reset Request
+PB Draw - Password Reset Request
 
 Hi ${name},
 
-We received a request to reset your password for your Picklix account.
+We received a request to reset your password for your PB Draw account.
 
 Reset your password by clicking this link:
 ${resetUrl}
@@ -1183,13 +1183,13 @@ This link will expire in 1 hour.
 
 If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
 
-© ${new Date().getFullYear()} Picklix
+© ${new Date().getFullYear()} PB Draw
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
-      subject: 'Reset Your Password - Picklix',
+      subject: 'Reset Your Password - PB Draw',
       text: emailText,
       html: emailHtml,
     });
@@ -1249,7 +1249,7 @@ export const sendWaitlistJoinedEmail = async ({
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">You're on the Waitlist!</p>
           </div>
 
@@ -1280,10 +1280,10 @@ export const sendWaitlistJoinedEmail = async ({
 
           <div class="footer">
             <p class="footer-text">
-              This is an automated message from Picklix.
+              This is an automated message from PB Draw.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -1292,7 +1292,7 @@ export const sendWaitlistJoinedEmail = async ({
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
       subject: `You're on the Waitlist - ${tournamentName}`,
       html: emailHtml,
@@ -1355,7 +1355,7 @@ export const sendWaitlistPromotionEmail = async ({
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">A Spot Just Opened Up!</p>
           </div>
 
@@ -1389,10 +1389,10 @@ export const sendWaitlistPromotionEmail = async ({
 
           <div class="footer">
             <p class="footer-text">
-              This is an automated message from Picklix.
+              This is an automated message from PB Draw.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -1401,7 +1401,7 @@ export const sendWaitlistPromotionEmail = async ({
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
       subject: `🎉 Spot Available! Complete Your Registration - ${tournamentName}`,
       html: emailHtml,
@@ -1459,7 +1459,7 @@ export const sendWaitlistExpiredEmail = async ({
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">Registration Window Closed</p>
           </div>
 
@@ -1489,10 +1489,10 @@ export const sendWaitlistExpiredEmail = async ({
 
           <div class="footer">
             <p class="footer-text">
-              This is an automated message from Picklix.
+              This is an automated message from PB Draw.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -1501,7 +1501,7 @@ export const sendWaitlistExpiredEmail = async ({
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
       subject: `Registration Window Expired - ${eventName}`,
       html: emailHtml,
@@ -1563,10 +1563,10 @@ export const sendCancellationConfirmationEmail = async ({ user, tournament, even
 
               <p>We're sorry to see you cancel. If you have any questions or concerns, please don't hesitate to reach out to the tournament organizer.</p>
 
-              <p style="margin-top: 30px;">Best regards,<br>The Picklix Team</p>
+              <p style="margin-top: 30px;">Best regards,<br>The PB Draw Team</p>
             </div>
             <div class="footer">
-              <p>Picklix - Pickleball Tournament Management</p>
+              <p>PB Draw - Pickleball Tournament Management</p>
             </div>
           </div>
         </body>
@@ -1653,10 +1653,10 @@ export const sendPartnerNotificationEmail = async ({ partner, cancelingPlayer, t
 
               <p><em>If you don't respond by the deadline, please contact the tournament organizer directly to discuss your options.</em></p>
 
-              <p style="margin-top: 30px;">Best regards,<br>The Picklix Team</p>
+              <p style="margin-top: 30px;">Best regards,<br>The PB Draw Team</p>
             </div>
             <div class="footer">
-              <p>Picklix - Pickleball Tournament Management</p>
+              <p>PB Draw - Pickleball Tournament Management</p>
             </div>
           </div>
         </body>
@@ -1716,10 +1716,10 @@ export const sendPartnerRefundEmail = async ({ partner, tournament, event, refun
 
               <p>We hope to see you at future tournaments!</p>
 
-              <p style="margin-top: 30px;">Best regards,<br>The Picklix Team</p>
+              <p style="margin-top: 30px;">Best regards,<br>The PB Draw Team</p>
             </div>
             <div class="footer">
-              <p>Picklix - Pickleball Tournament Management</p>
+              <p>PB Draw - Pickleball Tournament Management</p>
             </div>
           </div>
         </body>
@@ -1883,7 +1883,7 @@ export const sendBulkCommunicationEmail = async ({
       <body>
         <div class="email-container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="tournament-name">${tournamentName}</p>
           </div>
 
@@ -1905,7 +1905,7 @@ export const sendBulkCommunicationEmail = async ({
           <div class="footer">
             <p class="footer-text">
               This message was sent regarding your participation in ${tournamentName}.<br>
-              <a href="${process.env.CLIENT_URL}">Visit Picklix</a>
+              <a href="${process.env.CLIENT_URL}">Visit PB Draw</a>
             </p>
           </div>
         </div>
@@ -1927,7 +1927,7 @@ Visit your dashboard: ${process.env.CLIENT_URL}/dashboard
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
       subject: subject,
       text: emailText,
@@ -2057,7 +2057,7 @@ export const sendEmailVerificationEmail = async ({ to, name, verificationToken }
       <body>
         <div class="email-container">
           <div class="header">
-            <div class="logo">Picklix</div>
+            <div class="logo">PB Draw</div>
             <p class="header-subtitle">Verify Your Email Address</p>
           </div>
 
@@ -2067,7 +2067,7 @@ export const sendEmailVerificationEmail = async ({ to, name, verificationToken }
             </p>
 
             <p class="greeting">
-              Thank you for signing up for Picklix! Please verify your email address to complete your registration and access all features.
+              Thank you for signing up for PB Draw! Please verify your email address to complete your registration and access all features.
             </p>
 
             <div style="text-align: center; margin: 32px 0;">
@@ -2077,7 +2077,7 @@ export const sendEmailVerificationEmail = async ({ to, name, verificationToken }
             <div class="info-section">
               <p class="info-text">
                 <strong>Link expires in 24 hours.</strong><br><br>
-                If you didn't create an account on Picklix, you can safely ignore this email.
+                If you didn't create an account on PB Draw, you can safely ignore this email.
               </p>
             </div>
 
@@ -2095,7 +2095,7 @@ export const sendEmailVerificationEmail = async ({ to, name, verificationToken }
               This is an automated message, please do not reply to this email.
             </p>
             <p class="footer-text" style="margin-top: 16px; font-size: 12px;">
-              © ${new Date().getFullYear()} Picklix. All rights reserved.
+              © ${new Date().getFullYear()} PB Draw. All rights reserved.
             </p>
           </div>
         </div>
@@ -2104,25 +2104,25 @@ export const sendEmailVerificationEmail = async ({ to, name, verificationToken }
     `;
 
     const emailText = `
-Picklix - Verify Your Email Address
+PB Draw - Verify Your Email Address
 
 Hi ${name},
 
-Thank you for signing up for Picklix! Please verify your email address to complete your registration.
+Thank you for signing up for PB Draw! Please verify your email address to complete your registration.
 
 Click here to verify: ${verifyUrl}
 
 This link will expire in 24 hours.
 
-If you didn't create an account on Picklix, you can safely ignore this email.
+If you didn't create an account on PB Draw, you can safely ignore this email.
 
-© ${new Date().getFullYear()} Picklix
+© ${new Date().getFullYear()} PB Draw
     `;
 
     const info = await transport.sendMail({
-      from: `"Picklix" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: to,
-      subject: 'Verify Your Email - Picklix',
+      subject: 'Verify Your Email - PB Draw',
       text: emailText,
       html: emailHtml,
     });
@@ -2190,10 +2190,10 @@ export const sendOrganizerRefundEmail = async ({ user, tournament, event, refund
 
               <p>If you have any questions, please contact the tournament organizer directly.</p>
 
-              <p style="margin-top: 30px;">Best regards,<br>The Picklix Team</p>
+              <p style="margin-top: 30px;">Best regards,<br>The PB Draw Team</p>
             </div>
             <div class="footer">
-              <p>Picklix - Pickleball Tournament Management</p>
+              <p>PB Draw - Pickleball Tournament Management</p>
             </div>
           </div>
         </body>
@@ -2258,10 +2258,10 @@ export const sendTournamentCancelledEmail = async ({ user, tournament, refundAmo
 
               <p>We apologize for the inconvenience and hope to see you at future tournaments!</p>
 
-              <p style="margin-top: 30px;">Best regards,<br>The Picklix Team</p>
+              <p style="margin-top: 30px;">Best regards,<br>The PB Draw Team</p>
             </div>
             <div class="footer">
-              <p>Picklix - Pickleball Tournament Management</p>
+              <p>PB Draw - Pickleball Tournament Management</p>
             </div>
           </div>
         </body>

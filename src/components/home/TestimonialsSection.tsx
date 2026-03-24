@@ -43,7 +43,7 @@ const TestimonialsSection = () => {
             Trusted by the best
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">
-            See why top clubs and organizers are making the switch to Picklix.
+            See why top clubs and organizers are making the switch to PB Draw.
           </p>
         </motion.div>
 

@@ -87,7 +87,7 @@ const Navbar = () => {
                 <div className="absolute inset-0 rounded-xl bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               <span className="font-display text-lg sm:text-xl font-bold text-foreground tracking-wide whitespace-nowrap">
-                PICK<span className="text-primary">LIX</span>
+                PB<span className="text-primary">DRAW</span>
               </span>
             </Link>
 

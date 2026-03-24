@@ -65,7 +65,7 @@ const connectToDatabase = async () => {
 app.use(helmet());
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  'https://www.picklixtourney.com',
+  'https://www.pbdraw.com',
   'capacitor://localhost',
   'ionic://localhost',
   'http://localhost',
@@ -100,7 +100,7 @@ app.use((req, res, next) => {
 app.get('/api', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to Picklix API - Serverless',
+    message: 'Welcome to PB Draw API - Serverless',
     version: '1.0.0'
   });
 });

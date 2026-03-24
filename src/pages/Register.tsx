@@ -875,7 +875,7 @@ const Register = () => {
                   <Trophy className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <p className="font-display font-bold text-lg tracking-tight">PICKLIX</p>
+                  <p className="font-display font-bold text-lg tracking-tight">PB DRAW</p>
                   <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold">
                     Tournament Details
                   </p>

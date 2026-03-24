@@ -31,7 +31,7 @@ const SocialProofBar = () => {
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-foreground shrink-0" />
           <span>
-            {tournamentsRun > 0 ? `${tournamentsRun}+ tournaments run` : "Tournaments run on Picklix"}
+            {tournamentsRun > 0 ? `${tournamentsRun}+ tournaments run` : "Tournaments run on PB Draw"}
           </span>
         </div>
         {organizersCount > 0 && (

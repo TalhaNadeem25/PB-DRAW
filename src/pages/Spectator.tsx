@@ -245,7 +245,7 @@ const Spectator = () => {
   return (
     <Layout variant="minimal">
       <Helmet>
-        <title>{tournament.name} — Spectator View | Picklix</title>
+        <title>{tournament.name} — Spectator View | PB Draw</title>
         <meta
           name="description"
           content={`Follow ${tournament.name} live — match scores, standings, brackets, and schedule.`}

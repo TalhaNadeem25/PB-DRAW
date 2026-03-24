@@ -240,7 +240,7 @@ const LiveTournamentDetail = () => {
                   </div>
                   <div className="min-w-0">
                     <h1 className="font-display font-bold text-foreground text-lg sm:text-xl truncate">
-                      PICKLIX LIVE
+                      PB DRAW LIVE
                     </h1>
                     <p className="text-sm text-muted-foreground truncate">{tournament.name}</p>
                   </div>
