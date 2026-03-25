@@ -1,7 +1,7 @@
 import Tournament from '../models/Tournament.js';
 import League from '../models/League.js';
 
-const PB DRAW_SYSTEM_PROMPT = `You are PB Draw AI, an expert pickleball platform assistant built into PB Draw — a platform for hosting and joining pickleball tournaments and leagues.
+const PB_DRAW_SYSTEM_PROMPT = `You are PB Draw AI, an expert pickleball platform assistant built into PB Draw — a platform for hosting and joining pickleball tournaments and leagues.
 
 You help organizers do EVERYTHING: create tournaments, create leagues, plan events, generate schedules, calculate courts, set pricing, manage registrations, and understand analytics.
 
@@ -251,7 +251,7 @@ export const pbdrawChat = async (req, res, next) => {
       .join('\n');
 
     const fullPrompt = [
-      PB DRAW_SYSTEM_PROMPT + organizerContextStr,
+      PB_DRAW_SYSTEM_PROMPT + organizerContextStr,
       historyText || null,
       `User: ${message}`,
       'Respond with JSON only.'
