@@ -1,37 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.picklixtourney.com/</loc>
+    <loc>https://www.pbdraw.com/</loc>
     <priority>1.0</priority>
     <changefreq>daily</changefreq>
   </url>
   <url>
-    <loc>https://www.picklixtourney.com/tournaments</loc>
+    <loc>https://www.pbdraw.com/tournaments</loc>
     <priority>0.9</priority>
     <changefreq>daily</changefreq>
   </url>
   <url>
-    <loc>https://www.picklixtourney.com/live</loc>
+    <loc>https://www.pbdraw.com/leagues</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://www.pbdraw.com/live</loc>
     <priority>0.8</priority>
     <changefreq>hourly</changefreq>
   </url>
   <url>
-    <loc>https://www.picklixtourney.com/login</loc>
+    <loc>https://www.pbdraw.com/blog</loc>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://www.pbdraw.com/login</loc>
     <priority>0.5</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://www.picklixtourney.com/register</loc>
+    <loc>https://www.pbdraw.com/signup</loc>
     <priority>0.5</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://www.picklixtourney.com/privacy</loc>
+    <loc>https://www.pbdraw.com/privacy</loc>
     <priority>0.3</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://www.picklixtourney.com/terms</loc>
+    <loc>https://www.pbdraw.com/terms</loc>
+    <priority>0.3</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://www.pbdraw.com/delete-account</loc>
     <priority>0.3</priority>
     <changefreq>monthly</changefreq>
   </url>
