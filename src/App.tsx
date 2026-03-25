@@ -46,6 +46,7 @@ const RegistrationSuccess = lazy(() => import("./pages/RegistrationSuccess"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const SkillQuiz = lazy(() => import("./pages/SkillQuiz"));
 const Teams = lazy(() => import("./pages/Teams"));
+const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
 const Terms = lazy(() => import("./pages/Terms"));
 const TournamentCommunications = lazy(() => import("./pages/TournamentCommunications"));
 const TournamentDetail = lazy(() => import("./pages/TournamentDetail"));
@@ -233,6 +234,7 @@ function AppRoutes() {
             <Route path="/blog/new" element={<BlogEditor />} />
             <Route path="/blog/:slug/edit" element={<BlogEditor />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
