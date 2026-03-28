@@ -211,14 +211,6 @@ const Profile = () => {
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-            <Button
-              variant="secondary"
-              size="sm"
-              className="absolute bottom-3 right-3 rounded-lg gap-1.5 bg-card/90 border border-border shadow-sm"
-            >
-              <PencilSimple className="w-4 h-4" />
-              Edit Cover
-            </Button>
           </div>
 
           {/* Avatar + name (overlapping cover) */}
