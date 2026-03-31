@@ -4,10 +4,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch, Trophy } from '@phosphor-icons/react';
+import { AppStoreLogo, ArrowRight, Eye, EyeSlash, CircleNotch, Trophy } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -19,17 +19,6 @@ const Login = () => {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        await loginWithGoogle(tokenResponse.access_token);
-        navigate('/tournaments');
-      } catch {
-        setError('Google sign-in failed. Please try again.');
-      }
-    },
-    onError: () => setError('Google sign-in failed. Please try again.'),
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,11 +179,22 @@ const Login = () => {
                     <span className="flex-shrink mx-4 text-xs font-medium text-muted-foreground uppercase tracking-widest">Or continue with</span>
                     <div className="flex-grow border-t border-border"></div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <button onClick={() => googleLogin()} className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors">
-                        <GoogleChromeLogo className="w-5 h-5" />
-                        <span className="text-sm font-semibold text-foreground">Google</span>
-                    </button>
+                <div className="flex flex-col gap-3">
+                    <GoogleLogin
+                        onSuccess={async (credentialResponse) => {
+                            try {
+                                await loginWithGoogle(credentialResponse.credential!);
+                                navigate('/tournaments');
+                            } catch {
+                                setError('Google sign-in failed. Please try again.');
+                            }
+                        }}
+                        onError={() => setError('Google sign-in failed. Please try again.')}
+                        width="100%"
+                        theme="outline"
+                        shape="rectangular"
+                        text="signin_with"
+                    />
                     <button disabled title="Coming Soon" className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border opacity-50 cursor-not-allowed">
                         <AppStoreLogo className="w-5 h-5 text-foreground" />
                         <span className="text-sm font-semibold text-foreground">Apple</span>
