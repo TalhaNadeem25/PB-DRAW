@@ -180,21 +180,28 @@ const Login = () => {
                     <div className="flex-grow border-t border-border"></div>
                 </div>
                 <div className="flex flex-col gap-3">
-                    <GoogleLogin
-                        onSuccess={async (credentialResponse) => {
-                            try {
-                                await loginWithGoogle(credentialResponse.credential!);
-                                navigate('/tournaments');
-                            } catch {
+                    <div onClick={() => console.log('[DEBUG] Google button wrapper clicked')}>
+                        <GoogleLogin
+                            onSuccess={async (credentialResponse) => {
+                                console.log('[DEBUG] Google onSuccess fired', credentialResponse);
+                                try {
+                                    await loginWithGoogle(credentialResponse.credential!);
+                                    navigate('/tournaments');
+                                } catch (err) {
+                                    console.error('[DEBUG] loginWithGoogle error', err);
+                                    setError('Google sign-in failed. Please try again.');
+                                }
+                            }}
+                            onError={() => {
+                                console.error('[DEBUG] Google onError fired');
                                 setError('Google sign-in failed. Please try again.');
-                            }
-                        }}
-                        onError={() => setError('Google sign-in failed. Please try again.')}
-                        width="100%"
-                        theme="outline"
-                        shape="rectangular"
-                        text="signin_with"
-                    />
+                            }}
+                            width="360"
+                            theme="outline"
+                            shape="rectangular"
+                            text="signin_with"
+                        />
+                    </div>
                     <button disabled title="Coming Soon" className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border opacity-50 cursor-not-allowed">
                         <AppStoreLogo className="w-5 h-5 text-foreground" />
                         <span className="text-sm font-semibold text-foreground">Apple</span>
