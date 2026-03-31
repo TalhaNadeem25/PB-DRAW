@@ -448,3 +448,51 @@ export const resetPassword = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Google OAuth Sign-In
+// @route   POST /api/auth/google
+// @access  Public
+export const googleAuth = async (req, res, next) => {
+  try {
+    const { access_token } = req.body;
+
+    if (!access_token) {
+      return res.status(400).json({ success: false, message: 'Google access token is required' });
+    }
+
+    // Get user info from Google
+    const googleRes = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
+    if (!googleRes.ok) {
+      return res.status(401).json({ success: false, message: 'Invalid Google access token' });
+    }
+
+    const { id: googleId, email, name, picture } = await googleRes.json();
+
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar: picture,
+        isEmailVerified: true,
+        role: 'player',
+      });
+    } else if (!user.googleId) {
+      user.googleId = googleId;
+      if (!user.avatar && picture) user.avatar = picture;
+      await user.save({ validateBeforeSave: false });
+    }
+
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      data: { user, token },
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(401).json({ success: false, message: 'Google sign-in failed' });
+  }
+};

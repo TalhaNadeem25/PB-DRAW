@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getMe, updateProfile, getUserStats, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail } from '../controllers/authController.js';
+import { register, login, getMe, updateProfile, getUserStats, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail, googleAuth } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { loginLimiter } from '../middleware/rateLimiter.js';
 
@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', loginLimiter, login);
+router.post('/google', googleAuth);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.get('/stats', protect, getUserStats);

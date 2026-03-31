@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '@/services/api';
+import api from '@/services/api';
 import { toast } from 'sonner';
 
 interface User {
@@ -38,6 +39,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   register: (data: {
     name: string;
     email: string;
@@ -106,6 +108,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async (access_token: string) => {
+    try {
+      const response = await api.post('/auth/google', { access_token });
+      const { user: userData, token: userToken } = response.data.data;
+
+      setUser(userData);
+      setToken(userToken);
+      localStorage.setItem('token', userToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      toast.success('Signed in with Google!');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Google sign-in failed. Please try again.';
+      toast.error(message);
+      throw error;
+    }
+  };
+
   const register = async (data: {
     name: string;
     email: string;
@@ -157,6 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     isAuthenticated: !!user,
     login,
+    loginWithGoogle,
     register,
     logout,
     updateUser,

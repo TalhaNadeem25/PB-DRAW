@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch, Trophy } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,8 +16,20 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        await loginWithGoogle(tokenResponse.access_token);
+        navigate('/tournaments');
+      } catch {
+        setError('Google sign-in failed. Please try again.');
+      }
+    },
+    onError: () => setError('Google sign-in failed. Please try again.'),
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,7 +191,7 @@ const Login = () => {
                     <div className="flex-grow border-t border-border"></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <button disabled title="Coming Soon" className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border opacity-50 cursor-not-allowed">
+                    <button onClick={() => googleLogin()} className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors">
                         <GoogleChromeLogo className="w-5 h-5" />
                         <span className="text-sm font-semibold text-foreground">Google</span>
                     </button>
