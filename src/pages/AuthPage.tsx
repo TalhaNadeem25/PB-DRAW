@@ -11,6 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch, Trophy, User } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 
 const AuthPage = () => {
   const location = useLocation();
@@ -42,7 +43,7 @@ const AuthPage = () => {
   });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleSignupChange = (field: string, value: string) => {
@@ -254,12 +255,28 @@ const AuthPage = () => {
                     <span className="flex-shrink mx-4 text-xs font-medium text-muted-foreground uppercase tracking-widest">Or continue with</span>
                     <div className="flex-grow border-t border-border"></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                      <GoogleChromeLogo className="w-4 h-4" />
-                      <span className="text-sm font-semibold text-foreground">Google</span>
-                    </button>
-                    <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                  <div className="flex flex-col gap-3">
+                    <GoogleLogin
+                      onSuccess={async (credentialResponse) => {
+                        console.log('[DEBUG] Google onSuccess', credentialResponse);
+                        try {
+                          await loginWithGoogle(credentialResponse.credential!);
+                          navigate(redirectUrl);
+                        } catch (err) {
+                          console.error('[DEBUG] loginWithGoogle error', err);
+                          setError('Google sign-in failed. Please try again.');
+                        }
+                      }}
+                      onError={() => {
+                        console.error('[DEBUG] Google onError');
+                        setError('Google sign-in failed. Please try again.');
+                      }}
+                      width="100%"
+                      theme="outline"
+                      shape="rectangular"
+                      text="signin_with"
+                    />
+                    <button disabled title="Coming Soon" className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border opacity-50 cursor-not-allowed transition-colors">
                       <AppStoreLogo className="w-4 h-4 text-foreground" />
                       <span className="text-sm font-semibold text-foreground">Apple</span>
                     </button>
