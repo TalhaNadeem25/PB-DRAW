@@ -6,6 +6,7 @@ import { generateToken } from '../utils/jwt.js';
 import { sendPasswordResetEmail, sendEmailVerificationEmail } from '../services/emailService.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -513,16 +514,12 @@ export const appleAuth = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Apple ID token is required' });
     }
 
-    // Verify Apple ID token using Apple's public keys
-    const appleKeysRes = await fetch('https://appleid.apple.com/auth/keys');
-    const { keys } = await appleKeysRes.json();
-    const decoded = jwt.decode(id_token, { complete: true });
-    if (!decoded) throw new Error('Invalid token');
-    const key = keys.find(k => k.kid === decoded.header.kid);
-    if (!key) throw new Error('Apple key not found');
-    const publicKeyObj = crypto.createPublicKey({ key, format: 'jwk' });
-    const publicKeyPem = publicKeyObj.export({ type: 'spki', format: 'pem' });
-    const payload = jwt.verify(id_token, publicKeyPem, { algorithms: ['ES256'] });
+    // Verify Apple ID token using Apple's public keys via jose
+    const JWKS = createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
+    const { payload } = await jwtVerify(id_token, JWKS, {
+      issuer: 'https://appleid.apple.com',
+      audience: process.env.APPLE_CLIENT_ID,
+    });
 
     const appleId = payload.sub;
     const email = payload.email || (user?.email);
