@@ -11,7 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch, Trophy, User } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useEffect } from 'react';
 
 const AuthPage = () => {
@@ -61,6 +61,18 @@ const AuthPage = () => {
     document.body.appendChild(script);
     return () => { document.body.removeChild(script); };
   }, []);
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        await loginWithGoogle(tokenResponse.access_token);
+        navigate(redirectUrl);
+      } catch {
+        setError('Google sign-in failed. Please try again.');
+      }
+    },
+    onError: () => setError('Google sign-in failed. Please try again.'),
+  });
 
   const handleAppleSignIn = async () => {
     try {
@@ -285,24 +297,10 @@ const AuthPage = () => {
                     <div className="flex-grow border-t border-border"></div>
                   </div>
                   <div className="flex flex-col gap-3">
-                    <div className="w-full overflow-hidden rounded-lg">
-                      <GoogleLogin
-                        onSuccess={async (credentialResponse) => {
-                          try {
-                            await loginWithGoogle(credentialResponse.credential!);
-                            navigate(redirectUrl);
-                          } catch (err) {
-                            setError('Google sign-in failed. Please try again.');
-                          }
-                        }}
-                        onError={() => setError('Google sign-in failed. Please try again.')}
-                        width="500"
-                        theme="filled_black"
-                        size="large"
-                        shape="rectangular"
-                        text="continue_with"
-                      />
-                    </div>
+                    <button onClick={() => googleLogin()} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors w-full h-10">
+                      <GoogleChromeLogo className="w-4 h-4 text-foreground" />
+                      <span className="text-sm font-semibold text-foreground">Continue with Google</span>
+                    </button>
                     <button onClick={handleAppleSignIn} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors w-full h-10">
                       <AppStoreLogo className="w-4 h-4 text-foreground" />
                       <span className="text-sm font-semibold text-foreground">Continue with Apple</span>
