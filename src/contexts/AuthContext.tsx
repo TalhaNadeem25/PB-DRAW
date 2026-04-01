@@ -109,9 +109,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async (credential: string) => {
+  const loginWithGoogle = async (access_token: string) => {
     try {
-      const response = await api.post('/auth/google', { credential });
+      const response = await api.post('/auth/google', { access_token });
       const { user: userData, token: userToken } = response.data.data;
 
       setUser(userData);

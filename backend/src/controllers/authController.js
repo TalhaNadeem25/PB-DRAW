@@ -455,20 +455,23 @@ export const resetPassword = async (req, res, next) => {
 // @access  Public
 export const googleAuth = async (req, res, next) => {
   try {
-    const { credential, access_token } = req.body;
-    const token = access_token || credential;
+    const { access_token } = req.body;
 
-    if (!token) {
-      return res.status(400).json({ success: false, message: 'Google token is required' });
+    if (!access_token) {
+      return res.status(400).json({ success: false, message: 'Google access token is required' });
     }
 
-    // Use userinfo endpoint which works with both access_token and id_token
-    const googleRes = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`);
+    const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
     if (!googleRes.ok) {
-      return res.status(401).json({ success: false, message: 'Invalid Google token' });
+      const errText = await googleRes.text();
+      console.error('Google userinfo error:', errText);
+      return res.status(401).json({ success: false, message: 'Invalid Google access token' });
     }
 
-    const { id: googleId, email, name, picture } = await googleRes.json();
+    const { sub: googleId, email, name, picture } = await googleRes.json();
 
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
