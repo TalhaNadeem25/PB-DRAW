@@ -5,6 +5,7 @@ import Tournament from '../models/Tournament.js';
 import { generateToken } from '../utils/jwt.js';
 import { sendPasswordResetEmail, sendEmailVerificationEmail } from '../services/emailService.js';
 import crypto from 'crypto';
+import appleSignin from 'apple-signin-auth';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -509,8 +510,7 @@ export const appleAuth = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Apple ID token is required' });
     }
 
-    const appleSignin = await import('apple-signin-auth');
-    const payload = await appleSignin.default.verifyIdToken(id_token, {
+    const payload = await appleSignin.verifyIdToken(id_token, {
       audience: process.env.APPLE_CLIENT_ID,
       ignoreExpiration: false,
     });
