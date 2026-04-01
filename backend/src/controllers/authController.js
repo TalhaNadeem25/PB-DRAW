@@ -5,7 +5,7 @@ import Tournament from '../models/Tournament.js';
 import { generateToken } from '../utils/jwt.js';
 import { sendPasswordResetEmail, sendEmailVerificationEmail } from '../services/emailService.js';
 import crypto from 'crypto';
-import appleSignin from 'apple-signin-auth';
+import jwt from 'jsonwebtoken';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -510,10 +510,15 @@ export const appleAuth = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Apple ID token is required' });
     }
 
-    const payload = await appleSignin.verifyIdToken(id_token, {
-      audience: process.env.APPLE_CLIENT_ID,
-      ignoreExpiration: false,
-    });
+    // Verify Apple ID token using Apple's public keys
+    const appleKeysRes = await fetch('https://appleid.apple.com/auth/keys');
+    const { keys } = await appleKeysRes.json();
+    const decoded = jwt.decode(id_token, { complete: true });
+    if (!decoded) throw new Error('Invalid token');
+    const key = keys.find(k => k.kid === decoded.header.kid);
+    if (!key) throw new Error('Key not found');
+    const publicKey = require('crypto').createPublicKey({ key, format: 'jwk' });
+    const payload = jwt.verify(id_token, publicKey, { algorithms: ['ES256'] });
 
     const appleId = payload.sub;
     const email = payload.email || (user?.email);
