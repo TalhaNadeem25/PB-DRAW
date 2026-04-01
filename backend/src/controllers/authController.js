@@ -520,8 +520,9 @@ export const appleAuth = async (req, res, next) => {
     if (!decoded) throw new Error('Invalid token');
     const key = keys.find(k => k.kid === decoded.header.kid);
     if (!key) throw new Error('Apple key not found');
-    const publicKey = crypto.createPublicKey({ key, format: 'jwk' });
-    const payload = jwt.verify(id_token, publicKey, { algorithms: ['ES256'] });
+    const publicKeyObj = crypto.createPublicKey({ key, format: 'jwk' });
+    const publicKeyPem = publicKeyObj.export({ type: 'spki', format: 'pem' });
+    const payload = jwt.verify(id_token, publicKeyPem, { algorithms: ['ES256'] });
 
     const appleId = payload.sub;
     const email = payload.email || (user?.email);
