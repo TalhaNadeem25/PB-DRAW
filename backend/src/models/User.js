@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  appleId: {
+    type: String,
+    default: null
+  },
   role: {
     type: String,
     enum: ['player', 'organizer', 'admin'],

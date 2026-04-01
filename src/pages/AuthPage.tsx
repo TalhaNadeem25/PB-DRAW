@@ -12,6 +12,7 @@ import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch,
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
+import { useEffect } from 'react';
 
 const AuthPage = () => {
   const location = useLocation();
@@ -43,7 +44,35 @@ const AuthPage = () => {
   });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle, loginWithApple } = useAuth();
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
+    script.async = true;
+    script.onload = () => {
+      (window as any).AppleID?.auth.init({
+        clientId: 'com.pbdraw.app.web',
+        scope: 'name email',
+        redirectURI: 'https://www.pbdraw.com/login',
+        usePopup: true,
+      });
+    };
+    document.body.appendChild(script);
+    return () => { document.body.removeChild(script); };
+  }, []);
+
+  const handleAppleSignIn = async () => {
+    try {
+      const response = await (window as any).AppleID.auth.signIn();
+      await loginWithApple(response.authorization.id_token, response.user);
+      navigate(redirectUrl);
+    } catch (err: any) {
+      if (err?.error !== 'popup_closed_by_user') {
+        setError('Apple sign-in failed. Please try again.');
+      }
+    }
+  };
   const navigate = useNavigate();
 
   const handleSignupChange = (field: string, value: string) => {
@@ -274,9 +303,9 @@ const AuthPage = () => {
                         text="continue_with"
                       />
                     </div>
-                    <button disabled title="Coming Soon" className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border opacity-50 cursor-not-allowed transition-colors">
+                    <button onClick={handleAppleSignIn} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors w-full h-10">
                       <AppStoreLogo className="w-4 h-4 text-foreground" />
-                      <span className="text-sm font-semibold text-foreground">Apple</span>
+                      <span className="text-sm font-semibold text-foreground">Continue with Apple</span>
                     </button>
                   </div>
                 </div>

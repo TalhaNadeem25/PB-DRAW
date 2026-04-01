@@ -496,3 +496,51 @@ export const googleAuth = async (req, res, next) => {
     res.status(401).json({ success: false, message: 'Google sign-in failed' });
   }
 };
+
+// @desc    Apple Sign-In
+// @route   POST /api/auth/apple
+// @access  Public
+export const appleAuth = async (req, res, next) => {
+  try {
+    const { id_token, user } = req.body;
+
+    if (!id_token) {
+      return res.status(400).json({ success: false, message: 'Apple ID token is required' });
+    }
+
+    const appleSignin = await import('apple-signin-auth');
+    const payload = await appleSignin.default.verifyIdToken(id_token, {
+      audience: process.env.APPLE_CLIENT_ID,
+      ignoreExpiration: false,
+    });
+
+    const appleId = payload.sub;
+    const email = payload.email || (user?.email);
+    const name = user?.name ? `${user.name.firstName} ${user.name.lastName}`.trim() : email?.split('@')[0] || 'Apple User';
+
+    let dbUser = await User.findOne({ $or: [{ appleId }, ...(email ? [{ email }] : [])] });
+
+    if (!dbUser) {
+      dbUser = await User.create({
+        name,
+        email: email || `${appleId}@privaterelay.appleid.com`,
+        appleId,
+        isEmailVerified: true,
+        role: 'player',
+      });
+    } else if (!dbUser.appleId) {
+      dbUser.appleId = appleId;
+      await dbUser.save({ validateBeforeSave: false });
+    }
+
+    const token = generateToken(dbUser._id);
+
+    res.status(200).json({
+      success: true,
+      data: { user: dbUser, token },
+    });
+  } catch (error) {
+    console.error('Apple auth error:', error);
+    res.status(401).json({ success: false, message: 'Apple sign-in failed' });
+  }
+};

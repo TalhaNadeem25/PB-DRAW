@@ -40,6 +40,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (credential: string) => Promise<void>;
+  loginWithApple: (id_token: string, user?: { email?: string; name?: { firstName: string; lastName: string } }) => Promise<void>;
   register: (data: {
     name: string;
     email: string;
@@ -126,6 +127,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithApple = async (id_token: string, user?: { email?: string; name?: { firstName: string; lastName: string } }) => {
+    try {
+      const response = await api.post('/auth/apple', { id_token, user });
+      const { user: userData, token: userToken } = response.data.data;
+
+      setUser(userData);
+      setToken(userToken);
+      localStorage.setItem('token', userToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      toast.success('Signed in with Apple!');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Apple sign-in failed. Please try again.';
+      toast.error(message);
+      throw error;
+    }
+  };
+
   const register = async (data: {
     name: string;
     email: string;
@@ -178,6 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     login,
     loginWithGoogle,
+    loginWithApple,
     register,
     logout,
     updateUser,
