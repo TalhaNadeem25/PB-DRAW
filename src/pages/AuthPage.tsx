@@ -256,26 +256,24 @@ const AuthPage = () => {
                     <div className="flex-grow border-t border-border"></div>
                   </div>
                   <div className="flex flex-col gap-3">
-                    <GoogleLogin
-                      onSuccess={async (credentialResponse) => {
-                        console.log('[DEBUG] Google onSuccess', credentialResponse);
-                        try {
-                          await loginWithGoogle(credentialResponse.credential!);
-                          navigate(redirectUrl);
-                        } catch (err) {
-                          console.error('[DEBUG] loginWithGoogle error', err);
-                          setError('Google sign-in failed. Please try again.');
-                        }
-                      }}
-                      onError={() => {
-                        console.error('[DEBUG] Google onError');
-                        setError('Google sign-in failed. Please try again.');
-                      }}
-                      width="100%"
-                      theme="outline"
-                      shape="rectangular"
-                      text="signin_with"
-                    />
+                    <div className="w-full overflow-hidden rounded-lg">
+                      <GoogleLogin
+                        onSuccess={async (credentialResponse) => {
+                          try {
+                            await loginWithGoogle(credentialResponse.credential!);
+                            navigate(redirectUrl);
+                          } catch (err) {
+                            setError('Google sign-in failed. Please try again.');
+                          }
+                        }}
+                        onError={() => setError('Google sign-in failed. Please try again.')}
+                        width="500"
+                        theme="filled_black"
+                        size="large"
+                        shape="rectangular"
+                        text="continue_with"
+                      />
+                    </div>
                     <button disabled title="Coming Soon" className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border opacity-50 cursor-not-allowed transition-colors">
                       <AppStoreLogo className="w-4 h-4 text-foreground" />
                       <span className="text-sm font-semibold text-foreground">Apple</span>
