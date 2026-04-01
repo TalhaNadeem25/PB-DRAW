@@ -454,19 +454,20 @@ export const resetPassword = async (req, res, next) => {
 // @access  Public
 export const googleAuth = async (req, res, next) => {
   try {
-    const { credential } = req.body;
+    const { credential, access_token } = req.body;
+    const token = access_token || credential;
 
-    if (!credential) {
-      return res.status(400).json({ success: false, message: 'Google credential is required' });
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Google token is required' });
     }
 
-    // Decode the ID token (JWT) — Google signs it, we verify via Google's public keys
-    const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    // Use userinfo endpoint which works with both access_token and id_token
+    const googleRes = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`);
     if (!googleRes.ok) {
-      return res.status(401).json({ success: false, message: 'Invalid Google credential' });
+      return res.status(401).json({ success: false, message: 'Invalid Google token' });
     }
 
-    const { sub: googleId, email, name, picture } = await googleRes.json();
+    const { id: googleId, email, name, picture } = await googleRes.json();
 
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
