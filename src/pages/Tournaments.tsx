@@ -257,15 +257,18 @@ const Tournaments = () => {
             </h1>
             
             <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative max-w-2xl">
-                <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search by tournament name or venue"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-14 text-base bg-card border-border rounded-xl shadow-sm"
-                />
-                <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg font-display uppercase tracking-widest font-bold">Search</Button>
+              <div className="flex-1 flex gap-2 max-w-2xl">
+                <div className="relative flex-1">
+                  <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="Search tournaments..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="pl-12 h-14 text-base bg-card border-border rounded-xl shadow-sm"
+                  />
+                </div>
+                <Button className="h-14 px-6 rounded-xl font-display uppercase tracking-widest font-bold shrink-0">Search</Button>
               </div>
 
               {/* Mobile Filter Trigger */}
