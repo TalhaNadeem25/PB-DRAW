@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { PencilSimple, Plus, BookOpen, Clock } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
-const BLOG_ADMIN_EMAILS = ["nadeemtalha24@gmail.com"];
+const BLOG_ADMIN_EMAILS = ["nadeemtalha24@gmail.com", "awk.hafiz@gmail.com"];
 
 function isBlogAdmin(user: any) {
   return user?.role === "admin" || BLOG_ADMIN_EMAILS.includes(user?.email);

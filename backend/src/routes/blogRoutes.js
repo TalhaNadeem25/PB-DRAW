@@ -4,7 +4,7 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-const BLOG_ADMIN_EMAILS = ['nadeemtalha24@gmail.com'];
+const BLOG_ADMIN_EMAILS = ['nadeemtalha24@gmail.com', 'awk.hafiz@gmail.com'];
 
 // Middleware — only blog admins or app admins can write
 const blogAdminOnly = (req, res, next) => {
