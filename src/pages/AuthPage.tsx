@@ -301,7 +301,7 @@ const AuthPage = () => {
                       <GoogleChromeLogo className="w-4 h-4 text-foreground" />
                       <span className="text-sm font-semibold text-foreground">Continue with Google</span>
                     </button>
-                    <button onClick={handleAppleSignIn} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors w-full h-10">
+                    <button disabled title="Coming Soon" className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border opacity-50 cursor-not-allowed transition-colors w-full h-10">
                       <AppStoreLogo className="w-4 h-4 text-foreground" />
                       <span className="text-sm font-semibold text-foreground">Continue with Apple</span>
                     </button>
