@@ -52,6 +52,7 @@ import { cn } from "@/lib/utils";
 import { courtAPI } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import PlayerScoreSubmit from "./PlayerScoreSubmit";
 
 export interface Match {
   _id: string;
@@ -93,6 +94,8 @@ interface MatchScheduleProps {
   tournamentId?: string;
   /** Tournament start date – after auto-schedule we show this day so courts display the scheduled matches */
   tournamentStartDate?: string;
+  /** Current logged-in user ID (for player score submission) */
+  currentUserId?: string;
 }
 
 const EVENT_DOT_COLORS = [
@@ -117,6 +120,7 @@ const MatchSchedule = ({
   selectedEventId = "all",
   onEventChange,
   tournamentId,
+  currentUserId,
 }: MatchScheduleProps) => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -641,39 +645,55 @@ const MatchSchedule = ({
 
     // Pool variant: wrap in Popover for click-to-assign
     if (variant === "pool") {
+      const showPlayerSubmit =
+        !!currentUserId &&
+        match.status !== "completed" &&
+        match.status !== "cancelled";
+
       return (
-        <Popover
-          open={selectedPoolMatch?._id === match._id}
-          onOpenChange={(open) => { if (!open) setSelectedPoolMatch(null); }}
-        >
-          <PopoverTrigger asChild>
-            <div onClick={() => setSelectedPoolMatch(match)}>
-              {cardContent}
-            </div>
-          </PopoverTrigger>
-          <PopoverContent side="right" align="start" className="w-56 p-3">
-            <p className="font-display font-bold text-sm mb-2">Assign to Court</p>
-            <div className="grid grid-cols-2 gap-2">
-              {allCourtNumbers.map((courtNum) => {
-                const count = (matchesByCourt[courtNum] ?? []).length;
-                return (
-                  <Button
-                    key={courtNum}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-xl text-sm font-display justify-between"
-                    onClick={() => handleClickAssign(match, courtNum)}
-                  >
-                    <span>Court {String(courtNum).padStart(2, "0")}</span>
-                    <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 ml-1">
-                      {count}
-                    </Badge>
-                  </Button>
-                );
-              })}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <div>
+          <Popover
+            open={selectedPoolMatch?._id === match._id}
+            onOpenChange={(open) => { if (!open) setSelectedPoolMatch(null); }}
+          >
+            <PopoverTrigger asChild>
+              <div onClick={() => setSelectedPoolMatch(match)}>
+                {cardContent}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent side="right" align="start" className="w-56 p-3">
+              <p className="font-display font-bold text-sm mb-2">Assign to Court</p>
+              <div className="grid grid-cols-2 gap-2">
+                {allCourtNumbers.map((courtNum) => {
+                  const count = (matchesByCourt[courtNum] ?? []).length;
+                  return (
+                    <Button
+                      key={courtNum}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl text-sm font-display justify-between"
+                      onClick={() => handleClickAssign(match, courtNum)}
+                    >
+                      <span>Court {String(courtNum).padStart(2, "0")}</span>
+                      <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 ml-1">
+                        {count}
+                      </Badge>
+                    </Button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+          {showPlayerSubmit && (
+            <PlayerScoreSubmit
+              match={match}
+              currentUserId={currentUserId}
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: ["tournament-matches", tournamentId] });
+              }}
+            />
+          )}
+        </div>
       );
     }
 

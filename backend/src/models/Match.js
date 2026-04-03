@@ -58,7 +58,7 @@ const matchSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['scheduled', 'in-progress', 'completed', 'cancelled'],
+    enum: ['scheduled', 'in-progress', 'completed', 'cancelled', 'disputed'],
     default: 'scheduled'
   },
   round: {
@@ -191,6 +191,22 @@ const matchSchema = new mongoose.Schema({
     required: {
       type: Boolean,
       default: true
+    }
+  },
+  scoreSubmission: {
+    team1: {
+      submitted: { type: Boolean, default: false },
+      team1Score: { type: Number, default: null },
+      team2Score: { type: Number, default: null },
+      submittedAt: { type: Date, default: null },
+      submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
+    },
+    team2: {
+      submitted: { type: Boolean, default: false },
+      team1Score: { type: Number, default: null },
+      team2Score: { type: Number, default: null },
+      submittedAt: { type: Date, default: null },
+      submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
     }
   }
 }, {

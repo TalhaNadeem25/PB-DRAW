@@ -5,7 +5,9 @@ import {
   updateMatchScore,
   updateMatch,
   checkInMatch,
-  markNoShow
+  markNoShow,
+  submitPlayerScore,
+  resolveDisputedScore
 } from '../controllers/matchController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -17,5 +19,7 @@ router.put('/:id/score', protect, authorize('organizer', 'admin'), updateMatchSc
 router.put('/:id', protect, authorize('organizer', 'admin'), updateMatch);
 router.post('/:id/check-in', protect, checkInMatch);
 router.post('/:id/no-show', protect, authorize('organizer', 'admin'), markNoShow);
+router.post('/:id/player-score', protect, submitPlayerScore);
+router.post('/:id/resolve-dispute', protect, resolveDisputedScore);
 
 export default router;

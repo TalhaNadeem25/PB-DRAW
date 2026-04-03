@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CircleNotch, Warning } from "@phosphor-icons/react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { eventAPI, poolAPI, matchAPI } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import MatchSchedule from "./MatchSchedule";
 
 interface TournamentScheduleProps {
@@ -12,6 +13,7 @@ interface TournamentScheduleProps {
 }
 
 const TournamentSchedule = ({ tournamentId, tournamentStartDate }: TournamentScheduleProps) => {
+  const { user } = useAuth();
   const [selectedEventId, setSelectedEventId] = useState<string>("all");
 
   // Fetch events for the tournament
@@ -109,6 +111,7 @@ const TournamentSchedule = ({ tournamentId, tournamentStartDate }: TournamentSch
       events={events}
       selectedEventId={selectedEventId}
       onEventChange={setSelectedEventId}
+      currentUserId={user?._id}
     />
   );
 };

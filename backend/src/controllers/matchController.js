@@ -687,3 +687,296 @@ export const markNoShow = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Player submits their match score
+// @route   POST /api/matches/:id/player-score
+// @access  Private (Player)
+export const submitPlayerScore = async (req, res, next) => {
+  try {
+    const match = await Match.findById(req.params.id)
+      .populate({
+        path: 'team1',
+        select: 'name players email',
+      })
+      .populate({
+        path: 'team2',
+        select: 'name players email',
+      })
+      .populate({
+        path: 'event',
+        populate: { path: 'tournament' }
+      });
+
+    if (!match) {
+      return res.status(404).json({ success: false, message: 'Match not found' });
+    }
+
+    // Lock scores for terminal statuses
+    if (['completed', 'cancelled', 'disputed'].includes(match.status)) {
+      return res.status(400).json({ success: false, message: 'Scores are locked' });
+    }
+
+    // Nested-populate players for Team documents
+    await Match.populate(match, [
+      { path: 'team1.players', select: 'name email', model: 'User' },
+      { path: 'team2.players', select: 'name email', model: 'User' },
+    ]);
+
+    // Determine which team the user belongs to
+    let isTeam1 = false;
+    let isTeam2 = false;
+
+    if (match.team1) {
+      if (match.team1Model === 'User') {
+        isTeam1 = match.team1._id?.toString() === req.user.id;
+      } else {
+        const team1Players = match.team1.players || [];
+        isTeam1 = team1Players.some((p) => p._id?.toString() === req.user.id || p.toString() === req.user.id);
+      }
+    }
+
+    if (match.team2) {
+      if (match.team2Model === 'User') {
+        isTeam2 = match.team2._id?.toString() === req.user.id;
+      } else {
+        const team2Players = match.team2.players || [];
+        isTeam2 = team2Players.some((p) => p._id?.toString() === req.user.id || p.toString() === req.user.id);
+      }
+    }
+
+    if (!isTeam1 && !isTeam2) {
+      return res.status(403).json({ success: false, message: 'You are not a player in this match' });
+    }
+
+    // Check if team already submitted
+    if (isTeam1 && match.scoreSubmission?.team1?.submitted) {
+      return res.status(400).json({ success: false, message: 'Your team has already submitted a score' });
+    }
+    if (isTeam2 && match.scoreSubmission?.team2?.submitted) {
+      return res.status(400).json({ success: false, message: 'Your team has already submitted a score' });
+    }
+
+    // Validate scores
+    const { team1Score, team2Score } = req.body;
+    if (team1Score === undefined || team2Score === undefined || team1Score < 0 || team2Score < 0 || isNaN(Number(team1Score)) || isNaN(Number(team2Score))) {
+      return res.status(400).json({ success: false, message: 'team1Score and team2Score must be non-negative numbers' });
+    }
+
+    // Save submission
+    const submissionData = {
+      submitted: true,
+      team1Score: Number(team1Score),
+      team2Score: Number(team2Score),
+      submittedAt: new Date(),
+      submittedBy: req.user.id
+    };
+
+    if (!match.scoreSubmission) {
+      match.scoreSubmission = {};
+    }
+
+    if (isTeam1) {
+      match.scoreSubmission.team1 = submissionData;
+    } else {
+      match.scoreSubmission.team2 = submissionData;
+    }
+    match.markModified('scoreSubmission');
+
+    const bothSubmitted = match.scoreSubmission?.team1?.submitted && match.scoreSubmission?.team2?.submitted;
+
+    if (bothSubmitted) {
+      const s1 = match.scoreSubmission.team1;
+      const s2 = match.scoreSubmission.team2;
+      const scoresMatch = s1.team1Score === s2.team1Score && s1.team2Score === s2.team2Score;
+
+      if (scoresMatch) {
+        // Scores agree — finalize
+        const finalTeam1Score = s1.team1Score;
+        const finalTeam2Score = s1.team2Score;
+
+        match.score.team1Score = finalTeam1Score;
+        match.score.team2Score = finalTeam2Score;
+        match.status = 'completed';
+        match.completedAt = new Date();
+
+        if (finalTeam1Score > finalTeam2Score) match.winner = match.team1;
+        else if (finalTeam2Score > finalTeam1Score) match.winner = match.team2;
+
+        await match.save();
+
+        // Update team stats
+        const team1Id = match.team1?._id ?? match.team1;
+        const team2Id = match.team2?._id ?? match.team2;
+        const team1 = team1Id ? await Team.findById(team1Id) : null;
+        const team2 = team2Id ? await Team.findById(team2Id) : null;
+        const team1IdStr = team1Id?.toString();
+
+        if (team1 && team2) {
+          team1.stats.pointsFor += finalTeam1Score;
+          team1.stats.pointsAgainst += finalTeam2Score;
+          team2.stats.pointsFor += finalTeam2Score;
+          team2.stats.pointsAgainst += finalTeam1Score;
+
+          const newWinnerId = (match.winner?._id ?? match.winner)?.toString();
+          if (newWinnerId === team1IdStr) {
+            team1.stats.wins += 1;
+            team2.stats.losses += 1;
+          } else if (newWinnerId) {
+            team2.stats.wins += 1;
+            team1.stats.losses += 1;
+          }
+
+          team1.stats.pointDifferential = team1.stats.pointsFor - team1.stats.pointsAgainst;
+          team2.stats.pointDifferential = team2.stats.pointsFor - team2.stats.pointsAgainst;
+          team1.markModified('stats');
+          team2.markModified('stats');
+          await team1.save();
+          await team2.save();
+        }
+
+        // Emit socket event
+        const io = req.app.get('io');
+        const tournamentId = match.event?.tournament?._id?.toString();
+        if (io && tournamentId) {
+          emitMatchScoreUpdate(io, match._id.toString(), tournamentId, {
+            matchId: match._id,
+            team1Score: match.score.team1Score,
+            team2Score: match.score.team2Score,
+            status: match.status,
+            winner: match.winner,
+            completedAt: match.completedAt
+          });
+        }
+      } else {
+        // Scores conflict — disputed
+        match.status = 'disputed';
+        await match.save();
+
+        // Try to notify organizer via socket
+        try {
+          const io = req.app.get('io');
+          const tournamentId = match.event?.tournament?._id?.toString();
+          if (io && tournamentId) {
+            io.to(`tournament:${tournamentId}`).emit('match:disputed', {
+              matchId: match._id,
+              team1Submission: match.scoreSubmission.team1,
+              team2Submission: match.scoreSubmission.team2
+            });
+          }
+        } catch (socketErr) {
+          console.warn('Could not emit disputed match event:', socketErr.message);
+        }
+      }
+    } else {
+      await match.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Score submitted successfully',
+      data: match
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Organizer resolves a disputed match score
+// @route   POST /api/matches/:id/resolve-dispute
+// @access  Private (Organizer/Admin)
+export const resolveDisputedScore = async (req, res, next) => {
+  try {
+    const match = await Match.findById(req.params.id)
+      .populate({
+        path: 'team1',
+        select: 'name players email',
+      })
+      .populate({
+        path: 'team2',
+        select: 'name players email',
+      })
+      .populate({
+        path: 'event',
+        populate: { path: 'tournament' }
+      });
+
+    if (!match) {
+      return res.status(404).json({ success: false, message: 'Match not found' });
+    }
+
+    // Check authorization
+    if (match.event?.tournament?.organizer?.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized to resolve disputes' });
+    }
+
+    const { team1Score, team2Score } = req.body;
+    if (team1Score === undefined || team2Score === undefined || team1Score < 0 || team2Score < 0) {
+      return res.status(400).json({ success: false, message: 'team1Score and team2Score are required and must be non-negative' });
+    }
+
+    const finalTeam1Score = Number(team1Score);
+    const finalTeam2Score = Number(team2Score);
+
+    match.score.team1Score = finalTeam1Score;
+    match.score.team2Score = finalTeam2Score;
+    match.status = 'completed';
+    match.completedAt = new Date();
+
+    if (finalTeam1Score > finalTeam2Score) match.winner = match.team1;
+    else if (finalTeam2Score > finalTeam1Score) match.winner = match.team2;
+
+    await match.save();
+
+    // Update team stats
+    const team1Id = match.team1?._id ?? match.team1;
+    const team2Id = match.team2?._id ?? match.team2;
+    const team1 = team1Id ? await Team.findById(team1Id) : null;
+    const team2 = team2Id ? await Team.findById(team2Id) : null;
+    const team1IdStr = team1Id?.toString();
+
+    if (team1 && team2) {
+      team1.stats.pointsFor += finalTeam1Score;
+      team1.stats.pointsAgainst += finalTeam2Score;
+      team2.stats.pointsFor += finalTeam2Score;
+      team2.stats.pointsAgainst += finalTeam1Score;
+
+      const newWinnerId = (match.winner?._id ?? match.winner)?.toString();
+      if (newWinnerId === team1IdStr) {
+        team1.stats.wins += 1;
+        team2.stats.losses += 1;
+      } else if (newWinnerId) {
+        team2.stats.wins += 1;
+        team1.stats.losses += 1;
+      }
+
+      team1.stats.pointDifferential = team1.stats.pointsFor - team1.stats.pointsAgainst;
+      team2.stats.pointDifferential = team2.stats.pointsFor - team2.stats.pointsAgainst;
+      team1.markModified('stats');
+      team2.markModified('stats');
+      await team1.save();
+      await team2.save();
+    }
+
+    // Emit socket event
+    const io = req.app.get('io');
+    const tournamentId = match.event?.tournament?._id?.toString();
+    if (io && tournamentId) {
+      emitMatchScoreUpdate(io, match._id.toString(), tournamentId, {
+        matchId: match._id,
+        team1Score: match.score.team1Score,
+        team2Score: match.score.team2Score,
+        status: match.status,
+        winner: match.winner,
+        completedAt: match.completedAt
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Dispute resolved successfully',
+      data: match
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -5,11 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ClipboardText, Calendar, Check, X, PencilSimple, CircleNotch, CaretDown, CaretRight, Trophy, Users, Stack, Pulse } from "@phosphor-icons/react";
+import { ClipboardText, Calendar, Check, X, PencilSimple, CircleNotch, CaretDown, CaretRight, Trophy, Users, Stack, Pulse, Warning } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { poolAPI, matchAPI } from "@/services/api";
@@ -44,6 +55,8 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
   const [editScores, setEditScores] = useState({ team1Score: 0, team2Score: 0 });
   const [openEvents, setOpenEvents] = useState<Set<string>>(new Set());
   const [openPools, setOpenPools] = useState<Set<string>>(new Set());
+  const [resolveMatch, setResolveMatch] = useState<MatchWithMeta | null>(null);
+  const [resolveScores, setResolveScores] = useState({ team1Score: 0, team2Score: 0 });
 
   const { data: allMatches = [], isLoading } = useQuery({
     queryKey: ["scores", tournamentId],
@@ -89,6 +102,26 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Failed to update score");
+    },
+  });
+
+  const resolveDisputeMutation = useMutation({
+    mutationFn: ({
+      matchId,
+      scores,
+    }: {
+      matchId: string;
+      scores: { team1Score: number; team2Score: number };
+    }) => matchAPI.resolveDispute(matchId, scores),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scores", tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      setResolveMatch(null);
+      toast.success("Dispute resolved");
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to resolve dispute");
     },
   });
 
@@ -171,13 +204,16 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
 
   const renderMatchCard = (match: MatchWithMeta) => {
     const isCompleted = match.status === "completed";
+    const isDisputed = match.status === "disputed";
     const isEditing = editingMatchId === match._id;
     return (
       <Card
         key={match._id}
         className={`glass-card-hover rounded-2xl border-2 transition-all relative overflow-hidden group ${isCompleted
           ? "bg-muted/30 border-primary/20"
-          : "border-border/60 hover:border-primary/50 hover:shadow-glow"
+          : isDisputed
+            ? "bg-orange-500/5 border-orange-500/40 hover:border-orange-500/60"
+            : "border-border/60 hover:border-primary/50 hover:shadow-glow"
           }`}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
@@ -199,6 +235,12 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
             {isCompleted && (
               <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 rounded-lg text-xs font-semibold backdrop-blur-sm">
                 Completed
+              </Badge>
+            )}
+            {isDisputed && (
+              <Badge className="bg-orange-500/15 text-orange-500 hover:bg-orange-500/20 border border-orange-500/40 rounded-lg text-xs font-semibold backdrop-blur-sm gap-1">
+                <Warning className="w-3 h-3" />
+                Disputed
               </Badge>
             )}
           </div>
@@ -328,9 +370,46 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
               ) : null}
             </div>
           </div>
+
+          {/* Disputed match details */}
+          {isDisputed && (
+            <div className="mt-4 p-3 rounded-xl border border-orange-500/30 bg-orange-500/5 space-y-2 relative z-10">
+              <div className="flex items-center gap-2 text-orange-500 text-sm font-semibold">
+                <Warning className="w-4 h-4" />
+                Score Mismatch — Organizer Action Required
+              </div>
+              {(match as any).scoreSubmission?.team1?.submitted && (match as any).scoreSubmission?.team2?.submitted && (
+                <p className="text-xs text-muted-foreground">
+                  {match.team1?.name || "Team 1"} reported: {(match as any).scoreSubmission.team1.team1Score}–{(match as any).scoreSubmission.team1.team2Score}
+                  {" | "}
+                  {match.team2?.name || "Team 2"} reported: {(match as any).scoreSubmission.team2.team1Score}–{(match as any).scoreSubmission.team2.team2Score}
+                </p>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-orange-500/40 text-orange-500 hover:bg-orange-500/10 hover:text-orange-600 h-8 text-xs"
+                onClick={() => {
+                  setResolveMatch(match);
+                  setResolveScores({ team1Score: match.score?.team1Score ?? 0, team2Score: match.score?.team2Score ?? 0 });
+                }}
+              >
+                <Check className="w-3.5 h-3.5 mr-1.5" />
+                Resolve Dispute
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
+  };
+
+  const handleResolveDispute = () => {
+    if (!resolveMatch) return;
+    resolveDisputeMutation.mutate({
+      matchId: resolveMatch._id,
+      scores: resolveScores,
+    });
   };
 
   if (events.length === 0) {
@@ -512,6 +591,59 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
           })}
         </div>
       )}
+
+      {/* Resolve Dispute Dialog */}
+      <AlertDialog open={!!resolveMatch} onOpenChange={(open) => { if (!open) setResolveMatch(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Warning className="w-5 h-5 text-orange-500" />
+              Resolve Score Dispute
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter the official final score to override the disputed submissions.
+              {resolveMatch && (match => (
+                <span className="block mt-2 text-sm">
+                  <strong>{match.team1?.name || "Team 1"}</strong> vs <strong>{match.team2?.name || "Team 2"}</strong>
+                </span>
+              ))(resolveMatch)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">{resolveMatch?.team1?.name || "Team 1"} Score</Label>
+              <Input
+                type="number"
+                min={0}
+                value={resolveScores.team1Score}
+                onChange={(e) => setResolveScores((s) => ({ ...s, team1Score: parseInt(e.target.value) || 0 }))}
+                className="h-10 text-center font-display font-bold text-lg"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{resolveMatch?.team2?.name || "Team 2"} Score</Label>
+              <Input
+                type="number"
+                min={0}
+                value={resolveScores.team2Score}
+                onChange={(e) => setResolveScores((s) => ({ ...s, team2Score: parseInt(e.target.value) || 0 }))}
+                className="h-10 text-center font-display font-bold text-lg"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resolveDisputeMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResolveDispute} disabled={resolveDisputeMutation.isPending}>
+              {resolveDisputeMutation.isPending ? (
+                <CircleNotch className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Check className="w-4 h-4 mr-2" />
+              )}
+              Save Official Score
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

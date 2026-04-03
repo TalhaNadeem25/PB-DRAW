@@ -419,6 +419,16 @@ export const matchAPI = {
     const response = await api.post(`/matches/${matchId}/no-show`, { teamNumber });
     return response.data;
   },
+
+  submitPlayerScore: async (matchId: string, data: { team1Score: number; team2Score: number }) => {
+    const response = await api.post(`/matches/${matchId}/player-score`, data);
+    return response.data;
+  },
+
+  resolveDispute: async (matchId: string, data: { team1Score: number; team2Score: number }) => {
+    const response = await api.post(`/matches/${matchId}/resolve-dispute`, data);
+    return response.data;
+  },
 };
 
 // Playoffs
