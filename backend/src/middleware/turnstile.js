@@ -19,6 +19,7 @@ export const verifyTurnstile = async (req, res, next) => {
     const data = await response.json();
 
     if (!data.success) {
+      console.error('Turnstile verification failed:', JSON.stringify(data));
       return res.status(400).json({ success: false, message: 'Bot verification failed. Please try again.' });
     }
 
