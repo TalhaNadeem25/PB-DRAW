@@ -62,7 +62,19 @@ const connectToDatabase = async () => {
 };
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://challenges.cloudflare.com"],
+      frameSrc: ["'self'", "https://challenges.cloudflare.com"],
+      connectSrc: ["'self'", "https://challenges.cloudflare.com", "https://www.pbdraw.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'https://www.pbdraw.com',
@@ -154,6 +166,16 @@ app.use(errorHandler);
 export default async (req, res) => {
   try {
     await connectToDatabase();
+    // Vercel rewrites pass the captured `:path*` segment as ?path= query param.
+    // Reconstruct req.url so Express can match routes correctly.
+    if (req.query && req.query.path) {
+      const pathValue = Array.isArray(req.query.path)
+        ? req.query.path.join('/')
+        : req.query.path;
+      const { path: _, ...restQuery } = req.query;
+      const queryString = new URLSearchParams(restQuery).toString();
+      req.url = '/api/' + pathValue + (queryString ? '?' + queryString : '');
+    }
     return app(req, res);
   } catch (error) {
     console.error('Serverless function error:', error);
