@@ -1,6 +1,4 @@
 import Layout from "@/components/layout/Layout";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerClose,
@@ -26,16 +24,14 @@ import {
   Trophy,
   MapPin,
   Users,
-  Gear,
   Plus,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useQueryClient } from "@tanstack/react-query";
 
-// ─── League Card (matches TournamentCard design) ────────────────────────────
+// ─── League Card ─────────────────────────────────────────────────────────────
 function LeagueCard({ league }: { league: any }) {
   const { user } = useAuth();
   const organizerId = league.organizer?._id ?? league.organizer;
@@ -63,8 +59,6 @@ function LeagueCard({ league }: { league: any }) {
 
   const ctaLink = isOwner
     ? `/leagues/${league._id}/manage`
-    : league.status === "open"
-    ? `/leagues/${league._id}`
     : `/leagues/${league._id}`;
 
   const ctaLabel = isOwner
@@ -75,112 +69,88 @@ function LeagueCard({ league }: { league: any }) {
     ? "View Standings"
     : "View Details";
 
+  const statusColors: Record<string, string> = {
+    open: "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30",
+    active: "bg-blue-500/15 text-blue-700 border border-blue-500/30",
+    completed: "bg-pb-surface2 text-pb-muted border border-pb-hairline",
+    draft: "bg-pb-surface2 text-pb-muted border border-pb-hairline",
+  };
+
   return (
-    <motion.div
-      whileHover={{ y: -6, scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden h-full group relative"
-    >
-      {/* Shimmer on hover */}
-      <div className="absolute inset-0 z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden rounded-2xl">
-        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-      </div>
-
-      {/* Image / header area */}
-      <div className="relative h-48 w-full overflow-hidden bg-muted">
-        {league.image ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-            style={{ backgroundImage: `url('${league.image}')` }}
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted to-muted/80 border-b border-border/50">
-            <div className="rounded-full bg-primary/10 p-4">
-              <Trophy className="w-10 h-10 text-primary/40" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {leagueTypeLabel[league.leagueType] ?? "League"}
-            </span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-
-        {/* Status badge */}
-        <div className="absolute top-4 left-4 flex gap-2">
-          <span className="px-3 py-1 rounded bg-white font-display font-black text-[10px] uppercase tracking-widest text-muted-foreground">
-            {league.status}
-          </span>
-        </div>
-
-        {/* Filling fast badge */}
-        {isFillingFast && league.status === "open" && (
-          <div className="absolute top-4 right-4">
-            <span className="font-display font-bold text-xs text-white bg-destructive/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-              {spotsRemaining} spots left
-            </span>
-          </div>
-        )}
-
-        {/* Name + location */}
-        <div className="absolute bottom-4 left-4 right-4 text-white">
-          <h4 className="text-xl font-display font-black uppercase tracking-tight leading-none mb-1 shadow-sm group-hover:text-primary transition-colors line-clamp-2">
-            {league.name}
-          </h4>
-          <p className="font-medium text-xs text-white/90 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-primary" />
-            {shortLocation}
-            {league.startDate && (
-              <> • {format(new Date(league.startDate), "MMM dd")}</>
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="p-4 flex-1 flex flex-col bg-card">
-        <div className="flex justify-between items-center mb-4 text-sm font-semibold">
-          <span className="bg-muted px-2 py-1 rounded-md text-xs text-foreground">
-            {leagueTypeLabel[league.leagueType] ?? league.leagueType}
-          </span>
-          <span className="text-foreground font-bold">
-            {league.entryFee ? `$${league.entryFee}` : "Free"} Entry
-          </span>
-        </div>
-
-        <div className="mt-auto">
-          {league.status !== "completed" && (
-            <>
-              <div className="flex justify-between items-end mb-1 text-xs font-bold">
-                <span className="text-foreground flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                  {playerCount} / {maxPlayers} registered
-                </span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-1.5 mb-5 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${fillPercent}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-                  className={cn(
-                    "h-full rounded-full",
-                    isFillingFast ? "bg-destructive" : "bg-primary"
-                  )}
-                />
-              </div>
-            </>
+    <div className="bg-pb-surface border border-pb-hairline rounded-[8px] flex flex-col overflow-hidden h-full">
+      {/* Top strip */}
+      <div className="p-4 pb-3 flex items-start justify-between gap-2">
+        <h4 className="font-display font-bold text-[17px] leading-tight text-pb-ink line-clamp-2 flex-1">
+          {league.name}
+        </h4>
+        <span
+          className={cn(
+            "shrink-0 text-[10px] font-mono uppercase tracking-[0.08em] px-2 py-0.5 rounded-[4px]",
+            statusColors[league.status] ?? statusColors.draft
           )}
-
-          <Button
-            className="w-full bg-foreground text-background hover:bg-primary font-display font-bold uppercase tracking-widest text-xs transition-colors py-5 rounded-xl shadow-none"
-            asChild
-          >
-            <Link to={ctaLink}>{ctaLabel}</Link>
-          </Button>
-        </div>
+        >
+          {league.status}
+        </span>
       </div>
-    </motion.div>
+
+      {/* Meta row */}
+      <div className="px-4 pb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+        {shortLocation && (
+          <span className="font-mono text-[12px] text-pb-muted flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            {shortLocation}
+          </span>
+        )}
+        {league.startDate && (
+          <span className="font-mono text-[12px] text-pb-muted">
+            {format(new Date(league.startDate), "MMM dd")}
+          </span>
+        )}
+        <span className="font-mono text-[12px] text-pb-muted">
+          {leagueTypeLabel[league.leagueType] ?? league.leagueType}
+        </span>
+        {isFillingFast && league.status === "open" && (
+          <span className="font-mono text-[10px] text-red-600 bg-red-500/10 px-1.5 py-0.5 rounded-[4px]">
+            {spotsRemaining} spots left
+          </span>
+        )}
+      </div>
+
+      <div className="h-px bg-pb-hairline" />
+
+      {/* Progress + CTA */}
+      <div className="p-4 flex-1 flex flex-col justify-end gap-3">
+        {league.status !== "completed" && (
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="font-mono text-[11px] text-pb-muted flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                {playerCount} / {maxPlayers}
+              </span>
+              <span className="font-mono text-[11px] text-pb-muted">
+                {league.entryFee ? `$${league.entryFee}` : "Free"}
+              </span>
+            </div>
+            <div className="h-[3px] bg-pb-hairline rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  isFillingFast ? "bg-red-500" : "bg-pb-court"
+                )}
+                style={{ width: `${fillPercent}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        <Link
+          to={ctaLink}
+          className="w-full bg-pb-court text-white rounded-[6px] font-mono text-[12px] uppercase tracking-[0.06em] py-2.5 text-center transition-opacity hover:opacity-90"
+        >
+          {ctaLabel}
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -261,7 +231,7 @@ export default function Leagues() {
     <div className="space-y-6">
       {/* League Type */}
       <div className="space-y-3">
-        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+        <h3 className="font-mono text-[11px] uppercase tracking-[0.08em] text-pb-muted">
           League Type
         </h3>
         <div className="space-y-2">
@@ -281,15 +251,15 @@ export default function Leagues() {
                 className={cn(
                   "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                   leagueTypeFilter === val
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground group-hover:border-primary"
+                    ? "border-pb-court bg-pb-court"
+                    : "border-pb-hairline group-hover:border-pb-court"
                 )}
               >
                 {leagueTypeFilter === val && (
-                  <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-white rounded-full" />
                 )}
               </div>
-              <span className="text-sm font-medium">{label}</span>
+              <span className="font-mono text-[13px] text-pb-ink">{label}</span>
             </label>
           ))}
         </div>
@@ -297,7 +267,7 @@ export default function Leagues() {
 
       {/* Player Group */}
       <div className="space-y-3">
-        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+        <h3 className="font-mono text-[11px] uppercase tracking-[0.08em] text-pb-muted">
           Player Group
         </h3>
         <div className="space-y-2">
@@ -317,15 +287,15 @@ export default function Leagues() {
                 className={cn(
                   "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                   playerGroupFilter === val
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground group-hover:border-primary"
+                    ? "border-pb-court bg-pb-court"
+                    : "border-pb-hairline group-hover:border-pb-court"
                 )}
               >
                 {playerGroupFilter === val && (
-                  <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-white rounded-full" />
                 )}
               </div>
-              <span className="text-sm font-medium">{label}</span>
+              <span className="font-mono text-[13px] text-pb-ink">{label}</span>
             </label>
           ))}
         </div>
@@ -333,7 +303,7 @@ export default function Leagues() {
 
       {/* Status */}
       <div className="space-y-3">
-        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+        <h3 className="font-mono text-[11px] uppercase tracking-[0.08em] text-pb-muted">
           Status
         </h3>
         <div className="space-y-2">
@@ -352,15 +322,15 @@ export default function Leagues() {
                 className={cn(
                   "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
                   statusFilter === val
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground group-hover:border-primary"
+                    ? "border-pb-court bg-pb-court"
+                    : "border-pb-hairline group-hover:border-pb-court"
                 )}
               >
                 {statusFilter === val && (
-                  <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-white rounded-full" />
                 )}
               </div>
-              <span className="text-sm font-medium">{label}</span>
+              <span className="font-mono text-[13px] text-pb-ink">{label}</span>
             </label>
           ))}
         </div>
@@ -368,7 +338,7 @@ export default function Leagues() {
 
       {/* Entry Fee */}
       <div className="space-y-3">
-        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
+        <h3 className="font-mono text-[11px] uppercase tracking-[0.08em] text-pb-muted">
           Entry Fee
         </h3>
         <div className="space-y-2">
@@ -384,15 +354,15 @@ export default function Leagues() {
             >
               <div
                 className={cn(
-                  "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                  "w-4 h-4 rounded-[3px] border flex items-center justify-center transition-colors",
                   entryFeeFilter === val
-                    ? "border-primary bg-primary text-white"
-                    : "border-muted-foreground group-hover:border-primary text-transparent"
+                    ? "border-pb-court bg-pb-court text-white"
+                    : "border-pb-hairline group-hover:border-pb-court text-transparent"
                 )}
               >
                 <Check className="w-3 h-3" weight="bold" />
               </div>
-              <span className="text-sm font-medium">{label}</span>
+              <span className="font-mono text-[13px] text-pb-ink">{label}</span>
             </label>
           ))}
         </div>
@@ -410,70 +380,64 @@ export default function Leagues() {
   return (
     <Layout>
       <PullToRefresh onRefresh={() => queryClient.invalidateQueries({ queryKey: ['leagues'] })}>
-      <div className="min-h-screen bg-background pt-24 pb-12">
+      <div className="min-h-screen bg-pb-paper pt-24 pb-12">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h1 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tighter text-foreground">
+              <h1 className="font-display font-extrabold text-[40px] tracking-[-0.04em] text-pb-ink leading-none">
                 Find Leagues
               </h1>
               {isOrganizer && (
-                <Button
-                  asChild
-                  className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-6 shrink-0"
+                <Link
+                  to="/leagues/create"
+                  className="inline-flex items-center gap-2 bg-pb-court text-white rounded-[6px] font-mono text-[12px] uppercase tracking-[0.06em] px-5 h-10 shrink-0 hover:opacity-90 transition-opacity"
                 >
-                  <Link to="/leagues/create">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create League
-                  </Link>
-                </Button>
+                  <Plus className="w-4 h-4" />
+                  Create League
+                </Link>
               )}
             </div>
 
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative max-w-2xl">
-                <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <MagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-pb-muted" />
                 <Input
                   placeholder="Search by league name or location"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-14 text-base bg-card border-border rounded-xl shadow-sm"
+                  className="pl-10 h-11 bg-pb-surface border-pb-hairline font-mono text-[13px] rounded-[6px] focus-visible:ring-pb-court"
                 />
-                <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg font-display uppercase tracking-widest font-bold">
-                  Search
-                </Button>
               </div>
 
               {/* Mobile filter drawer trigger */}
               <div className="md:hidden">
                 <Drawer>
                   <DrawerTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full h-14 rounded-xl flex items-center gap-2 shadow-sm border-border bg-card text-foreground font-display uppercase font-bold tracking-wide"
-                    >
-                      <Funnel className="w-5 h-5" />
+                    <button className="w-full h-11 rounded-[6px] flex items-center justify-center gap-2 border border-pb-hairline bg-pb-surface font-mono text-[12px] uppercase tracking-[0.06em] text-pb-ink">
+                      <Funnel className="w-4 h-4" />
                       Filters{" "}
                       {activeFiltersCount > 0 && (
-                        <Badge className="ml-2 bg-primary">{activeFiltersCount}</Badge>
+                        <span className="ml-1 bg-pb-court text-white font-mono text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                          {activeFiltersCount}
+                        </span>
                       )}
-                    </Button>
+                    </button>
                   </DrawerTrigger>
-                  <DrawerContent className="px-4">
+                  <DrawerContent className="px-4 bg-pb-paper">
                     <DrawerHeader className="text-left px-0">
-                      <DrawerTitle className="font-display font-bold text-2xl uppercase tracking-tight">
+                      <DrawerTitle className="font-display font-bold text-[22px] tracking-[-0.03em] text-pb-ink">
                         Filters
                       </DrawerTitle>
                     </DrawerHeader>
                     <div className="overflow-y-auto max-h-[60vh] py-4">
                       <FilterOptions />
                     </div>
-                    <DrawerFooter className="px-0 pt-4 pb-8 border-t border-border">
+                    <DrawerFooter className="px-0 pt-4 pb-8 border-t border-pb-hairline">
                       <DrawerClose asChild>
-                        <Button className="w-full h-14 rounded-xl font-display uppercase tracking-widest font-bold">
+                        <button className="w-full h-11 bg-pb-court text-white rounded-[6px] font-mono text-[12px] uppercase tracking-[0.06em]">
                           Show Results
-                        </Button>
+                        </button>
                       </DrawerClose>
                     </DrawerFooter>
                   </DrawerContent>
@@ -484,15 +448,15 @@ export default function Leagues() {
 
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Desktop filter sidebar */}
-            <aside className="hidden md:block w-[280px] shrink-0 sticky top-28 bg-card p-6 rounded-2xl border border-border shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-display font-bold text-xl uppercase tracking-tight flex items-center gap-2">
-                  <Funnel className="w-5 h-5 text-primary" /> Filters
+            <aside className="hidden md:block w-[260px] shrink-0 sticky top-28 bg-pb-surface border border-pb-hairline rounded-[8px] p-5">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-mono text-[13px] uppercase tracking-[0.08em] text-pb-ink flex items-center gap-2">
+                  <Funnel className="w-4 h-4" /> Filters
                 </h2>
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={clearFilters}
-                    className="text-xs text-muted-foreground hover:text-primary font-bold uppercase tracking-wider transition-colors"
+                    className="font-mono text-[11px] text-pb-muted hover:text-pb-ink uppercase tracking-[0.06em] transition-colors"
                   >
                     Clear All
                   </button>
@@ -505,17 +469,17 @@ export default function Leagues() {
             <main className="flex-1 min-w-0 w-full">
               {/* Results header */}
               <div className="hidden md:flex items-center justify-between mb-6">
-                <div className="text-muted-foreground font-semibold text-sm uppercase tracking-wide">
+                <div className="font-mono text-[12px] text-pb-muted uppercase tracking-[0.06em]">
                   Showing {filteredLeagues.length} of {totalCount} results
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-display font-semibold tracking-wider text-muted-foreground uppercase">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] text-pb-muted uppercase tracking-[0.06em]">
                     Sort:
                   </span>
                   <select
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
-                    className="bg-card border border-border rounded-lg px-2 py-1.5 text-foreground text-sm font-bold uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:border-primary/50 transition-colors"
+                    className="bg-pb-surface border border-pb-hairline rounded-[6px] px-2 py-1.5 text-pb-ink font-mono text-[12px] focus:outline-none focus:ring-1 focus:ring-pb-court cursor-pointer"
                   >
                     <option value="newest">Newest</option>
                     <option value="popular">Most Popular</option>
@@ -526,23 +490,23 @@ export default function Leagues() {
               {isLoading ? (
                 <SkeletonGrid count={6} className="mt-4" />
               ) : error ? (
-                <div className="text-center py-20 bg-card rounded-2xl border border-border">
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
-                    <MagnifyingGlass className="w-8 h-8 text-destructive" />
+                <div className="text-center py-20 bg-pb-surface border border-pb-hairline rounded-[8px]">
+                  <div className="w-14 h-14 mx-auto rounded-[8px] bg-red-500/10 flex items-center justify-center mb-4">
+                    <MagnifyingGlass className="w-7 h-7 text-red-500" />
                   </div>
-                  <h3 className="text-xl font-display font-bold uppercase tracking-tight mb-2">
+                  <h3 className="font-display font-bold text-[18px] tracking-[-0.02em] text-pb-ink mb-2">
                     Error loading leagues
                   </h3>
-                  <Button
+                  <button
                     onClick={() => window.location.reload()}
-                    className="mt-4 rounded-xl font-display font-bold uppercase tracking-widest"
+                    className="mt-4 bg-pb-court text-white rounded-[6px] font-mono text-[12px] uppercase tracking-[0.06em] px-5 h-10 hover:opacity-90 transition-opacity"
                   >
                     Retry
-                  </Button>
+                  </button>
                 </div>
               ) : filteredLeagues.length > 0 ? (
                 <div className="space-y-10">
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredLeagues.map((league: any, index: number) => (
                       <div
                         key={league._id}
@@ -556,23 +520,21 @@ export default function Leagues() {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 pt-8 border-t border-border">
-                      <Button
-                        variant="outline"
-                        size="icon"
+                    <div className="flex items-center justify-center gap-1.5 pt-8 border-t border-pb-hairline">
+                      <button
                         onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                         disabled={currentPage === 1}
-                        className="w-10 h-10 rounded-xl"
+                        className="w-9 h-9 flex items-center justify-center rounded-[6px] border border-pb-hairline font-mono text-[13px] text-pb-muted disabled:opacity-40 hover:border-pb-rule transition-colors"
                       >
-                        <CaretLeft className="w-5 h-5" />
-                      </Button>
+                        <CaretLeft className="w-4 h-4" />
+                      </button>
 
-                      <div className="flex items-center gap-1 mx-2">
+                      <div className="flex items-center gap-1">
                         {pageNumbers.map((page, i) =>
                           page === "..." ? (
                             <span
                               key={`ellipsis-${i}`}
-                              className="w-10 h-10 flex items-center justify-center text-muted-foreground text-sm select-none"
+                              className="w-9 h-9 flex items-center justify-center font-mono text-[13px] text-pb-muted"
                             >
                               …
                             </span>
@@ -581,10 +543,10 @@ export default function Leagues() {
                               key={page}
                               onClick={() => setCurrentPage(page as number)}
                               className={cn(
-                                "w-10 h-10 rounded-xl font-display font-bold text-sm transition-colors",
+                                "w-9 h-9 rounded-[6px] font-mono text-[13px] transition-colors",
                                 currentPage === page
-                                  ? "bg-primary text-primary-foreground"
-                                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                  ? "bg-pb-court text-white"
+                                  : "text-pb-muted hover:text-pb-ink hover:bg-pb-surface2"
                               )}
                             >
                               {page}
@@ -593,52 +555,44 @@ export default function Leagues() {
                         )}
                       </div>
 
-                      <Button
-                        variant="outline"
-                        size="icon"
+                      <button
                         onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="w-10 h-10 rounded-xl"
+                        className="w-9 h-9 flex items-center justify-center rounded-[6px] border border-pb-hairline font-mono text-[13px] text-pb-muted disabled:opacity-40 hover:border-pb-rule transition-colors"
                       >
-                        <CaretRight className="w-5 h-5" />
-                      </Button>
+                        <CaretRight className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-32 bg-card rounded-2xl border border-border shadow-sm">
-                  <div className="w-24 h-24 mx-auto mb-6 relative">
-                    <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
-                    <div className="absolute inset-2 rounded-full bg-primary/5 flex items-center justify-center">
-                      <Trophy className="w-10 h-10 text-primary/60" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary/40" />
-                    <div className="absolute -bottom-1 -left-1 w-2 h-2 rounded-full bg-primary/30" />
+                <div className="text-center py-24 bg-pb-surface border border-pb-hairline rounded-[8px]">
+                  <div className="w-16 h-16 mx-auto mb-5 rounded-[8px] bg-pb-surface2 flex items-center justify-center">
+                    <Trophy className="w-8 h-8 text-pb-muted" />
                   </div>
-                  <h3 className="text-2xl font-display font-black uppercase tracking-tight mb-2">
+                  <h3 className="font-display font-bold text-[22px] tracking-[-0.03em] text-pb-ink mb-2">
                     No leagues found
                   </h3>
-                  <p className="text-muted-foreground max-w-md mx-auto mb-8 font-medium">
+                  <p className="font-mono text-[13px] text-pb-muted max-w-md mx-auto mb-8">
                     Try adjusting your search or filters, or create your own league.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button
-                      variant="outline"
-                      className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-8"
+                    <button
                       onClick={() => {
                         setSearchQuery("");
                         clearFilters();
                       }}
+                      className="border border-pb-hairline rounded-[6px] font-mono text-[12px] uppercase tracking-[0.06em] text-pb-ink h-10 px-6 hover:bg-pb-surface2 transition-colors"
                     >
                       Clear Filters
-                    </Button>
+                    </button>
                     {isOrganizer && (
-                      <Button
-                        className="font-display font-bold uppercase tracking-widest rounded-xl h-12 px-8"
-                        asChild
+                      <Link
+                        to="/leagues/create"
+                        className="bg-pb-court text-white rounded-[6px] font-mono text-[12px] uppercase tracking-[0.06em] h-10 px-6 flex items-center justify-center hover:opacity-90 transition-opacity"
                       >
-                        <Link to="/leagues/create">Create a League</Link>
-                      </Button>
+                        Create a League
+                      </Link>
                     )}
                   </div>
                 </div>

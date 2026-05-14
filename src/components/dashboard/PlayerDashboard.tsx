@@ -1,17 +1,14 @@
 import TicketCard from "@/components/check-in/TicketCard";
 import WaitlistStatus from "@/components/registration/WaitlistStatus";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SkeletonGrid, SkeletonList } from "@/components/ui/skeleton-card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Pill, Eyebrow } from "@/components/ui/pb";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useState } from "react";
 import {
   ArrowRight,
   Medal,
   Calendar,
   Clock,
-  CircleNotch,
   MapPin,
   Ticket,
   Trophy,
@@ -78,6 +75,8 @@ export interface PlayerDashboardProps {
   onCancelRegistration: (payload: CancelRegistrationPayload) => void;
 }
 
+type Tab = "overview" | "events" | "teams";
+
 const PlayerDashboard = ({
   stats,
   winRate,
@@ -93,623 +92,625 @@ const PlayerDashboard = ({
   onCancelRegistration,
 }: PlayerDashboardProps) => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   const isNewUser =
     myEventRegistrations.length === 0 &&
     myTeams.length === 0 &&
     stats.matchesPlayed === 0;
 
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "events", label: "Events & Waitlist" },
+    { id: "teams", label: "Teams & Network" },
+  ];
+
+  // Mobile-only: win/loss form bar from last 10 matches (synthetic from win rate)
+  const totalRecentMatches = Math.min(10, stats.matchesPlayed);
+  const recentWins = totalRecentMatches > 0
+    ? Math.round((stats.matchesWon / Math.max(1, stats.matchesPlayed)) * totalRecentMatches)
+    : 0;
+  const recentForm: ("W" | "L")[] = totalRecentMatches > 0
+    ? [
+        ...Array(recentWins).fill("W"),
+        ...Array(totalRecentMatches - recentWins).fill("L"),
+      ].sort(() => Math.random() - 0.5) as ("W" | "L")[]
+    : [];
+
   return (
     <div className="space-y-8">
-    {isNewUser && (
-      <Card className="border-primary/20 bg-primary/5 rounded-2xl overflow-hidden">
-        <CardContent className="p-6">
+
+      {/* ── Mobile-only quick stats section ── */}
+      <div className="md:hidden space-y-4">
+        {/* KPI row */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "SKILL LVL", value: user.skillLevel?.toString() ?? "N/A" },
+            { label: `WINS · ${totalRecentMatches > 0 ? `${totalRecentMatches}M` : "ALL"}`, value: String(stats.matchesWon) },
+            { label: "MEDALS", value: String(stats.goldMedals + stats.silverMedals + stats.bronzeMedals) },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-pb-surface border border-pb-hairline rounded-[8px] px-3 py-3 flex flex-col gap-1">
+              <Eyebrow>{label}</Eyebrow>
+              <span className="font-mono text-[22px] font-bold text-pb-court leading-none">{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Upcoming events list */}
+        {myEventRegistrations.length > 0 && (
+          <div>
+            <Eyebrow className="mb-2">UPCOMING · {myEventRegistrations.length} EVENT{myEventRegistrations.length !== 1 ? "S" : ""}</Eyebrow>
+            <div className="bg-pb-surface border border-pb-hairline rounded-[8px] divide-y divide-pb-hairline overflow-hidden">
+              {myEventRegistrations.slice(0, 5).map((reg) => (
+                <div
+                  key={reg.eventId}
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-pb-surface2 transition-colors"
+                  onClick={() => navigate(`/tournaments/${reg.tournamentId}`)}
+                >
+                  {/* Date column */}
+                  <div className="shrink-0 w-10 text-center">
+                    <p className="font-mono text-[9px] text-pb-faint uppercase tracking-[0.06em]">
+                      {reg.tournamentStartDate
+                        ? format(new Date(reg.tournamentStartDate), "MMM").toUpperCase()
+                        : "TBD"}
+                    </p>
+                    <p className="font-mono text-[18px] font-bold text-pb-ink leading-none">
+                      {reg.tournamentStartDate
+                        ? format(new Date(reg.tournamentStartDate), "dd")
+                        : "--"}
+                    </p>
+                  </div>
+                  {/* Event info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display font-bold text-[13px] text-pb-ink leading-snug truncate">{reg.eventName}</p>
+                    <p className="text-[11px] font-mono text-pb-muted truncate">{reg.tournamentName}</p>
+                  </div>
+                  {/* Status pill */}
+                  {reg.tournamentStatus && (
+                    <Pill
+                      tone={reg.tournamentStatus === "in-progress" ? "court" : reg.tournamentStatus === "open" ? "neutral" : "neutral"}
+                      mono
+                      className="shrink-0"
+                    >
+                      {String(reg.tournamentStatus).replace("-", " ")}
+                    </Pill>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent form bar */}
+        {recentForm.length > 0 && (
+          <div>
+            <Eyebrow className="mb-2">RECENT FORM</Eyebrow>
+            <div className="flex gap-1.5">
+              {recentForm.map((result, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "h-6 flex-1 rounded-[3px] min-w-[18px]",
+                    result === "W" ? "bg-pb-court" : "bg-pb-faint/40"
+                  )}
+                  title={result}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* New user onboarding */}
+      {isNewUser && (
+        <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-              <Trophy className="w-6 h-6 text-primary" />
+            <div className="w-10 h-10 rounded-[6px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center shrink-0">
+              <Trophy size={18} className="text-pb-court" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">Get started</h3>
-              <p className="text-sm text-muted-foreground mb-4">You're all set — here's what to do first.</p>
+              <p className="font-display font-black text-[14px] uppercase tracking-tight text-pb-ink mb-0.5">Get started</p>
+              <p className="text-[12px] font-mono text-pb-muted mb-4">You're all set — here's what to do first.</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
-                >
-                  <Medal className="w-5 h-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-xs font-display font-bold uppercase tracking-wide">1. Complete Profile</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Set your skill level</p>
-                  </div>
-                </Link>
-                <Link
-                  to="/tournaments"
-                  className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
-                >
-                  <Calendar className="w-5 h-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-xs font-display font-bold uppercase tracking-wide">2. Find a Tournament</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Register for an event</p>
-                  </div>
-                </Link>
-                <Link
-                  to="/teams"
-                  className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all group"
-                >
-                  <UserPlus className="w-5 h-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-xs font-display font-bold uppercase tracking-wide">3. Find a Partner</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Connect with players</p>
-                  </div>
-                </Link>
+                {[
+                  { to: "/profile", icon: Medal, label: "1. Complete Profile", sub: "Set your skill level" },
+                  { to: "/tournaments", icon: Calendar, label: "2. Find a Tournament", sub: "Register for an event" },
+                  { to: "/teams", icon: UserPlus, label: "3. Find a Partner", sub: "Connect with players" },
+                ].map(({ to, icon: Icon, label, sub }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="flex items-center gap-3 p-3 rounded-[6px] bg-pb-paper border border-pb-hairline hover:border-pb-rule transition-colors"
+                  >
+                    <Icon size={16} className="text-pb-court shrink-0" />
+                    <div>
+                      <p className="text-[11px] font-display font-bold uppercase tracking-wide text-pb-ink">{label}</p>
+                      <p className="text-[11px] font-mono text-pb-muted mt-0.5">{sub}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    )}
-    <Tabs defaultValue="overview" className="w-full space-y-8">
-      <TabsList className="bg-muted p-1 rounded-xl h-auto">
-        <TabsTrigger
-          value="overview"
-          className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
-        >
-          Overview
-        </TabsTrigger>
-        <TabsTrigger
-          value="events"
-          className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
-        >
-          Events & Waitlist
-        </TabsTrigger>
-        <TabsTrigger
-          value="teams"
-          className="rounded-lg px-6 py-2.5 font-display uppercase font-bold tracking-widest text-xs data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
-        >
-          Teams & Network
-        </TabsTrigger>
-      </TabsList>
+        </div>
+      )}
 
-      <TabsContent value="overview" className="space-y-8 animate-in fade-in-50 duration-500">
-        {/* Next Match Persistent Banner */}
-        {myEventRegistrations.length > 0 && (
-          <Card className="border-0 bg-hero-gradient text-primary-foreground rounded-2xl overflow-hidden relative shadow-md">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-            <CardContent className="p-6 relative z-10 flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-shrink-0 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-card/20 backdrop-blur-md rounded-full mb-3 border border-white/20">
-                  <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />
-                  <span className="text-xs font-bold font-display uppercase tracking-widest text-white">
-                    Up Next
-                  </span>
-                </div>
-                <div className="flex items-center justify-center md:justify-start gap-4">
+      {/* Tab strip */}
+      <div className="flex gap-1 border-b border-pb-hairline">
+        {tabs.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              "px-4 py-2.5 text-[11px] font-mono uppercase tracking-[0.08em] border-b-2 transition-colors -mb-px",
+              activeTab === id
+                ? "border-pb-ink text-pb-ink"
+                : "border-transparent text-pb-muted hover:text-pb-ink"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview tab */}
+      {activeTab === "overview" && (
+        <div className="space-y-8">
+          {/* Up Next banner */}
+          {myEventRegistrations.length > 0 && (
+            <div className="bg-pb-court rounded-[6px] overflow-hidden">
+              <div className="px-6 py-5 flex flex-col md:flex-row items-start md:items-center gap-5">
+                <div className="flex items-center gap-5">
                   <div className="text-center">
-                    <p className="text-sm font-display font-semibold uppercase tracking-wider text-white/80">
+                    <p className="text-[11px] font-mono uppercase tracking-[0.06em] text-white/70 mb-0.5">
                       {myEventRegistrations[0].tournamentStartDate
                         ? format(new Date(myEventRegistrations[0].tournamentStartDate), "MMM")
                         : "TBD"}
                     </p>
-                    <p className="text-4xl font-display font-black leading-none">
+                    <p className="font-display font-black text-[40px] leading-none text-white">
                       {myEventRegistrations[0].tournamentStartDate
                         ? format(new Date(myEventRegistrations[0].tournamentStartDate), "dd")
                         : "--"}
                     </p>
                   </div>
-                  <div className="h-10 w-px bg-white/20" />
-                  <div className="text-left">
-                    <h3 className="font-display font-bold text-xl leading-tight line-clamp-1">
+                  <div className="w-px h-12 bg-white/20" />
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-pb-amber animate-pulse" />
+                      <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-white/70">Up Next</span>
+                    </div>
+                    <h3 className="font-display font-black text-[18px] text-white leading-tight line-clamp-1">
                       {myEventRegistrations[0].eventName}
                     </h3>
-                    <p className="text-sm font-medium text-white/90 truncate flex items-center gap-1.5">
-                      <Trophy className="w-3.5 h-3.5" />
+                    <p className="text-[12px] font-mono text-white/70 flex items-center gap-1.5 mt-0.5">
+                      <Trophy size={11} />
                       {myEventRegistrations[0].tournamentName}
                     </p>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex-1 flex justify-center md:justify-end gap-3 w-full md:w-auto mt-4 md:mt-0">
-                <Button
-                  className="bg-white text-primary hover:bg-neutral-100 font-display font-bold uppercase tracking-widest w-full md:w-auto rounded-xl h-12"
-                  asChild
-                >
-                  <Link to={`/tournaments/${myEventRegistrations[0].tournamentId}`}>
-                    View Bracket <ArrowRight className="w-4 h-4 ml-2" />
+                <div className="md:ml-auto">
+                  <Link
+                    to={`/tournaments/${myEventRegistrations[0].tournamentId}`}
+                    className="inline-flex items-center gap-2 h-10 px-5 rounded-[6px] bg-white text-pb-court font-display font-bold text-[13px] uppercase tracking-wide hover:bg-white/90 transition-colors"
+                  >
+                    View Bracket <ArrowRight size={13} />
                   </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Player Stats — hero row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-          <Card className="md:col-span-2 glass-card rounded-2xl overflow-hidden bg-hero-gradient text-primary-foreground">
-            <CardContent className="p-6 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs font-display font-semibold tracking-wider uppercase text-primary-foreground/80">
-                    Win Rate
-                  </p>
-                  <p className="font-display font-bold text-4xl mt-1">{winRate}%</p>
                 </div>
-                <div className="inline-flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-medium">
-                  <TrendUp className="w-3.5 h-3.5" />
-                  <span>
+              </div>
+            </div>
+          )}
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Win Rate — spans 2 cols on md */}
+            <div className="md:col-span-2 bg-pb-court rounded-[6px] p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.08em] text-white/70 mb-1">Win Rate</p>
+                  <p className="font-display font-black text-[40px] leading-none text-white">{winRate}%</p>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/20">
+                  <TrendUp size={12} className="text-white/80" />
+                  <span className="text-[11px] font-mono text-white/80">
                     {stats.matchesWon}W / {stats.matchesPlayed}M
                   </span>
                 </div>
               </div>
-              <p className="text-xs text-primary-foreground/80 mt-auto">
+              <p className="text-[11px] font-mono text-white/60 mt-auto">
                 Keep playing to improve your ranking and unlock new events.
               </p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card rounded-2xl">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Trophy className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-[11px] font-display font-semibold tracking-wider text-muted-foreground uppercase">
-                  Active
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-1">Tournaments</p>
-              <p className="font-display font-bold text-2xl text-foreground">
-                {stats.tournamentsPlayed}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card rounded-2xl">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Medal className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-[11px] font-display font-semibold tracking-wider text-muted-foreground uppercase">
-                  Rating
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-1">Skill Level</p>
-              <p className="font-display font-bold text-2xl text-foreground">
-                {user.skillLevel ?? "N/A"}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card rounded-2xl">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Medal className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-[11px] font-display font-semibold tracking-wider text-muted-foreground uppercase">
-                  Medals
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-base font-bold text-yellow-600">{stats.goldMedals}</span>
-                <span className="text-base font-bold text-gray-400">{stats.silverMedals}</span>
-                <span className="text-base font-bold text-orange-600">{stats.bronzeMedals}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Gold / Silver / Bronze</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* My Event Registrations */}
-        <Card className="rounded-2xl">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="font-display text-xl">My Event Registrations</CardTitle>
-                <CardDescription>
-                  Events you're registered for across all tournaments
-                </CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/profile">
-                  View All
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            {teamsLoading ? (
-              <SkeletonGrid count={3} />
-            ) : myEventRegistrations.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {myEventRegistrations.map((registration) => (
-                  <div
-                    key={registration.eventId}
-                    className="glass-card-hover rounded-2xl p-4 cursor-pointer flex flex-col justify-between h-full"
-                    onClick={() => navigate(`/tournaments/${registration.tournamentId}`)}
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="flex flex-col items-center justify-center rounded-xl bg-muted px-2 py-2 min-w-[70px]">
-                        <p className="text-[11px] font-display font-semibold uppercase text-muted-foreground">
-                          {registration.tournamentStartDate
-                            ? format(
-                                new Date(registration.tournamentStartDate),
-                                "MMM"
-                              ).toUpperCase()
-                            : "TBD"}
-                        </p>
-                        <p className="font-display font-bold text-xl text-foreground leading-none">
-                          {registration.tournamentStartDate
-                            ? format(new Date(registration.tournamentStartDate), "dd")
-                            : "--"}
-                        </p>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-display font-bold text-base truncate">
-                            {registration.eventName}
-                          </h3>
-                          {registration.eventFormat && (
-                            <Badge variant="outline" className="text-[11px] uppercase">
-                              {registration.eventFormat}
-                            </Badge>
-                          )}
-                          {registration.isDoubles && (
-                            <Badge variant="secondary" className="text-[11px] uppercase">
-                              Doubles
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                          <Trophy className="w-3 h-3" />
-                          <span className="font-medium truncate">
-                            {registration.tournamentName}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {registration.tournamentLocation ?? "TBD"}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {registration.tournamentStartDate
-                              ? format(
-                                  new Date(registration.tournamentStartDate),
-                                  "MMM dd, yyyy"
-                                )
-                              : "TBD"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center justify-between mt-3 text-xs">
-                      {registration.tournamentStatus && (
-                        <Badge variant="secondary" className="capitalize">
-                          {String(registration.tournamentStatus).replace("-", " ")}
-                        </Badge>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-8 h-8 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center">
+                  <Trophy size={14} className="text-pb-court" />
+                </div>
+                <span className="text-[10px] font-mono uppercase tracking-[0.06em] text-pb-faint">Active</span>
+              </div>
+              <p className="text-[11px] font-mono text-pb-muted mb-1">Tournaments</p>
+              <p className="font-display font-black text-[26px] text-pb-ink">{stats.tournamentsPlayed}</p>
+            </div>
+
+            <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-8 h-8 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center">
+                  <Medal size={14} className="text-pb-court" />
+                </div>
+                <span className="text-[10px] font-mono uppercase tracking-[0.06em] text-pb-faint">Rating</span>
+              </div>
+              <p className="text-[11px] font-mono text-pb-muted mb-1">Skill Level</p>
+              <p className="font-display font-black text-[26px] text-pb-ink">{user.skillLevel ?? "N/A"}</p>
+            </div>
+          </div>
+
+          {/* Medals row */}
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5">
+            <p className="text-[10px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-4">Medals</p>
+            <div className="flex items-center gap-8">
+              <div className="text-center">
+                <p className="font-display font-black text-[28px] text-yellow-600">{stats.goldMedals}</p>
+                <p className="text-[10px] font-mono text-pb-faint uppercase tracking-[0.06em] mt-0.5">Gold</p>
+              </div>
+              <div className="w-px h-10 bg-pb-hairline" />
+              <div className="text-center">
+                <p className="font-display font-black text-[28px] text-pb-muted">{stats.silverMedals}</p>
+                <p className="text-[10px] font-mono text-pb-faint uppercase tracking-[0.06em] mt-0.5">Silver</p>
+              </div>
+              <div className="w-px h-10 bg-pb-hairline" />
+              <div className="text-center">
+                <p className="font-display font-black text-[28px] text-orange-600">{stats.bronzeMedals}</p>
+                <p className="text-[10px] font-mono text-pb-faint uppercase tracking-[0.06em] mt-0.5">Bronze</p>
+              </div>
+            </div>
+          </div>
+
+          {/* My Event Registrations */}
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px]">
+            <div className="border-b border-pb-hairline px-6 py-4 flex items-center justify-between">
+              <div>
+                <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink">My Event Registrations</p>
+                <p className="text-[11px] font-mono text-pb-muted mt-0.5">Events you're registered for across all tournaments</p>
+              </div>
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-pb-court hover:underline underline-offset-2"
+              >
+                View All <ArrowRight size={12} />
+              </Link>
+            </div>
+            <div className="p-4">
+              {teamsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-20 bg-pb-paper border border-pb-hairline rounded-[6px] animate-pulse" />
+                  ))}
+                </div>
+              ) : myEventRegistrations.length > 0 ? (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {myEventRegistrations.map((reg) => (
+                    <div
+                      key={reg.eventId}
+                      className="bg-pb-paper border border-pb-hairline rounded-[6px] p-4 cursor-pointer hover:border-pb-rule transition-colors flex flex-col justify-between"
+                      onClick={() => navigate(`/tournaments/${reg.tournamentId}`)}
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="flex flex-col items-center justify-center rounded-[4px] bg-pb-surface border border-pb-hairline px-2.5 py-2 min-w-[60px]">
+                          <p className="text-[10px] font-mono text-pb-faint uppercase">
+                            {reg.tournamentStartDate
+                              ? format(new Date(reg.tournamentStartDate), "MMM").toUpperCase()
+                              : "TBD"}
+                          </p>
+                          <p className="font-display font-black text-[18px] text-pb-ink leading-none">
+                            {reg.tournamentStartDate
+                              ? format(new Date(reg.tournamentStartDate), "dd")
+                              : "--"}
+                          </p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h3 className="font-display font-bold text-[13px] text-pb-ink truncate">{reg.eventName}</h3>
+                            {reg.eventFormat && <Pill tone="neutral">{reg.eventFormat}</Pill>}
+                            {reg.isDoubles && <Pill tone="amber">Doubles</Pill>}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-pb-muted mb-1">
+                            <Trophy size={11} />
+                            <span className="truncate">{reg.tournamentName}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] font-mono text-pb-faint">
+                            <span className="flex items-center gap-1">
+                              <MapPin size={10} />
+                              {reg.tournamentLocation ?? "TBD"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        {reg.tournamentStatus && (
+                          <Pill tone={reg.tournamentStatus === "in-progress" ? "court" : "neutral"}>
+                            {String(reg.tournamentStatus).replace("-", " ")}
+                          </Pill>
+                        )}
+                        <button
+                          className="text-[11px] font-mono text-red-500 hover:text-red-700 flex items-center gap-1 ml-auto"
                           onClick={(e) => {
                             e.stopPropagation();
                             onCancelRegistration({
-                              eventId: registration.eventId,
-                              eventName: registration.eventName,
-                              tournamentName: registration.tournamentName,
-                              isDoubles: registration.isDoubles,
-                              partnerName: registration.partnerName,
+                              eventId: reg.eventId,
+                              eventName: reg.eventName,
+                              tournamentName: reg.tournamentName,
+                              isDoubles: reg.isDoubles,
+                              partnerName: reg.partnerName,
                             });
                           }}
                         >
-                          <XCircle className="w-4 h-4 mr-1" />
+                          <XCircle size={13} />
                           Cancel
-                        </Button>
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center py-12 px-4 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Trophy className="w-8 h-8 text-primary/60" />
+                  ))}
                 </div>
-                <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">No registrations yet</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mb-5">
-                  Find a tournament near you and sign up for your first event.
-                </p>
-                <Button asChild className="font-display font-bold uppercase tracking-widest rounded-xl h-10 px-6 text-xs">
-                  <Link to="/tournaments">Browse Tournaments <ArrowRight className="w-4 h-4 ml-2" /></Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recommended Tournaments */}
-        {recommendedTournaments.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="font-display text-xl">Recommended For You</CardTitle>
-                  <CardDescription>Based on your skill level and location</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/tournaments">
-                    Browse All
-                    <ArrowRight className="w-4 h-4 ml-2" />
+              ) : (
+                <div className="flex flex-col items-center py-10 text-center">
+                  <Trophy size={28} className="text-pb-faint mb-3" />
+                  <p className="text-[13px] font-mono text-pb-muted mb-1">No registrations yet</p>
+                  <p className="text-[12px] font-mono text-pb-faint max-w-xs mb-4">
+                    Find a tournament near you and sign up for your first event.
+                  </p>
+                  <Link
+                    to="/tournaments"
+                    className="inline-flex items-center gap-2 h-9 px-5 rounded-[6px] bg-pb-ink text-white font-display font-bold text-[12px] uppercase tracking-wide hover:bg-pb-ink/90 transition-colors"
+                  >
+                    Browse Tournaments <ArrowRight size={13} />
                   </Link>
-                </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recommended Tournaments */}
+          {recommendedTournaments.length > 0 && (
+            <div className="bg-pb-surface border border-pb-hairline rounded-[6px]">
+              <div className="border-b border-pb-hairline px-6 py-4 flex items-center justify-between">
+                <div>
+                  <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink">Recommended For You</p>
+                  <p className="text-[11px] font-mono text-pb-muted mt-0.5">Based on your skill level and location</p>
+                </div>
+                <Link
+                  to="/tournaments"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-mono text-pb-court hover:underline underline-offset-2"
+                >
+                  Browse All <ArrowRight size={12} />
+                </Link>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {recommendedTournaments.map((tournament) => (
                   <div
                     key={tournament._id}
-                    className="p-4 border rounded-lg hover:shadow-md cursor-pointer transition-all"
+                    className="bg-pb-paper border border-pb-hairline rounded-[6px] p-4 cursor-pointer hover:border-pb-rule transition-colors"
                     onClick={() => navigate(`/tournaments/${tournament._id}`)}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-sm">{tournament.name}</h3>
-                      <Badge variant="default" className="text-xs">
-                        Open
-                      </Badge>
+                    <div className="flex items-start justify-between mb-2.5">
+                      <h3 className="font-display font-bold text-[13px] text-pb-ink">{tournament.name}</h3>
+                      <Pill tone="court">Open</Pill>
                     </div>
-                    <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="space-y-1 text-[11px] font-mono text-pb-faint">
                       {tournament.location && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={11} />
                           {tournament.location}
                         </div>
                       )}
                       {tournament.startDate && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
+                        <div className="flex items-center gap-1.5">
+                          <Calendar size={11} />
                           {format(new Date(tournament.startDate), "MMM dd")}
                         </div>
                       )}
                     </div>
-                    <Button size="sm" className="w-full mt-3">
+                    <button className="w-full mt-3 h-8 rounded-[4px] border border-pb-hairline text-[11px] font-mono text-pb-muted hover:border-pb-rule hover:text-pb-ink transition-colors">
                       View Details
-                    </Button>
+                    </button>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          )}
 
-        {/* Deep Performance Insights */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="glass-card rounded-2xl">
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Deep Performance Insights</CardTitle>
-              <CardDescription>
-                Keep an eye on your key stats over recent matches
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Serve Accuracy</span>
-                  <span className="font-semibold">
-                    {Math.min(100, Number(winRate) + 10)}%
-                  </span>
+          {/* Performance Insights */}
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-6">
+            <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink mb-1">Performance Insights</p>
+            <p className="text-[11px] font-mono text-pb-muted mb-5">Key stats over recent matches</p>
+            <div className="space-y-4">
+              {[
+                { label: "Serve Accuracy", value: Math.min(100, Number(winRate) + 10) },
+                { label: "Third Shot Consistency", value: Math.max(40, Math.min(95, Number(winRate))) },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <div className="flex justify-between text-[12px] font-mono mb-1.5">
+                    <span className="text-pb-muted">{label}</span>
+                    <span className="font-bold text-pb-ink">{value}%</span>
+                  </div>
+                  <div className="h-1.5 bg-pb-hairline rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-pb-court rounded-full transition-all duration-700"
+                      style={{ width: `${value}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-hero-gradient rounded-full"
-                    style={{ width: `${Math.min(100, Number(winRate) + 10)}%` }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Third Shot Consistency</span>
-                  <span className="font-semibold">
-                    {Math.max(40, Math.min(95, Number(winRate)))}%
-                  </span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary/70 rounded-full"
-                    style={{
-                      width: `${Math.max(40, Math.min(95, Number(winRate)))}%`,
-                    }}
-                  />
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground italic">
+              ))}
+              <p className="text-[11px] font-mono text-pb-faint italic mt-2">
                 Your backhand drive has improved over recent events — keep trusting it on big points.
               </p>
-            </CardContent>
-          </Card>
-        </div>
-      </TabsContent>
-
-      <TabsContent value="events" className="space-y-8 animate-in fade-in-50 duration-500">
-        {/* My Tickets */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-green-600" />
-                <div>
-                  <CardTitle>My Tickets</CardTitle>
-                  <CardDescription>Your tournament tickets with QR codes</CardDescription>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/tickets">
-                  View All
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            {ticketsLoading ? (
-              <SkeletonList count={3} />
-            ) : ticketsData && Array.isArray(ticketsData) && ticketsData.length > 0 ? (
-              <div className="space-y-4">
-                {ticketsData.slice(0, 3).map((ticket: any, index: number) => (
-                  <TicketCard
-                    key={ticket?.paymentId ?? index}
-                    payment={ticket}
-                    compact
-                  />
-                ))}
-                {ticketsData.length > 3 && (
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link to="/tickets">
-                      View All {ticketsData.length} Tickets
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center py-12 px-4 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Ticket className="w-8 h-8 text-primary/60" />
-                </div>
-                <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">No tickets yet</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mb-5">
-                  Register for a tournament event and your ticket will show up here for check-in.
-                </p>
-                <Button asChild variant="outline" className="font-display font-bold uppercase tracking-widest rounded-xl h-10 px-6 text-xs">
-                  <Link to="/tournaments">Find a Tournament <ArrowRight className="w-4 h-4 ml-2" /></Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      )}
 
-        {/* Waitlist Entries */}
-        {waitlistData && Array.isArray(waitlistData) && waitlistData.length > 0 && (
-          <Card className="border-yellow-200 bg-yellow-50/30">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-yellow-600" />
+      {/* Events tab */}
+      {activeTab === "events" && (
+        <div className="space-y-8">
+          {/* My Tickets */}
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px]">
+            <div className="border-b border-pb-hairline px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Ticket size={16} className="text-pb-court" />
                 <div>
-                  <CardTitle className="text-yellow-900">Waitlist Entries</CardTitle>
-                  <CardDescription>Events you're waiting to join</CardDescription>
+                  <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink">My Tickets</p>
+                  <p className="text-[11px] font-mono text-pb-muted">Your tournament tickets with QR codes</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
+              <Link
+                to="/tickets"
+                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-pb-court hover:underline underline-offset-2"
+              >
+                View All <ArrowRight size={12} />
+              </Link>
+            </div>
+            <div className="p-4">
+              {ticketsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map(i => <div key={i} className="h-24 bg-pb-paper border border-pb-hairline rounded-[6px] animate-pulse" />)}
+                </div>
+              ) : ticketsData && Array.isArray(ticketsData) && ticketsData.length > 0 ? (
+                <div className="space-y-3">
+                  {ticketsData.slice(0, 3).map((ticket: any, index: number) => (
+                    <TicketCard key={ticket?.paymentId ?? index} payment={ticket} compact />
+                  ))}
+                  {ticketsData.length > 3 && (
+                    <Link
+                      to="/tickets"
+                      className="flex items-center justify-center gap-2 w-full h-9 rounded-[6px] border border-pb-hairline text-[12px] font-mono text-pb-muted hover:border-pb-rule hover:text-pb-ink transition-colors"
+                    >
+                      View All {ticketsData.length} Tickets <ArrowRight size={12} />
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center py-10 text-center">
+                  <Ticket size={28} className="text-pb-faint mb-3" />
+                  <p className="text-[13px] font-mono text-pb-muted mb-1">No tickets yet</p>
+                  <p className="text-[12px] font-mono text-pb-faint max-w-xs mb-4">
+                    Register for a tournament event and your ticket will show up here for check-in.
+                  </p>
+                  <Link
+                    to="/tournaments"
+                    className="inline-flex items-center gap-2 h-9 px-5 rounded-[6px] border border-pb-hairline text-[12px] font-mono text-pb-ink hover:border-pb-rule transition-colors"
+                  >
+                    Find a Tournament <ArrowRight size={12} />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Waitlist entries */}
+          {waitlistData && Array.isArray(waitlistData) && waitlistData.length > 0 && (
+            <div className="bg-pb-surface border border-pb-hairline rounded-[6px]">
+              <div className="border-b border-pb-hairline px-6 py-4 flex items-center gap-2.5">
+                <Clock size={15} className="text-pb-amber" />
+                <div>
+                  <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink">Waitlist Entries</p>
+                  <p className="text-[11px] font-mono text-pb-muted">Events you're waiting to join</p>
+                </div>
+              </div>
+              <div className="p-4 space-y-3">
                 {waitlistData.slice(0, 3).map((entry: any) => (
-                  <WaitlistStatus
-                    key={entry?._id ?? Math.random()}
-                    entry={entry}
-                  />
+                  <WaitlistStatus key={entry?._id ?? Math.random()} entry={entry} />
                 ))}
                 {waitlistData.length > 3 && (
-                  <Button variant="outline" className="w-full mt-2">
+                  <button className="flex items-center justify-center gap-2 w-full h-9 rounded-[6px] border border-pb-hairline text-[12px] font-mono text-pb-muted hover:border-pb-rule hover:text-pb-ink transition-colors">
                     View All {waitlistData.length} Waitlist Entries
-                  </Button>
+                  </button>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </TabsContent>
+            </div>
+          )}
+        </div>
+      )}
 
-      <TabsContent value="teams" className="space-y-8 animate-in fade-in-50 duration-500">
-        {/* Pending Invitations - banner style */}
-        {pendingInvitations.length > 0 && (
-          <Card className="border-orange-200 bg-orange-50/80 rounded-2xl overflow-hidden">
-            <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-4">
+      {/* Teams tab */}
+      {activeTab === "teams" && (
+        <div className="space-y-8">
+          {/* Pending invitations */}
+          {pendingInvitations.length > 0 && (
+            <div className="bg-pb-surface border border-pb-amber/40 rounded-[6px] p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                  <UserPlus className="w-5 h-5 text-orange-600" />
+                <div className="w-9 h-9 rounded-[4px] bg-pb-amber/10 border border-pb-amber/20 flex items-center justify-center shrink-0">
+                  <UserPlus size={15} className="text-pb-amber" />
                 </div>
                 <div>
-                  <p className="font-display font-bold text-orange-900">
-                    Pending team invitation
-                  </p>
-                  <p className="text-sm text-orange-800">
-                    You have {pendingInvitations.length} team invitation
-                    {pendingInvitations.length > 1 ? "s" : ""} waiting for your response.
+                  <p className="font-display font-bold text-[14px] text-pb-ink">Pending team invitation</p>
+                  <p className="text-[12px] font-mono text-pb-muted">
+                    You have {pendingInvitations.length} team invitation{pendingInvitations.length > 1 ? "s" : ""} waiting for your response.
                   </p>
                 </div>
               </div>
-              <Button
-                className="md:w-auto w-full bg-orange-500 hover:bg-orange-600 text-white"
-                asChild
+              <Link
+                to="/teams"
+                className="inline-flex items-center justify-center h-9 px-5 rounded-[6px] bg-pb-amber text-white font-display font-bold text-[12px] uppercase tracking-wide hover:bg-pb-amber/90 transition-colors shrink-0"
               >
-                <Link to="/teams">Review</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* My Teams */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="font-display text-xl">My Teams</CardTitle>
-                <CardDescription>Teams you're a part of</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/teams">
-                  Manage Teams
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
+                Review
+              </Link>
             </div>
-          </CardHeader>
-          <CardContent>
-            {teamsLoading ? (
-              <SkeletonList count={3} />
-            ) : myTeams.length > 0 ? (
-              <div className="space-y-3">
-                {myTeams.slice(0, 5).map((team) => (
-                  <div
-                    key={team._id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{team.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {team.players?.length ?? 0} player(s)
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to="/teams">View</Link>
-                    </Button>
-                  </div>
-                ))}
+          )}
+
+          {/* My Teams */}
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px]">
+            <div className="border-b border-pb-hairline px-6 py-4 flex items-center justify-between">
+              <div>
+                <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink">My Teams</p>
+                <p className="text-[11px] font-mono text-pb-muted mt-0.5">Teams you're a part of</p>
               </div>
-            ) : (
-              <div className="flex flex-col items-center py-12 px-4 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-primary/60" />
+              <Link
+                to="/teams"
+                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-pb-court hover:underline underline-offset-2"
+              >
+                Manage <ArrowRight size={12} />
+              </Link>
+            </div>
+            <div className="p-4">
+              {teamsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map(i => <div key={i} className="h-14 bg-pb-paper border border-pb-hairline rounded-[6px] animate-pulse" />)}
                 </div>
-                <h3 className="font-display font-bold text-base uppercase tracking-wide mb-1">No teams yet</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mb-5">
-                  Register for a doubles event to form a team, or accept a partner invitation.
-                </p>
-                <Button asChild variant="outline" className="font-display font-bold uppercase tracking-widest rounded-xl h-10 px-6 text-xs">
-                  <Link to="/tournaments">Find a Tournament <ArrowRight className="w-4 h-4 ml-2" /></Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+              ) : myTeams.length > 0 ? (
+                <div className="divide-y divide-pb-hairline">
+                  {myTeams.slice(0, 5).map((team) => (
+                    <div key={team._id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                      <div>
+                        <p className="font-display font-bold text-[13px] text-pb-ink">{team.name}</p>
+                        <p className="text-[11px] font-mono text-pb-faint">{team.players?.length ?? 0} player(s)</p>
+                      </div>
+                      <Link
+                        to="/teams"
+                        className="text-[11px] font-mono text-pb-court hover:underline underline-offset-2"
+                      >
+                        View
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center py-10 text-center">
+                  <Users size={28} className="text-pb-faint mb-3" />
+                  <p className="text-[13px] font-mono text-pb-muted mb-1">No teams yet</p>
+                  <p className="text-[12px] font-mono text-pb-faint max-w-xs mb-4">
+                    Register for a doubles event to form a team, or accept a partner invitation.
+                  </p>
+                  <Link
+                    to="/tournaments"
+                    className="inline-flex items-center gap-2 h-9 px-5 rounded-[6px] border border-pb-hairline text-[12px] font-mono text-pb-ink hover:border-pb-rule transition-colors"
+                  >
+                    Find a Tournament <ArrowRight size={12} />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

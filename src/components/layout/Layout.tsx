@@ -21,8 +21,6 @@ const Layout = ({ children, variant = "default" }: LayoutProps) => {
       <ConnectionStatus />
       {variant === "default" && <Navbar />}
       {variant === "minimal" && <MinimalNavbar />}
-      {/* On native, add top safe area so content clears the status bar */}
-      {isNative && <div className="pt-safe w-full" />}
       <main className="flex-1 pb-16 md:pb-0">
         {children}
       </main>

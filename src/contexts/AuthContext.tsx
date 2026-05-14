@@ -38,7 +38,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
   loginWithGoogle: (credential: string) => Promise<void>;
   loginWithApple: (id_token: string, user?: { email?: string; name?: { firstName: string; lastName: string } }) => Promise<void>;
   register: (data: {
@@ -48,6 +48,7 @@ interface AuthContextType {
     role?: string;
     skillLevel?: number;
     phone?: string;
+    turnstileToken?: string;
   }) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
@@ -91,9 +92,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUser();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, turnstileToken?: string) => {
     try {
-      const response = await authAPI.login(email, password);
+      const response = await authAPI.login(email, password, turnstileToken);
       const { user: userData, token: userToken } = response.data;
 
       setUser(userData);
@@ -152,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role?: string;
     skillLevel?: number;
     phone?: string;
+    turnstileToken?: string;
   }) => {
     try {
       const response = await authAPI.register(data);

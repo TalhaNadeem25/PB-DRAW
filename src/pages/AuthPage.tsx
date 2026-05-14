@@ -1,19 +1,64 @@
 import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
-import { AppStoreLogo, ArrowRight, GoogleChromeLogo, Eye, EyeSlash, CircleNotch, Trophy, User } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { Eye, EyeSlash, CircleNotch } from '@phosphor-icons/react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
-import { useEffect } from 'react';
+import { Eyebrow, PbLogo, PbBtn } from '@/components/ui/pb';
+import { ArrowRight } from 'lucide-react';
 
+// ── Field primitive (auth-specific) ──────────────────────────────────────────
+function Field({
+  label,
+  id,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  required,
+  disabled,
+  trailing,
+}: {
+  label: string;
+  id: string;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  trailing?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={id}
+        className="font-mono text-[10.5px] font-medium tracking-[0.14em] uppercase text-pb-muted"
+      >
+        {label}
+      </label>
+      <div className="flex items-center gap-2 px-3.5 py-2.5 bg-pb-surface border border-pb-hairline rounded-[6px] focus-within:border-pb-ink transition-colors">
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          className="flex-1 bg-transparent text-[14px] text-pb-ink placeholder:text-pb-faint font-sans outline-none"
+        />
+        {trailing}
+      </div>
+    </div>
+  );
+}
+
+// ── AuthPage ──────────────────────────────────────────────────────────────────
 const AuthPage = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -21,18 +66,15 @@ const AuthPage = () => {
   const redirectUrl = searchParams.get('redirect') || '/tournaments';
 
   const [activeTab, setActiveTab] = useState(defaultTab);
-  
-  // Shared state
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Login specific state
+
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Signup specific state
   const [signupData, setSignupData] = useState({
     name: '',
     email: '',
@@ -45,6 +87,7 @@ const AuthPage = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const { login, register, loginWithGoogle, loginWithApple } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -85,7 +128,6 @@ const AuthPage = () => {
       }
     }
   };
-  const navigate = useNavigate();
 
   const handleSignupChange = (field: string, value: string) => {
     setSignupData((prev) => ({ ...prev, [field]: value }));
@@ -96,13 +138,11 @@ const AuthPage = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
     try {
       await login(loginEmail, loginPassword);
       haptics.success();
       navigate(redirectUrl);
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       haptics.error();
       setError('Invalid email or password. Please try again.');
     } finally {
@@ -113,24 +153,19 @@ const AuthPage = () => {
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     if (signupData.password !== signupData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     if (signupData.password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
-    
     if (!acceptedTerms) {
-        setError('You must accept the terms and conditions');
-        return;
+      setError('You must accept the terms and conditions');
+      return;
     }
-
     setIsLoading(true);
-
     try {
       await register({
         name: signupData.name,
@@ -142,8 +177,7 @@ const AuthPage = () => {
       });
       haptics.success();
       navigate(redirectUrl, { state: { fromSignup: true } });
-    } catch (error) {
-      console.error('Signup error:', error);
+    } catch {
       haptics.error();
       setError('Failed to create account. Please try again.');
     } finally {
@@ -151,287 +185,347 @@ const AuthPage = () => {
     }
   };
 
+  const isLogin = activeTab === 'login';
+
   return (
     <Layout variant="auth">
-      <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans">
-        <div className="h-6" />
+      <div className="min-h-screen bg-pb-paper grid lg:grid-cols-[1.1fr_1fr]">
 
-        {/* Left Side: Hero Brand Experience */}
-        <div className="hidden lg:flex lg:w-1/2 xl:w-5/12 relative overflow-hidden items-center justify-center bg-sidebar-primary">  
-          <div className="absolute inset-0 bg-cover bg-center opacity-40" 
-            style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuANcBh8658firenMfbo6Fsqiw6eDQlBp_lX5oMiyvz9HHqM_Jd_VxipHbrbU1coa37yAOe9HF3G9ayWR8yaHeAg0QCWwlV-BZH7y9jlClMKtniLg_5AF446YVkwzmODdPD0qa19WWtMsCo7acHQEFgTloRgospSAWsUBkcocmrTXrrY67dn4YMsPkfoSU7_xTwZ1mywWoHEhSxPLinFMMiozYwuZDW5igU-v51FA5LGwI5nkDtZFeFwilrM1kSGLJejRnHji8ZeaFg')` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-sidebar-primary via-transparent to-transparent z-10" />
-          
-          <div className="relative z-20 flex flex-col justify-end p-16 w-full">
-            <div className="flex items-center gap-3 text-primary mb-6 animate-fade-in">
-                <Trophy className="w-10 h-10 fill-current" />
-                <h2 className="text-3xl font-display font-black tracking-tighter text-white">PB DRAW</h2>
-            </div>
-            <h1 className="text-white text-5xl font-display font-black leading-tight mb-4 animate-slide-up">
-              Master the court, <br/>manage the game.
+        {/* ── Left: editorial panel ─────────────────────────────────────── */}
+        <div className="hidden lg:flex flex-col justify-between px-14 py-14 border-r border-pb-hairline">
+          {/* Top: logo */}
+          <PbLogo size={19} />
+
+          {/* Center: headline */}
+          <div>
+            <Eyebrow className="mb-5">No. 12 · May 2026</Eyebrow>
+
+            <h1
+              className="font-display font-extrabold text-pb-ink leading-[0.95]"
+              style={{ fontSize: 'clamp(52px, 5.5vw, 76px)', letterSpacing: '-0.045em' }}
+            >
+              Show up.<br />
+              <span className="italic" style={{ color: 'var(--pb-court)' }}>
+                Play to it.
+              </span>
             </h1>
-            <p className="text-white/80 text-lg font-light max-w-md font-sans animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              The ultimate hub for pickleball enthusiasts. Access your tournaments, track rankings, and join the fastest-growing sports community.
+
+            <p className="mt-5 text-[15px] text-pb-ink2 leading-[1.55] max-w-[440px]">
+              240 open draws this week. Find the right one, snag a partner,
+              and let the bracket decide.
             </p>
-            <div className="mt-12 flex gap-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <div className="flex flex-col">
-                  <span className="text-primary text-3xl font-display font-bold">Play</span>
-                  <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Tournaments</span>
-              </div>
-              <div className="w-px h-12 bg-primary-foreground/20"></div>
-              <div className="flex flex-col">
-                  <span className="text-primary text-3xl font-display font-bold">Manage</span>
-                  <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Events</span>
-              </div>
+
+            {/* Stats */}
+            <div className="flex gap-9 mt-9">
+              {[['18.4k', 'Players'], ['240', 'Open Draws'], ['28', 'States']].map(([v, l]) => (
+                <div key={l}>
+                  <div
+                    className="font-mono font-medium text-pb-ink leading-none"
+                    style={{ fontSize: 28, letterSpacing: '-0.02em', fontFeatureSettings: '"tnum" 1' }}
+                  >
+                    {v}
+                  </div>
+                  <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-pb-muted mt-1">
+                    {l}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Bottom: testimonial */}
+          <p className="text-[12.5px] text-pb-muted leading-relaxed max-w-[420px]">
+            "Cleanest scoring sheet I've used. The bracket page alone is worth it."
+            {' '}<strong className="text-pb-ink font-medium">— Lena, organizer, Bay PB Co.</strong>
+          </p>
         </div>
 
-        {/* Right Side: Auth Form with Tabs */}
-        <div className="flex w-full flex-col lg:w-1/2 xl:w-7/12 bg-background px-6 py-10 sm:px-10 lg:px-16 xl:px-20 justify-center overflow-y-auto">
-          <div className="w-full max-w-xl mx-auto">
-            
-            {/* Mobile Logo */}
-            <div className="lg:hidden flex items-center gap-2 mb-10 text-primary">
-                <Trophy className="w-8 h-8 fill-current" />
-                <span className="text-xl font-bold font-display text-foreground">PB Draw</span>
+        {/* ── Right: form panel ─────────────────────────────────────────── */}
+        <div className="flex flex-col justify-center px-8 py-12 sm:px-12 lg:px-16 xl:px-20 overflow-y-auto">
+          {/* Mobile logo */}
+          <div className="lg:hidden mb-10">
+            <PbLogo size={18} />
+          </div>
+
+          <div className="w-full max-w-[420px] mx-auto">
+            <Eyebrow className="mb-3">
+              {isLogin ? 'Welcome back' : 'Join the draw'}
+            </Eyebrow>
+            <h2
+              className="font-display font-bold text-pb-ink"
+              style={{ fontSize: 36, letterSpacing: '-0.03em', lineHeight: 1 }}
+            >
+              {isLogin ? 'Sign in to PB Draw' : 'Create account'}
+            </h2>
+
+            {/* Segmented toggle */}
+            <div className="flex gap-1 mt-7 p-1 bg-pb-surface border border-pb-hairline rounded-[8px] w-fit">
+              {(['login', 'signup'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => { setActiveTab(tab); setError(''); }}
+                  className={cn(
+                    "px-3.5 py-1.5 text-[12.5px] font-medium rounded-[6px] transition-colors duration-150",
+                    activeTab === tab
+                      ? "bg-pb-ink text-white"
+                      : "text-pb-muted hover:text-pb-ink"
+                  )}
+                >
+                  {tab === 'login' ? 'Sign in' : 'Create account'}
+                </button>
+              ))}
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 p-1 rounded-xl">
-                <TabsTrigger value="login" className="rounded-lg font-display uppercase font-bold tracking-widest text-xs py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground">
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="rounded-lg font-display uppercase font-bold tracking-widest text-xs py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground">
-                  Create Account
-                </TabsTrigger>
-              </TabsList>
+            {/* Error */}
+            {error && (
+              <div className="mt-5 px-4 py-3 rounded-[6px] bg-destructive/8 border border-destructive/20 text-[13px] text-destructive flex justify-between items-center">
+                {error}
+                <button onClick={() => setError('')} className="opacity-50 hover:opacity-100 ml-3 shrink-0">×</button>
+              </div>
+            )}
 
-              {/* Error Message Global */}
-              {error && (
-                  <div className="mb-6 p-4 rounded-lg bg-destructive/10 text-destructive text-sm font-medium border border-destructive/20 flex items-center justify-between">
-                      {error}
-                      <button onClick={() => setError('')} className="opacity-50 hover:opacity-100">×</button>
-                  </div>
-              )}
+            {/* ── LOGIN FORM ── */}
+            {isLogin && (
+              <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4 mt-6">
+                <Field
+                  label="Email"
+                  id="login-email"
+                  type="email"
+                  value={loginEmail}
+                  onChange={(v) => { setLoginEmail(v); setError(''); }}
+                  placeholder="name@example.com"
+                  required
+                  disabled={isLoading}
+                />
 
-              {/* === LOGIN TAB === */}
-              <TabsContent value="login" className="space-y-6 animate-in fade-in-50 duration-500">
-                <div className="mb-8">
-                  <h2 className="text-3xl font-display font-bold text-foreground mb-2">Welcome back</h2>
-                  <p className="text-muted-foreground">Enter your credentials to access your account.</p>
+                <Field
+                  label="Password"
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={loginPassword}
+                  onChange={(v) => { setLoginPassword(v); setError(''); }}
+                  placeholder="••••••••"
+                  required
+                  disabled={isLoading}
+                  trailing={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-pb-faint hover:text-pb-muted transition-colors"
+                    >
+                      {showPassword
+                        ? <EyeSlash className="w-4 h-4" />
+                        : <Eye className="w-4 h-4" />}
+                    </button>
+                  }
+                />
+
+                <div className="flex items-center justify-between mt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={rememberMe}
+                      onCheckedChange={(c) => setRememberMe(c as boolean)}
+                      className="rounded-[3px]"
+                    />
+                    <span className="text-[12.5px] text-pb-muted">Remember me</span>
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[12.5px] text-pb-ink underline decoration-pb-hairline hover:decoration-pb-ink transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
 
-                <form onSubmit={handleLoginSubmit} className="space-y-5">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="login-email" className="text-foreground text-sm font-semibold">Email Address</Label>
-                    <Input 
-                      id="login-email"
-                      type="email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="h-12 px-4 bg-transparent focus:border-primary focus:ring-primary/20" 
-                      placeholder="name@example.com" 
-                      required 
-                      disabled={isLoading}
-                    />
-                  </div>
+                <PbBtn
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  full
+                  disabled={isLoading}
+                  className="mt-2 justify-between"
+                >
+                  {isLoading ? (
+                    <><CircleNotch className="w-4 h-4 animate-spin" /> Signing in…</>
+                  ) : (
+                    <><span>Sign in</span><ArrowRight size={15} strokeWidth={1.8} /></>
+                  )}
+                </PbBtn>
+              </form>
+            )}
 
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="login-password" className="text-foreground text-sm font-semibold">Password</Label>
-                      <Link to="/forgot-password" className="text-xs font-bold text-primary hover:underline">Forgot Password?</Link>
-                    </div>
-                    <div className="relative flex items-center">
-                      <Input 
-                        id="login-password"
-                        type={showPassword ? "text" : "password"}
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        className="h-12 px-4 pr-12 bg-transparent focus:border-primary focus:ring-primary/20" 
-                        placeholder="••••••••" 
-                        required 
-                        disabled={isLoading}
-                      />
-                      <button 
-                        type="button" 
-                        className="absolute right-4 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowPassword(!showPassword)}
+            {/* ── SIGNUP FORM ── */}
+            {!isLogin && (
+              <form onSubmit={handleSignupSubmit} className="flex flex-col gap-4 mt-6">
+
+                {/* Role picker */}
+                <div>
+                  <div className="font-mono text-[10.5px] font-medium tracking-[0.14em] uppercase text-pb-muted mb-2.5">
+                    I am a
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['player', 'organizer'] as const).map((role) => (
+                      <label
+                        key={role}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 border rounded-[6px] cursor-pointer transition-colors",
+                          signupData.role === role
+                            ? "border-pb-ink bg-pb-surface2"
+                            : "border-pb-hairline bg-pb-surface hover:border-pb-rule"
+                        )}
                       >
+                        <input
+                          type="radio"
+                          name="role"
+                          value={role}
+                          checked={signupData.role === role}
+                          onChange={() => handleSignupChange('role', role)}
+                          className="hidden"
+                        />
+                        <span
+                          className={cn(
+                            "w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                            signupData.role === role ? "border-pb-ink" : "border-pb-rule"
+                          )}
+                        >
+                          {signupData.role === role && (
+                            <span className="w-2 h-2 rounded-full bg-pb-ink block" />
+                          )}
+                        </span>
+                        <span className="text-[13px] font-medium text-pb-ink capitalize">{role}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Full name" id="signup-name" value={signupData.name}
+                    onChange={(v) => handleSignupChange('name', v)} placeholder="Jane Smith" required />
+                  <Field label="Email" id="signup-email" type="email" value={signupData.email}
+                    onChange={(v) => handleSignupChange('email', v)} placeholder="jane@example.com" required />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="Password"
+                    id="signup-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={signupData.password}
+                    onChange={(v) => handleSignupChange('password', v)}
+                    placeholder="Min 6 chars"
+                    required
+                    trailing={
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="text-pb-faint hover:text-pb-muted transition-colors">
                         {showPassword ? <EyeSlash className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-2">
-                    <Checkbox 
-                      id="remember" 
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    />
-                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer font-normal">
-                      Remember me on this device
-                    </Label>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    size="lg"
-                    className="w-full h-12 mt-4 font-display font-bold rounded-xl shadow-glow hover:shadow-glow-lg transition-all"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <><CircleNotch className="w-5 h-5 animate-spin mr-2" />Signing In...</>
-                    ) : (
-                      <><span>Sign In</span><ArrowRight className="w-5 h-5 ml-2" /></>
-                    )}
-                  </Button>
-                </form>
-
-                {/* Social Login */}
-                <div className="mt-8">
-                  <div className="relative flex items-center mb-6">
-                    <div className="flex-grow border-t border-border"></div>
-                    <span className="flex-shrink mx-4 text-xs font-medium text-muted-foreground uppercase tracking-widest">Or continue with</span>
-                    <div className="flex-grow border-t border-border"></div>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <button onClick={() => googleLogin()} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border hover:bg-muted/50 transition-colors w-full h-10">
-                      <GoogleChromeLogo className="w-4 h-4 text-foreground" />
-                      <span className="text-sm font-semibold text-foreground">Continue with Google</span>
-                    </button>
-                    <button disabled title="Coming Soon" className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border opacity-50 cursor-not-allowed transition-colors w-full h-10">
-                      <AppStoreLogo className="w-4 h-4 text-foreground" />
-                      <span className="text-sm font-semibold text-foreground">Continue with Apple</span>
-                    </button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* === SIGNUP TAB === */}
-              <TabsContent value="signup" className="space-y-6 animate-in fade-in-50 duration-500">
-                <div className="mb-6">
-                  <h2 className="text-foreground text-3xl font-display font-bold tracking-tight mb-2">Create Account</h2>
-                  <p className="text-muted-foreground">Start your journey on the court today.</p>
+                    }
+                  />
+                  <Field label="Confirm password" id="signup-confirm" type="password"
+                    value={signupData.confirmPassword}
+                    onChange={(v) => handleSignupChange('confirmPassword', v)}
+                    placeholder="Re-enter" required />
                 </div>
 
-                <form onSubmit={handleSignupSubmit} className="flex flex-col gap-6">
-                  {/* Role Selection */}
-                  <div>
-                    <h3 className="text-foreground text-sm font-semibold mb-3">Choose Your Path</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Player Radio */}
-                      <label className={cn(
-                        "group relative flex flex-col gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
-                        signupData.role === 'player' ? "border-primary bg-primary/5" : "border-border bg-transparent hover:border-primary/50"
-                      )}>
-                        <input type="radio" className="hidden" value="player" checked={signupData.role === 'player'} onChange={() => handleSignupChange('role', 'player')} />
-                        <div className="flex justify-between items-start">
-                          <div className={cn("size-8 rounded-lg flex items-center justify-center", signupData.role === 'player' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                            <User className="size-5" />
-                          </div>
-                          <div className={cn("size-5 rounded-full border-2 flex items-center justify-center", signupData.role === 'player' ? "border-primary" : "border-muted-foreground/30")}>
-                            {signupData.role === 'player' && <div className="size-2.5 bg-primary rounded-full" />}
-                          </div>
-                        </div>
-                        <div>
-                          <p className="font-bold font-display text-sm">Player</p>
-                          <p className="text-muted-foreground text-xs">Join tournaments & track stats.</p>
-                        </div>
-                      </label>
-
-                      {/* Organizer Radio */}
-                      <label className={cn(
-                        "group relative flex flex-col gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
-                        signupData.role === 'organizer' ? "border-primary bg-primary/5" : "border-border bg-transparent hover:border-primary/50"
-                      )}>
-                        <input type="radio" className="hidden" value="organizer" checked={signupData.role === 'organizer'} onChange={() => handleSignupChange('role', 'organizer')} />
-                        <div className="flex justify-between items-start">
-                          <div className={cn("size-8 rounded-lg flex items-center justify-center", signupData.role === 'organizer' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                            <Trophy className="size-5" />
-                          </div>
-                          <div className={cn("size-5 rounded-full border-2 flex items-center justify-center", signupData.role === 'organizer' ? "border-primary" : "border-muted-foreground/30")}>
-                            {signupData.role === 'organizer' && <div className="size-2.5 bg-primary rounded-full" />}
-                          </div>
-                        </div>
-                        <div>
-                          <p className="font-bold font-display text-sm">Organizer</p>
-                          <p className="text-muted-foreground text-xs">Manage events & clubs.</p>
-                        </div>
-                      </label>
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Skill level — custom select to match field style */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-mono text-[10.5px] font-medium tracking-[0.14em] uppercase text-pb-muted">
+                      Skill level
+                    </span>
+                    <Select value={signupData.skillLevel} onValueChange={(v) => handleSignupChange('skillLevel', v)}>
+                      <SelectTrigger className="h-[42px] rounded-[6px] border-pb-hairline bg-pb-surface text-[14px] font-sans focus:ring-0 focus:border-pb-ink">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2.5">2.5 — Beginner</SelectItem>
+                        <SelectItem value="3.0">3.0 — Intermediate</SelectItem>
+                        <SelectItem value="3.5">3.5 — Advanced Int.</SelectItem>
+                        <SelectItem value="4.0">4.0 — Advanced</SelectItem>
+                        <SelectItem value="4.5">4.5 — Competitive</SelectItem>
+                        <SelectItem value="5.0">5.0 — Pro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  <Field label="Phone (optional)" id="signup-phone" type="tel"
+                    value={signupData.phone} onChange={(v) => handleSignupChange('phone', v)}
+                    placeholder="555-0123" />
+                </div>
 
-                  {/* Core Form Fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="signup-name" className="text-sm font-semibold">Full Name</Label>
-                      <Input id="signup-name" value={signupData.name} onChange={(e) => handleSignupChange('name', e.target.value)} className="h-11" placeholder="John Doe" required />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="signup-email" className="text-sm font-semibold">Email</Label>
-                      <Input id="signup-email" type="email" value={signupData.email} onChange={(e) => handleSignupChange('email', e.target.value)} className="h-11" placeholder="john@example.com" required />
-                    </div>
-                  </div>
+                <label className="flex items-start gap-2.5 cursor-pointer mt-1">
+                  <Checkbox
+                    checked={acceptedTerms}
+                    onCheckedChange={(c) => setAcceptedTerms(c as boolean)}
+                    className="mt-0.5 rounded-[3px]"
+                  />
+                  <span className="text-[12px] text-pb-muted leading-relaxed">
+                    I agree to the{' '}
+                    <Link to="/terms" className="text-pb-ink underline">Terms of Service</Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" className="text-pb-ink underline">Privacy Policy</Link>.
+                  </span>
+                </label>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="flex flex-col gap-2 relative">
-                      <Label htmlFor="signup-password" className="text-sm font-semibold">Password</Label>
-                      <Input id="signup-password" type={showPassword ? 'text' : 'password'} value={signupData.password} onChange={(e) => handleSignupChange('password', e.target.value)} className="h-11 pr-10" placeholder="Min 6 chars" required />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-muted-foreground">
-                        {showPassword ? <EyeSlash className="size-4" /> : <Eye className="size-4" />}
-                      </button>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="signup-confirm" className="text-sm font-semibold">Confirm Password</Label>
-                      <Input id="signup-confirm" type="password" value={signupData.confirmPassword} onChange={(e) => handleSignupChange('confirmPassword', e.target.value)} className="h-11" placeholder="Re-enter password" required />
-                    </div>
-                  </div>
+                <PbBtn
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  full
+                  disabled={isLoading}
+                  className="mt-1 justify-between"
+                >
+                  {isLoading ? (
+                    <><CircleNotch className="w-4 h-4 animate-spin" /> Creating account…</>
+                  ) : (
+                    <><span>Create account</span><ArrowRight size={15} strokeWidth={1.8} /></>
+                  )}
+                </PbBtn>
+              </form>
+            )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="skillLevel" className="text-sm font-semibold">Skill Level</Label>
-                      <Select value={signupData.skillLevel} onValueChange={(val) => handleSignupChange('skillLevel', val)}>
-                        <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Select skill" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="2.5">2.5 - Beginner</SelectItem>
-                          <SelectItem value="3.0">3.0 - Intermediate</SelectItem>
-                          <SelectItem value="3.5">3.5 - Advanced Int.</SelectItem>
-                          <SelectItem value="4.0">4.0 - Advanced</SelectItem>
-                          <SelectItem value="4.5">4.5 - Competitive</SelectItem>
-                          <SelectItem value="5.0">5.0 - Pro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="phone" className="text-sm font-semibold">Phone (Optional)</Label>
-                      <Input id="phone" type="tel" value={signupData.phone} onChange={(e) => handleSignupChange('phone', e.target.value)} className="h-11" placeholder="555-0123" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 pt-2">
-                    <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)} className="mt-1" />
-                    <Label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer font-normal">
-                      I agree to the <Link to="/terms" className="font-bold underline">Terms of Service</Link> and <Link to="/privacy" className="font-bold underline">Privacy Policy</Link>.
-                    </Label>
-                  </div>
-
-                  <Button type="submit" disabled={isLoading} className="w-full h-12 mt-2 font-display font-bold uppercase tracking-widest rounded-xl shadow-glow">
-                    {isLoading ? <><CircleNotch className="mr-2 h-5 w-5 animate-spin" />Processing...</> : <><User className="mr-2 h-4 w-4" /> Create Account</>}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-            
-            <div className="mt-12 text-center pb-8">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">
-                    Protected by reCAPTCHA and subject to the <br/> Google Privacy Policy and Terms of Service.
-                </p>
+            {/* OR divider */}
+            <div className="flex items-center gap-3 my-5 text-pb-faint text-[11px]">
+              <span className="flex-1 h-px bg-pb-hairline" />
+              OR
+              <span className="flex-1 h-px bg-pb-hairline" />
             </div>
-            
+
+            {/* Social buttons */}
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={() => googleLogin()}
+                className="flex items-center justify-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium text-pb-ink bg-pb-surface border border-pb-hairline rounded-[6px] hover:bg-pb-surface2 transition-colors"
+              >
+                {/* Google icon */}
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+              </button>
+
+              <button
+                disabled
+                title="Coming soon"
+                className="flex items-center justify-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium text-pb-faint bg-pb-surface border border-pb-hairline rounded-[6px] opacity-50 cursor-not-allowed"
+              >
+                {/* Apple icon */}
+                <svg width="15" height="16" viewBox="0 0 814 1000" fill="currentColor">
+                  <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 383.8 37.5 258.2 37.5 207.7c0-127.4 53.4-194.7 109.4-250.7 44.8-45.2 100.8-67.9 145.4-67.9 87.5 0 140.4 45.9 210.3 45.9 76.9 0 121.5-54.6 214.5-54.6 33.7 0 112.2 4.2 167.3 65.1z"/>
+                </svg>
+                Continue with Apple
+              </button>
+            </div>
+
+            {/* Footer note */}
+            <p className="mt-7 text-[12px] text-pb-muted leading-relaxed">
+              {isLogin
+                ? <>New here? <button onClick={() => setActiveTab('signup')} className="text-pb-ink font-medium hover:underline">Create an account</button> — browse and register first, we ask later.</>
+                : <>Already have an account? <button onClick={() => setActiveTab('login')} className="text-pb-ink font-medium hover:underline">Sign in</button>.</>
+              }
+            </p>
           </div>
         </div>
       </div>

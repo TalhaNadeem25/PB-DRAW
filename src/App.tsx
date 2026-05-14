@@ -38,6 +38,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const OrganizerScanner = lazy(() => import("./pages/OrganizerScanner"));
 const PartnerCancellationResponse = lazy(() => import("./pages/PartnerCancellationResponse"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const MatchScoreEntry = lazy(() => import("./pages/MatchScoreEntry"));
 const PoolManagement = lazy(() => import("./pages/PoolManagement"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -136,6 +137,7 @@ function AppRoutes() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/tournaments/:tournamentId/matches/:matchId/score" element={<MatchScoreEntry />} />
             <Route path="/tournaments/:id" element={<ErrorBoundary><TournamentDetail /></ErrorBoundary>} />
             <Route path="/tournaments/:id/register" element={<Register />} />
             <Route path="/tournaments/:tournamentId/register/:eventId" element={<EventRegistration />} />

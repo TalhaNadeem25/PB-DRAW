@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Trophy, SignIn } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { PbLogo, PbAvatar } from "@/components/ui/pb";
 import { motion } from "framer-motion";
 
 const MinimalNavbar = () => {
@@ -24,27 +24,19 @@ const MinimalNavbar = () => {
       <motion.nav
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         className={cn(
-          "fixed top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-2xl",
+          "fixed top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-50 transition-all duration-300 rounded-[8px]",
           scrolled
-            ? "bg-card/80 backdrop-blur-xl shadow-float border border-border/50"
-            : "bg-card/60 backdrop-blur-lg border border-border/30"
+            ? "bg-pb-surface/95 backdrop-blur-sm border border-pb-rule"
+            : "bg-pb-surface/80 backdrop-blur-sm border border-pb-hairline"
         )}
       >
-        <div className="px-3 sm:px-4 md:px-6">
+        <div className="px-4 sm:px-5">
           <div className="flex items-center justify-between h-12">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group shrink-0">
-              <div className="relative">
-                <div className="w-9 h-9 rounded-xl bg-hero-gradient flex items-center justify-center shadow-md group-hover:shadow-glow transition-all duration-300">
-                  <Trophy className="w-4 h-4 text-primary-foreground" />
-                </div>
-                <div className="absolute inset-0 rounded-xl bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              <span className="font-display text-lg font-bold text-foreground tracking-wide whitespace-nowrap">
-                PICK<span className="text-primary">LIX</span>
-              </span>
+            <Link to="/" className="shrink-0">
+              <PbLogo size={15} />
             </Link>
 
             {/* Right actions */}
@@ -52,20 +44,18 @@ const MinimalNavbar = () => {
               {isAuthenticated ? (
                 <>
                   <NotificationCenter />
-                  <Link
-                    to="/dashboard"
-                    className="w-8 h-8 rounded-full bg-hero-gradient flex items-center justify-center text-xs font-bold text-primary-foreground hover:shadow-glow transition-all duration-300"
-                  >
-                    {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+                  <Link to="/dashboard">
+                    <PbAvatar name={user?.name ?? "U"} size={28} tone="court" />
                   </Link>
                 </>
               ) : (
-                <Button variant="ghost" size="sm" asChild className="gap-1.5 text-sm">
-                  <Link to="/login">
-                    <SignIn className="w-4 h-4" />
-                    Sign In
-                  </Link>
-                </Button>
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[6px] text-[12px] font-mono text-pb-muted hover:text-pb-ink hover:bg-pb-surface2 transition-colors"
+                >
+                  <SignIn size={14} />
+                  Sign In
+                </Link>
               )}
             </div>
           </div>

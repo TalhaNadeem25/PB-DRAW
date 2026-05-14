@@ -1,37 +1,16 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Heart, ShareNetwork, Trophy, Trash, Calendar, CheckCircle } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import ExportButtons from "@/components/tournament/ExportButtons";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Pill, PbBtn, Dot } from "@/components/ui/pb";
 
 const statusConfig = {
-  open: {
-    label: "Registration Open",
-    className: "bg-primary text-primary-foreground border-transparent",
-    dotClass: "bg-background animate-[blink_2s_ease-in-out_infinite]",
-  },
-  closed: {
-    label: "Registration Closed",
-    className: "bg-muted text-foreground border-transparent",
-    dotClass: "bg-muted-foreground",
-  },
-  "in-progress": {
-    label: "In Progress",
-    className: "bg-destructive text-destructive-foreground border-transparent",
-    dotClass: "bg-white animate-pulse",
-  },
-  completed: {
-    label: "Completed",
-    className: "bg-foreground text-background border-transparent",
-    dotClass: "bg-background",
-  },
-  draft: {
-    label: "Draft",
-    className: "bg-card text-muted-foreground border-border/80 border-2",
-    dotClass: "bg-muted-foreground",
-  },
+  open:        { label: "Registration Open", tone: "court"   as const, pulse: true  },
+  closed:      { label: "Closed",            tone: "neutral" as const, pulse: false },
+  "in-progress": { label: "Live",            tone: "amber"   as const, pulse: true  },
+  completed:   { label: "Completed",         tone: "ink"     as const, pulse: false },
+  draft:       { label: "Draft",             tone: "neutral" as const, pulse: false },
 };
 
 interface DashboardTopBarProps {
@@ -51,71 +30,50 @@ const DashboardTopBar = ({
   onCompleteTournament,
   onDeleteTournament,
 }: DashboardTopBarProps) => {
-  const statusInfo =
-    statusConfig[tournament.status as keyof typeof statusConfig] ||
-    statusConfig.draft;
+  const status = statusConfig[tournament.status as keyof typeof statusConfig] ?? statusConfig.draft;
 
   return (
-    <div className="flex flex-col gap-4 mb-6 animate-fade-in">
-      {/* Top: Back + Name + Status + Date */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 sm:gap-6 min-w-0 bg-card p-6 rounded-xl border-2 border-border shadow-sm">
+    <div className="mb-6 space-y-4">
+      {/* Main card */}
+      <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5 flex flex-col sm:flex-row sm:items-start gap-4">
         <Link
           to="/tournaments"
-          className="shrink-0 w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors border border-border/80 self-start"
+          className="shrink-0 w-9 h-9 rounded-[6px] border border-pb-hairline flex items-center justify-center text-pb-muted hover:text-pb-ink hover:border-pb-rule transition-colors self-start"
         >
-          <ArrowLeft className="w-6 h-6" />
+          <ArrowLeft size={16} />
         </Link>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
-            <h1 className="font-display font-black text-3xl sm:text-4xl truncate uppercase tracking-tight text-foreground">
+
+        <div className="flex-1 min-w-0">
+          {/* Eyebrow — dates */}
+          <p className="flex items-center gap-1.5 text-[11px] font-mono text-pb-muted uppercase tracking-[0.08em] mb-2">
+            <Calendar size={10} />
+            {format(new Date(tournament.startDate), "MMM d")} – {format(new Date(tournament.endDate), "MMM d, yyyy")}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display font-extrabold text-[clamp(22px,3vw,36px)] tracking-[-0.035em] leading-none text-pb-ink">
               {tournament.name}
             </h1>
-            <Badge
-              variant="outline"
-              className={cn(
-                "font-bold text-xs uppercase tracking-widest px-2 py-0.5",
-                statusInfo.className
-              )}
-            >
-              <span
-                className={cn("w-2 h-2 rounded-full mr-2", statusInfo.dotClass)}
-              />
-              {statusInfo.label}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-primary font-bold tracking-widest uppercase mt-3">
-            <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">
-              {format(new Date(tournament.startDate), "MMM dd, yyyy")} –{" "}
-              {format(new Date(tournament.endDate), "MMM dd, yyyy")}
-            </span>
+            <Pill tone={status.tone} className="flex items-center gap-1.5 shrink-0">
+              {status.pulse && <Dot color={status.tone === "amber" ? "amber" : "court"} size={5} pulse />}
+              {status.label}
+            </Pill>
           </div>
         </div>
       </div>
 
-      {/* Bottom: Actions — scrollable on mobile */}
-      <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+      {/* Action bar */}
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-0.5">
         {(tournament.status === "open" || tournament.status === "closed") && (
-          <Button
-            size="sm"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm"
-            onClick={onStartTournament}
-          >
-            <Trophy className="w-4 h-4 mr-2" />
-            <span className="whitespace-nowrap">Start Tournament</span>
-          </Button>
+          <PbBtn variant="primary" size="md" onClick={onStartTournament} className="shrink-0">
+            <Trophy size={14} /> Start Tournament
+          </PbBtn>
         )}
 
         {tournament.status === "in-progress" && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-12 px-6 font-display font-bold text-base tracking-wide uppercase shrink-0 rounded-xl shadow-sm border-foreground/30 hover:bg-foreground hover:text-background transition-colors"
-            onClick={onCompleteTournament}
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            <span className="whitespace-nowrap">Complete Tournament</span>
-          </Button>
+          <PbBtn variant="outline" size="md" onClick={onCompleteTournament} className="shrink-0">
+            <CheckCircle size={14} /> Complete Tournament
+          </PbBtn>
         )}
 
         <ExportButtons
@@ -126,36 +84,26 @@ const DashboardTopBar = ({
           variant="outline"
         />
 
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12 rounded-xl border-border bg-card hover:bg-muted/50 hover:border-primary/50 transition-colors shrink-0"
+        <button
           onClick={onToggleFavorite}
+          className="h-9 w-9 rounded-[6px] border border-pb-hairline flex items-center justify-center text-pb-muted hover:border-pb-rule hover:text-pb-ink transition-colors shrink-0"
         >
           <Heart
-            className={cn(
-              "w-5 h-5 transition-colors",
-              isFavorite && "fill-destructive text-destructive"
-            )}
+            size={15}
+            className={cn("transition-colors", isFavorite && "fill-destructive text-destructive")}
           />
-        </Button>
+        </button>
 
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12 rounded-xl border-border bg-card hover:bg-muted/50 hover:border-primary/50 transition-colors shrink-0"
-        >
-          <ShareNetwork className="w-5 h-5 text-muted-foreground" />
-        </Button>
+        <button className="h-9 w-9 rounded-[6px] border border-pb-hairline flex items-center justify-center text-pb-muted hover:border-pb-rule hover:text-pb-ink transition-colors shrink-0">
+          <ShareNetwork size={15} />
+        </button>
 
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12 rounded-xl border-border bg-card hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive text-muted-foreground transition-colors shrink-0"
+        <button
           onClick={onDeleteTournament}
+          className="h-9 w-9 rounded-[6px] border border-pb-hairline flex items-center justify-center text-pb-muted hover:border-destructive/50 hover:text-destructive transition-colors shrink-0"
         >
-          <Trash className="w-5 h-5" />
-        </Button>
+          <Trash size={15} />
+        </button>
       </div>
     </div>
   );

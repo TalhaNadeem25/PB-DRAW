@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Pill } from "@/components/ui/pb";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -565,10 +566,10 @@ const PoolManagement = () => {
   if (eventLoading) {
     return (
       <Layout variant="minimal">
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-pb-paper flex items-center justify-center">
           <div className="text-center">
-            <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading pool management...</p>
+            <CircleNotch className="w-10 h-10 animate-spin text-pb-court mx-auto mb-3" />
+            <p className="text-[12px] font-mono text-pb-muted">Loading pool management...</p>
           </div>
         </div>
       </Layout>
@@ -578,14 +579,17 @@ const PoolManagement = () => {
   if (!event) {
     return (
       <Layout variant="minimal">
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <Warning className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h2 className="text-2xl font-display font-bold mb-2">Event Not Found</h2>
-            <Button onClick={() => navigate(`/tournaments/${id}`)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
+        <div className="min-h-screen bg-pb-paper flex items-center justify-center">
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-8 text-center max-w-sm">
+            <Warning className="w-8 h-8 text-pb-muted mx-auto mb-3" />
+            <h2 className="font-display font-black text-[18px] uppercase tracking-tight text-pb-ink mb-2">Event Not Found</h2>
+            <button
+              onClick={() => navigate(`/tournaments/${id}`)}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-[6px] border border-pb-hairline text-[12px] font-mono text-pb-ink hover:border-pb-rule transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
               Back to Tournament
-            </Button>
+            </button>
           </div>
         </div>
       </Layout>
@@ -594,14 +598,14 @@ const PoolManagement = () => {
 
   return (
     <Layout variant="minimal">
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-pb-paper">
         {/* Top bar — same structure as TournamentDetail organizer (DashboardTopBar) */}
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col gap-4 mb-6 animate-fade-in">
             <div className="flex items-start gap-3 min-w-0">
               <Link
                 to={`/tournaments/${id}`}
-                className="shrink-0 w-10 h-10 rounded-xl glass flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all mt-0.5"
+                className="shrink-0 w-9 h-9 rounded-[6px] border border-pb-hairline bg-pb-surface flex items-center justify-center text-pb-muted hover:text-pb-ink hover:border-pb-rule transition-all mt-0.5"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
@@ -610,10 +614,7 @@ const PoolManagement = () => {
                   <h1 className="font-display font-bold text-xl sm:text-2xl truncate max-w-[200px] sm:max-w-none">
                     {event.name}
                   </h1>
-                  <Badge variant="outline" className="font-medium border shrink-0 text-xs bg-primary/10 text-primary border-primary/20">
-                    <span className="w-2 h-2 rounded-full mr-1.5 bg-primary" />
-                    Pool Play
-                  </Badge>
+                  <Pill tone="court">Pool Play</Pill>
                 </div>
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mt-1">
                   <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -642,13 +643,13 @@ const PoolManagement = () => {
                 <DialogTrigger asChild>
                   <Button
                     size="sm"
-                    className="bg-court-green text-white hover:bg-court-green-dark shadow-lg shrink-0"
+                    className="bg-pb-ink text-white hover:bg-pb-ink/90 shrink-0 rounded-[6px] border-0"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     <span className="whitespace-nowrap">Create Pool</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="glass-card rounded-2xl border border-border/50 sm:max-w-lg">
+                <DialogContent className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="font-display">Create Pools</DialogTitle>
                     <DialogDescription>Choose how many pools to create, then configure each one.</DialogDescription>
@@ -731,11 +732,11 @@ const PoolManagement = () => {
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Pools List */}
             <div className="space-y-4">
-              <Card className="glass-card-hover rounded-2xl border border-border/50 shadow-float">
+              <Card className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-display">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Trophy className="w-5 h-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 font-display text-pb-ink text-[14px] uppercase tracking-tight">
+                    <div className="w-8 h-8 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center">
+                      <Trophy className="w-4 h-4 text-pb-court" />
                     </div>
                     Pools ({pools.length})
                   </CardTitle>
@@ -752,7 +753,7 @@ const PoolManagement = () => {
                         >
                           <Button
                             variant={selectedPoolId === pool._id && sidebarSection === 'pools' ? "default" : "outline"}
-                            className={`flex-1 justify-start transition-all min-w-0 rounded-xl ${selectedPoolId === pool._id && sidebarSection === 'pools' ? 'bg-hero-gradient text-primary-foreground shadow-glow border-0' : 'hover:border-primary/50 hover:bg-primary/5'}`}
+                            className={`flex-1 justify-start transition-all min-w-0 rounded-[6px] ${selectedPoolId === pool._id && sidebarSection === 'pools' ? 'bg-pb-court-tint2 text-pb-court border-pb-court/30' : 'hover:border-pb-rule hover:bg-pb-surface'}`}
                             onClick={() => {
                               setSelectedPoolId(pool._id);
                               setSidebarSection('pools');
@@ -792,12 +793,12 @@ const PoolManagement = () => {
                 </CardContent>
               </Card>
 
-              <Card className="glass-card-hover rounded-2xl border border-border/50 shadow-float">
+              <Card className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="flex items-center gap-2 font-display">
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Users className="w-5 h-5 text-primary" />
+                    <CardTitle className="flex items-center gap-2 font-display text-pb-ink text-[14px] uppercase tracking-tight">
+                      <div className="w-8 h-8 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center">
+                        <Users className="w-4 h-4 text-pb-court" />
                       </div>
                       {isSingles
                         ? `Unassigned Players (${unassignedPlayers.length})`
@@ -837,7 +838,7 @@ const PoolManagement = () => {
                         unassignedPlayers.map((player: any) => (
                           <div
                             key={player._id}
-                            className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-xl border border-border/60 hover:border-primary/30 transition-colors"
+                            className="flex items-center justify-between gap-2 p-3 bg-pb-paper rounded-[6px] border border-pb-hairline hover:border-pb-rule transition-colors"
                           >
                             <div className="flex-1">
                               <span className="font-medium text-sm">{player.name}</span>
@@ -873,7 +874,7 @@ const PoolManagement = () => {
                         unassignedTeams.map((team: any) => (
                           <div
                             key={team._id}
-                            className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-xl border border-border/60 hover:border-primary/30 transition-colors"
+                            className="flex items-center justify-between gap-2 p-3 bg-pb-paper rounded-[6px] border border-pb-hairline hover:border-pb-rule transition-colors"
                           >
                             <span className="font-medium text-sm flex-1">{team.name}</span>
                             {pools.length > 0 ? (
@@ -905,22 +906,22 @@ const PoolManagement = () => {
 
               {/* Playoffs — sidebar section */}
               {event?.playFormat !== 'round-robin' && (
-                <Card className="glass-card-hover rounded-2xl border border-border/50 shadow-float">
+                <Card className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-display">
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Trophy className="w-5 h-5 text-primary" />
+                    <CardTitle className="flex items-center gap-2 font-display text-pb-ink text-[14px] uppercase tracking-tight">
+                      <div className="w-8 h-8 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center">
+                        <Trophy className="w-4 h-4 text-pb-court" />
                       </div>
                       Playoffs
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-[11px] font-mono text-pb-muted">
                       Bracket, generate, and complete playoffs
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Button
                       variant={sidebarSection === 'playoffs' ? "default" : "outline"}
-                      className={`w-full justify-start rounded-xl transition-all ${sidebarSection === 'playoffs' ? 'bg-hero-gradient text-primary-foreground shadow-glow border-0' : 'hover:border-primary/50 hover:bg-primary/5'}`}
+                      className={`w-full justify-start rounded-[6px] transition-all ${sidebarSection === 'playoffs' ? 'bg-pb-court-tint2 text-pb-court border-pb-court/30' : 'hover:border-pb-rule hover:bg-pb-surface'}`}
                       onClick={() => {
                         setSidebarSection('playoffs');
                         if (!selectedPoolId && pools.length > 0) setSelectedPoolId(pools[0]._id);
@@ -939,7 +940,7 @@ const PoolManagement = () => {
               {sidebarSection === 'playoffs' ? (
                 /* Event-level playoffs: all completed pools → gold / silver / bronze tiers */
                 <div className="space-y-6">
-                  <Card className="glass-card rounded-2xl border border-border/50 shadow-float">
+                  <Card className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
                     <CardContent className="p-6 space-y-6">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <h3 className="font-display font-bold text-lg">Event Playoffs</h3>
@@ -983,7 +984,7 @@ const PoolManagement = () => {
                             onClick={() => setIsGeneratePlayoffOpen(true)}
                             disabled={generateEventPlayoffsMutation.isPending || eventPlayoffsFinalized || completedPoolsCount < 2}
                             size="sm"
-                            className="bg-court-green text-white hover:bg-court-green-dark shadow-lg shrink-0 rounded-xl"
+                            className="bg-pb-ink text-white hover:bg-pb-ink/90 shrink-0 rounded-[6px] border-0"
                           >
                             {generateEventPlayoffsMutation.isPending ? (
                               <>
@@ -1018,7 +1019,7 @@ const PoolManagement = () => {
                           }
                         }}
                       >
-                        <DialogContent className="glass-card rounded-2xl border border-border/50 max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none max-h-[90vh] overflow-y-auto">
                           {(() => {
                             const isDoubleElim = event?.playFormat === 'double-elimination';
                             const totalAdvancing = completedPoolsCount * playoffAdvanceCount;
@@ -1201,7 +1202,7 @@ const PoolManagement = () => {
                                     Cancel
                                   </Button>
                                   <Button
-                                    className="bg-court-green text-white hover:bg-court-green-dark rounded-xl"
+                                    className="bg-pb-ink text-white hover:bg-pb-ink/90 rounded-[6px] border-0"
                                     onClick={() =>
                                       generateEventPlayoffsMutation.mutate({
                                         advanceCountPerPool: playoffAdvanceCount,
@@ -1272,9 +1273,9 @@ const PoolManagement = () => {
                           })()}
                         </div>
                       ) : (
-                        <div className="text-center py-12 rounded-2xl bg-muted/30 border border-border/40">
-                          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                            <Trophy className="w-8 h-8 text-primary" />
+                        <div className="text-center py-12 rounded-[6px] bg-pb-surface border border-pb-hairline">
+                          <div className="w-14 h-14 rounded-[6px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center mx-auto mb-4">
+                            <Trophy className="w-7 h-7 text-pb-court" />
                           </div>
                           <h3 className="text-xl font-display font-bold mb-2">No event playoffs yet</h3>
                           <p className="text-muted-foreground mb-2">
@@ -1293,7 +1294,7 @@ const PoolManagement = () => {
                     const placements = [...(event.eventPlayoffPlacements as { place: number; name: string; entityId: string; tier: string }[])]
                       .sort((a, b) => a.place - b.place);
                     return (
-                      <Card className="glass-card rounded-2xl border border-border/50 shadow-float">
+                      <Card className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
                         <CardContent className="p-6">
                           <h3 className="font-display font-bold text-lg mb-5 flex items-center gap-2">
                             <Trophy className="w-5 h-5 text-yellow-500" />
@@ -1307,7 +1308,7 @@ const PoolManagement = () => {
                                 p.tier === 'gold' ? 'border-yellow-400/50 bg-yellow-400/5'
                                 : p.tier === 'silver' ? 'border-slate-400/50 bg-slate-400/5'
                                 : p.tier === 'bronze' ? 'border-amber-600/50 bg-amber-600/5'
-                                : 'border-border/40 bg-muted/20';
+                                : 'border-pb-court/30 bg-pb-court-tint2';
                               const badgeClass =
                                 p.tier === 'gold' ? 'border-yellow-500 text-yellow-600'
                                 : p.tier === 'silver' ? 'border-slate-400 text-slate-500'
@@ -1337,7 +1338,7 @@ const PoolManagement = () => {
               ) : selectedPool ? (
                 <div className="space-y-6">
                   {/* Tabbed Navigation */}
-                  <Card className="glass-card rounded-2xl border border-border/50 shadow-float">
+                  <Card className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
                     <CardContent className="p-0">
                       {(() => {
                         const matches = selectedPool.matches || [];
@@ -1347,7 +1348,7 @@ const PoolManagement = () => {
                           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <div className="border-b border-border/40 px-4 pt-4">
                               <TabsList className="w-full justify-start flex-wrap h-auto gap-1.5 glass border border-border/50 p-1.5 rounded-xl">
-                                <TabsTrigger value="standings" className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all">
+                                <TabsTrigger value="standings" className="rounded-lg data-[state=active]:bg-pb-court-tint2 data-[state=active]:text-pb-court transition-all">
                                   Standings
                                 </TabsTrigger>
                                 {rounds.map((round: number) => {
@@ -1357,7 +1358,7 @@ const PoolManagement = () => {
                                     <TabsTrigger
                                       key={round}
                                       value={`round-${round}`}
-                                      className="rounded-lg data-[state=active]:bg-hero-gradient data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow transition-all"
+                                      className="rounded-lg data-[state=active]:bg-pb-court-tint2 data-[state=active]:text-pb-court transition-all"
                                     >
                                       Round {round}
                                       <Badge variant="secondary" className="ml-2 text-[10px]">
@@ -1779,7 +1780,7 @@ const PoolManagement = () => {
                   </Card>
                 </div>
               ) : (
-                <Card className="h-full flex items-center justify-center glass-card rounded-2xl border border-border/50 shadow-float">
+                <Card className="h-full flex items-center justify-center bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
                   <CardContent className="text-center py-16">
                     <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                       <Trophy className="w-10 h-10 text-primary" />
@@ -1798,7 +1799,7 @@ const PoolManagement = () => {
 
       {/* Schedule Match Dialog */}
       <Dialog open={!!schedulingMatch} onOpenChange={(open) => !open && setSchedulingMatch(null)}>
-        <DialogContent className="glass-card rounded-2xl border border-border/50">
+        <DialogContent className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none">
           <DialogHeader>
             <DialogTitle className="font-display">Schedule Match</DialogTitle>
             <DialogDescription>

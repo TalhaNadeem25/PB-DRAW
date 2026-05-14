@@ -38,6 +38,11 @@ export default class ErrorBoundary extends Component<Props, State> {
                 We hit an unexpected error. Try refreshing the page or going
                 back home.
               </p>
+              {this.state.error && (
+                <p className="text-xs font-mono bg-muted rounded p-2 text-left break-all mt-2">
+                  {this.state.error.message}
+                </p>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Oswald:wght@400..700&display=swap');
+/* Fonts loaded via <link> in index.html for preconnect benefit */
 
 @tailwind base;
 @tailwind components;
@@ -6,169 +6,114 @@
 
 @layer base {
   :root {
-    --font-display: "Oswald", system-ui, sans-serif;
-    --font-sans: "DM Sans", system-ui, sans-serif;
-    /* Court-inspired green palette */
-    --background: 75 20% 96.5%;
-    /* F7F8F4 warm-off-white */
-    --foreground: 150 20% 10%;
+    /* ── Fonts ── */
+    --font-display: "Bricolage Grotesque", Georgia, serif;
+    --font-sans:    "Geist", system-ui, sans-serif;
+    --font-mono:    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-    --card: 0 0% 100%;
-    --card-foreground: 150 20% 10%;
+    /* ── shadcn semantic tokens (mapped to PB Draw design tokens) ── */
+    --background: 42 33% 94%;        /* paper  #F5F2EB */
+    --foreground: 60 6% 5%;          /* ink    #0F0F0E */
+
+    --card: 0 0% 100%;               /* surface #FFFFFF */
+    --card-foreground: 60 6% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 150 20% 10%;
+    --popover-foreground: 60 6% 5%;
 
-    /* Vibrant court green */
-    --primary: 145 70% 35%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 141 41% 21%;          /* court  #1F4A2E */
+    --primary-foreground: 103 43% 95%;
 
-    /* Warm ball yellow */
-    --secondary: 45 95% 55%;
-    --secondary-foreground: 150 20% 10%;
+    --secondary: 42 33% 94%;         /* paper as secondary bg */
+    --secondary-foreground: 60 6% 5%;
 
-    --muted: 120 10% 94%;
-    --muted-foreground: 150 10% 45%;
+    --muted: 43 50% 97%;             /* surface2 #FBF9F4 */
+    --muted-foreground: 38 4% 40%;   /* muted    #6B6863 */
 
-    /* Accent - lighter green */
-    --accent: 145 60% 92%;
-    --accent-foreground: 145 70% 25%;
-
-    /* Success variant */
-    --success: 145 70% 40%;
-    --success-foreground: 0 0% 100%;
-
-    /* Warning variant */
-    --warning: 45 95% 55%;
-    --warning-foreground: 150 20% 10%;
+    --accent: 120 16% 92%;           /* court-tint #E6EDE6 */
+    --accent-foreground: 141 41% 17%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* New colors for states */
-    --info: 220 80% 55%;
+    --success: 141 41% 21%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 28 76% 43%;           /* amber #C2691A */
+    --warning-foreground: 0 0% 100%;
+
+    --info: 220 60% 50%;
     --info-foreground: 0 0% 100%;
-    --amber: 30 95% 50%;
+
+    --amber: 28 76% 43%;             /* #C2691A — LIVE state */
     --amber-foreground: 0 0% 100%;
 
-    --border: 120 10% 88%;
-    --input: 120 10% 88%;
-    --ring: 145 70% 35%;
+    --border: 41 24% 87%;            /* hairline #E5E0D5 */
+    --input:  41 24% 87%;
+    --ring:   141 41% 21%;
 
-    --radius: 0.75rem;
+    --radius: 0.375rem;              /* 6px base */
 
-    /* Custom tokens */
-    --court-green: 145 70% 35%;
-    --court-green-dark: 145 70% 25%;
-    --court-green-light: 145 60% 45%;
-    --ball-yellow: 45 95% 55%;
-    --ball-yellow-light: 45 95% 70%;
-    --net-white: 0 0% 100%;
-    --surface-warm: 35 30% 97%;
+    /* ── PB Draw design tokens (direct hex, used as Tailwind pb-* classes) ── */
+    --pb-paper:       #F5F2EB;
+    --pb-surface:     #FFFFFF;
+    --pb-surface2:    #FBF9F4;
+    --pb-hairline:    #E5E0D5;
+    --pb-rule:        #D5CFBF;
+    --pb-ink:         #0F0F0E;
+    --pb-ink2:        #3A3833;
+    --pb-muted:       #6B6863;
+    --pb-faint:       #9C9890;
+    --pb-court:       #1F4A2E;
+    --pb-court-ink:   #0E2D1A;
+    --pb-court-tint:  #E6EDE6;
+    --pb-court-tint2: #F1F5EE;
+    --pb-amber:       #C2691A;
+    --pb-amber-tint:  #FBE8D5;
+    --pb-red:         #A23A2C;
+    --pb-blue:        #2A4F8F;
+    --pb-blue-tint:   #E2E9F4;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(145 70% 35%), hsl(145 70% 25%));
-    --gradient-hero-radial: radial-gradient(ellipse at top, hsl(145 70% 40% / 0.15), transparent 50%);
-    --gradient-accent: linear-gradient(135deg, hsl(45 95% 55%), hsl(45 95% 65%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(120 10% 98%));
-    --gradient-success: linear-gradient(135deg, hsl(145 70% 40%), hsl(145 70% 30%));
-    --gradient-mesh: radial-gradient(at 40% 20%, hsl(145 70% 35% / 0.15) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, hsl(45 95% 55% / 0.1) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, hsl(145 60% 45% / 0.1) 0px, transparent 50%),
-      radial-gradient(at 80% 100%, hsl(145 70% 25% / 0.1) 0px, transparent 50%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(145 70% 35% / 0.2) 0%, transparent 70%);
+    /* ── Legacy gradient/shadow tokens (kept for existing components) ── */
+    --gradient-hero: linear-gradient(135deg, #1F4A2E, #0E2D1A);
+    --gradient-hero-radial: radial-gradient(ellipse at top, hsl(141 41% 21% / 0.12), transparent 50%);
+    --gradient-accent: linear-gradient(135deg, #E6EDE6, #F1F5EE);
+    --gradient-card: linear-gradient(180deg, #FFFFFF, #FBF9F4);
+    --gradient-success: linear-gradient(135deg, #1F4A2E, #0E2D1A);
+    --gradient-mesh: radial-gradient(at 40% 20%, hsl(141 41% 21% / 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(28 76% 43% / 0.06) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(141 41% 21% / 0.05) 0px, transparent 50%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(141 41% 21% / 0.15) 0%, transparent 70%);
 
-    /* Enhanced Shadows */
-    --shadow-xs: 0 1px 2px -1px hsl(150 20% 10% / 0.05);
-    --shadow-sm: 0 2px 8px -2px hsl(150 20% 10% / 0.08);
-    --shadow-md: 0 8px 24px -8px hsl(150 20% 10% / 0.12);
-    --shadow-lg: 0 16px 48px -12px hsl(150 20% 10% / 0.16);
-    --shadow-xl: 0 24px 64px -16px hsl(150 20% 10% / 0.20);
-    --shadow-2xl: 0 32px 80px -20px hsl(150 20% 10% / 0.25);
-    --shadow-glow: 0 0 40px hsl(145 70% 35% / 0.2);
-    --shadow-glow-lg: 0 0 60px hsl(145 70% 35% / 0.3);
-    --shadow-glow-yellow: 0 0 40px hsl(45 95% 55% / 0.25);
-    --shadow-inner: inset 0 2px 4px 0 hsl(150 20% 10% / 0.05);
-    --shadow-float: 0 20px 40px -15px hsl(150 20% 10% / 0.2), 0 8px 16px -8px hsl(150 20% 10% / 0.1);
+    --shadow-xs: 0 1px 2px -1px hsl(60 6% 5% / 0.04);
+    --shadow-sm: 0 2px 8px -2px hsl(60 6% 5% / 0.06);
+    --shadow-md: 0 8px 24px -8px hsl(60 6% 5% / 0.10);
+    --shadow-lg: 0 16px 48px -12px hsl(60 6% 5% / 0.14);
+    --shadow-xl: 0 24px 64px -16px hsl(60 6% 5% / 0.18);
+    --shadow-2xl: 0 32px 80px -20px hsl(60 6% 5% / 0.22);
+    --shadow-glow: 0 0 40px hsl(141 41% 21% / 0.15);
+    --shadow-glow-lg: 0 0 60px hsl(141 41% 21% / 0.22);
+    --shadow-glow-yellow: 0 0 40px hsl(28 76% 43% / 0.2);
+    --shadow-inner: inset 0 2px 4px 0 hsl(60 6% 5% / 0.04);
+    --shadow-float: 0 20px 40px -15px hsl(60 6% 5% / 0.15), 0 8px 16px -8px hsl(60 6% 5% / 0.08);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Court / legacy token aliases */
+    --court-green: 141 41% 21%;
+    --court-green-dark: 141 41% 14%;
+    --court-green-light: 141 35% 36%;
+    --ball-yellow: 28 76% 43%;
+    --ball-yellow-light: 28 76% 56%;
+
+    --sidebar-background: 42 33% 96%;
+    --sidebar-foreground: 60 6% 18%;
+    --sidebar-primary: 141 41% 21%;
+    --sidebar-primary-foreground: 103 43% 95%;
+    --sidebar-accent: 120 16% 92%;
+    --sidebar-accent-foreground: 141 41% 17%;
+    --sidebar-border: 41 24% 87%;
+    --sidebar-ring: 141 41% 21%;
   }
 
-  .dark {
-    --background: 150 20% 6%;
-    --foreground: 120 10% 98%;
-
-    --card: 150 15% 10%;
-    --card-foreground: 120 10% 98%;
-
-    --popover: 150 15% 10%;
-    --popover-foreground: 120 10% 98%;
-
-    --primary: 145 70% 45%;
-    --primary-foreground: 150 20% 10%;
-
-    --secondary: 45 90% 50%;
-    --secondary-foreground: 150 20% 10%;
-
-    --muted: 150 15% 15%;
-    --muted-foreground: 120 10% 65%;
-
-    --accent: 145 50% 15%;
-    --accent-foreground: 145 70% 70%;
-
-    --success: 145 70% 45%;
-    --success-foreground: 150 20% 10%;
-
-    --warning: 45 90% 50%;
-    --warning-foreground: 150 20% 10%;
-
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --info: 220 80% 65%;
-    --info-foreground: 150 20% 10%;
-    --amber: 30 95% 55%;
-    --amber-foreground: 150 20% 10%;
-
-    --border: 150 15% 18%;
-    --input: 150 15% 18%;
-    --ring: 145 70% 45%;
-
-    --court-green: 145 70% 45%;
-    --court-green-dark: 145 70% 35%;
-    --court-green-light: 145 60% 55%;
-    --ball-yellow: 45 90% 50%;
-
-    --gradient-hero: linear-gradient(135deg, hsl(145 70% 45%), hsl(145 70% 35%));
-    --gradient-mesh: radial-gradient(at 40% 20%, hsl(145 70% 45% / 0.1) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, hsl(45 90% 50% / 0.08) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, hsl(145 60% 45% / 0.08) 0px, transparent 50%),
-      radial-gradient(at 80% 100%, hsl(145 70% 35% / 0.08) 0px, transparent 50%);
-
-    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
-    --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 16px 48px -12px hsl(0 0% 0% / 0.5);
-    --shadow-xl: 0 24px 64px -16px hsl(0 0% 0% / 0.6);
-    --shadow-glow: 0 0 40px hsl(145 70% 45% / 0.3);
-    --shadow-glow-lg: 0 0 60px hsl(145 70% 45% / 0.4);
-    --shadow-float: 0 20px 40px -15px hsl(0 0% 0% / 0.4), 0 8px 16px -8px hsl(0 0% 0% / 0.3);
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 }
 
 /* Respect user motion preferences */
@@ -194,7 +139,7 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
-  /* Display font (Oswald): headings, buttons, nav, badges, labels that are titles */
+  /* Display (Bricolage Grotesque): page heroes, section headings */
   h1,
   h2,
   h3,
@@ -204,15 +149,16 @@
     @apply font-display font-bold tracking-tight;
   }
 
+  /* Buttons use body font (Geist) */
   button,
   [role="button"],
   [type="button"],
   [type="submit"],
   [type="reset"] {
-    @apply font-display;
+    @apply font-sans;
   }
 
-  /* Ensure inputs and selects use body font (DM Sans) for content */
+  /* Inputs use body font */
   input,
   textarea,
   select {
@@ -559,19 +505,21 @@
     animation: shimmer 1.5s infinite;
   }
 
-  /* Live indicator */
+  /* Live indicator — amber pulse */
   .live-indicator {
     @apply relative flex h-2.5 w-2.5;
   }
 
   .live-indicator::before {
     content: '';
-    @apply absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping;
+    @apply absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping;
+    background-color: var(--pb-amber);
   }
 
   .live-indicator::after {
     content: '';
-    @apply relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500;
+    @apply relative inline-flex rounded-full h-2.5 w-2.5;
+    background-color: var(--pb-amber);
   }
 
   /* Premium badge */
@@ -729,6 +677,14 @@
     background: hsl(var(--background) / 0.8) !important;
   }
 }
+/* ─── PB Draw: amber LIVE pulse ─────────────────────────────────────────────
+   Used on <Dot pulse> and .live-indicator for any LIVE/in-progress state.    */
+@keyframes pbpulse {
+  0%   { box-shadow: 0 0 0 0 #C2691A66; }
+  70%  { box-shadow: 0 0 0 8px #C2691A00; }
+  100% { box-shadow: 0 0 0 0 #C2691A00; }
+}
+
 /* ─── iOS Liquid Glass (iOS only via .ios-glass on <html>) ───────────────────
    Scoped to .ios-glass so desktop/Android are completely unaffected.
    Specular highlight is baked into background-image (no ::before) so it

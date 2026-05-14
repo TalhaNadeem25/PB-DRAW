@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],
+  darkMode: false,
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Oswald", "system-ui", "sans-serif"],
-        sans: ['"DM Sans"', "system-ui", "sans-serif"],
+        display: ['"Bricolage Grotesque"', "Georgia", "serif"],
+        sans:    ['"Geist"', "system-ui", "sans-serif"],
+        mono:    ['"Geist Mono"', "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -75,6 +76,27 @@ export default {
         ball: {
           yellow: "hsl(var(--ball-yellow))",
           "yellow-light": "hsl(var(--ball-yellow-light))",
+        },
+        /* PB Draw design tokens — use as bg-pb-paper, text-pb-ink, etc. */
+        pb: {
+          paper:       "var(--pb-paper)",
+          surface:     "var(--pb-surface)",
+          surface2:    "var(--pb-surface2)",
+          hairline:    "var(--pb-hairline)",
+          rule:        "var(--pb-rule)",
+          ink:         "var(--pb-ink)",
+          ink2:        "var(--pb-ink2)",
+          muted:       "var(--pb-muted)",
+          faint:       "var(--pb-faint)",
+          court:       "var(--pb-court)",
+          "court-ink": "var(--pb-court-ink)",
+          "court-tint":"var(--pb-court-tint)",
+          amber:          "var(--pb-amber)",
+          "amber-tint":   "var(--pb-amber-tint)",
+          "court-tint2":  "var(--pb-court-tint2)",
+          red:            "var(--pb-red)",
+          blue:           "var(--pb-blue)",
+          "blue-tint":    "var(--pb-blue-tint)",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

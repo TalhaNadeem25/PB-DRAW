@@ -1,12 +1,14 @@
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eyebrow, Pill, PbAvatar } from "@/components/ui/pb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { authAPI } from "@/services/api";
+import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
@@ -22,7 +24,10 @@ import {
   Target,
   Trophy,
   User,
-  Lightning
+  Lightning,
+  ShareNetwork,
+  CheckCircle,
+  CreditCard,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +48,7 @@ const Profile = () => {
   const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"profile" | "payments">("profile");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -197,9 +203,173 @@ const Profile = () => {
   };
   const tournaments = statsData?.data?.tournaments || [];
 
+  const winRate = stats.matchesPlayed > 0
+    ? Math.round((stats.matchesWon / stats.matchesPlayed) * 100)
+    : 0;
+
   return (
     <Layout>
       <div className="min-h-screen bg-background">
+
+        {/* ── Mobile Profile Layout ── */}
+        <div className="md:hidden flex flex-col min-h-screen bg-pb-paper pb-20">
+
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-4 pb-3 bg-pb-surface border-b border-pb-hairline sticky top-0 z-30" style={{ paddingTop: 'max(env(safe-area-inset-top), 14px)' }}>
+            <h1 className="font-display font-bold text-[18px] text-pb-ink tracking-[-0.02em]">Profile</h1>
+            <button
+              onClick={() => navigator.share?.({ title: user.name, url: window.location.href }).catch(() => {})}
+              className="w-9 h-9 flex items-center justify-center rounded-[6px] border border-pb-hairline text-pb-muted"
+            >
+              <ShareNetwork size={16} />
+            </button>
+          </div>
+
+          {/* Tab strip (organizers only) */}
+          {user.role === "organizer" && (
+            <div className="flex border-b border-pb-hairline bg-pb-surface">
+              {(["profile", "payments"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "flex-1 py-2.5 text-[11px] font-mono uppercase tracking-[0.08em] border-b-2 -mb-px transition-colors",
+                    activeTab === tab ? "border-pb-ink text-pb-ink" : "border-transparent text-pb-muted"
+                  )}
+                >
+                  {tab === "profile" ? "Profile" : "Payments"}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Profile tab */}
+          {activeTab === "profile" && (
+          <>
+
+          {/* Profile header */}
+          <div className="px-4 pt-5 pb-4 bg-pb-surface border-b border-pb-hairline">
+            <div className="flex items-center gap-4 mb-3">
+              <PbAvatar name={user.name} size={68} tone="ink" />
+              <div className="flex-1 min-w-0">
+                <h2 className="font-display font-bold text-[22px] text-pb-ink tracking-[-0.025em] leading-tight">{user.name}</h2>
+                <p className="font-mono text-[11px] text-pb-muted mt-0.5">
+                  {user.location?.city && user.location?.state
+                    ? `${user.location.city}, ${user.location.state}`
+                    : user.email?.split("@")[0] ? `@${user.email.split("@")[0]}` : ""}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Pill tone="court" className="flex items-center gap-1 text-[10px]">
+                    <CheckCircle size={10} weight="bold" />
+                    {user.role === "player" ? "Verified" : user.role === "organizer" ? "Organizer" : "Admin"}
+                  </Pill>
+                  <Pill tone="neutral" mono className="text-[10px]">Member</Pill>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats strip */}
+          <div className="grid grid-cols-3 divide-x divide-pb-hairline bg-pb-surface border-b border-pb-hairline">
+            {[
+              { label: "SKILL LVL", value: formData.skillLevel },
+              { label: "MATCHES", value: String(stats.matchesPlayed) },
+              { label: "WIN RATE", value: `${winRate}%` },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex flex-col items-center justify-center py-4 gap-0.5">
+                <Eyebrow>{label}</Eyebrow>
+                <span className="font-mono text-[22px] font-bold text-pb-court leading-none">{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Trophy cabinet */}
+          {tournaments.length > 0 && (
+            <div className="px-4 pt-5">
+              <Eyebrow className="mb-3">TROPHY CABINET</Eyebrow>
+              <div className="bg-pb-surface border border-pb-hairline rounded-[8px] overflow-hidden divide-y divide-pb-hairline">
+                {tournaments.slice(0, 6).map((tournament: any, idx: number) => (
+                  <div
+                    key={tournament._id}
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-pb-surface2 transition-colors"
+                    onClick={() => navigate(`/tournaments/${tournament._id}`)}
+                  >
+                    {/* Place badge */}
+                    <div className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-mono font-bold border",
+                      idx === 0
+                        ? "bg-pb-amber-tint border-[#E8C9A1] text-[#7C3F0A]"
+                        : "bg-pb-surface2 border-pb-hairline text-pb-muted"
+                    )}>
+                      {idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display font-bold text-[13px] text-pb-ink truncate">{tournament.name}</p>
+                      <p className="font-mono text-[10px] text-pb-faint">
+                        {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}
+                      </p>
+                    </div>
+                    <span className="font-mono text-[10px] text-pb-muted capitalize shrink-0">{tournament.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Edit profile CTA */}
+          <div className="px-4 pt-4">
+            <div className="bg-pb-surface border border-pb-hairline rounded-[8px] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <PencilSimple size={14} className="text-pb-muted" />
+                <Eyebrow>EDIT PROFILE</Eyebrow>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-mono text-pb-muted uppercase tracking-[0.1em]">Name</label>
+                  <input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="h-8 px-2.5 text-[12px] font-mono bg-pb-paper border border-pb-hairline rounded-[4px] text-pb-ink focus:outline-none focus:border-pb-rule"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-mono text-pb-muted uppercase tracking-[0.1em]">Skill</label>
+                  <input
+                    value={formData.skillLevel}
+                    onChange={(e) => setFormData({ ...formData, skillLevel: e.target.value })}
+                    className="h-8 px-2.5 text-[12px] font-mono bg-pb-paper border border-pb-hairline rounded-[4px] text-pb-ink focus:outline-none focus:border-pb-rule"
+                  />
+                </div>
+              </div>
+              {hasUnsavedChanges && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={updateMutation.isPending}
+                  className="w-full h-9 rounded-[6px] bg-pb-ink text-white text-[12px] font-mono font-semibold flex items-center justify-center gap-2"
+                >
+                  {updateMutation.isPending
+                    ? <><CircleNotch size={13} className="animate-spin" /> Saving…</>
+                    : <><FloppyDisk size={13} /> Save Changes</>}
+                </button>
+              )}
+            </div>
+          </div>
+
+          </> /* end profile tab */
+          )}
+
+          {/* Payments tab (organizer only) */}
+          {activeTab === "payments" && user.role === "organizer" && (
+            <div className="px-4 pt-5 pb-6">
+              <ConnectAccountStatus />
+            </div>
+          )}
+
+        </div>
+
+        {/* ── Desktop Profile Layout (md+) ── */}
+        <div className="hidden md:block">
+
         {/* Hero: cover + avatar + name */}
         <div className="relative">
           {/* Cover */}
@@ -475,6 +645,27 @@ const Profile = () => {
                   </Button>
                 </CardContent>
               </Card>
+
+              {/* Stripe Configuration (organizers only) */}
+              {user.role === "organizer" && (
+                <Card className="glass-card rounded-2xl border-border/50 overflow-hidden">
+                  <div className="h-1 bg-primary/20" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-display font-bold text-foreground">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-primary" />
+                      </div>
+                      Payment Setup
+                    </CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Connect your Stripe account to collect entry fees from players.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ConnectAccountStatus />
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
 
@@ -574,6 +765,7 @@ const Profile = () => {
           </div>
         )}
         {hasUnsavedChanges && <div className="h-20" />}
+        </div>{/* end hidden md:block */}
       </div>
     </Layout>
   );

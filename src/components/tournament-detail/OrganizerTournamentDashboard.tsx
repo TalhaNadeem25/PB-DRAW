@@ -7,8 +7,6 @@ import AIPlannerChat from "@/components/tournament/EnhancedAIPlannerChat";
 import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
 import TournamentPlanner from "@/components/tournament/TournamentPlanner";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import DashboardOverview, { type ActivityItem } from "@/components/tournament-dashboard/DashboardOverview";
 import DashboardTopBar from "@/components/tournament-dashboard/DashboardTopBar";
 import OrganizerEventsPanel from "@/components/tournament-dashboard/OrganizerEventsPanel";
@@ -20,6 +18,7 @@ import TournamentDashboardSidebar, {
 import { CaretRight, Stack, Trophy } from "@phosphor-icons/react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import { Pill, PbBtn, Eyebrow } from "@/components/ui/pb";
 
 export interface OrganizerTournamentDashboardProps {
   tournament: any;
@@ -91,54 +90,62 @@ export default function OrganizerTournamentDashboard({
         );
       case "pools":
         return (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-6">
             <div>
-              <h2 className="font-display font-bold text-2xl flex items-center gap-2">
-                <Stack className="w-6 h-6 text-primary" />
+              <h2 className="font-display font-extrabold text-[28px] tracking-[-0.03em] text-pb-ink leading-none mb-1">
                 Pools
               </h2>
-              <p className="text-muted-foreground mt-1">
-                Manage pools, standings, and matches for each event. Select an event to create pools, assign teams, and run pool play or playoffs.
+              <p className="text-[12px] font-mono text-pb-muted max-w-prose">
+                Manage pools, standings, and matches for each event. Select an event to create pools,
+                assign teams, and run pool play or playoffs.
               </p>
             </div>
+
             {(tournament.events?.length ?? 0) > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {(tournament.events || []).map((event: any) => (
                   <div
                     key={event._id}
-                    className="glass-card rounded-2xl border border-border/50 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-primary/30 hover:shadow-float transition-all"
+                    className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-pb-rule transition-colors"
                   >
                     <div className="min-w-0">
-                      <h3 className="font-display font-semibold text-lg truncate">{event.name}</h3>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        <Badge variant="secondary" className="capitalize text-xs">
-                          {event.format?.replace("-", " ") ?? "—"}
-                        </Badge>
-                        <span>
-                          {(event.currentTeams || 0)} {(event.format || "").toLowerCase() === "singles" ? "players" : "teams"} registered
+                      <p className="font-display font-semibold text-[16px] tracking-[-0.02em] text-pb-ink truncate mb-1.5">
+                        {event.name}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Pill tone="neutral" mono className="capitalize">
+                          {(event.format || "").replace("-", " ") || "—"}
+                        </Pill>
+                        <span className="text-[11px] font-mono text-pb-muted">
+                          {event.currentTeams || 0}{" "}
+                          {(event.format || "").toLowerCase() === "singles" ? "players" : "teams"} registered
                         </span>
                       </div>
                     </div>
-                    <Button asChild className="shrink-0">
-                      <Link to={`/tournaments/${id}/events/${event._id}/pools`}>
-                        Manage pools
-                        <CaretRight className="w-4 h-4 ml-1" />
-                      </Link>
-                    </Button>
+                    <Link
+                      to={`/tournaments/${id}/events/${event._id}/pools`}
+                      className="shrink-0 h-9 px-4 rounded-[6px] border border-pb-hairline bg-pb-surface2 flex items-center gap-1.5 text-[12px] font-mono text-pb-ink hover:border-pb-rule hover:bg-pb-surface transition-colors"
+                    >
+                      Manage pools
+                      <CaretRight size={12} />
+                    </Link>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-                <Stack className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground font-medium">No events yet</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Add events in the Events tab, then come back here to manage pools for each event.
+              <div className="bg-pb-surface border border-pb-hairline rounded-[6px] px-5 py-14 text-center">
+                <Stack size={28} className="mx-auto mb-3 text-pb-faint" />
+                <p className="text-[13px] font-sans font-medium text-pb-ink mb-1">No events yet</p>
+                <p className="text-[12px] font-mono text-pb-muted mb-4">
+                  Add events in the Events tab, then come back here to manage pools.
                 </p>
-                <Button variant="outline" className="mt-4" onClick={() => setActiveSection("events")}>
-                  <Trophy className="w-4 h-4 mr-2" />
+                <button
+                  onClick={() => setActiveSection("events")}
+                  className="h-9 px-4 rounded-[6px] border border-pb-hairline bg-pb-surface2 flex items-center gap-1.5 text-[12px] font-mono text-pb-ink hover:border-pb-rule transition-colors mx-auto"
+                >
+                  <Trophy size={13} />
                   Go to Events
-                </Button>
+                </button>
               </div>
             )}
           </div>
@@ -174,7 +181,7 @@ export default function OrganizerTournamentDashboard({
       <Helmet>
         <title>Dashboard - {tournament.name} | PB Draw</title>
       </Helmet>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-pb-paper">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
           <DashboardTopBar
             tournament={tournament}
@@ -193,7 +200,6 @@ export default function OrganizerTournamentDashboard({
               onSectionChange={setActiveSection}
               tournamentId={id}
             />
-
             <main className="flex-1 min-w-0 font-sans">{renderSection()}</main>
           </div>
         </div>

@@ -1,89 +1,61 @@
 import { cn } from "@/lib/utils";
 import {
-    ChartBar,
-    Calendar,
-    ClipboardText,
-    Clock,
-    Flask,
-    GitBranch,
-    Stack,
-    SquaresFour,
-    ListNumbers,
-    ArrowsCounterClockwise,
-    Gear,
-    Sparkle,
-    Trophy,
-    Users,
+  ChartBar, Calendar, ClipboardText, Clock, Flask, GitBranch,
+  Stack, SquaresFour, ListNumbers, ArrowsCounterClockwise,
+  Gear, Sparkle, Trophy, Users,
 } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
+import { Eyebrow } from "@/components/ui/pb";
 
 export type DashboardSection =
-  | "dashboard"
-  | "events"
-  | "waitlist"
-  | "pools"
-  | "registrations"
-  | "planner"
-  | "ai-planner"
-  | "schedule"
-  | "brackets"
-  | "scores"
-  | "refunds"
-  | "test";
+  | "dashboard" | "events" | "waitlist" | "pools" | "registrations"
+  | "planner" | "ai-planner" | "schedule" | "brackets" | "scores"
+  | "refunds" | "test";
 
-interface SidebarItem {
-  id: DashboardSection;
-  label: string;
-  icon: React.ElementType;
-}
-
-interface SidebarCategory {
-  title: string;
-  items: SidebarItem[];
-}
+interface SidebarItem { id: DashboardSection; label: string; icon: React.ElementType }
+interface SidebarCategory { title: string; items: SidebarItem[] }
 
 const sidebarCategories: SidebarCategory[] = [
   {
     title: "1. Setup Phase",
     items: [
-      { id: "dashboard", label: "Overview", icon: SquaresFour },
-      { id: "events", label: "Events", icon: Trophy },
-      { id: "waitlist", label: "Waitlist", icon: ListNumbers },
-      { id: "planner", label: "Planner", icon: Calendar },
+      { id: "dashboard",      label: "Overview",         icon: SquaresFour },
+      { id: "events",         label: "Events",           icon: Trophy      },
+      { id: "waitlist",       label: "Waitlist",         icon: ListNumbers },
+      { id: "planner",        label: "Planner",          icon: Calendar    },
     ],
   },
   {
     title: "2. Pre-Tournament",
     items: [
-      { id: "registrations", label: "Players & Check-in", icon: Users },
-      { id: "ai-planner", label: "AI Planner (Beta)", icon: Sparkle },
-      { id: "pools", label: "Pool Setup", icon: Stack },
-      { id: "schedule", label: "Court Scheduling", icon: Clock },
+      { id: "registrations",  label: "Players & Check-in", icon: Users    },
+      { id: "ai-planner",     label: "AI Planner (Beta)",  icon: Sparkle  },
+      { id: "pools",          label: "Pool Setup",         icon: Stack    },
+      { id: "schedule",       label: "Court Scheduling",   icon: Clock    },
     ],
   },
   {
     title: "3. Day-Of",
     items: [
-      { id: "brackets", label: "Live Brackets & Play", icon: GitBranch },
-      { id: "scores", label: "Input Scores", icon: ClipboardText },
+      { id: "brackets",       label: "Live Brackets & Play", icon: GitBranch    },
+      { id: "scores",         label: "Input Scores",         icon: ClipboardText },
     ],
   },
   {
     title: "4. Post-Tournament",
     items: [
-      { id: "refunds", label: "Refunds", icon: ArrowsCounterClockwise },
+      { id: "refunds",        label: "Refunds",           icon: ArrowsCounterClockwise },
     ],
   },
   {
     title: "Test Panel",
     items: [
-      { id: "test", label: "Test Data", icon: Flask },
+      { id: "test",           label: "Test Data",         icon: Flask },
     ],
-  }
+  },
 ];
 
-// Helper to get flat items for mobile nav
-const flatSidebarItems = sidebarCategories.flatMap(c => c.items);
+const flatSidebarItems = sidebarCategories.flatMap((c) => c.items);
 
 interface TournamentDashboardSidebarProps {
   activeSection: DashboardSection;
@@ -95,14 +67,14 @@ const TournamentDashboardSidebar = ({
   activeSection,
   onSectionChange,
   tournamentId,
-}: TournamentDashboardSidebarProps) => {
-  return (
-    <nav className="bg-card border-none sm:border-r-2 sm:border-border sm:shadow-none shadow-sm sm:w-64 hidden lg:block p-3 space-y-4">
-      {sidebarCategories.map((category) => (
-        <div key={category.title} className="space-y-1">
-          <h4 className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 font-display">
-            {category.title}
-          </h4>
+}: TournamentDashboardSidebarProps) => (
+  <nav className="hidden lg:block w-56 shrink-0 space-y-5">
+    {sidebarCategories.map((category) => (
+      <div key={category.title}>
+        <div className="px-3 mb-1.5">
+          <Eyebrow>{category.title}</Eyebrow>
+        </div>
+        <div className="space-y-0.5">
           {category.items.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
@@ -111,45 +83,43 @@ const TournamentDashboardSidebar = ({
                 key={item.id}
                 onClick={() => onSectionChange(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 border-l-4",
+                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-[13px] font-sans transition-colors border-l-2",
                   isActive
-                    ? "border-primary bg-primary/10 text-foreground font-bold"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                    ? "border-pb-court bg-pb-court-tint2 text-pb-court font-medium"
+                    : "border-transparent text-pb-muted hover:text-pb-ink hover:bg-pb-surface2"
                 )}
               >
-                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary" : "")} />
+                <Icon size={14} className="shrink-0" weight={isActive ? "bold" : "regular"} />
                 <span className="truncate">{item.label}</span>
               </button>
             );
           })}
         </div>
-      ))}
+      </div>
+    ))}
 
-      {/* Divider */}
-      <div className="border-t border-border/50 my-3" />
-
-      {/* Bottom links */}
+    <div className="border-t border-pb-hairline pt-3 space-y-0.5">
       <Link
         to="/analytics"
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-bold border-l-4 border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200 uppercase font-display tracking-widest"
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-[13px] font-sans text-pb-muted hover:text-pb-ink hover:bg-pb-surface2 transition-colors border-l-2 border-transparent"
       >
-        <ChartBar className="w-5 h-5 shrink-0" />
+        <ChartBar size={14} className="shrink-0" />
         Analytics
       </Link>
       <Link
         to={`/tournaments/${tournamentId}/edit`}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-bold border-l-4 border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200 uppercase font-display tracking-widest"
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-[13px] font-sans text-pb-muted hover:text-pb-ink hover:bg-pb-surface2 transition-colors border-l-2 border-transparent"
       >
-        <Gear className="w-5 h-5 shrink-0" />
-        Gear
+        <Gear size={14} className="shrink-0" />
+        Settings
       </Link>
-    </nav>
-  );
-};
+    </div>
+  </nav>
+);
 
 export default TournamentDashboardSidebar;
 
-/** Mobile horizontal tab bar — rendered outside the sidebar on <lg screens */
+/** Mobile horizontal tab strip */
 export const MobileDashboardNav = ({
   activeSection,
   onSectionChange,
@@ -157,8 +127,8 @@ export const MobileDashboardNav = ({
   activeSection: DashboardSection;
   onSectionChange: (section: DashboardSection) => void;
 }) => (
-  <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 px-4 border-b-2 border-border/50 mb-6 bg-card sticky top-14 z-20">
-    <div className="flex gap-4 min-w-max px-2">
+  <div className="lg:hidden overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-pb-hairline mb-6 bg-pb-surface sticky top-14 z-20">
+    <div className="flex gap-1 min-w-max py-2">
       {flatSidebarItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeSection === item.id;
@@ -167,14 +137,14 @@ export const MobileDashboardNav = ({
             key={item.id}
             onClick={() => onSectionChange(item.id)}
             className={cn(
-              "flex items-center gap-2 px-2 py-4 text-sm font-bold whitespace-nowrap transition-all duration-200 border-b-4",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-mono transition-colors whitespace-nowrap",
               isActive
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                ? "bg-pb-ink text-white"
+                : "text-pb-muted hover:text-pb-ink hover:bg-pb-surface2"
             )}
           >
-            <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "")} />
-            <span className="font-display tracking-widest uppercase">{item.label}</span>
+            <Icon size={12} />
+            {item.label}
           </button>
         );
       })}

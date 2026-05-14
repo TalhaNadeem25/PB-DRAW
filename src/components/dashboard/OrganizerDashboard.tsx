@@ -1,8 +1,6 @@
 import { ConnectAccountStatus } from "@/components/stripe/ConnectAccountStatus";
 import { SkeletonList } from "@/components/ui/skeleton-card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pill, Eyebrow, PbBtn } from "@/components/ui/pb";
 import {
   ArrowRight,
   Brain,
@@ -26,6 +24,12 @@ export interface OrganizerDashboardProps {
   tournamentsLoading: boolean;
 }
 
+const statusTone = (status: string): "court" | "amber" | "neutral" | "ink" => {
+  if (status === "in-progress") return "court";
+  if (status === "open") return "amber";
+  return "neutral";
+};
+
 export default function OrganizerDashboard({
   myTournaments,
   activeTournaments,
@@ -33,181 +37,169 @@ export default function OrganizerDashboard({
 }: OrganizerDashboardProps) {
   const navigate = useNavigate();
 
+  const kpis = [
+    {
+      label: "Total Tournaments",
+      value: myTournaments.length,
+      sub: `${activeTournaments.length} active`,
+      icon: Trophy,
+    },
+    {
+      label: "Active Tournaments",
+      value: activeTournaments.length,
+      sub: "Currently running",
+      icon: Play,
+    },
+    {
+      label: "Total Participants",
+      value: myTournaments.reduce((sum: number, t: any) => sum + (t.currentPlayers || 0), 0),
+      sub: "Across all tournaments",
+      icon: Users,
+    },
+    {
+      label: "Events Created",
+      value: myTournaments.reduce((sum: number, t: any) => sum + (t.events?.length || 0), 0),
+      sub: "Total events",
+      icon: Target,
+    },
+  ];
+
   return (
     <div className="space-y-8">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tournaments</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{myTournaments.length}</div>
-            <p className="text-xs text-muted-foreground">{activeTournaments.length} active</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Tournaments</CardTitle>
-            <Play className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeTournaments.length}</div>
-            <p className="text-xs text-muted-foreground">Currently running</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Participants</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {myTournaments.reduce((sum: number, t: any) => sum + (t.currentPlayers || 0), 0)}
+      {/* KPI row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {kpis.map(({ label, value, sub, icon: Icon }) => (
+          <div key={label} className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5">
+            <div className="flex items-start justify-between mb-3">
+              <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-pb-muted leading-tight">{label}</span>
+              <div className="w-7 h-7 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center shrink-0">
+                <Icon size={13} className="text-pb-court" />
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">Across all tournaments</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Events Created</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {myTournaments.reduce((sum: number, t: any) => sum + (t.events?.length || 0), 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Total events</p>
-          </CardContent>
-        </Card>
+            <p className="font-display font-black text-[28px] leading-none text-pb-ink mb-1">{value}</p>
+            <p className="text-[11px] font-mono text-pb-faint">{sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* AI Planner Hero Card */}
-      <Card className="border-0 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-full blur-3xl" />
-        <CardContent className="pt-8 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-shrink-0">
-              <div className="w-20 h-20 bg-hero-gradient rounded-2xl flex items-center justify-center shadow-glow">
-                <Sparkle className="w-10 h-10 text-primary-foreground" />
-              </div>
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 rounded-full mb-3">
-                <Sparkle className="w-3 h-3 text-primary" />
-                <span className="text-xs font-bold text-primary">NEW FEATURE</span>
-              </div>
-              <h3 className="font-display font-bold text-2xl mb-2">
-                Plan Perfect Tournaments with AI
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Let AI help you calculate court requirements, suggest events, optimize schedules, and more. Get expert recommendations instantly.
-              </p>
-              <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-primary" />
-                  <span className="text-sm">Smart Event Suggestions</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Lightning className="w-4 h-4 text-primary" />
-                  <span className="text-sm">Court Calculations</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <TrendUp className="w-4 h-4 text-primary" />
-                  <span className="text-sm">Schedule Optimization</span>
-                </div>
-              </div>
-              <Button asChild size="lg" className="bg-hero-gradient hover:shadow-glow">
-                <Link to="/tournament-planner">
-                  <Sparkle className="w-4 h-4 mr-2" />
-                  Try AI Planner Now
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
+      {/* AI Planner editorial card */}
+      <div className="bg-pb-surface border border-pb-hairline rounded-[6px] overflow-hidden">
+        <div className="border-b border-pb-hairline px-6 py-4 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center">
+            <Brain size={15} className="text-pb-court" />
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <Eyebrow>New Feature</Eyebrow>
+          </div>
+        </div>
+        <div className="p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
+          <div className="flex-1">
+            <h3 className="font-display font-black text-[20px] tracking-[-0.02em] text-pb-ink mb-2">
+              Plan Perfect Tournaments with AI
+            </h3>
+            <p className="text-[13px] font-mono text-pb-muted mb-5 leading-relaxed">
+              Let AI help you calculate court requirements, suggest events, optimize schedules, and more. Get expert recommendations instantly.
+            </p>
+            <div className="flex flex-wrap gap-5 mb-5">
+              {[
+                { icon: Brain, label: "Smart Event Suggestions" },
+                { icon: Lightning, label: "Court Calculations" },
+                { icon: TrendUp, label: "Schedule Optimization" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <Icon size={13} className="text-pb-court" />
+                  <span className="text-[12px] font-mono text-pb-muted">{label}</span>
+                </div>
+              ))}
+            </div>
+            <Link
+              to="/tournament-planner"
+              className="inline-flex items-center gap-2 h-9 px-5 rounded-[6px] bg-pb-ink text-white font-display font-bold text-[13px] uppercase tracking-wide hover:bg-pb-ink/90 transition-colors"
+            >
+              <Sparkle size={14} />
+              Try AI Planner
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+        </div>
+      </div>
 
-      {/* Stripe Connect - Payment Setup */}
+      {/* Stripe Payment Setup */}
       <div>
-        <h2 className="text-2xl font-bold mb-4">Payment Setup</h2>
+        <h2 className="font-display font-black text-[18px] uppercase tracking-tight text-pb-ink mb-4">Payment Setup</h2>
         <ConnectAccountStatus />
       </div>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Manage your tournaments efficiently</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Button asChild className="h-auto py-6 flex-col gap-2">
-            <Link to="/create-tournament">
-              <Plus className="w-6 h-6" />
-              <span>Create Tournament</span>
-            </Link>
-          </Button>
-          <Button variant="outline" asChild className="h-auto py-6 flex-col gap-2">
-            <Link to="/tournaments">
-              <Trophy className="w-6 h-6" />
-              <span>View All Tournaments</span>
-            </Link>
-          </Button>
-          <Button variant="outline" asChild className="h-auto py-6 flex-col gap-2">
-            <Link to="/teams">
-              <Users className="w-6 h-6" />
-              <span>Manage Teams</span>
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="bg-pb-surface border border-pb-hairline rounded-[6px]">
+        <div className="border-b border-pb-hairline px-6 py-4">
+          <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink">Quick Actions</p>
+          <p className="text-[11px] font-mono text-pb-muted mt-0.5">Manage your tournaments efficiently</p>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link
+            to="/create-tournament"
+            className="flex flex-col items-center justify-center gap-2 py-5 rounded-[6px] bg-pb-ink text-white hover:bg-pb-ink/90 transition-colors"
+          >
+            <Plus size={20} />
+            <span className="text-[12px] font-mono uppercase tracking-[0.06em]">Create Tournament</span>
+          </Link>
+          <Link
+            to="/tournaments"
+            className="flex flex-col items-center justify-center gap-2 py-5 rounded-[6px] border border-pb-hairline bg-pb-paper text-pb-ink hover:border-pb-rule transition-colors"
+          >
+            <Trophy size={20} className="text-pb-muted" />
+            <span className="text-[12px] font-mono uppercase tracking-[0.06em]">View All Tournaments</span>
+          </Link>
+          <Link
+            to="/teams"
+            className="flex flex-col items-center justify-center gap-2 py-5 rounded-[6px] border border-pb-hairline bg-pb-paper text-pb-ink hover:border-pb-rule transition-colors"
+          >
+            <Users size={20} className="text-pb-muted" />
+            <span className="text-[12px] font-mono uppercase tracking-[0.06em]">Manage Teams</span>
+          </Link>
+        </div>
+      </div>
 
       {/* Active Tournaments */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Active Tournaments</CardTitle>
-              <CardDescription>Tournaments currently open or in progress</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/tournaments">
-                View All
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
+      <div className="bg-pb-surface border border-pb-hairline rounded-[6px]">
+        <div className="border-b border-pb-hairline px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="font-display font-black text-[15px] uppercase tracking-tight text-pb-ink">Active Tournaments</p>
+            <p className="text-[11px] font-mono text-pb-muted mt-0.5">Tournaments currently open or in progress</p>
           </div>
-        </CardHeader>
-        <CardContent>
+          <Link
+            to="/tournaments"
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono text-pb-court hover:underline underline-offset-2"
+          >
+            View All <ArrowRight size={12} />
+          </Link>
+        </div>
+        <div className="p-4">
           {tournamentsLoading ? (
             <SkeletonList count={3} />
           ) : activeTournaments.length > 0 ? (
-            <div className="space-y-4">
+            <div className="divide-y divide-pb-hairline">
               {activeTournaments.map((tournament: any) => (
                 <div
                   key={tournament._id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  className="flex items-center justify-between py-4 first:pt-0 last:pb-0 cursor-pointer group"
                   onClick={() => navigate(`/tournaments/${tournament._id}`)}
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold">{tournament.name}</h3>
-                      <Badge variant={tournament.status === "in-progress" ? "default" : "secondary"}>
-                        {tournament.status}
-                      </Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5 mb-1.5">
+                      <h3 className="font-display font-bold text-[14px] text-pb-ink group-hover:text-pb-court transition-colors truncate">
+                        {tournament.name}
+                      </h3>
+                      <Pill tone={statusTone(tournament.status)}>{tournament.status}</Pill>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono text-pb-faint">
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 shrink-0" />
+                        <MapPin size={11} className="shrink-0" />
                         <span className="truncate max-w-[120px] sm:max-w-none">{tournament.location}</span>
                       </span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 shrink-0" />
+                        <Calendar size={11} className="shrink-0" />
                         {new Date(tournament.startDate).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -215,26 +207,30 @@ export default function OrganizerDashboard({
                         })}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3 shrink-0" />
+                        <Users size={11} className="shrink-0" />
                         {tournament.currentPlayers || 0} players
                       </span>
                     </div>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                  <ArrowRight size={15} className="text-pb-faint group-hover:text-pb-muted transition-colors shrink-0 ml-3" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No active tournaments</p>
-              <Button asChild className="mt-4">
-                <Link to="/create-tournament">Create Your First Tournament</Link>
-              </Button>
+            <div className="text-center py-10">
+              <Trophy size={32} className="mx-auto mb-3 text-pb-faint" />
+              <p className="text-[13px] font-mono text-pb-muted mb-4">No active tournaments</p>
+              <Link
+                to="/create-tournament"
+                className="inline-flex items-center gap-2 h-9 px-5 rounded-[6px] bg-pb-ink text-white font-display font-bold text-[12px] uppercase tracking-wide hover:bg-pb-ink/90 transition-colors"
+              >
+                <Plus size={13} />
+                Create Your First Tournament
+              </Link>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

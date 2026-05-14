@@ -2,44 +2,79 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Eyebrow, PbBtn } from "@/components/ui/pb";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  CalendarBlank,
-  ArrowLeft,
-  CircleNotch,
-  FloppyDisk,
-  Users,
-  Trophy,
-  MapPin,
-  Gavel,
-  CurrencyDollar,
+  CalendarBlank, ArrowLeft, CircleNotch, FloppyDisk,
+  Users, Trophy, MapPin, Gavel, CurrencyDollar, Check,
 } from "@phosphor-icons/react";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { tournamentAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AMENITY_OPTIONS = ["Parking", "Restrooms", "Locker Rooms", "Food & Beverages", "Seating/Bleachers", "First Aid", "WiFi"];
+
+/* ── Shared form primitives ── */
+const FL = ({ children }: { children: React.ReactNode }) => (
+  <label className="block text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-1.5">{children}</label>
+);
+const FI = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <input
+    {...props}
+    className={cn(
+      "w-full h-9 rounded-[6px] border border-pb-hairline bg-pb-surface2 px-3 text-[13px] font-sans text-pb-ink placeholder:text-pb-faint focus:outline-none focus:border-pb-rule",
+      props.className
+    )}
+  />
+);
+const FS = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => (
+  <select
+    {...props}
+    className={cn(
+      "w-full h-9 rounded-[6px] border border-pb-hairline bg-pb-surface2 px-3 text-[13px] font-mono text-pb-ink focus:outline-none focus:border-pb-rule",
+      props.className
+    )}
+  />
+);
+const FTA = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <textarea
+    {...props}
+    className={cn(
+      "w-full rounded-[6px] border border-pb-hairline bg-pb-surface2 px-3 py-2 text-[13px] font-sans text-pb-ink placeholder:text-pb-faint focus:outline-none focus:border-pb-rule resize-none",
+      props.className
+    )}
+  />
+);
+
+/* ── Section card ── */
+const SCard = ({ icon: Icon, title, sub, children }: { icon: React.ElementType; title: string; sub?: string; children: React.ReactNode }) => (
+  <div className="bg-pb-surface border border-pb-hairline rounded-[6px] overflow-hidden">
+    <div className="flex items-center gap-2.5 px-5 py-4 border-b border-pb-hairline bg-pb-surface2">
+      <Icon size={14} className="text-pb-muted shrink-0" />
+      <div>
+        <p className="font-display font-semibold text-[15px] tracking-[-0.015em] text-pb-ink">{title}</p>
+        {sub && <p className="text-[11px] font-mono text-pb-muted">{sub}</p>}
+      </div>
+    </div>
+    <div className="p-5 space-y-5">{children}</div>
+  </div>
+);
+
+/* ── Date picker trigger ── */
+const DateBtn = ({ date, onClick }: { date?: Date; onClick?: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="w-full h-9 rounded-[6px] border border-pb-hairline bg-pb-surface2 px-3 text-[13px] font-mono text-pb-ink flex items-center gap-2 hover:border-pb-rule focus:outline-none focus:border-pb-rule transition-colors"
+  >
+    <CalendarBlank size={13} className="text-pb-muted shrink-0" />
+    {date ? format(date, "MMM d, yyyy") : <span className="text-pb-faint">Pick a date</span>}
+  </button>
+);
 
 const EditTournament = () => {
   const { id } = useParams();
@@ -48,14 +83,13 @@ const EditTournament = () => {
   const { user } = useAuth();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['tournament', id],
+    queryKey: ["tournament", id],
     queryFn: () => tournamentAPI.getById(id!),
     enabled: !!id,
   });
 
   const tournament = data?.data;
 
-  // Step 1: Basic Info
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
@@ -70,7 +104,6 @@ const EditTournament = () => {
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [allowWaitlist, setAllowWaitlist] = useState(false);
 
-  // Venue & Courts
   const [courtCount, setCourtCount] = useState<number | string>("");
   const [courtSurface, setCourtSurface] = useState("");
   const [playStartTime, setPlayStartTime] = useState("08:00");
@@ -78,7 +111,6 @@ const EditTournament = () => {
   const [amenities, setAmenities] = useState<string[]>([]);
   const [spectatorCapacity, setSpectatorCapacity] = useState<number | string>("");
 
-  // Rules & Prizes
   const [checkInWindow, setCheckInWindow] = useState("30");
   const [refereeType, setRefereeType] = useState("");
   const [entryFee, setEntryFee] = useState<number | string>(0);
@@ -103,19 +135,13 @@ const EditTournament = () => {
       setStatus(tournament.status || "open");
       setCurrentImage(tournament.image || null);
       setAllowWaitlist(tournament.settings?.allowWaitlist === true);
-
-      // Venue
       setCourtCount(tournament.venue?.courts ?? "");
       setCourtSurface(tournament.venue?.courtSurface || "");
       setAmenities(tournament.venue?.facilities || []);
       setSpectatorCapacity(tournament.venue?.spectatorCapacity ?? "");
-
-      // Scheduling
       setPlayStartTime(tournament.scheduling?.startTime || "08:00");
       setPlayEndTime(tournament.scheduling?.endTime || "18:00");
       setCheckInWindow(String(tournament.scheduling?.checkInWindow ?? 30));
-
-      // Rules & prizes
       setRefereeType(tournament.refereeType || "");
       setEntryFee(tournament.entryFee ?? 0);
       setPrizeTotal(tournament.prizePool?.total ?? "");
@@ -128,36 +154,29 @@ const EditTournament = () => {
     }
   }, [tournament]);
 
-  const toggleAmenity = (amenity: string) => {
-    setAmenities(prev =>
-      prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]
-    );
-  };
+  const toggleAmenity = (a: string) =>
+    setAmenities(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { toast.error("Image size must be less than 5MB"); return; }
-      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
-        toast.error("Only JPEG, PNG, and WEBP images are allowed"); return;
-      }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image size must be less than 5MB"); return; }
+    if (!["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Only JPEG, PNG, and WEBP images are allowed"); return;
     }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => tournamentAPI.update(id!, data),
     onSuccess: async () => {
       if (imageFile) {
-        try {
-          await tournamentAPI.uploadImage(id!, imageFile);
-        } catch {
-          toast.error('Tournament updated but image upload failed');
-        }
+        try { await tournamentAPI.uploadImage(id!, imageFile); }
+        catch { toast.error("Tournament updated but image upload failed"); }
       }
-      queryClient.invalidateQueries({ queryKey: ['tournament', id] });
-      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ["tournament", id] });
+      queryClient.invalidateQueries({ queryKey: ["tournaments"] });
       toast.success("Tournament updated successfully!");
       navigate(`/tournaments/${id}`);
     },
@@ -172,44 +191,27 @@ const EditTournament = () => {
       toast.error("Please fill in all required fields");
       return;
     }
-
     updateMutation.mutate({
-      name,
-      description,
-      location,
-      address,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
+      name, description, location, address,
+      startDate: startDate.toISOString(), endDate: endDate.toISOString(),
       registrationDeadline: registrationDeadline?.toISOString(),
-      maxPlayers,
-      status,
+      maxPlayers, status,
       rules: rules || undefined,
       contactEmail: contactEmail || undefined,
       contactPhone: contactPhone || undefined,
       entryFee: Number(entryFee) || 0,
       refereeType: refereeType || undefined,
-      settings: {
-        ...(tournament?.settings || {}),
-        allowWaitlist,
-      },
+      settings: { ...(tournament?.settings || {}), allowWaitlist },
       venue: {
         courts: courtCount !== "" ? Number(courtCount) : undefined,
         courtSurface: courtSurface || undefined,
         facilities: amenities.length > 0 ? amenities : undefined,
         spectatorCapacity: spectatorCapacity !== "" ? Number(spectatorCapacity) : undefined,
       },
-      scheduling: {
-        startTime: playStartTime,
-        endTime: playEndTime,
-        checkInWindow: Number(checkInWindow),
-      },
+      scheduling: { startTime: playStartTime, endTime: playEndTime, checkInWindow: Number(checkInWindow) },
       prizePool: {
         total: prizeTotal !== "" ? Number(prizeTotal) : 0,
-        distribution: {
-          first: prizeFirst || undefined,
-          second: prizeSecond || undefined,
-          third: prizeThird || undefined,
-        },
+        distribution: { first: prizeFirst || undefined, second: prizeSecond || undefined, third: prizeThird || undefined },
       },
     });
   };
@@ -217,30 +219,15 @@ const EditTournament = () => {
   const isOrganizer = tournament && user && (
     tournament.organizerId === user._id ||
     tournament.organizer?._id === user._id ||
-    user.role === 'admin'
+    user.role === "admin"
   );
 
-  if (tournament && user && !isOrganizer) {
-    return (
-      <Layout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Card className="w-full max-w-md">
-            <CardContent className="pt-6 text-center">
-              <h2 className="text-xl font-bold mb-2">Unauthorized</h2>
-              <p className="text-muted-foreground mb-4">You don't have permission to edit this tournament.</p>
-              <Button asChild><a href={`/tournaments/${id}`}>Back to Tournament</a></Button>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
-
+  /* ── Loading / error / auth states ── */
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <CircleNotch className="w-8 h-8 animate-spin text-primary" />
+        <div className="min-h-screen bg-pb-paper flex items-center justify-center">
+          <CircleNotch size={24} className="animate-spin text-pb-muted" />
         </div>
       </Layout>
     );
@@ -249,14 +236,30 @@ const EditTournament = () => {
   if (error || !tournament) {
     return (
       <Layout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Card className="w-full max-w-md">
-            <CardContent className="pt-6 text-center">
-              <h2 className="text-xl font-bold mb-2">Tournament Not Found</h2>
-              <p className="text-muted-foreground mb-4">The tournament you're looking for doesn't exist.</p>
-              <Button asChild><a href="/tournaments">Back to Tournaments</a></Button>
-            </CardContent>
-          </Card>
+        <div className="min-h-screen bg-pb-paper flex items-center justify-center px-4">
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-8 max-w-md w-full text-center">
+            <p className="font-display font-bold text-[18px] text-pb-ink mb-2">Tournament Not Found</p>
+            <p className="text-[12px] font-mono text-pb-muted mb-5">The tournament you're looking for doesn't exist.</p>
+            <a href="/tournaments" className="font-mono text-[12px] text-pb-court underline underline-offset-2">
+              Back to Tournaments
+            </a>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (tournament && user && !isOrganizer) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-pb-paper flex items-center justify-center px-4">
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px] p-8 max-w-md w-full text-center">
+            <p className="font-display font-bold text-[18px] text-pb-ink mb-2">Unauthorized</p>
+            <p className="text-[12px] font-mono text-pb-muted mb-5">You don't have permission to edit this tournament.</p>
+            <a href={`/tournaments/${id}`} className="font-mono text-[12px] text-pb-court underline underline-offset-2">
+              Back to Tournament
+            </a>
+          </div>
         </div>
       </Layout>
     );
@@ -264,351 +267,305 @@ const EditTournament = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background">
-        <div className="border-b border-border/60 bg-card/50">
-          <div className="container mx-auto px-4 sm:px-6 py-6">
-            <Button
-              variant="ghost"
+      <div className="min-h-screen bg-pb-paper">
+
+        {/* ── Top bar ── */}
+        <div className="bg-pb-surface border-b border-pb-hairline">
+          <div className="container mx-auto px-4 sm:px-6 py-5">
+            <button
               onClick={() => navigate(`/tournaments/${id}`)}
-              className="mb-4 text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-1.5 text-[12px] font-mono text-pb-muted hover:text-pb-ink mb-4 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Tournament
-            </Button>
-            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">Edit Tournament</h1>
-            <p className="text-muted-foreground text-sm">Update tournament information</p>
+              <ArrowLeft size={13} /> Back to Tournament
+            </button>
+            <h1 className="font-display font-extrabold text-[32px] tracking-[-0.035em] leading-none text-pb-ink mb-1">
+              Edit Tournament
+            </h1>
+            <p className="text-[12px] font-mono text-pb-muted">Update tournament information</p>
           </div>
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="max-w-4xl mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="max-w-3xl mx-auto">
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-              {/* Basic Info */}
-              <Card className="glass-card rounded-2xl border-border/50">
-                <CardHeader>
-                  <CardTitle>Tournament Details</CardTitle>
-                  <CardDescription>Update the basic information about your tournament</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Tournament Name *</Label>
-                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+              {/* ── Basic Info ── */}
+              <SCard icon={Trophy} title="Tournament Details" sub="Update the basic information about your tournament">
+                <div>
+                  <FL>Tournament Name *</FL>
+                  <FI value={name} onChange={(e) => setName(e.target.value)} required />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <FL>Venue Name *</FL>
+                    <FI value={location} onChange={(e) => setLocation(e.target.value)} required />
                   </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Venue Name *</Label>
-                      <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} required />
+                  <div>
+                    <FL>Address</FL>
+                    <FI value={address} onChange={(e) => setAddress(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <FL>Description</FL>
+                  <FTA value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <FL>Max Players *</FL>
+                    <FI
+                      type="number"
+                      min={4}
+                      value={maxPlayers}
+                      onChange={(e) => setMaxPlayers(parseInt(e.target.value) || 128)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <FL>Status</FL>
+                    <FS value={status} onChange={(e) => setStatus(e.target.value)}>
+                      <option value="draft">Draft</option>
+                      <option value="open">Open</option>
+                      <option value="closed">Closed</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </FS>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <FL>Contact Email</FL>
+                    <FI type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+                  </div>
+                  <div>
+                    <FL>Contact Phone</FL>
+                    <FI type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+                  </div>
+                </div>
+                <div className="flex items-start justify-between gap-4 p-4 rounded-[6px] border border-pb-hairline bg-pb-surface2">
+                  <div className="flex items-start gap-2.5">
+                    <Users size={14} className="text-pb-muted shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-sans font-medium text-[13px] text-pb-ink">Allow waitlist</p>
+                      <p className="text-[11px] font-mono text-pb-muted mt-0.5">
+                        When an event is full, players can join a waitlist. You can approve them to send a payment link.
+                      </p>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Address</Label>
-                      <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
-                    </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="maxPlayers">Max Players *</Label>
-                      <Input
-                        id="maxPlayers"
-                        type="number"
-                        min="4"
-                        value={maxPlayers}
-                        onChange={(e) => setMaxPlayers(parseInt(e.target.value) || 128)}
-                        required
+                  <Switch checked={allowWaitlist} onCheckedChange={setAllowWaitlist} className="shrink-0" />
+                </div>
+                <div>
+                  <FL>Tournament Image</FL>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleImageChange}
+                    className="w-full text-[12px] font-mono text-pb-muted file:mr-3 file:h-7 file:px-3 file:rounded-[4px] file:border file:border-pb-hairline file:bg-pb-surface2 file:text-[11px] file:font-mono file:text-pb-ink file:cursor-pointer"
+                  />
+                  <p className="text-[11px] font-mono text-pb-faint mt-1.5">JPEG, PNG, or WEBP · max 5 MB</p>
+                  {(imagePreview || currentImage) && (
+                    <div className="mt-3">
+                      <img
+                        src={imagePreview || currentImage!}
+                        alt="Tournament"
+                        className="w-full max-w-sm rounded-[6px] border border-pb-hairline object-cover"
                       />
+                      {imagePreview && (
+                        <p className="text-[11px] font-mono text-pb-muted mt-1.5">New image selected — will be uploaded on save</p>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <select
-                        id="status"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="open">Open</option>
-                        <option value="closed">Closed</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                      </select>
-                    </div>
-                  </div>
+                  )}
+                </div>
+              </SCard>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="contactEmail">Contact Email</Label>
-                      <Input id="contactEmail" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+              {/* ── Dates ── */}
+              <SCard icon={CalendarBlank} title="Dates" sub="Update tournament dates and registration deadline">
+                <div className="grid md:grid-cols-3 gap-4">
+                  {([
+                    { label: "Start Date *", date: startDate, set: setStartDate },
+                    { label: "End Date *", date: endDate, set: setEndDate },
+                    { label: "Registration Deadline", date: registrationDeadline, set: setRegistrationDeadline },
+                  ] as { label: string; date: Date | undefined; set: (d: Date | undefined) => void }[]).map(({ label, date, set }) => (
+                    <div key={label}>
+                      <FL>{label}</FL>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <DateBtn date={date} />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={date} onSelect={set} initialFocus />
+                        </PopoverContent>
+                      </Popover>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="contactPhone">Contact Phone</Label>
-                      <Input id="contactPhone" type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
-                    </div>
-                  </div>
+                  ))}
+                </div>
+              </SCard>
 
-                  <div className="flex items-center justify-between rounded-lg border border-border/50 p-4">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <Label htmlFor="allowWaitlist" className="text-base font-medium cursor-pointer">Allow waitlist</Label>
-                        <p className="text-sm text-muted-foreground">
-                          When an event is full, players can join a waitlist. You can approve them to send a payment link.
-                        </p>
-                      </div>
-                    </div>
-                    <Switch id="allowWaitlist" checked={allowWaitlist} onCheckedChange={setAllowWaitlist} />
+              {/* ── Venue ── */}
+              <SCard icon={MapPin} title="Venue & Courts" sub="Tell players about your venue setup">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <FL>Number of Courts</FL>
+                    <FI
+                      type="number"
+                      min={1}
+                      placeholder="e.g. 8"
+                      value={courtCount}
+                      onChange={(e) => setCourtCount(e.target.value === "" ? "" : Number(e.target.value))}
+                    />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Tournament Image</Label>
-                    <Input id="image" type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleImageChange} />
-                    <p className="text-sm text-muted-foreground">Upload a new tournament image (JPG, PNG, or WEBP, max 5MB)</p>
-                    {(imagePreview || currentImage) && (
-                      <div className="mt-2">
-                        <img
-                          src={imagePreview || currentImage!}
-                          alt="Tournament"
-                          className="w-full max-w-md rounded-lg border border-border object-cover"
-                        />
-                        {imagePreview && (
-                          <p className="text-sm text-muted-foreground mt-2">New image selected (will be uploaded on save)</p>
+                  <div>
+                    <FL>Court Surface</FL>
+                    <FS value={courtSurface} onChange={(e) => setCourtSurface(e.target.value)}>
+                      <option value="">Select surface type</option>
+                      <option value="indoor-sport-court">Indoor Sport Court</option>
+                      <option value="indoor-wood">Indoor Wood</option>
+                      <option value="outdoor-concrete">Outdoor Concrete</option>
+                      <option value="outdoor-asphalt">Outdoor Asphalt</option>
+                      <option value="outdoor-sport-court">Outdoor Sport Court</option>
+                    </FS>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <FL>Play Starts</FL>
+                    <FI type="time" value={playStartTime} onChange={(e) => setPlayStartTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <FL>Play Ends</FL>
+                    <FI type="time" value={playEndTime} onChange={(e) => setPlayEndTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <FL>Spectator Capacity</FL>
+                    <FI
+                      type="number"
+                      min={0}
+                      placeholder="e.g. 200"
+                      value={spectatorCapacity}
+                      onChange={(e) => setSpectatorCapacity(e.target.value === "" ? "" : Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <FL>Amenities</FL>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-1">
+                    {AMENITY_OPTIONS.map((amenity) => (
+                      <label
+                        key={amenity}
+                        className={cn(
+                          "flex items-center gap-2 cursor-pointer p-2.5 rounded-[6px] border transition-colors",
+                          amenities.includes(amenity)
+                            ? "border-pb-court bg-pb-court-tint2"
+                            : "border-pb-hairline bg-pb-surface2 hover:border-pb-rule"
                         )}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Dates */}
-              <Card className="glass-card rounded-2xl border-border/50">
-                <CardHeader>
-                  <CardTitle>Dates</CardTitle>
-                  <CardDescription>Update tournament dates and registration deadline</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-3 gap-6">
-                    {[
-                      { label: "Start Date *", date: startDate, setDate: setStartDate },
-                      { label: "End Date *", date: endDate, setDate: setEndDate },
-                      { label: "Registration Deadline", date: registrationDeadline, setDate: setRegistrationDeadline },
-                    ].map(({ label, date, setDate }) => (
-                      <div key={label} className="space-y-2">
-                        <Label>{label}</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
-                            >
-                              <CalendarBlank className="mr-2 h-4 w-4" />
-                              {date ? format(date, "PPP") : "Pick a date"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
+                      >
+                        <div className={cn(
+                          "w-4 h-4 rounded-[3px] border flex items-center justify-center shrink-0 transition-colors",
+                          amenities.includes(amenity) ? "bg-pb-court border-pb-court" : "border-pb-rule bg-pb-surface"
+                        )}>
+                          {amenities.includes(amenity) && <Check size={10} weight="bold" className="text-white" />}
+                        </div>
+                        <input type="checkbox" checked={amenities.includes(amenity)} onChange={() => toggleAmenity(amenity)} className="sr-only" />
+                        <span className="text-[11px] font-mono text-pb-ink">{amenity}</span>
+                      </label>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </SCard>
 
-              {/* Venue & Courts */}
-              <Card className="glass-card rounded-2xl border-border/50">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    <CardTitle>Venue & Courts</CardTitle>
+              {/* ── Rules & Prizes ── */}
+              <SCard icon={Gavel} title="Rules & Prizes" sub="Configure rules, fees, and prize distribution">
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <FL>Check-In Window (min)</FL>
+                    <FI
+                      type="number"
+                      min={0}
+                      placeholder="30"
+                      value={checkInWindow}
+                      onChange={(e) => setCheckInWindow(e.target.value)}
+                    />
+                    <p className="text-[11px] font-mono text-pb-faint mt-1">Minutes before first match</p>
                   </div>
-                  <CardDescription>Tell players about your venue setup</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="courtCount">Number of Courts</Label>
-                      <Input
-                        id="courtCount"
+                  <div>
+                    <FL>Referee Type</FL>
+                    <FS value={refereeType} onChange={(e) => setRefereeType(e.target.value)}>
+                      <option value="">Select referee type</option>
+                      <option value="self-officiated">Self-officiated</option>
+                      <option value="line-judges">Line Judges</option>
+                      <option value="certified-referees">Certified Referees</option>
+                    </FS>
+                  </div>
+                  <div>
+                    <FL>Tournament Entry Fee ($)</FL>
+                    <div className="relative">
+                      <CurrencyDollar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-pb-muted" />
+                      <FI
                         type="number"
-                        min="1"
-                        placeholder="e.g. 8"
-                        value={courtCount}
-                        onChange={(e) => setCourtCount(e.target.value === "" ? "" : Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="courtSurface">Court Surface</Label>
-                      <Select value={courtSurface} onValueChange={setCourtSurface}>
-                        <SelectTrigger id="courtSurface">
-                          <SelectValue placeholder="Select surface type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="indoor-sport-court">Indoor Sport Court</SelectItem>
-                          <SelectItem value="indoor-wood">Indoor Wood</SelectItem>
-                          <SelectItem value="outdoor-concrete">Outdoor Concrete</SelectItem>
-                          <SelectItem value="outdoor-asphalt">Outdoor Asphalt</SelectItem>
-                          <SelectItem value="outdoor-sport-court">Outdoor Sport Court</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="playStartTime">Play Starts</Label>
-                      <Input id="playStartTime" type="time" value={playStartTime} onChange={(e) => setPlayStartTime(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="playEndTime">Play Ends</Label>
-                      <Input id="playEndTime" type="time" value={playEndTime} onChange={(e) => setPlayEndTime(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="spectatorCapacity">Spectator Capacity</Label>
-                      <Input
-                        id="spectatorCapacity"
-                        type="number"
-                        min="0"
-                        placeholder="e.g. 200"
-                        value={spectatorCapacity}
-                        onChange={(e) => setSpectatorCapacity(e.target.value === "" ? "" : Number(e.target.value))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Amenities</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {AMENITY_OPTIONS.map((amenity) => (
-                        <div key={amenity} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`amenity-${amenity}`}
-                            checked={amenities.includes(amenity)}
-                            onCheckedChange={() => toggleAmenity(amenity)}
-                          />
-                          <label htmlFor={`amenity-${amenity}`} className="text-sm font-medium cursor-pointer">{amenity}</label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Rules & Prizes */}
-              <Card className="glass-card rounded-2xl border-border/50">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    <CardTitle>Rules & Prizes</CardTitle>
-                  </div>
-                  <CardDescription>Configure rules, fees, and prize distribution</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="checkInWindow">Check-in Window (minutes)</Label>
-                      <Input
-                        id="checkInWindow"
-                        type="number"
-                        min="0"
-                        placeholder="30"
-                        value={checkInWindow}
-                        onChange={(e) => setCheckInWindow(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">Minutes before first match players must check in</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="refereeType">Referee Type</Label>
-                      <Select value={refereeType} onValueChange={setRefereeType}>
-                        <SelectTrigger id="refereeType">
-                          <SelectValue placeholder="Select referee type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="self-officiated">Self-officiated</SelectItem>
-                          <SelectItem value="line-judges">Line Judges</SelectItem>
-                          <SelectItem value="certified-referees">Certified Referees</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="entryFee">
-                        <span className="flex items-center gap-1"><CurrencyDollar className="h-4 w-4" />Tournament Entry Fee ($)</span>
-                      </Label>
-                      <Input
-                        id="entryFee"
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        min={0}
+                        step={0.01}
                         placeholder="0"
                         value={entryFee}
                         onChange={(e) => setEntryFee(e.target.value === "" ? "" : Number(e.target.value))}
+                        className="pl-8"
                       />
                     </div>
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Gavel className="h-4 w-4 text-muted-foreground" />
-                      <Label className="text-base font-medium">Prize Pool</Label>
-                    </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="prizeTotal">Total Prize Pool ($)</Label>
-                        <Input
-                          id="prizeTotal"
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={prizeTotal}
-                          onChange={(e) => setPrizeTotal(e.target.value === "" ? "" : Number(e.target.value))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="prizeFirst">🥇 1st Place</Label>
-                        <Input id="prizeFirst" placeholder="e.g. $500" value={prizeFirst} onChange={(e) => setPrizeFirst(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="prizeSecond">🥈 2nd Place</Label>
-                        <Input id="prizeSecond" placeholder="e.g. $250" value={prizeSecond} onChange={(e) => setPrizeSecond(e.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="prizeThird">🥉 3rd Place</Label>
-                        <Input id="prizeThird" placeholder="e.g. $100" value={prizeThird} onChange={(e) => setPrizeThird(e.target.value)} />
-                      </div>
-                    </div>
+                <div className="pt-3 border-t border-pb-hairline">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Trophy size={13} className="text-pb-muted shrink-0" />
+                    <Eyebrow>Prize Pool</Eyebrow>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="rules">Tournament Rules</Label>
-                    <Textarea
-                      id="rules"
-                      value={rules}
-                      onChange={(e) => setRules(e.target.value)}
-                      rows={5}
-                      placeholder="Describe the rules, scoring format, and any special regulations..."
-                      maxLength={2000}
-                    />
-                    <p className="text-xs text-muted-foreground text-right">{rules.length}/2000</p>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <FL>Total ($)</FL>
+                      <FI
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={prizeTotal}
+                        onChange={(e) => setPrizeTotal(e.target.value === "" ? "" : Number(e.target.value))}
+                      />
+                    </div>
+                    {[
+                      { label: "🥇 1st Place", value: prizeFirst, set: setPrizeFirst },
+                      { label: "🥈 2nd Place", value: prizeSecond, set: setPrizeSecond },
+                      { label: "🥉 3rd Place", value: prizeThird, set: setPrizeThird },
+                    ].map(({ label, value, set }) => (
+                      <div key={label}>
+                        <FL>{label}</FL>
+                        <FI placeholder="e.g. $500" value={value} onChange={(e) => set(e.target.value)} />
+                      </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => navigate(`/tournaments/${id}`)}>
+                <div>
+                  <FL>Tournament Rules</FL>
+                  <FTA
+                    value={rules}
+                    onChange={(e) => setRules(e.target.value)}
+                    rows={5}
+                    placeholder="Describe the rules, scoring format, and any special regulations..."
+                    maxLength={2000}
+                  />
+                  <p className="text-[11px] font-mono text-pb-faint mt-1 text-right">{rules.length}/2000</p>
+                </div>
+              </SCard>
+
+              {/* ── Footer actions ── */}
+              <div className="flex justify-end gap-3 pb-8">
+                <PbBtn type="button" variant="outline" size="md" onClick={() => navigate(`/tournaments/${id}`)}>
                   Cancel
-                </Button>
-                <Button type="submit" disabled={updateMutation.isPending}>
+                </PbBtn>
+                <PbBtn type="submit" variant="primary" size="md" disabled={updateMutation.isPending}>
                   {updateMutation.isPending ? (
-                    <><CircleNotch className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                    <><CircleNotch size={14} className="animate-spin" /> Saving…</>
                   ) : (
-                    <><FloppyDisk className="w-4 h-4 mr-2" />Save Changes</>
+                    <><FloppyDisk size={14} /> Save Changes</>
                   )}
-                </Button>
+                </PbBtn>
               </div>
             </form>
           </div>

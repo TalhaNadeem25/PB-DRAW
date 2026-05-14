@@ -1,29 +1,23 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ClipboardText, Calendar, Check, X, PencilSimple, CircleNotch, CaretDown, CaretRight, Trophy, Users, Stack, Pulse, Warning } from "@phosphor-icons/react";
+import {
+  ClipboardText, Calendar, Check, X, PencilSimple, CircleNotch,
+  CaretDown, Trophy, Users, Warning,
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { poolAPI, matchAPI } from "@/services/api";
+import { Eyebrow, Pill, PbBtn, Dot } from "@/components/ui/pb";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type MatchWithMeta = {
   _id: string;
@@ -46,8 +40,28 @@ interface ScoresPanelProps {
 }
 
 type RoundGroup = { round: number | null; matches: MatchWithMeta[] };
-type PoolGroup = { poolId: string; poolName: string; rounds: RoundGroup[] };
+type PoolGroup  = { poolId: string; poolName: string; rounds: RoundGroup[] };
 type EventGroup = { eventId: string; eventName: string; pools: PoolGroup[] };
+
+// ─── Dispute score input ──────────────────────────────────────────────────────
+
+const DisputeInput = ({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) => (
+  <input
+    type="number"
+    min={0}
+    value={value}
+    onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+    className="w-full h-10 text-center font-mono font-bold text-[18px] tabular-nums bg-pb-surface2 border border-pb-hairline focus:border-pb-rule focus:outline-none rounded-[6px] text-pb-ink [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+  />
+);
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
   const queryClient = useQueryClient();
@@ -58,25 +72,18 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
   const [resolveMatch, setResolveMatch] = useState<MatchWithMeta | null>(null);
   const [resolveScores, setResolveScores] = useState({ team1Score: 0, team2Score: 0 });
 
+  // ── Data ──────────────────────────────────────────────────────────────────
+
   const { data: allMatches = [], isLoading } = useQuery({
     queryKey: ["scores", tournamentId],
     queryFn: async (): Promise<MatchWithMeta[]> => {
-      const eventsList = events || [];
       const result: MatchWithMeta[] = [];
-      for (const event of eventsList) {
+      for (const event of events || []) {
         const poolsRes = await poolAPI.getByEvent(event._id);
-        const pools = poolsRes?.data || [];
-        for (const pool of pools) {
+        for (const pool of poolsRes?.data || []) {
           const matchesRes = await matchAPI.getByPool(pool._id);
-          const matches = matchesRes?.data || [];
-          for (const m of matches) {
-            result.push({
-              ...m,
-              eventId: event._id,
-              eventName: event.name,
-              poolId: pool._id,
-              poolName: pool.name || "Pool",
-            });
+          for (const m of matchesRes?.data || []) {
+            result.push({ ...m, eventId: event._id, eventName: event.name, poolId: pool._id, poolName: pool.name || "Pool" });
           }
         }
       }
@@ -85,34 +92,24 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
     enabled: !!tournamentId && !!events?.length,
   });
 
+  // ── Mutations ─────────────────────────────────────────────────────────────
+
   const updateScoreMutation = useMutation({
-    mutationFn: ({
-      matchId,
-      scores,
-    }: {
-      matchId: string;
-      scores: { team1Score: number; team2Score: number; status?: string };
-    }) => matchAPI.updateScore(matchId, { ...scores, status: "completed" }),
-    onSuccess: (_, { matchId }) => {
+    mutationFn: ({ matchId, scores }: { matchId: string; scores: { team1Score: number; team2Score: number } }) =>
+      matchAPI.updateScore(matchId, { ...scores, status: "completed" }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scores", tournamentId] });
       queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
       setEditingMatchId(null);
       toast.success("Score updated");
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update score");
-    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to update score"),
   });
 
   const resolveDisputeMutation = useMutation({
-    mutationFn: ({
-      matchId,
-      scores,
-    }: {
-      matchId: string;
-      scores: { team1Score: number; team2Score: number };
-    }) => matchAPI.resolveDispute(matchId, scores),
+    mutationFn: ({ matchId, scores }: { matchId: string; scores: { team1Score: number; team2Score: number } }) =>
+      matchAPI.resolveDispute(matchId, scores),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scores", tournamentId] });
       queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
@@ -120,12 +117,11 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
       setResolveMatch(null);
       toast.success("Dispute resolved");
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to resolve dispute");
-    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to resolve dispute"),
   });
 
-  // Hierarchy: Event → Pool → Round → matches (matches without round go under "Other")
+  // ── Hierarchy ─────────────────────────────────────────────────────────────
+
   const hierarchy = useMemo((): EventGroup[] => {
     const result: EventGroup[] = [];
     for (const event of events) {
@@ -133,446 +129,393 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
       if (eventMatches.length === 0) continue;
       const poolMap = new Map<string, { poolName: string; matches: MatchWithMeta[] }>();
       for (const m of eventMatches) {
-        const existing = poolMap.get(m.poolId);
-        if (!existing) poolMap.set(m.poolId, { poolName: m.poolName, matches: [m] });
-        else existing.matches.push(m);
+        const ex = poolMap.get(m.poolId);
+        if (!ex) poolMap.set(m.poolId, { poolName: m.poolName, matches: [m] });
+        else ex.matches.push(m);
       }
-      const pools: PoolGroup[] = Array.from(poolMap.entries())
-        .map(([poolId, { poolName, matches }]) => {
-          const roundMap = new Map<number | null, MatchWithMeta[]>();
-          for (const m of matches) {
-            const r = m.round ?? null;
-            if (!roundMap.has(r)) roundMap.set(r, []);
-            roundMap.get(r)!.push(m);
-          }
-          const rounds: RoundGroup[] = Array.from(roundMap.entries())
-            .sort(([a], [b]) => (a === null ? 1 : b === null ? -1 : a - b))
-            .map(([round, ms]) => ({ round, matches: ms }));
-          return { poolId, poolName, rounds };
-        })
-        .sort((a, b) => a.poolName.localeCompare(b.poolName));
+      const pools: PoolGroup[] = Array.from(poolMap.entries()).map(([poolId, { poolName, matches }]) => {
+        const roundMap = new Map<number | null, MatchWithMeta[]>();
+        for (const m of matches) {
+          const r = m.round ?? null;
+          if (!roundMap.has(r)) roundMap.set(r, []);
+          roundMap.get(r)!.push(m);
+        }
+        const rounds: RoundGroup[] = Array.from(roundMap.entries())
+          .sort(([a], [b]) => (a === null ? 1 : b === null ? -1 : a - b))
+          .map(([round, ms]) => ({ round, matches: ms }));
+        return { poolId, poolName, rounds };
+      }).sort((a, b) => a.poolName.localeCompare(b.poolName));
       result.push({ eventId: event._id, eventName: event.name, pools });
     }
     return result;
   }, [events, allMatches]);
 
-  const totalCompleted = allMatches.filter((m) => m.status === "completed").length;
-  const totalMatches = allMatches.length;
-
-  const toggleEvent = (eventId: string) => {
-    setOpenEvents((prev) => {
-      const next = new Set(prev);
-      if (next.has(eventId)) next.delete(eventId);
-      else next.add(eventId);
-      return next;
-    });
-  };
-  const togglePool = (poolId: string) => {
-    setOpenPools((prev) => {
-      const next = new Set(prev);
-      if (next.has(poolId)) next.delete(poolId);
-      else next.add(poolId);
-      return next;
-    });
-  };
-  const isEventOpen = (eventId: string) => openEvents.has(eventId);
-  const isPoolOpen = (poolId: string) => openPools.has(poolId);
-
-  // Default: expand first event and first pool of each event when hierarchy loads
+  // Auto-expand all on first load
   useEffect(() => {
     if (hierarchy.length === 0) return;
-    setOpenEvents((prev) => {
-      if (prev.size > 0) return prev;
-      return new Set(hierarchy.map((e) => e.eventId));
-    });
+    setOpenEvents((prev) => prev.size > 0 ? prev : new Set(hierarchy.map((e) => e.eventId)));
     setOpenPools((prev) => {
       if (prev.size > 0) return prev;
-      const poolIds = hierarchy.flatMap((e) => e.pools.map((p) => p.poolId));
-      return new Set(poolIds);
+      return new Set(hierarchy.flatMap((e) => e.pools.map((p) => p.poolId)));
     });
   }, [hierarchy.length]);
 
-  const handleSaveScore = (matchId: string) => {
-    updateScoreMutation.mutate({
-      matchId,
-      scores: {
-        team1Score: editScores.team1Score,
-        team2Score: editScores.team2Score,
-      },
-    });
-  };
+  const toggleEvent = (id: string) => setOpenEvents((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const togglePool  = (id: string) => setOpenPools((prev)  => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const totalCompleted = allMatches.filter((m) => m.status === "completed").length;
+  const totalMatches   = allMatches.length;
+  const totalDisputed  = allMatches.filter((m) => m.status === "disputed").length;
+
+  // ── Match card ────────────────────────────────────────────────────────────
 
   const renderMatchCard = (match: MatchWithMeta) => {
     const isCompleted = match.status === "completed";
-    const isDisputed = match.status === "disputed";
-    const isEditing = editingMatchId === match._id;
+    const isDisputed  = match.status === "disputed";
+    const isEditing   = editingMatchId === match._id;
+
+    const t1Score = match.score?.team1Score ?? 0;
+    const t2Score = match.score?.team2Score ?? 0;
+    const t1Wins  = isCompleted && t1Score > t2Score;
+    const t2Wins  = isCompleted && t2Score > t1Score;
+
     return (
-      <Card
+      <div
         key={match._id}
-        className={`glass-card-hover rounded-2xl border-2 transition-all relative overflow-hidden group ${isCompleted
-          ? "bg-muted/30 border-primary/20"
-          : isDisputed
-            ? "bg-orange-500/5 border-orange-500/40 hover:border-orange-500/60"
-            : "border-border/60 hover:border-primary/50 hover:shadow-glow"
-          }`}
+        className={cn(
+          "bg-pb-surface border rounded-[6px] overflow-hidden",
+          isDisputed ? "border-pb-amber/50" : "border-pb-hairline"
+        )}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-4 relative z-10">
-            <div className="flex items-center gap-2">
-              {match.scheduledTime && (
-                <Badge variant="outline" className="gap-1.5 rounded-lg text-xs bg-background/50 backdrop-blur-sm">
-                  <Calendar className="w-3.5 h-3.5 text-primary" />
-                  {format(new Date(match.scheduledTime), "MMM d, h:mm a")}
-                </Badge>
-              )}
-              {match.courtNumber != null && (
-                <Badge variant="outline" className="rounded-lg text-xs bg-background/50 backdrop-blur-sm">
-                  Court {match.courtNumber}
-                </Badge>
-              )}
-            </div>
-            {isCompleted && (
-              <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 rounded-lg text-xs font-semibold backdrop-blur-sm">
-                Completed
-              </Badge>
+        {/* Match meta strip */}
+        <div className={cn(
+          "flex items-center justify-between px-4 py-2 border-b border-pb-hairline text-[11px] font-mono",
+          isDisputed ? "bg-amber-50/60" : "bg-pb-surface2"
+        )}>
+          <div className="flex items-center gap-3 text-pb-muted">
+            {match.scheduledTime && (
+              <span className="flex items-center gap-1">
+                <Calendar size={10} />
+                {format(new Date(match.scheduledTime), "h:mm a")}
+              </span>
             )}
-            {isDisputed && (
-              <Badge className="bg-orange-500/15 text-orange-500 hover:bg-orange-500/20 border border-orange-500/40 rounded-lg text-xs font-semibold backdrop-blur-sm gap-1">
-                <Warning className="w-3 h-3" />
-                Disputed
-              </Badge>
+            {match.courtNumber != null && (
+              <span>Court {match.courtNumber}</span>
             )}
           </div>
+          <div className="flex items-center gap-2">
+            {isCompleted && (
+              <Pill tone="court" mono className="flex items-center gap-1">
+                <Dot color="court" size={5} /> Complete
+              </Pill>
+            )}
+            {isDisputed && (
+              <Pill tone="amber" mono className="flex items-center gap-1">
+                <Warning size={10} /> Disputed
+              </Pill>
+            )}
+            {!isCompleted && !isDisputed && (
+              <span className="text-pb-faint uppercase tracking-[0.08em]">Pending</span>
+            )}
+          </div>
+        </div>
 
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center relative z-10">
-            {/* Team 1 (Left) */}
-            <div className="text-right flex flex-col justify-center">
-              <div className="font-display font-bold text-lg sm:text-xl truncate">
+        {/* Score body */}
+        <div className="px-4 py-4">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+            {/* Team 1 */}
+            <div className="text-right min-w-0">
+              <p className={cn(
+                "font-display font-bold text-[15px] tracking-[-0.02em] truncate",
+                t1Wins ? "text-pb-court" : "text-pb-ink"
+              )}>
                 {match.team1?.name || "Team 1"}
-              </div>
+              </p>
               {match.team1?.players?.length ? (
-                <div className="text-sm text-muted-foreground truncate mt-0.5">
-                  {match.team1.players
-                    .map((p: any) => p.name)
-                    .filter(Boolean)
-                    .join(" / ") || "—"}
-                </div>
+                <p className="text-[11px] font-mono text-pb-muted truncate mt-0.5">
+                  {match.team1.players.map((p: any) => p.name).filter(Boolean).join(" / ")}
+                </p>
               ) : null}
             </div>
 
-            {/* Score / Center */}
-            <div className="flex flex-col items-center justify-center px-1 sm:px-4 min-w-[120px]">
+            {/* Center: score / inline edit */}
+            <div className="flex flex-col items-center gap-2 shrink-0">
               {isEditing ? (
-                <div className="glass-dark p-3 rounded-xl border border-border/50 animate-fade-in shadow-lg">
-                  <div className="flex items-center justify-center gap-2 sm:gap-3">
-                    <Input
+                <div className="flex flex-col items-center gap-2.5 p-3 bg-pb-paper border border-pb-rule rounded-[6px]">
+                  <div className="flex items-center gap-2">
+                    <input
                       type="number"
-                      className="input-no-spinner w-14 sm:w-16 h-12 sm:h-14 text-center text-xl sm:text-2xl font-display font-bold rounded-lg bg-background/50 border-primary/30 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
+                      min={0}
                       value={editScores.team1Score}
-                      onChange={(e) =>
-                        setEditScores((s) => ({
-                          ...s,
-                          team1Score: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      min={0}
+                      onChange={(e) => setEditScores((s) => ({ ...s, team1Score: parseInt(e.target.value) || 0 }))}
+                      className="w-14 h-12 text-center font-mono font-bold text-[22px] tabular-nums bg-pb-surface border border-pb-hairline focus:border-pb-rule focus:outline-none rounded-[6px] text-pb-ink [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
-                    <span className="text-xl font-bold text-muted-foreground">:</span>
-                    <Input
+                    <span className="text-[13px] font-mono text-pb-faint">:</span>
+                    <input
                       type="number"
-                      className="input-no-spinner w-14 sm:w-16 h-12 sm:h-14 text-center text-xl sm:text-2xl font-display font-bold rounded-lg bg-background/50 border-primary/30 focus-visible:ring-primary focus-visible:border-primary shadow-inner"
-                      value={editScores.team2Score}
-                      onChange={(e) =>
-                        setEditScores((s) => ({
-                          ...s,
-                          team2Score: parseInt(e.target.value) || 0,
-                        }))
-                      }
                       min={0}
+                      value={editScores.team2Score}
+                      onChange={(e) => setEditScores((s) => ({ ...s, team2Score: parseInt(e.target.value) || 0 }))}
+                      className="w-14 h-12 text-center font-mono font-bold text-[22px] tabular-nums bg-pb-surface border border-pb-hairline focus:border-pb-rule focus:outline-none rounded-[6px] text-pb-ink [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                   </div>
-                  <div className="flex gap-2 mt-3 w-full">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow-sm h-8"
-                      onClick={() => handleSaveScore(match._id)}
+                  <div className="flex gap-1.5 w-full">
+                    <button
+                      onClick={() => updateScoreMutation.mutate({ matchId: match._id, scores: editScores })}
                       disabled={updateScoreMutation.isPending}
+                      className="flex-1 h-8 rounded-[6px] bg-pb-court text-white text-[12px] font-mono font-medium flex items-center justify-center gap-1 hover:opacity-90 disabled:opacity-50 transition-opacity"
                     >
-                      {updateScoreMutation.isPending ? <CircleNotch className="w-4 h-4 animate-spin mx-auto" /> : <><Check className="w-4 h-4 mr-1" /> Save</>}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
+                      {updateScoreMutation.isPending
+                        ? <CircleNotch size={12} className="animate-spin" />
+                        : <><Check size={12} /> Save</>}
+                    </button>
+                    <button
                       onClick={() => setEditingMatchId(null)}
-                      className="w-8 h-8 shrink-0 border-destructive/30 text-destructive hover:bg-destructive/10"
+                      className="w-8 h-8 rounded-[6px] border border-pb-hairline text-pb-muted hover:text-pb-ink hover:border-pb-rule flex items-center justify-center transition-colors"
                     >
-                      <X className="w-4 h-4" />
-                    </Button>
+                      <X size={12} />
+                    </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center group/score">
-                  <div className="flex items-center gap-2 sm:gap-3 bg-background/60 backdrop-blur-md px-3 sm:px-4 py-2 rounded-xl border border-border/50 shadow-sm transition-transform group-hover/score:scale-105 group-hover/score:shadow-glow-sm">
-                    <span
-                      className={`text-2xl sm:text-4xl font-bold font-display tracking-tighter ${isCompleted && (match.score?.team1Score ?? 0) > (match.score?.team2Score ?? 0)
-                        ? "text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]"
-                        : isCompleted && (match.score?.team1Score ?? 0) < (match.score?.team2Score ?? 0)
-                          ? "text-muted-foreground"
-                          : "text-foreground"
-                        }`}
-                    >
-                      {match.score?.team1Score ?? "–"}
+                <>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-pb-surface2 border border-pb-hairline rounded-[6px]">
+                    <span className={cn(
+                      "font-mono text-[26px] font-bold tabular-nums leading-none min-w-[1.5ch] text-center",
+                      t1Wins ? "text-pb-court" : t2Wins ? "text-pb-muted" : "text-pb-ink"
+                    )}>
+                      {isCompleted ? t1Score : "–"}
                     </span>
-                    <span className="text-lg sm:text-xl font-bold text-muted-foreground/40 mx-0.5 sm:mx-1">:</span>
-                    <span
-                      className={`text-2xl sm:text-4xl font-bold font-display tracking-tighter ${isCompleted && (match.score?.team2Score ?? 0) > (match.score?.team1Score ?? 0)
-                        ? "text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]"
-                        : isCompleted && (match.score?.team2Score ?? 0) < (match.score?.team1Score ?? 0)
-                          ? "text-muted-foreground"
-                          : "text-foreground"
-                        }`}
-                    >
-                      {match.score?.team2Score ?? "–"}
+                    <span className="text-[11px] font-mono text-pb-faint">:</span>
+                    <span className={cn(
+                      "font-mono text-[26px] font-bold tabular-nums leading-none min-w-[1.5ch] text-center",
+                      t2Wins ? "text-pb-court" : t1Wins ? "text-pb-muted" : "text-pb-ink"
+                    )}>
+                      {isCompleted ? t2Score : "–"}
                     </span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="mt-2 text-xs h-7 px-3 text-foreground hover:text-primary hover:bg-primary/10 transition-colors rounded-full opacity-0 group-hover:opacity-100 absolute -bottom-3 glass shadow-md z-20"
+                  <button
                     onClick={() => {
                       setEditingMatchId(match._id);
-                      setEditScores({
-                        team1Score: match.score?.team1Score ?? 0,
-                        team2Score: match.score?.team2Score ?? 0,
-                      });
+                      setEditScores({ team1Score: t1Score, team2Score: t2Score });
                     }}
+                    className="flex items-center gap-1 text-[11px] font-mono text-pb-muted hover:text-pb-ink transition-colors"
                   >
-                    <PencilSimple className="w-3 h-3 mr-1.5" />
-                    {isCompleted ? "Edit" : "Score"}
-                  </Button>
-                </div>
+                    <PencilSimple size={10} />
+                    {isCompleted ? "Edit score" : "Enter score"}
+                  </button>
+                </>
               )}
             </div>
 
-            {/* Team 2 (Right) */}
-            <div className="text-left flex flex-col justify-center">
-              <div className="font-display font-bold text-lg sm:text-xl truncate">
+            {/* Team 2 */}
+            <div className="min-w-0">
+              <p className={cn(
+                "font-display font-bold text-[15px] tracking-[-0.02em] truncate",
+                t2Wins ? "text-pb-court" : "text-pb-ink"
+              )}>
                 {match.team2?.name || "Team 2"}
-              </div>
+              </p>
               {match.team2?.players?.length ? (
-                <div className="text-sm text-muted-foreground truncate mt-0.5">
-                  {match.team2.players
-                    .map((p: any) => p.name)
-                    .filter(Boolean)
-                    .join(" / ") || "—"}
-                </div>
+                <p className="text-[11px] font-mono text-pb-muted truncate mt-0.5">
+                  {match.team2.players.map((p: any) => p.name).filter(Boolean).join(" / ")}
+                </p>
               ) : null}
             </div>
           </div>
+        </div>
 
-          {/* Disputed match details */}
-          {isDisputed && (
-            <div className="mt-4 p-3 rounded-xl border border-orange-500/30 bg-orange-500/5 space-y-2 relative z-10">
-              <div className="flex items-center gap-2 text-orange-500 text-sm font-semibold">
-                <Warning className="w-4 h-4" />
-                Score Mismatch — Organizer Action Required
-              </div>
+        {/* Disputed banner */}
+        {isDisputed && (
+          <div className="px-4 py-3 border-t border-pb-amber/30 bg-amber-50/40 flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[12px] font-mono font-medium text-pb-amber">
+                Score mismatch — organizer action required
+              </p>
               {(match as any).scoreSubmission?.team1?.submitted && (match as any).scoreSubmission?.team2?.submitted && (
-                <p className="text-xs text-muted-foreground">
-                  {match.team1?.name || "Team 1"} reported: {(match as any).scoreSubmission.team1.team1Score}–{(match as any).scoreSubmission.team1.team2Score}
-                  {" | "}
-                  {match.team2?.name || "Team 2"} reported: {(match as any).scoreSubmission.team2.team1Score}–{(match as any).scoreSubmission.team2.team2Score}
+                <p className="text-[11px] font-mono text-pb-muted mt-1">
+                  {match.team1?.name}: {(match as any).scoreSubmission.team1.team1Score}–{(match as any).scoreSubmission.team1.team2Score}
+                  {" · "}
+                  {match.team2?.name}: {(match as any).scoreSubmission.team2.team1Score}–{(match as any).scoreSubmission.team2.team2Score}
                 </p>
               )}
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-orange-500/40 text-orange-500 hover:bg-orange-500/10 hover:text-orange-600 h-8 text-xs"
-                onClick={() => {
-                  setResolveMatch(match);
-                  setResolveScores({ team1Score: match.score?.team1Score ?? 0, team2Score: match.score?.team2Score ?? 0 });
-                }}
-              >
-                <Check className="w-3.5 h-3.5 mr-1.5" />
-                Resolve Dispute
-              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <PbBtn
+              size="sm"
+              variant="outline"
+              className="shrink-0 border-pb-amber/40 text-pb-amber hover:bg-amber-50"
+              onClick={() => {
+                setResolveMatch(match);
+                setResolveScores({ team1Score: t1Score, team2Score: t2Score });
+              }}
+            >
+              Resolve
+            </PbBtn>
+          </div>
+        )}
+      </div>
     );
   };
 
-  const handleResolveDispute = () => {
-    if (!resolveMatch) return;
-    resolveDisputeMutation.mutate({
-      matchId: resolveMatch._id,
-      scores: resolveScores,
-    });
-  };
+  // ── Empty / loading states ─────────────────────────────────────────────────
 
   if (events.length === 0) {
     return (
-      <div className="space-y-6 animate-fade-in relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        <Card className="glass-card-hover rounded-3xl border border-border/50 bg-gradient-to-br from-background to-muted/30 relative z-10 shadow-xl overflow-hidden">
-          <CardContent className="py-20 text-center relative">
-            <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6 shadow-inner ring-1 ring-primary/20">
-              <ClipboardText className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
-            </div>
-            <h3 className="text-2xl font-display font-bold mb-3 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">No Events Yet</h3>
-            <p className="text-muted-foreground max-w-sm mx-auto text-lg">
-              Create events and pools first. Matches will appear here for score
-              entry.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div className="w-12 h-12 rounded-[6px] bg-pb-surface border border-pb-hairline flex items-center justify-center">
+          <ClipboardText size={22} className="text-pb-faint" />
+        </div>
+        <p className="text-[13px] font-mono text-pb-muted text-center max-w-xs">
+          Create events and pools first. Matches will appear here for score entry.
+        </p>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6 flex flex-col min-h-[50vh] animate-fade-in">
-      {/* Top Stylish Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-card p-6 sm:px-8 sm:py-6 rounded-3xl border-border/50 relative overflow-hidden shadow-sm">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-background via-background/80 to-transparent pointer-events-none z-0" />
+  // ── Render ─────────────────────────────────────────────────────────────────
 
-        <div className="relative z-10 flex-col">
-          <h2 className="font-display font-bold text-3xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-primary via-primary/80 to-primary/40 leading-tight">
-            Tournament Scores
+  return (
+    <div className="space-y-5">
+
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display font-extrabold text-[28px] tracking-[-0.03em] text-pb-ink leading-none mb-1">
+            Score Entry
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 font-medium max-w-lg">
-            Browse by event and pool to update match results lively.
+          <p className="text-[12px] font-mono text-pb-muted">
+            Record match results for all events and pools.
           </p>
         </div>
-        <Badge variant="secondary" className="rounded-2xl px-5 py-2 font-bold text-sm shadow-inner backdrop-blur-md bg-background/80 border border-primary/20 relative z-10 flex items-center gap-2 mt-2 sm:mt-0">
-          <Pulse className="w-4 h-4 text-primary animate-pulse" />
-          <span><span className="text-primary">{totalCompleted}</span> / {totalMatches} completed</span>
-        </Badge>
+        <div className="flex items-center gap-2 shrink-0 pt-1">
+          {totalDisputed > 0 && (
+            <Pill tone="amber" mono className="flex items-center gap-1">
+              <Warning size={10} /> {totalDisputed} disputed
+            </Pill>
+          )}
+          <Pill tone={totalCompleted === totalMatches && totalMatches > 0 ? "court" : "neutral"} mono>
+            {totalCompleted}/{totalMatches} complete
+          </Pill>
+        </div>
       </div>
 
+      {/* ── Progress bar ── */}
+      {totalMatches > 0 && (
+        <div className="h-[3px] bg-pb-hairline rounded-full overflow-hidden">
+          <div
+            className="h-full bg-pb-court rounded-full transition-all duration-700"
+            style={{ width: `${(totalCompleted / totalMatches) * 100}%` }}
+          />
+        </div>
+      )}
+
+      {/* ── Body ── */}
       {isLoading ? (
-        <Card className="glass-card rounded-3xl border border-border/50 min-h-[300px] flex items-center justify-center relative overflow-hidden">
-          <CardContent className="py-20 flex flex-col items-center justify-center gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 animate-pulse" />
-              <CircleNotch className="w-10 h-10 animate-spin text-primary relative z-10 drop-shadow-sm" />
-            </div>
-            <span className="text-muted-foreground font-medium text-lg mt-2 tracking-wide">Gathering matches…</span>
-          </CardContent>
-        </Card>
+        <div className="flex items-center justify-center py-16 gap-2">
+          <CircleNotch size={18} className="animate-spin text-pb-muted" />
+          <span className="text-[13px] font-mono text-pb-muted">Loading matches…</span>
+        </div>
       ) : hierarchy.length === 0 ? (
-        <Card className="glass-card-hover rounded-3xl border border-border/50 min-h-[300px] flex items-center justify-center bg-gradient-to-br from-background to-muted/20 shadow-xl overflow-hidden relative">
-          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:32px_32px]" />
-          <CardContent className="py-20 text-center relative z-10">
-            <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6 shadow-inner ring-1 ring-primary/20">
-              <ClipboardText className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
-            </div>
-            <h3 className="text-2xl font-display font-bold mb-3 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">No Matches Generated</h3>
-            <p className="text-muted-foreground max-w-md mx-auto text-lg leading-relaxed">
-              Generate matches from the <span className="text-foreground font-semibold">Pools page</span> for each
-              event to start entering scores.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-14 gap-3">
+          <div className="w-12 h-12 rounded-[6px] bg-pb-surface border border-pb-hairline flex items-center justify-center">
+            <ClipboardText size={20} className="text-pb-faint" />
+          </div>
+          <p className="text-[13px] font-mono text-pb-muted text-center max-w-xs">
+            No matches generated yet. Generate matches from the Pools page.
+          </p>
+        </div>
       ) : (
-        <div className="space-y-5 relative z-10">
+        <div className="space-y-3">
           {hierarchy.map((event) => {
-            const eventMatchCount = event.pools.reduce(
-              (sum, p) => sum + p.rounds.reduce((s, r) => s + r.matches.length, 0),
-              0
-            );
-            const eventCompleted = event.pools.reduce(
-              (sum, p) =>
-                sum +
-                p.rounds.reduce(
-                  (s, r) => s + r.matches.filter((m) => m.status === "completed").length,
-                  0
-                ),
-              0
-            );
+            const eventTotal     = event.pools.reduce((s, p) => s + p.rounds.reduce((r, rg) => r + rg.matches.length, 0), 0);
+            const eventCompleted = event.pools.reduce((s, p) => s + p.rounds.reduce((r, rg) => r + rg.matches.filter((m) => m.status === "completed").length, 0), 0);
+            const isOpen = openEvents.has(event.eventId);
+
             return (
               <Collapsible
                 key={event.eventId}
-                open={isEventOpen(event.eventId)}
+                open={isOpen}
                 onOpenChange={() => toggleEvent(event.eventId)}
-                className="group/event"
               >
-                <Card className="rounded-3xl border border-border/50 overflow-hidden glass-card transition-all duration-300 hover:border-primary/40 focus-within:border-primary/40 focus-within:shadow-glow-sm shadow-sm relative">
+                {/* ── Event header ── */}
+                <div className="bg-pb-surface border border-pb-hairline rounded-[6px] overflow-hidden">
                   <CollapsibleTrigger asChild>
-                    <button className="w-full flex items-center gap-3 sm:gap-4 p-4 sm:p-5 text-left transition-colors relative overflow-hidden group-data-[state=open]/event:bg-muted/10 hover:bg-muted/30">
-                      <div className="absolute inset-y-0 left-0 w-1.5 bg-primary group-data-[state=open]/event:opacity-100 opacity-0 transition-opacity" />
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-data-[state=open]/event:bg-primary group-data-[state=open]/event:text-primary-foreground group-hover/event:scale-105 group-hover/event:shadow-glow-sm transition-all duration-300 hidden sm:flex">
-                        <Trophy className="w-6 h-6 text-primary group-data-[state=open]/event:text-primary-foreground transition-colors" />
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-pb-surface2 transition-colors group">
+                      <div className="w-7 h-7 rounded-[4px] bg-pb-court-tint2 border border-pb-hairline flex items-center justify-center shrink-0">
+                        <Trophy size={13} className="text-pb-court" />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="font-display font-bold text-xl sm:text-2xl tracking-tight truncate block">
-                          {event.eventName}
-                        </span>
-                      </div>
-                      <Badge variant="outline" className="rounded-xl ml-auto bg-background/50 backdrop-blur-sm hidden sm:inline-flex border-primary/20 shadow-sm py-1 px-3">
-                        <span className="text-primary font-bold mr-1.5 text-sm">{eventCompleted}</span> / {eventMatchCount} done
-                      </Badge>
-                      <div className="w-9 h-9 rounded-full bg-background flex items-center justify-center border border-border/50 shrink-0 group-data-[state=open]/event:bg-primary group-data-[state=open]/event:border-primary transition-all duration-300 shadow-sm">
-                        <CaretDown className="w-4 h-4 text-muted-foreground group-data-[state=open]/event:text-primary-foreground group-data-[state=open]/event:rotate-180 transition-transform duration-500" />
+                      <span className="font-display font-bold text-[15px] tracking-[-0.02em] text-pb-ink flex-1 text-left">
+                        {event.eventName}
+                      </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {/* Mini progress */}
+                        <div className="hidden sm:flex items-center gap-2">
+                          <div className="w-20 h-[3px] bg-pb-hairline rounded-full overflow-hidden">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                eventCompleted === eventTotal && eventTotal > 0 ? "bg-pb-court" : "bg-pb-rule"
+                              )}
+                              style={{ width: eventTotal > 0 ? `${(eventCompleted / eventTotal) * 100}%` : "0%" }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-mono text-pb-muted tabular-nums">
+                            {eventCompleted}/{eventTotal}
+                          </span>
+                        </div>
+                        <CaretDown
+                          size={14}
+                          className={cn("text-pb-faint transition-transform", isOpen && "rotate-180")}
+                        />
                       </div>
                     </button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-top-4 data-[state=open]:slide-in-from-top-4 origin-top transition-all duration-300">
-                    <div className="border-t border-border/30 p-4 sm:p-6 space-y-4 bg-background/30 backdrop-blur-md relative">
+
+                  <CollapsibleContent>
+                    <div className="border-t border-pb-hairline p-4 space-y-3 bg-pb-paper">
                       {event.pools.map((pool) => {
-                        const poolMatchCount = pool.rounds.reduce(
-                          (s, r) => s + r.matches.length,
-                          0
-                        );
-                        const poolCompleted = pool.rounds.reduce(
-                          (s, r) =>
-                            s + r.matches.filter((m) => m.status === "completed").length,
-                          0
-                        );
+                        const poolTotal     = pool.rounds.reduce((s, r) => s + r.matches.length, 0);
+                        const poolCompleted = pool.rounds.reduce((s, r) => s + r.matches.filter((m) => m.status === "completed").length, 0);
+                        const isPoolOpen    = openPools.has(pool.poolId);
+
                         return (
                           <Collapsible
                             key={pool.poolId}
-                            open={isPoolOpen(pool.poolId)}
+                            open={isPoolOpen}
                             onOpenChange={() => togglePool(pool.poolId)}
-                            className="group/pool"
                           >
-                            <div className="rounded-2xl border border-border/60 overflow-hidden bg-card/60 shadow-sm transition-colors duration-300 hover:border-primary/30 relative">
+                            <div className="bg-pb-surface border border-pb-hairline rounded-[6px] overflow-hidden">
                               <CollapsibleTrigger asChild>
-                                <button className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left hover:bg-muted/40 transition-colors group-data-[state=open]/pool:bg-muted/20 relative">
-                                  <div className="w-10 h-10 rounded-xl bg-muted/80 flex items-center justify-center shrink-0 border border-border/50 shadow-inner group-data-[state=open]/pool:border-primary/20 transition-colors">
-                                    <Users className="w-5 h-5 text-muted-foreground group-data-[state=open]/pool:text-primary transition-colors" />
-                                  </div>
-                                  <span className="font-display font-semibold text-lg text-foreground/90 group-data-[state=open]/pool:text-foreground tracking-tight">{pool.poolName}</span>
-                                  <Badge variant="secondary" className="rounded-xl text-xs sm:text-sm ml-auto shadow-inner bg-background font-semibold px-2 sm:px-3">
-                                    <span className={poolCompleted === poolMatchCount && poolMatchCount > 0 ? "text-primary" : ""}>{poolCompleted}</span> / {poolMatchCount}
-                                  </Badge>
-                                  <CaretDown className="w-4 h-4 text-muted-foreground ml-1 sm:ml-2 group-data-[state=open]/pool:rotate-180 group-data-[state=open]/pool:text-primary transition-all duration-300 shrink-0" />
+                                <button className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-pb-surface2 transition-colors">
+                                  <Users size={12} className="text-pb-faint shrink-0" />
+                                  <span className="font-mono text-[13px] font-medium text-pb-ink flex-1">
+                                    {pool.poolName}
+                                  </span>
+                                  <span className="text-[11px] font-mono text-pb-muted tabular-nums shrink-0">
+                                    {poolCompleted}/{poolTotal}
+                                  </span>
+                                  <CaretDown
+                                    size={12}
+                                    className={cn("text-pb-faint shrink-0 transition-transform", isPoolOpen && "rotate-180")}
+                                  />
                                 </button>
                               </CollapsibleTrigger>
-                              <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 origin-top transition-all duration-300">
-                                <div className="p-3 sm:p-5 pt-1 space-y-6 sm:space-y-8 bg-background/50 relative">
-                                  <div className="absolute left-6 top-1 bottom-6 w-px bg-gradient-to-b from-border/80 via-border/40 to-transparent pointer-events-none hidden sm:block" />
-                                  {pool.rounds.map(({ round, matches }, rIdx) => (
-                                    <div key={round ?? "other"} className="space-y-4 relative sm:pl-7">
-                                      <div className="hidden sm:block absolute left-[-11px] top-1.5 w-6 h-6 rounded-full bg-background border-2 border-border/80 flex items-center justify-center shadow-sm z-10 transition-colors marker">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground marker-inner" />
-                                      </div>
-                                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sticky top-0 bg-background/90 backdrop-blur-sm pb-2 z-10 -mx-2 px-2 sm:mx-0 sm:px-0">
-                                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 shadow-inner sm:hidden">
-                                          <Stack className="w-4 h-4 text-primary" />
-                                        </div>
-                                        <h4 className="text-sm font-bold tracking-wider uppercase text-muted-foreground drop-shadow-sm">
-                                          {round != null ? `Round ${round}` : "Other matches"}
-                                        </h4>
-                                        <Badge variant="outline" className="rounded-lg text-[10px] px-2 py-0.5 h-5 ml-1 sm:ml-2 border-border/50 text-muted-foreground uppercase font-bold bg-background/50">
+
+                              <CollapsibleContent>
+                                <div className="border-t border-pb-hairline p-3 space-y-4 bg-pb-paper">
+                                  {pool.rounds.map(({ round, matches }) => (
+                                    <div key={round ?? "other"}>
+                                      {/* Round header */}
+                                      <div className="flex items-center gap-2 mb-2.5">
+                                        <Eyebrow>
+                                          {round != null ? `Round ${round}` : "Matches"}
+                                        </Eyebrow>
+                                        <span className="text-[11px] font-mono text-pb-faint">
                                           {matches.length} match{matches.length !== 1 ? "es" : ""}
-                                        </Badge>
-                                        <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent ml-2" />
+                                        </span>
+                                        <div className="flex-1 h-px bg-pb-hairline" />
                                       </div>
-                                      <div className="space-y-3 sm:space-y-4">
+                                      <div className="space-y-2">
                                         {matches.map((m) => renderMatchCard(m))}
                                       </div>
                                     </div>
@@ -585,61 +528,72 @@ const ScoresPanel = ({ tournamentId, events }: ScoresPanelProps) => {
                       })}
                     </div>
                   </CollapsibleContent>
-                </Card>
+                </div>
               </Collapsible>
             );
           })}
         </div>
       )}
 
-      {/* Resolve Dispute Dialog */}
+      {/* ── Resolve Dispute Dialog ── */}
       <AlertDialog open={!!resolveMatch} onOpenChange={(open) => { if (!open) setResolveMatch(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Warning className="w-5 h-5 text-orange-500" />
+        <AlertDialogContent className="max-w-sm bg-pb-surface border border-pb-hairline rounded-[8px] p-0 shadow-none">
+          <AlertDialogHeader className="px-5 pt-5 pb-4 border-b border-pb-hairline">
+            <AlertDialogTitle className="flex items-center gap-2 font-display font-bold text-[17px] tracking-[-0.025em] text-pb-ink">
+              <Warning size={16} className="text-pb-amber shrink-0" />
               Resolve Score Dispute
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              Enter the official final score to override the disputed submissions.
-              {resolveMatch && (match => (
-                <span className="block mt-2 text-sm">
-                  <strong>{match.team1?.name || "Team 1"}</strong> vs <strong>{match.team2?.name || "Team 2"}</strong>
+            <AlertDialogDescription className="text-[12px] font-mono text-pb-muted mt-1">
+              Enter the official score to override disputed submissions.
+              {resolveMatch && (
+                <span className="block mt-1 font-medium text-pb-ink">
+                  {resolveMatch.team1?.name || "Team 1"} vs {resolveMatch.team2?.name || "Team 2"}
                 </span>
-              ))(resolveMatch)}
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs">{resolveMatch?.team1?.name || "Team 1"} Score</Label>
-              <Input
-                type="number"
-                min={0}
-                value={resolveScores.team1Score}
-                onChange={(e) => setResolveScores((s) => ({ ...s, team1Score: parseInt(e.target.value) || 0 }))}
-                className="h-10 text-center font-display font-bold text-lg"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">{resolveMatch?.team2?.name || "Team 2"} Score</Label>
-              <Input
-                type="number"
-                min={0}
-                value={resolveScores.team2Score}
-                onChange={(e) => setResolveScores((s) => ({ ...s, team2Score: parseInt(e.target.value) || 0 }))}
-                className="h-10 text-center font-display font-bold text-lg"
-              />
+
+          <div className="px-5 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-mono uppercase tracking-[0.1em] text-pb-muted block mb-1.5">
+                  {resolveMatch?.team1?.name || "Team 1"}
+                </label>
+                <DisputeInput
+                  value={resolveScores.team1Score}
+                  onChange={(v) => setResolveScores((s) => ({ ...s, team1Score: v }))}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-mono uppercase tracking-[0.1em] text-pb-muted block mb-1.5">
+                  {resolveMatch?.team2?.name || "Team 2"}
+                </label>
+                <DisputeInput
+                  value={resolveScores.team2Score}
+                  onChange={(v) => setResolveScores((s) => ({ ...s, team2Score: v }))}
+                />
+              </div>
             </div>
           </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={resolveDisputeMutation.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResolveDispute} disabled={resolveDisputeMutation.isPending}>
-              {resolveDisputeMutation.isPending ? (
-                <CircleNotch className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <Check className="w-4 h-4 mr-2" />
-              )}
-              Save Official Score
+
+          <AlertDialogFooter className="px-5 pb-5 flex gap-2">
+            <AlertDialogCancel
+              disabled={resolveDisputeMutation.isPending}
+              className="flex-1 h-9 rounded-[6px] border border-pb-hairline text-[13px] font-mono text-pb-muted hover:text-pb-ink hover:border-pb-rule bg-transparent"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                resolveDisputeMutation.mutate({ matchId: resolveMatch!._id, scores: resolveScores });
+              }}
+              disabled={resolveDisputeMutation.isPending}
+              className="flex-1 h-9 rounded-[6px] bg-pb-court text-white text-[13px] font-mono font-medium hover:opacity-90 flex items-center justify-center gap-1.5"
+            >
+              {resolveDisputeMutation.isPending
+                ? <CircleNotch size={13} className="animate-spin" />
+                : <><Check size={13} /> Save Official Score</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,89 +1,79 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Trash, Gear, Trophy, CircleNotch, Users, Envelope, CheckCircle } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Plus, Trash, Gear, Trophy, CircleNotch, Users, Envelope, CheckCircle, CaretRight } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { waitlistAPI, eventAPI } from "@/services/api";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { GameType, TournamentFormat } from "@/types/tournament";
 import { SKILL_LEVEL_RANGES, formatEventSkillLevel } from "@/types/tournament";
+import { Eyebrow, Pill, PbBtn } from "@/components/ui/pb";
+
 const gameTypes: GameType[] = ["Singles", "Doubles", "Mixed Doubles"];
 const tournamentFormats: TournamentFormat[] = [
-  "Round Robin",
-  "Single Elimination",
-  "Double Elimination",
-  "Pools + Playoffs",
+  "Round Robin", "Single Elimination", "Double Elimination", "Pools + Playoffs",
 ];
 
-/** Map API playFormat (kebab) to TournamentFormat (display) */
-function playFormatToDisplay(playFormat: string | undefined): TournamentFormat {
-  if (!playFormat) return "Round Robin";
+function playFormatToDisplay(pf: string | undefined): TournamentFormat {
   const map: Record<string, TournamentFormat> = {
-    "round-robin": "Round Robin",
-    "single-elimination": "Single Elimination",
-    "double-elimination": "Double Elimination",
-    "pool-play": "Pools + Playoffs",
-    "pool+knockout": "Pools + Playoffs",
-    swiss: "Round Robin",
+    "round-robin": "Round Robin", "single-elimination": "Single Elimination",
+    "double-elimination": "Double Elimination", "pool-play": "Pools + Playoffs",
+    "pool+knockout": "Pools + Playoffs", swiss: "Round Robin",
   };
-  return map[playFormat.toLowerCase()] ?? "Round Robin";
+  return pf ? (map[pf.toLowerCase()] ?? "Round Robin") : "Round Robin";
 }
-
-/** Map TournamentFormat (display) to API playFormat */
-function displayToPlayFormat(format: TournamentFormat): string {
+function displayToPlayFormat(f: TournamentFormat): string {
   const map: Record<string, string> = {
-    "Round Robin": "round-robin",
-    "Single Elimination": "single-elimination",
-    "Double Elimination": "double-elimination",
-    "Pools + Playoffs": "pool-play",
+    "Round Robin": "round-robin", "Single Elimination": "single-elimination",
+    "Double Elimination": "double-elimination", "Pools + Playoffs": "pool-play",
   };
-  return map[format] ?? "round-robin";
+  return map[f] ?? "round-robin";
 }
-
-/** Map API format (singles/doubles) to GameType */
-function formatToGameType(format: string | undefined): GameType {
-  if (!format) return "Singles";
-  const f = format.toLowerCase();
-  if (f === "doubles") return "Doubles";
-  if (f === "mixed-doubles") return "Mixed Doubles";
+function formatToGameType(f: string | undefined): GameType {
+  if (!f) return "Singles";
+  if (f.toLowerCase() === "doubles") return "Doubles";
+  if (f.toLowerCase() === "mixed-doubles") return "Mixed Doubles";
   return "Singles";
 }
-
-/** Map GameType to API format */
 function gameTypeToFormat(gt: GameType): string {
   return gt.toLowerCase().replace(" ", "-");
 }
 
-function WaitlistDialogContent({
-  eventId,
-  onClose,
-  toast,
-  queryClient,
-}: {
-  eventId: string;
-  onClose: () => void;
-  toast: any;
-  queryClient: ReturnType<typeof useQueryClient>;
+// ─── Shared form field ────────────────────────────────────────────────────────
+
+function FormField({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return (
+    <div>
+      <label className="text-[11px] font-mono uppercase tracking-[0.1em] text-pb-muted block mb-1.5">{label}</label>
+      {children}
+      {hint && <p className="text-[11px] font-mono text-pb-faint mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+function PbSelect({ value, onChange, options }: {
+  value: string; onChange: (v: string) => void;
+  options: { value: string; label: string }[];
 }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full h-9 px-2.5 text-[12px] font-mono bg-pb-surface2 border border-pb-hairline rounded-[6px] text-pb-ink focus:outline-none focus:border-pb-rule transition-colors"
+    >
+      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
+}
+
+// ─── Waitlist dialog content ──────────────────────────────────────────────────
+
+function WaitlistDialogContent({ eventId, queryClient }: { eventId: string; queryClient: ReturnType<typeof useQueryClient> }) {
   const { data, isLoading } = useQuery({
     queryKey: ["waitlist", eventId],
     queryFn: () => waitlistAPI.getEventWaitlist(eventId),
@@ -94,64 +84,121 @@ function WaitlistDialogContent({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["waitlist", eventId] });
       queryClient.invalidateQueries({ queryKey: ["tournament"] });
-      toast.success("Approved", {
-        description: "User has been emailed to pay and complete registration.",
-      });
+      toast.success("Approved — email sent with payment link");
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to approve");
-    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to approve"),
   });
-  const entries = data?.data ?? [];
-  const waiting = entries.filter((e: any) => e.status === "waiting");
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <CircleNotch className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-  if (entries.length === 0) {
-    return <p className="text-muted-foreground py-4">No one on the waitlist for this event.</p>;
-  }
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-8">
+      <CircleNotch size={20} className="animate-spin text-pb-muted" />
+    </div>
+  );
+
+  const entries = data?.data ?? [];
+  if (entries.length === 0) return (
+    <p className="text-[12px] font-mono text-pb-muted py-4">No one on the waitlist for this event.</p>
+  );
+
   return (
-    <div className="space-y-3 py-2">
+    <div className="space-y-2 py-2">
       {entries.map((entry: any) => (
-        <div key={entry._id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+        <div key={entry._id} className="flex items-center justify-between gap-3 rounded-[6px] border border-pb-hairline p-3">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="font-mono text-sm text-muted-foreground shrink-0">#{entry.position}</span>
+            <span className="font-mono text-[11px] text-pb-faint shrink-0">#{entry.position}</span>
             <div className="min-w-0">
-              <div className="font-medium truncate">{entry.user?.name ?? "—"}</div>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
-                <Envelope className="w-3 h-3 shrink-0" />
-                {entry.user?.email ?? "—"}
-              </div>
+              <p className="text-[13px] font-medium text-pb-ink truncate">{entry.user?.name ?? "—"}</p>
+              <p className="flex items-center gap-1 text-[11px] font-mono text-pb-muted truncate">
+                <Envelope size={10} /> {entry.user?.email ?? "—"}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {entry.status === "waiting" && (
-              <Button
-                size="sm"
-                onClick={() => approveMutation.mutate(entry._id)}
-                disabled={approveMutation.isPending}
-              >
-                {approveMutation.isPending ? <CircleNotch className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
-                Approve
-              </Button>
-            )}
-            {entry.status !== "waiting" && (
-              <Badge variant="secondary" className="capitalize">{entry.status}</Badge>
+          <div className="shrink-0">
+            {entry.status === "waiting" ? (
+              <PbBtn size="sm" variant="primary" onClick={() => approveMutation.mutate(entry._id)} disabled={approveMutation.isPending}>
+                {approveMutation.isPending
+                  ? <CircleNotch size={12} className="animate-spin" />
+                  : <><CheckCircle size={12} /> Approve</>}
+              </PbBtn>
+            ) : (
+              <Pill tone="neutral" mono className="capitalize">{entry.status}</Pill>
             )}
           </div>
         </div>
       ))}
-      <p className="text-xs text-muted-foreground mt-2">
-        Approving sends an email with a payment link. They have 24 hours to complete registration.
+      <p className="text-[11px] font-mono text-pb-faint mt-2">
+        Approving sends a payment link. They have 24 hours to complete registration.
       </p>
     </div>
   );
 }
+
+// ─── Event form (shared between create + edit) ────────────────────────────────
+
+function EventForm({ form, onChange, isNew = false }: {
+  form: { name: string; gameType: GameType; format: TournamentFormat; skillLevel: string; maxPlayers: number; entryFee: number };
+  onChange: (f: any) => void;
+  isNew?: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <FormField label="Event Name *">
+        <Input
+          placeholder="e.g. Men's Singles"
+          value={form.name}
+          onChange={(e) => onChange({ ...form, name: e.target.value })}
+          className="h-9 text-[13px] bg-pb-surface2 border-pb-hairline font-sans focus:border-pb-rule"
+        />
+      </FormField>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Game Type">
+          <PbSelect
+            value={form.gameType}
+            onChange={(v) => onChange({ ...form, gameType: v as GameType })}
+            options={gameTypes.map((gt) => ({ value: gt, label: gt }))}
+          />
+        </FormField>
+        <FormField label="Format">
+          <PbSelect
+            value={form.format}
+            onChange={(v) => onChange({ ...form, format: v as TournamentFormat })}
+            options={tournamentFormats.map((tf) => ({ value: tf, label: tf }))}
+          />
+        </FormField>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <FormField label="Skill Level">
+          <PbSelect
+            value={form.skillLevel}
+            onChange={(v) => onChange({ ...form, skillLevel: v })}
+            options={SKILL_LEVEL_RANGES.map((r) => ({ value: r, label: r }))}
+          />
+        </FormField>
+        <FormField
+          label={form.gameType === "Singles" ? "Max Players" : "Max Teams"}
+          hint={form.gameType === "Singles" ? "Players" : "Pairs"}
+        >
+          <Input
+            type="number" min={2}
+            value={form.maxPlayers}
+            onChange={(e) => onChange({ ...form, maxPlayers: parseInt(e.target.value) || 16 })}
+            className="h-9 text-[13px] font-mono bg-pb-surface2 border-pb-hairline focus:border-pb-rule"
+          />
+        </FormField>
+        <FormField label="Entry Fee ($)">
+          <Input
+            type="number"
+            value={form.entryFee}
+            onChange={(e) => onChange({ ...form, entryFee: parseInt(e.target.value) || 0 })}
+            className="h-9 text-[13px] font-mono bg-pb-surface2 border-pb-hairline focus:border-pb-rule"
+          />
+        </FormField>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main panel ───────────────────────────────────────────────────────────────
 
 interface OrganizerEventsPanelProps {
   tournamentId: string;
@@ -159,56 +206,36 @@ interface OrganizerEventsPanelProps {
   events: any[];
   isCreateEventOpen: boolean;
   setIsCreateEventOpen: (open: boolean) => void;
-  newEvent: {
-    name: string;
-    gameType: GameType;
-    format: TournamentFormat;
-    skillLevel: string;
-    maxPlayers: number;
-    entryFee: number;
-  };
-  setNewEvent: (event: any) => void;
+  newEvent: { name: string; gameType: GameType; format: TournamentFormat; skillLevel: string; maxPlayers: number; entryFee: number };
+  setNewEvent: (e: any) => void;
   onCreateEvent: () => void;
   createEventPending: boolean;
   onDeleteEvent: (eventId: string, eventName: string) => void;
 }
 
 const OrganizerEventsPanel = ({
-  tournamentId,
-  tournament,
-  events,
-  isCreateEventOpen,
-  setIsCreateEventOpen,
-  newEvent,
-  setNewEvent,
-  onCreateEvent,
-  createEventPending,
+  tournamentId, tournament, events,
+  isCreateEventOpen, setIsCreateEventOpen,
+  newEvent, setNewEvent, onCreateEvent, createEventPending,
   onDeleteEvent,
 }: OrganizerEventsPanelProps) => {
   const queryClient = useQueryClient();
   const allowWaitlist = tournament?.settings?.allowWaitlist === true;
   const [waitlistEvent, setWaitlistEvent] = useState<{ _id: string; name: string } | null>(null);
   const [eventToEdit, setEventToEdit] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState<{
-    name: string;
-    gameType: GameType;
-    format: TournamentFormat;
-    skillLevel: string;
-    maxPlayers: number;
-    entryFee: number;
-    addPlayoffStage: boolean;
-  }>({ name: "", gameType: "Singles", format: "Round Robin", skillLevel: "3.5-4.0", maxPlayers: 32, entryFee: 50, addPlayoffStage: false });
+  const [editForm, setEditForm] = useState({
+    name: "", gameType: "Singles" as GameType, format: "Round Robin" as TournamentFormat,
+    skillLevel: "3.5-4.0", maxPlayers: 32, entryFee: 50, addPlayoffStage: false,
+  });
 
   const updateEventMutation = useMutation({
     mutationFn: ({ eventId, data }: { eventId: string; data: any }) => eventAPI.update(eventId, data),
-    onSuccess: (_, { eventId }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tournament", tournamentId] });
       setEventToEdit(null);
-      toast.success("Event updated successfully");
+      toast.success("Event updated");
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update event");
-    },
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to update event"),
   });
 
   const openEditEvent = (event: any) => {
@@ -226,17 +253,14 @@ const OrganizerEventsPanel = ({
 
   const handleSaveEventSettings = () => {
     if (!eventToEdit?._id) return;
-    if (!editForm.name?.trim()) {
-      toast.error("Please enter an event name");
-      return;
-    }
+    if (!editForm.name?.trim()) { toast.error("Event name is required"); return; }
     updateEventMutation.mutate({
       eventId: eventToEdit._id,
       data: {
         name: editForm.name.trim(),
         format: gameTypeToFormat(editForm.gameType),
         playFormat: displayToPlayFormat(editForm.format),
-        addPlayoffStage: displayToPlayFormat(editForm.format) !== 'round-robin',
+        addPlayoffStage: displayToPlayFormat(editForm.format) !== "round-robin",
         skillLevel: editForm.skillLevel,
         maxTeams: editForm.maxPlayers,
         entryFee: editForm.entryFee,
@@ -245,375 +269,146 @@ const OrganizerEventsPanel = ({
   };
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-display font-bold">Events</h3>
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="font-display font-bold text-[20px] tracking-[-0.025em] text-pb-ink">Events</h2>
         <Dialog open={isCreateEventOpen} onOpenChange={setIsCreateEventOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Event
-            </Button>
+            <PbBtn variant="primary" size="sm">
+              <Plus size={13} /> Add Event
+            </PbBtn>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Event</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="max-w-lg bg-pb-surface border border-pb-hairline rounded-[8px] p-0">
+            <DialogHeader className="px-5 pt-5 pb-4 border-b border-pb-hairline">
+              <DialogTitle className="font-display font-bold text-[17px] tracking-[-0.025em] text-pb-ink">
+                Create New Event
+              </DialogTitle>
+              <DialogDescription className="text-[12px] font-mono text-pb-muted mt-0.5">
                 Add a new event to this tournament
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="event-name">Event Name *</Label>
-                <Input
-                  id="event-name"
-                  placeholder="e.g., Men's Singles"
-                  value={newEvent.name}
-                  onChange={(e) =>
-                    setNewEvent({ ...newEvent, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Game Type</Label>
-                  <Select
-                    value={newEvent.gameType}
-                    onValueChange={(v: GameType) =>
-                      setNewEvent({ ...newEvent, gameType: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {gameTypes.map((gt) => (
-                        <SelectItem key={gt} value={gt}>
-                          {gt}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Format</Label>
-                  <Select
-                    value={newEvent.format}
-                    onValueChange={(v: TournamentFormat) =>
-                      setNewEvent({ ...newEvent, format: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tournamentFormats.map((tf) => (
-                        <SelectItem key={tf} value={tf}>
-                          {tf}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Skill Level Range</Label>
-                  <Select
-                    value={newEvent.skillLevel}
-                    onValueChange={(v) =>
-                      setNewEvent({ ...newEvent, skillLevel: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="e.g. 3.5-4.0" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SKILL_LEVEL_RANGES.map((range) => (
-                        <SelectItem key={range} value={range}>
-                          {range}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    {newEvent.gameType === "Singles" ? "Max Players" : "Max Teams"}
-                  </Label>
-                  <Input
-                    type="number"
-                    min={2}
-                    value={newEvent.maxPlayers}
-                    onChange={(e) =>
-                      setNewEvent({
-                        ...newEvent,
-                        maxPlayers: parseInt(e.target.value) || (newEvent.gameType === "Singles" ? 32 : 16),
-                      })
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {newEvent.gameType === "Singles"
-                      ? "Maximum number of players"
-                      : "Maximum number of teams (pairs)"}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Entry Fee ($)</Label>
-                  <Input
-                    type="number"
-                    value={newEvent.entryFee}
-                    onChange={(e) =>
-                      setNewEvent({
-                        ...newEvent,
-                        entryFee: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-              </div>
+            <div className="px-5 py-4">
+              <EventForm form={newEvent} onChange={setNewEvent} isNew />
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateEventOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={onCreateEvent} disabled={createEventPending}>
-                {createEventPending ? (
-                  <>
-                    <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Event
-                  </>
-                )}
-              </Button>
+            <DialogFooter className="px-5 pb-5 flex gap-2">
+              <PbBtn variant="outline" size="sm" onClick={() => setIsCreateEventOpen(false)}>Cancel</PbBtn>
+              <PbBtn variant="primary" size="sm" onClick={onCreateEvent} disabled={createEventPending}>
+                {createEventPending ? <><CircleNotch size={12} className="animate-spin" /> Creating…</> : <><Plus size={12} /> Create Event</>}
+              </PbBtn>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
+      {/* Event list */}
       {events.length > 0 ? (
-        <div className="space-y-4">
-          {events.map((event: any, index: number) => (
-            <div
-              key={event._id}
-              className="glass-card-hover rounded-2xl p-6 animate-fade-in"
-              style={{
-                animationDelay: `${Math.min(index * 0.1, 0.5)}s`,
-              }}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h4 className="font-display font-bold text-lg">
-                    {event.name}
-                  </h4>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge variant="outline" className="capitalize">
-                      {(event.format || "").replace("-", " ")}
-                    </Badge>
-                    <Badge variant="accent">{formatEventSkillLevel(event.skillLevel)}</Badge>
+        <div className="space-y-3">
+          {events.map((event: any) => {
+            const isSingles = (event.format || "").toLowerCase() === "singles";
+            return (
+              <div key={event._id} className="bg-pb-surface border border-pb-hairline rounded-[6px] p-5">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="font-display font-bold text-[16px] tracking-[-0.02em] text-pb-ink">
+                      {event.name}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      <Pill tone="neutral" mono className="capitalize">
+                        {(event.format || "").replace("-", " ")}
+                      </Pill>
+                      <Pill tone="neutral" mono>{formatEventSkillLevel(event.skillLevel)}</Pill>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6 shrink-0">
+                    <div className="text-right">
+                      <Eyebrow>{isSingles ? "Players" : "Teams"}</Eyebrow>
+                      <p className="font-mono text-[15px] font-medium text-pb-ink mt-0.5">
+                        {event.currentTeams || 0}/{event.maxTeams}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Eyebrow>Entry</Eyebrow>
+                      <p className="font-mono text-[15px] font-medium text-pb-court mt-0.5">
+                        ${event.entryFee}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-sm text-muted-foreground">
-                      {(event.format || "").toLowerCase() === "singles" ? "Players" : "Teams"}
-                    </div>
-                    <div className="font-semibold">
-                      {event.currentTeams || 0}/{event.maxTeams}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-muted-foreground">
-                      Entry Fee
-                    </div>
-                    <div className="font-display font-bold text-primary">
-                      ${event.entryFee}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {allowWaitlist && (
-                      <Button variant="outline" onClick={() => setWaitlistEvent({ _id: event._id, name: event.name })}>
-                        <Users className="w-4 h-4 mr-1" />
-                        Waitlist
-                      </Button>
-                    )}
-                    <Button variant="outline" onClick={() => openEditEvent(event)}>
-                      <Gear className="w-4 h-4 mr-1" />
-                      Settings
-                    </Button>
-                    <Button asChild>
-                      <Link to={`/tournaments/${tournamentId}/events/${event._id}/pools`}>
-                        Pools
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => onDeleteEvent(event._id, event.name)}
-                      title="Delete event"
-                    >
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </div>
+
+                {/* Action buttons */}
+                <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-pb-hairline">
+                  {allowWaitlist && (
+                    <PbBtn variant="outline" size="sm" onClick={() => setWaitlistEvent({ _id: event._id, name: event.name })}>
+                      <Users size={12} /> Waitlist
+                    </PbBtn>
+                  )}
+                  <PbBtn variant="outline" size="sm" onClick={() => openEditEvent(event)}>
+                    <Gear size={12} /> Settings
+                  </PbBtn>
+                  <PbBtn variant="outline" size="sm" asChild>
+                    <Link to={`/tournaments/${tournamentId}/events/${event._id}/pools`}>
+                      Pools <CaretRight size={12} />
+                    </Link>
+                  </PbBtn>
+                  <button
+                    onClick={() => onDeleteEvent(event._id, event.name)}
+                    className="ml-auto h-8 w-8 rounded-[6px] border border-pb-hairline flex items-center justify-center text-pb-faint hover:border-destructive/50 hover:text-destructive transition-colors"
+                    title="Delete event"
+                  >
+                    <Trash size={13} />
+                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No events have been added yet.</p>
+        <div className="flex flex-col items-center justify-center py-16 gap-3 bg-pb-surface border border-pb-hairline rounded-[6px]">
+          <Trophy size={24} className="text-pb-faint" />
+          <p className="text-[12px] font-mono text-pb-muted">No events yet. Add your first event above.</p>
         </div>
       )}
 
+      {/* Waitlist dialog */}
       <Dialog open={!!waitlistEvent} onOpenChange={(open) => !open && setWaitlistEvent(null)}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Waitlist — {waitlistEvent?.name ?? ""}</DialogTitle>
-            <DialogDescription>
-              Approve someone to send them an email to pay and complete registration. They have 24 hours to register.
+        <DialogContent className="max-w-lg bg-pb-surface border border-pb-hairline rounded-[8px] p-0 max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-pb-hairline">
+            <DialogTitle className="font-display font-bold text-[17px] tracking-[-0.025em] text-pb-ink">
+              Waitlist — {waitlistEvent?.name ?? ""}
+            </DialogTitle>
+            <DialogDescription className="text-[12px] font-mono text-pb-muted mt-0.5">
+              Approve to send a payment link. They have 24 hours to register.
             </DialogDescription>
           </DialogHeader>
-          {waitlistEvent && (
-            <WaitlistDialogContent eventId={waitlistEvent._id} onClose={() => setWaitlistEvent(null)} toast={toast} queryClient={queryClient} />
-          )}
+          <div className="px-5 py-4">
+            {waitlistEvent && <WaitlistDialogContent eventId={waitlistEvent._id} queryClient={queryClient} />}
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Event Settings dialog */}
+      {/* Edit event dialog */}
       <Dialog open={!!eventToEdit} onOpenChange={(open) => !open && setEventToEdit(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Event Settings</DialogTitle>
-            <DialogDescription>
-              Update name, format, capacity, and entry fee for this event.
+        <DialogContent className="max-w-lg bg-pb-surface border border-pb-hairline rounded-[8px] p-0 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-pb-hairline">
+            <DialogTitle className="font-display font-bold text-[17px] tracking-[-0.025em] text-pb-ink">
+              Event Settings
+            </DialogTitle>
+            <DialogDescription className="text-[12px] font-mono text-pb-muted mt-0.5">
+              Update name, format, capacity, and entry fee.
             </DialogDescription>
           </DialogHeader>
           {eventToEdit && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-name">Event Name *</Label>
-                <Input
-                  id="edit-event-name"
-                  placeholder="e.g., Men's Singles"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Game Type</Label>
-                  <Select
-                    value={editForm.gameType}
-                    onValueChange={(v: GameType) => setEditForm({ ...editForm, gameType: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {gameTypes.map((gt) => (
-                        <SelectItem key={gt} value={gt}>
-                          {gt}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Format</Label>
-                  <Select
-                    value={editForm.format}
-                    onValueChange={(v: TournamentFormat) => setEditForm({ ...editForm, format: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tournamentFormats.map((tf) => (
-                        <SelectItem key={tf} value={tf}>
-                          {tf}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Skill Level Range</Label>
-                  <Select
-                    value={editForm.skillLevel}
-                    onValueChange={(v) => setEditForm({ ...editForm, skillLevel: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="e.g. 3.5-4.0" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SKILL_LEVEL_RANGES.map((range) => (
-                        <SelectItem key={range} value={range}>
-                          {range}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>{editForm.gameType === "Singles" ? "Max Players" : "Max Teams"}</Label>
-                  <Input
-                    type="number"
-                    min={2}
-                    value={editForm.maxPlayers}
-                    onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        maxPlayers: parseInt(e.target.value) || (editForm.gameType === "Singles" ? 32 : 16),
-                      })
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {editForm.gameType === "Singles"
-                      ? "Maximum number of players"
-                      : "Maximum number of teams (pairs)"}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Entry Fee ($)</Label>
-                  <Input
-                    type="number"
-                    value={editForm.entryFee}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, entryFee: parseInt(e.target.value) || 0 })
-                    }
-                  />
-                </div>
-              </div>
+            <div className="px-5 py-4">
+              <EventForm form={editForm} onChange={setEditForm} />
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEventToEdit(null)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveEventSettings}
-              disabled={updateEventMutation.isPending}
-            >
-              {updateEventMutation.isPending ? (
-                <>
-                  <CircleNotch className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save changes"
-              )}
-            </Button>
+          <DialogFooter className="px-5 pb-5 flex gap-2">
+            <PbBtn variant="outline" size="sm" onClick={() => setEventToEdit(null)}>Cancel</PbBtn>
+            <PbBtn variant="primary" size="sm" onClick={handleSaveEventSettings} disabled={updateEventMutation.isPending}>
+              {updateEventMutation.isPending ? <><CircleNotch size={12} className="animate-spin" /> Saving…</> : "Save changes"}
+            </PbBtn>
           </DialogFooter>
         </DialogContent>
       </Dialog>

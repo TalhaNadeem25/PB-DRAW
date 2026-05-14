@@ -1,16 +1,9 @@
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { waitlistAPI } from "@/services/api";
 import { CheckCircle, ListNumbers, CircleNotch, Envelope } from "@phosphor-icons/react";
 import { useState } from "react";
+import { Eyebrow, Pill, PbBtn } from "@/components/ui/pb";
 
 interface OrganizerWaitlistPanelProps {
   tournamentId: string;
@@ -54,16 +47,19 @@ export default function OrganizerWaitlistPanel({
 
   if (!allowWaitlist) {
     return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <ListNumbers className="w-8 h-8 text-primary" />
-          <h2 className="font-display font-bold text-2xl">Waitlist</h2>
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-display font-extrabold text-[28px] tracking-[-0.03em] text-pb-ink leading-none mb-1">
+            Waitlist
+          </h2>
+          <p className="text-[13px] text-pb-muted font-mono">Manage overflow registrations</p>
         </div>
-        <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-          <ListNumbers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground font-medium">Waitlist is not enabled</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Enable the waitlist in tournament Settings so players can join when events are full. You can then approve them here to send a payment link.
+        <div className="bg-pb-surface border border-pb-hairline rounded-[6px] px-5 py-14 text-center">
+          <ListNumbers size={28} className="mx-auto mb-3 text-pb-faint" />
+          <p className="text-[13px] font-sans font-medium text-pb-ink mb-1">Waitlist is not enabled</p>
+          <p className="text-[12px] font-mono text-pb-muted max-w-sm mx-auto">
+            Enable the waitlist in tournament Settings so players can join when events are full.
+            You can then approve them here to send a payment link.
           </p>
         </div>
       </div>
@@ -71,100 +67,118 @@ export default function OrganizerWaitlistPanel({
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h2 className="font-display font-bold text-2xl flex items-center gap-2">
-            <ListNumbers className="w-6 h-6 text-primary" />
+          <h2 className="font-display font-extrabold text-[28px] tracking-[-0.03em] text-pb-ink leading-none mb-1">
             Waitlist
           </h2>
-          <p className="text-muted-foreground mt-1">
-            Select an event to view and approve players on the waitlist. Approving sends them an email to pay and complete registration.
+          <p className="text-[12px] font-mono text-pb-muted max-w-sm">
+            Approving a player sends them an email to pay and complete registration.
           </p>
         </div>
-        <div className="w-full sm:w-64 shrink-0">
-          <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an event" />
-            </SelectTrigger>
-            <SelectContent>
-              {eventsWithWaitlist.map((event: any) => (
-                <SelectItem key={event._id} value={event._id}>
-                  {event.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+        {/* Event picker */}
+        <div className="shrink-0 w-full sm:w-56">
+          <label className="block text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-1.5">
+            Event
+          </label>
+          <select
+            value={selectedEventId}
+            onChange={(e) => setSelectedEventId(e.target.value)}
+            className="w-full h-9 rounded-[6px] border border-pb-hairline bg-pb-surface2 px-3 text-[13px] font-mono text-pb-ink focus:outline-none focus:border-pb-rule"
+          >
+            <option value="">Select an event…</option>
+            {eventsWithWaitlist.map((event: any) => (
+              <option key={event._id} value={event._id}>
+                {event.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
+      {/* Body */}
       {!selectedEventId ? (
-        <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-          <ListNumbers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground font-medium">Select an event</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Choose an event from the dropdown above to see who is on the waitlist.
+        <div className="bg-pb-surface border border-pb-hairline rounded-[6px] px-5 py-14 text-center">
+          <ListNumbers size={28} className="mx-auto mb-3 text-pb-faint" />
+          <p className="text-[13px] font-sans font-medium text-pb-ink mb-1">Select an event</p>
+          <p className="text-[12px] font-mono text-pb-muted">
+            Choose an event above to see who is on the waitlist.
           </p>
         </div>
       ) : isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <CircleNotch className="w-10 h-10 animate-spin text-muted-foreground" />
+          <CircleNotch size={24} className="animate-spin text-pb-muted" />
         </div>
       ) : entries.length === 0 ? (
-        <div className="glass-card rounded-2xl border border-border/50 p-12 text-center">
-          <ListNumbers className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground font-medium">No one on the waitlist</p>
-          <p className="text-sm text-muted-foreground mt-1">
+        <div className="bg-pb-surface border border-pb-hairline rounded-[6px] px-5 py-14 text-center">
+          <ListNumbers size={28} className="mx-auto mb-3 text-pb-faint" />
+          <p className="text-[13px] font-sans font-medium text-pb-ink mb-1">No one on the waitlist</p>
+          <p className="text-[12px] font-mono text-pb-muted max-w-sm mx-auto">
             When this event is full, players can join the waitlist. They will appear here.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-2xl border border-border/50 overflow-hidden divide-y divide-border/50">
+          <div className="bg-pb-surface border border-pb-hairline rounded-[6px] overflow-hidden divide-y divide-pb-hairline">
+            {/* Table header */}
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-2.5 bg-pb-surface2">
+              <Eyebrow>#</Eyebrow>
+              <Eyebrow>Player</Eyebrow>
+              <Eyebrow>Action</Eyebrow>
+            </div>
+
             {entries.map((entry: any) => (
               <div
                 key={entry._id}
-                className="flex items-center justify-between gap-3 p-4 bg-card hover:bg-muted/30 transition-colors"
+                className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-3.5 hover:bg-pb-surface2 transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="font-mono text-sm text-muted-foreground shrink-0 w-8">
-                    #{entry.position}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{entry.user?.name ?? "—"}</div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
-                      <Envelope className="w-3 h-3 shrink-0" />
-                      {entry.user?.email ?? "—"}
-                    </div>
-                  </div>
+                {/* Position */}
+                <span className="font-mono text-[12px] text-pb-muted w-6 text-right shrink-0">
+                  {entry.position}
+                </span>
+
+                {/* Player info */}
+                <div className="min-w-0">
+                  <p className="font-display font-semibold text-[14px] tracking-[-0.015em] text-pb-ink truncate">
+                    {entry.user?.name ?? "—"}
+                  </p>
+                  <p className="flex items-center gap-1 text-[11px] font-mono text-pb-muted truncate mt-0.5">
+                    <Envelope size={10} className="shrink-0" />
+                    {entry.user?.email ?? "—"}
+                  </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+
+                {/* Action */}
+                <div className="shrink-0">
                   {entry.status === "waiting" ? (
-                    <Button
+                    <PbBtn
+                      variant="primary"
                       size="sm"
                       onClick={() => approveMutation.mutate(entry._id)}
                       disabled={approveMutation.isPending}
                     >
                       {approveMutation.isPending ? (
-                        <CircleNotch className="w-4 h-4 animate-spin" />
+                        <CircleNotch size={13} className="animate-spin" />
                       ) : (
                         <>
-                          <CheckCircle className="w-4 h-4 mr-1" />
+                          <CheckCircle size={13} />
                           Approve
                         </>
                       )}
-                    </Button>
+                    </PbBtn>
                   ) : (
-                    <span className="text-xs font-medium px-2 py-1 rounded-md bg-muted text-muted-foreground capitalize">
-                      {entry.status}
-                    </span>
+                    <Pill tone="neutral" mono className="capitalize">{entry.status}</Pill>
                   )}
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Approving sends an email with a payment link. They have 24 hours to complete registration.
+
+          <p className="text-[11px] font-mono text-pb-faint">
+            Approving sends an email with a payment link. Players have 24 hours to complete registration.
           </p>
         </div>
       )}

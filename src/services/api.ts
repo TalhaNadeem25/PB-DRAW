@@ -65,13 +65,14 @@ export const authAPI = {
     role?: string;
     skillLevel?: number;
     phone?: string;
+    turnstileToken?: string;
   }) => {
     const response = await api.post('/auth/register', data);
     return response.data;
   },
 
-  login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
+  login: async (email: string, password: string, turnstileToken?: string) => {
+    const response = await api.post('/auth/login', { email, password, turnstileToken });
     return response.data;
   },
 
@@ -953,6 +954,24 @@ export const blogAPI = {
   },
   delete: async (slug: string) => {
     const response = await api.delete(`/blog/${slug}`);
+    return response.data;
+  },
+};
+
+// Organizer Stripe Configuration
+export const stripeConfigAPI = {
+  get: async () => {
+    const response = await api.get('/stripe-config');
+    return response.data;
+  },
+
+  save: async (data: { publishableKey: string; secretKey: string }) => {
+    const response = await api.post('/stripe-config', data);
+    return response.data;
+  },
+
+  delete: async () => {
+    const response = await api.delete('/stripe-config');
     return response.data;
   },
 };

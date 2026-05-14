@@ -2,7 +2,6 @@ import Layout from "@/components/layout/Layout";
 import OrganizerTournamentDashboard from "@/components/tournament-detail/OrganizerTournamentDashboard";
 import PlayerTournamentView from "@/components/tournament-detail/PlayerTournamentView";
 import TournamentAlertDialogs from "@/components/tournament-detail/TournamentAlertDialogs";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSocket } from "@/contexts/SocketContext";
 import { eventAPI, favoritesAPI, tournamentAPI } from "@/services/api";
@@ -15,34 +14,6 @@ import { toast } from "sonner";
 import type { ActivityItem } from "@/components/tournament-dashboard/DashboardOverview";
 import type { DashboardSection } from "@/components/tournament-dashboard/TournamentDashboardSidebar";
 
-/* ─── Status config ─── */
-const statusConfig = {
-  open: {
-    label: "Registration Open",
-    className: "bg-primary/10 text-primary border-primary/20",
-    dotClass: "bg-primary",
-  },
-  closed: {
-    label: "Registration Closed",
-    className: "bg-muted text-muted-foreground border-border",
-    dotClass: "bg-muted-foreground",
-  },
-  "in-progress": {
-    label: "In Progress",
-    className: "bg-destructive/10 text-destructive border-destructive/20",
-    dotClass: "bg-destructive animate-pulse",
-  },
-  completed: {
-    label: "Completed",
-    className: "bg-accent text-accent-foreground border-accent-foreground/20",
-    dotClass: "bg-accent-foreground",
-  },
-  draft: {
-    label: "Draft",
-    className: "bg-muted text-muted-foreground border-border",
-    dotClass: "bg-muted-foreground",
-  },
-};
 
 const TournamentDetail = () => {
   /* ─── Hooks ─── */
@@ -239,10 +210,10 @@ const TournamentDetail = () => {
   if (isLoading) {
     return (
       <Layout variant="minimal">
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-pb-paper flex items-center justify-center">
           <div className="text-center">
-            <CircleNotch className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading tournament details...</p>
+            <CircleNotch size={32} className="animate-spin text-pb-muted mx-auto mb-3" />
+            <p className="text-[13px] font-mono text-pb-muted">Loading tournament…</p>
           </div>
         </div>
       </Layout>
@@ -252,25 +223,36 @@ const TournamentDetail = () => {
   if (error || !tournament) {
     return (
       <Layout variant="minimal">
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-              <Warning className="w-8 h-8 text-destructive" />
+        <div className="min-h-screen bg-pb-paper flex items-center justify-center px-4">
+          <div className="text-center max-w-sm">
+            <div className="w-12 h-12 mx-auto rounded-[6px] bg-pb-surface border border-pb-hairline flex items-center justify-center mb-4">
+              <Warning size={20} className="text-pb-muted" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Tournament Not Found</h2>
-            <p className="text-muted-foreground mb-6">
-              The tournament you're looking for doesn't exist or has been removed.
+            <h2 className="font-display font-bold text-[22px] tracking-[-0.025em] text-pb-ink mb-2">
+              Tournament Not Found
+            </h2>
+            <p className="text-[13px] font-mono text-pb-muted mb-6">
+              This tournament doesn't exist or has been removed.
             </p>
-            <Button onClick={() => navigate("/tournaments")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Tournaments
-            </Button>
+            <button
+              onClick={() => navigate("/tournaments")}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-[6px] border border-pb-hairline bg-pb-surface text-[13px] font-mono text-pb-ink hover:border-pb-rule transition-colors"
+            >
+              <ArrowLeft size={13} /> Back to Tournaments
+            </button>
           </div>
         </div>
       </Layout>
     );
   }
 
+  const statusConfig = {
+    open: { label: "Registration Open", className: "bg-primary/10 text-primary border-primary/20", dotClass: "bg-primary" },
+    closed: { label: "Closed", className: "bg-muted text-muted-foreground border-border", dotClass: "bg-muted-foreground" },
+    "in-progress": { label: "Live", className: "bg-destructive/10 text-destructive border-destructive/20", dotClass: "bg-destructive animate-pulse" },
+    completed: { label: "Completed", className: "bg-accent text-accent-foreground border-accent-foreground/20", dotClass: "bg-accent-foreground" },
+    draft: { label: "Draft", className: "bg-muted text-muted-foreground border-border", dotClass: "bg-muted-foreground" },
+  };
   const statusInfo = statusConfig[tournament.status as keyof typeof statusConfig] || statusConfig.draft;
   const organizerId = typeof tournament.organizer === "string" ? tournament.organizer : tournament.organizer?._id;
   const isOrganizer = user?._id === organizerId || user?.role === "admin";

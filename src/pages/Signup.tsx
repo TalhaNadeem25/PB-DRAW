@@ -1,14 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Kept for skill level
-import { Trophy, User, ArrowRight, CircleNotch, Play, Eye, EyeSlash } from '@phosphor-icons/react';
+import { ArrowRight, CircleNotch, Eye, EyeSlash, Check } from '@phosphor-icons/react';
+import { Turnstile } from '@marsidev/react-turnstile';
+import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { cn } from '@/lib/utils';
+import { PbLogo, Eyebrow } from '@/components/ui/pb';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -24,6 +22,9 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [mobileView, setMobileView] = useState<'splash' | 'form'>('splash');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<TurnstileInstance>(null);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -35,24 +36,11 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-    
-    if (!acceptedTerms) {
-        setError('You must accept the terms and conditions');
-        return;
-    }
-
+    if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return; }
+    if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (!acceptedTerms) { setError('You must accept the terms and conditions'); return; }
+    if (!turnstileToken) { setError('Please complete the bot verification.'); return; }
     setIsLoading(true);
-
     try {
       await register({
         name: formData.name,
@@ -61,298 +49,279 @@ const Signup = () => {
         role: formData.role,
         skillLevel: parseFloat(formData.skillLevel),
         phone: formData.phone || undefined,
+        turnstileToken,
       });
       navigate('/tournaments');
-    } catch (error) {
-      console.error('Signup error:', error);
+    } catch {
       setError('Failed to create account. Please try again.');
+      turnstileRef.current?.reset();
+      setTurnstileToken('');
     } finally {
       setIsLoading(false);
     }
   };
 
+  /* shared input class */
+  const inputCls = "w-full h-11 px-4 rounded-[6px] border border-pb-hairline bg-pb-surface2 text-[13px] font-sans text-pb-ink placeholder:text-pb-faint focus:outline-none focus:border-pb-rule";
+  const labelCls = "block text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-1.5";
+
   return (
     <Layout variant="auth">
-    <div className="min-h-screen flex flex-col bg-background font-sans">
-      <main className="flex-1 flex overflow-hidden">
-        {/* Split Layout: Left Panel (Visual) */}
-        <div className="hidden lg:flex flex-1 relative bg-sidebar-primary overflow-hidden">
-            <div className="absolute inset-0 z-0 opacity-40">
-                <div 
-                    className="w-full h-full bg-center bg-cover" 
-                    style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCPkWfPl10QRi6Z1IR8Lj41ZRv6lln8mtc12GGmSkrjbkW7nhmyybA5gq49T9l3pCde6ZBYG7-p-VCy4lSnGllwnc1IrO3BU9j7E_Z3Iou8IKpVCl_ePIH1-TfEtimKvSHYk7t103ofIsHTRpH-kVBU68fjGEuvYzkZOVUGAZDpPgtxFiZ5R7pyA0VfJLA-OS74fhHEYmXtNnhW37pC3GcWER3rw_sO4WHhQw7JRfGcLDCZmpQqnX4uhEaca-oQT3Y6PHj0QeX5OIU')` }}
-                ></div>
-            </div>
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-sidebar-primary via-transparent to-transparent z-10"></div>
-            
-            <div className="relative z-20 flex flex-col justify-end p-16 w-full">
-                <h1 className="text-primary-foreground text-5xl font-display font-black leading-tight tracking-tight mb-4">
-                    Elevate Your <br/><span className="text-primary">Pickleball</span> Game.
-                </h1>
-                <p className="text-primary-foreground/80 text-lg max-w-md font-sans">
-                    Join the fastest-growing community of players and organizers. Manage matches, track performance, and dominate the court.
-                </p>
-                <div className="mt-12 flex gap-8">
-                    <div className="flex flex-col">
-                        <span className="text-primary text-3xl font-display font-bold">12k+</span>
-                        <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Players</span>
-                    </div>
-                    <div className="w-px h-12 bg-primary-foreground/20"></div>
-                    <div className="flex flex-col">
-                        <span className="text-primary text-3xl font-display font-bold">450+</span>
-                        <span className="text-primary-foreground/60 text-xs uppercase tracking-widest font-medium">Clubs</span>
-                    </div>
-                </div>
-            </div>
+
+      {/* ── Mobile dark splash (< lg) ──────────────────────────────── */}
+      {mobileView === 'splash' && (
+        <div className="lg:hidden min-h-screen bg-pb-ink flex flex-col px-6 pt-12 pb-10">
+          <PbLogo color="#F5F2EB" size={18} />
+
+          <div className="flex-1 flex flex-col justify-center py-10">
+            <Eyebrow className="text-pb-amber mb-5">Your draw · Your game</Eyebrow>
+            <h1 className="font-display font-extrabold text-[54px] leading-[0.95] tracking-[-0.045em] text-[#F5F2EB]">
+              Find your<br />draw.<br />
+              <em className="not-italic text-pb-amber">Win it.</em>
+            </h1>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => setMobileView('form')}
+              className="w-full h-[52px] bg-[#F5F2EB] text-pb-ink rounded-[8px] font-sans font-medium text-[14px]"
+            >
+              Create account with email
+            </button>
+
+            <p className="text-center text-[12px] text-[#9C9890] pt-2">
+              Already have an account?{' '}
+              <Link to="/login" className="text-pb-amber font-medium">Log in</Link>
+            </p>
+          </div>
+
+          <p className="text-[10px] text-[#6E6A62] text-center mt-6 leading-relaxed">
+            By continuing you agree to PB Draw's Terms and Privacy Policy.
+          </p>
         </div>
+      )}
 
-        {/* Split Layout: Right Panel (Registration Form) */}
-        <div className="flex-1 bg-background overflow-y-auto">
-          <div className="max-w-[580px] mx-auto px-6 py-12 lg:py-20 flex flex-col">
-            {/* Headline Section */}
-            <div className="mb-10 text-center lg:text-left">
-              <h2 className="text-foreground text-3xl font-display font-bold tracking-tight mb-2">Create Your Account</h2>
-              <p className="text-muted-foreground">Start your journey on the court today.</p>
-            </div>
+      {/* ── Full layout (desktop always · mobile form view) ─────────── */}
+      <div className={cn("min-h-screen flex flex-col bg-pb-paper font-sans", mobileView === 'splash' ? "hidden lg:flex" : "flex")}>
+        <main className="flex-1 flex overflow-hidden">
 
-            {/* Step Header */}
-            <div className="flex items-center gap-2 mb-8">
-              <div className="h-1 flex-1 bg-primary rounded-full"></div>
-              <div className="h-1 flex-1 bg-muted rounded-full"></div>
-              <span className="ml-2 text-xs font-bold text-muted-foreground uppercase tracking-tighter">Step 1 of 2</span>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                {/* Choose Your Path */}
+          {/* Left: brand photo */}
+          <div className="hidden lg:flex flex-1 relative overflow-hidden">
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-50"
+              style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCPkWfPl10QRi6Z1IR8Lj41ZRv6lln8mtc12GGmSkrjbkW7nhmyybA5gq49T9l3pCde6ZBYG7-p-VCy4lSnGllwnc1IrO3BU9j7E_Z3Iou8IKpVCl_ePIH1-TfEtimKvSHYk7t103ofIsHTRpH-kVBU68fjGEuvYzkZOVUGAZDpPgtxFiZ5R7pyA0VfJLA-OS74fhHEYmXtNnhW37pC3GcWER3rw_sO4WHhQw7JRfGcLDCZmpQqnX4uhEaca-oQT3Y6PHj0QeX5OIU')` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-pb-ink via-pb-ink/60 to-transparent" />
+            <div className="relative z-10 flex flex-col justify-end p-16 w-full">
+              <h1 className="text-white text-5xl font-display font-black leading-tight tracking-tighter mb-4 uppercase">
+                Elevate Your<br/><span className="text-pb-court">Pickleball</span> Game.
+              </h1>
+              <p className="text-white/70 text-[14px] font-mono max-w-md mb-10">
+                Join the fastest-growing community of players and organizers. Manage matches, track performance, and dominate the court.
+              </p>
+              <div className="flex gap-10">
                 <div>
-                  <h3 className="text-foreground text-base font-bold mb-4 font-display">Choose Your Path</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Player Card */}
-                    <label 
-                        className={cn(
-                            "group relative flex flex-col gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all hover:bg-primary/5",
-                            formData.role === 'player' 
-                                ? "border-primary bg-primary/5 shadow-sm" 
-                                : "border-border bg-card hover:border-primary/50"
-                        )}
-                    >
-                      <input 
-                        type="radio" 
-                        name="role" 
-                        value="player" 
-                        checked={formData.role === 'player'}
-                        onChange={() => handleChange('role', 'player')}
-                        className="hidden"
-                      />
-                      <div className="flex justify-between items-start">
-                        <div className={cn(
-                            "size-10 rounded-lg flex items-center justify-center transition-colors",
-                            formData.role === 'player' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
-                        )}>
-                          <User className="size-6" />
-                        </div>
-                        <div className={cn(
-                            "size-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                            formData.role === 'player' ? "border-primary" : "border-muted-foreground/30"
-                        )}>
-                          {formData.role === 'player' && <div className="size-2.5 bg-primary rounded-full"></div>}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-foreground text-base font-bold font-display">I am a Player</p>
-                        <p className="text-muted-foreground text-sm leading-snug">Join tournaments, track stats, and find games.</p>
-                      </div>
-                    </label>
+                  <span className="text-pb-court font-display font-black text-3xl">12k+</span>
+                  <span className="block text-white/50 text-[10px] font-mono uppercase tracking-[0.08em] mt-1">Players</span>
+                </div>
+                <div className="w-px bg-white/15 self-stretch" />
+                <div>
+                  <span className="text-pb-court font-display font-black text-3xl">450+</span>
+                  <span className="block text-white/50 text-[10px] font-mono uppercase tracking-[0.08em] mt-1">Clubs</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                    {/* Organizer Card */}
-                    <label 
+          {/* Right: form */}
+          <div className="flex-1 bg-pb-paper overflow-y-auto">
+            <div className="max-w-[560px] mx-auto px-6 py-12 lg:py-16 flex flex-col">
+
+              {/* Mobile back button */}
+              <div className="lg:hidden flex items-center gap-3 mb-8">
+                <button
+                  onClick={() => setMobileView('splash')}
+                  className="flex items-center gap-1.5 text-[12px] font-mono text-pb-muted hover:text-pb-ink transition-colors"
+                >
+                  <ArrowRight size={13} className="rotate-180" /> Back
+                </button>
+              </div>
+
+              <div className="mb-8">
+                <h2 className="font-display font-extrabold text-[30px] tracking-[-0.035em] text-pb-ink mb-1.5">
+                  Create Your Account
+                </h2>
+                <p className="text-[13px] font-mono text-pb-muted">Start your journey on the court today.</p>
+              </div>
+
+              {/* Step indicator */}
+              <div className="flex items-center gap-2 mb-8">
+                <div className="h-[3px] flex-1 bg-pb-court rounded-full" />
+                <div className="h-[3px] flex-1 bg-pb-hairline rounded-full" />
+                <span className="ml-2 text-[10px] font-mono text-pb-faint uppercase tracking-[0.08em]">Step 1 of 2</span>
+              </div>
+
+              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                {/* Role selector */}
+                <div>
+                  <p className="text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-3">Choose Your Path</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { value: 'player', icon: User, title: 'I am a Player', sub: 'Join tournaments, track stats, and find games.' },
+                      { value: 'organizer', icon: Trophy, title: 'I am an Organizer', sub: 'Manage events, handle registrations, and grow your club.' },
+                    ].map(({ value, icon: Icon, title, sub }) => (
+                      <label
+                        key={value}
                         className={cn(
-                            "group relative flex flex-col gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all hover:bg-primary/5",
-                            formData.role === 'organizer' 
-                                ? "border-primary bg-primary/5 shadow-sm" 
-                                : "border-border bg-card hover:border-primary/50"
+                          "flex flex-col gap-3 p-4 rounded-[6px] border-2 cursor-pointer transition-colors",
+                          formData.role === value
+                            ? "border-pb-court bg-pb-court-tint2"
+                            : "border-pb-hairline bg-pb-surface hover:border-pb-rule"
                         )}
-                    >
-                      <input 
-                        type="radio" 
-                        name="role" 
-                        value="organizer" 
-                        checked={formData.role === 'organizer'}
-                        onChange={() => handleChange('role', 'organizer')}
-                        className="hidden"
-                      />
-                      <div className="flex justify-between items-start">
-                        <div className={cn(
-                            "size-10 rounded-lg flex items-center justify-center transition-colors",
-                            formData.role === 'organizer' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
-                        )}>
-                          <Trophy className="size-6" />
+                      >
+                        <input type="radio" name="role" value={value} checked={formData.role === value} onChange={() => handleChange('role', value)} className="sr-only" />
+                        <div className="flex justify-between items-start">
+                          <div className={cn(
+                            "w-9 h-9 rounded-[6px] flex items-center justify-center transition-colors",
+                            formData.role === value ? "bg-pb-court text-white" : "bg-pb-surface2 text-pb-muted"
+                          )}>
+                            <Icon size={18} />
+                          </div>
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                            formData.role === value ? "border-pb-court" : "border-pb-hairline"
+                          )}>
+                            {formData.role === value && <div className="w-2.5 h-2.5 bg-pb-court rounded-full" />}
+                          </div>
                         </div>
-                        <div className={cn(
-                            "size-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                            formData.role === 'organizer' ? "border-primary" : "border-muted-foreground/30"
-                        )}>
-                          {formData.role === 'organizer' && <div className="size-2.5 bg-primary rounded-full"></div>}
+                        <div>
+                          <p className="text-[13px] font-display font-bold text-pb-ink">{title}</p>
+                          <p className="text-[11px] font-mono text-pb-muted mt-0.5 leading-snug">{sub}</p>
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-foreground text-base font-bold font-display">I am an Organizer</p>
-                        <p className="text-muted-foreground text-sm leading-snug">Manage events, handle registrations, and grow your club.</p>
-                      </div>
-                    </label>
+                      </label>
+                    ))}
                   </div>
                 </div>
 
-                {/* Error Message */}
                 {error && (
-                    <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium text-center">
-                        {error}
-                    </div>
+                  <div className="p-3 rounded-[6px] bg-destructive/10 border border-destructive/20 text-destructive text-[13px] font-mono text-center">
+                    {error}
+                  </div>
                 )}
 
-                {/* Registration Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="name" className="text-foreground text-sm font-semibold">Full Name</Label>
-                        <Input 
-                            id="name"
-                            value={formData.name} 
-                            onChange={(e) => handleChange('name', e.target.value)}
-                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
-                            placeholder="John Doe" 
-                            required
-                        />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="email" className="text-foreground text-sm font-semibold">Email Address</Label>
-                        <Input 
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => handleChange('email', e.target.value)}
-                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
-                            placeholder="john@example.com" 
-                            required
-                        />
-                    </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Full Name</label>
+                    <input type="text" className={inputCls} placeholder="John Doe" value={formData.name} onChange={(e) => handleChange('name', e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Email Address</label>
+                    <input type="email" className={inputCls} placeholder="john@example.com" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} required />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="password" className="text-foreground text-sm font-semibold">Password</Label>
-                        <div className="relative">
-                            <Input 
-                                id="password"
-                                type={showPassword ? 'text' : 'password'}
-                                value={formData.password}
-                                onChange={(e) => handleChange('password', e.target.value)}
-                                className="h-12 px-4 bg-card focus-visible:ring-primary pr-10" 
-                                placeholder="At least 6 characters" 
-                                required
-                            />
-                            <button 
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                            >
-                                {showPassword ? <EyeSlash className="size-5" /> : <Eye className="size-5" />}
-                            </button>
-                        </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Password</label>
+                    <div className="relative">
+                      <input type={showPassword ? 'text' : 'password'} className={cn(inputCls, 'pr-10')} placeholder="At least 6 characters" value={formData.password} onChange={(e) => handleChange('password', e.target.value)} required />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-pb-muted hover:text-pb-ink">
+                        {showPassword ? <EyeSlash size={15} /> : <Eye size={15} />}
+                      </button>
                     </div>
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="confirmPassword" className="text-foreground text-sm font-semibold">Confirm Password</Label>
-                        <Input 
-                            id="confirmPassword"
-                            type="password"
-                            value={formData.confirmPassword}
-                            onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
-                            placeholder="Re-enter password" 
-                            required
-                        />
-                    </div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Confirm Password</label>
+                    <input type="password" className={inputCls} placeholder="Re-enter password" value={formData.confirmPassword} onChange={(e) => handleChange('confirmPassword', e.target.value)} required />
+                  </div>
                 </div>
 
-                {/* Additional Fields (Skill/Phone) - Keeping functionality but styling simply */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                     <div className="flex flex-col gap-2">
-                        <Label htmlFor="skillLevel" className="text-foreground text-sm font-semibold">Skill Level</Label>
-                        <Select 
-                            value={formData.skillLevel} 
-                            onValueChange={(value) => handleChange('skillLevel', value)}
-                        >
-                            <SelectTrigger className="h-12 bg-card focus:ring-primary">
-                                <SelectValue placeholder="Select skill" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="2.5">2.5 - Beginner</SelectItem>
-                                <SelectItem value="3.0">3.0 - Intermediate</SelectItem>
-                                <SelectItem value="3.5">3.5 - Advanced Intermediate</SelectItem>
-                                <SelectItem value="4.0">4.0 - Advanced</SelectItem>
-                                <SelectItem value="4.5">4.5 - Competitive</SelectItem>
-                                <SelectItem value="5.0">5.0 - Pro</SelectItem>
-                            </SelectContent>
-                        </Select>
-                     </div>
-                     <div className="flex flex-col gap-2">
-                        <Label htmlFor="phone" className="text-foreground text-sm font-semibold">Phone (Optional)</Label>
-                        <Input 
-                            id="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => handleChange('phone', e.target.value)}
-                            className="h-12 px-4 bg-card focus-visible:ring-primary" 
-                            placeholder="555-0123" 
-                        />
-                     </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Skill Level</label>
+                    <select
+                      className="w-full h-11 px-4 rounded-[6px] border border-pb-hairline bg-pb-surface2 text-[13px] font-mono text-pb-ink focus:outline-none focus:border-pb-rule"
+                      value={formData.skillLevel}
+                      onChange={(e) => handleChange('skillLevel', e.target.value)}
+                    >
+                      <option value="2.5">2.5 — Beginner</option>
+                      <option value="3.0">3.0 — Intermediate</option>
+                      <option value="3.5">3.5 — Advanced Intermediate</option>
+                      <option value="4.0">4.0 — Advanced</option>
+                      <option value="4.5">4.5 — Competitive</option>
+                      <option value="5.0">5.0 — Pro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Phone (Optional)</label>
+                    <input type="tel" className={inputCls} placeholder="555-0123" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} />
+                  </div>
                 </div>
 
-                <div className="flex items-start gap-3 py-2">
-                  <Checkbox 
-                    id="terms" 
-                    checked={acceptedTerms}
-                    onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
-                    className="mt-1 border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                  />
-                  <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer font-normal">
-                    I agree to the <Link to="/terms" className="text-foreground font-bold underline underline-offset-2 hover:text-primary">Terms of Service</Link> and <Link to="/privacy" className="text-foreground font-bold underline underline-offset-2 hover:text-primary">Privacy Policy</Link>.
-                  </Label>
-                </div>
-
-                <Button 
-                    type="submit" 
-                    disabled={isLoading}
-                    className="w-full h-14 rounded-xl text-base font-black tracking-wide shadow-md hover:scale-[1.01] active:scale-95 transition-all text-primary-foreground bg-primary hover:bg-primary/90"
-                >
-                    {isLoading ? (
-                        <>
-                            <CircleNotch className="mr-2 h-5 w-5 animate-spin" />
-                            Creating Account...
-                        </>
-                    ) : (
-                        <>
-                            <span>Continue to Preferences</span>
-                            <ArrowRight className="ml-2 h-5 w-5" />
-                        </>
+                {/* Terms */}
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <div
+                    onClick={() => setAcceptedTerms(!acceptedTerms)}
+                    className={cn(
+                      "w-4 h-4 rounded-[3px] border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                      acceptedTerms ? "bg-pb-court border-pb-court" : "border-pb-rule bg-pb-surface2"
                     )}
-                </Button>
-            </form>
+                  >
+                    {acceptedTerms && <Check size={10} weight="bold" className="text-white" />}
+                  </div>
+                  <span className="text-[12px] font-mono text-pb-muted leading-relaxed">
+                    I agree to the{' '}
+                    <Link to="/terms" className="text-pb-ink font-semibold underline underline-offset-2 hover:text-pb-court">Terms of Service</Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" className="text-pb-ink font-semibold underline underline-offset-2 hover:text-pb-court">Privacy Policy</Link>.
+                  </span>
+                </label>
 
-            <div className="mt-12 text-center">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em]">
-                    Trusted by 500+ pickleball organizations worldwide
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken('')}
+                  onError={() => setTurnstileToken('')}
+                  options={{ theme: 'light', size: 'normal' }}
+                />
+
+                <button
+                  type="submit"
+                  disabled={isLoading || !turnstileToken}
+                  className="w-full h-13 py-3.5 rounded-[6px] bg-pb-ink text-white font-display font-black text-[14px] uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-pb-ink/90 transition-colors disabled:opacity-60"
+                >
+                  {isLoading ? (
+                    <><CircleNotch size={16} className="animate-spin" /> Creating Account…</>
+                  ) : (
+                    <>Continue to Preferences <ArrowRight size={15} /></>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-10 text-center">
+                <p className="text-[11px] font-mono text-pb-faint uppercase tracking-[0.12em]">
+                  Trusted by 500+ pickleball organizations worldwide
                 </p>
+              </div>
+
+              <div className="mt-6 text-center">
+                <p className="text-[13px] font-mono text-pb-muted">
+                  Already have an account?{' '}
+                  <Link to="/login" className="text-pb-court font-semibold hover:underline underline-offset-2">
+                    Sign in
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
 
-      {/* Mobile Progress Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 w-full h-1.5 bg-border">
-        <div className="h-full bg-hero-gradient w-1/2"></div>
+        {/* Mobile progress bar */}
+        <div className="lg:hidden fixed bottom-0 left-0 w-full h-[3px] bg-pb-hairline">
+          <div className="h-full bg-pb-court w-1/2 rounded-full" />
+        </div>
       </div>
-    </div>
     </Layout>
   );
 };

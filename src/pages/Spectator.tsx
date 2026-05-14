@@ -3,6 +3,7 @@ import BracketViewer from "@/components/tournament/BracketViewer";
 import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Eyebrow, Pill, Dot, PbBtn } from "@/components/ui/pb";
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ import {
   Trophy,
   WifiHigh,
   WifiSlash,
+  ShareNetwork,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
@@ -241,6 +243,11 @@ const Spectator = () => {
   }
 
   const statusInfo = getStatusInfo(tournament.status);
+  const isLiveTournament = tournament.status === "in-progress";
+  const upNextMatches = allMatches
+    .filter((m: any) => m.status === "scheduled")
+    .sort((a: any, b: any) => new Date(a.scheduledTime || 0).getTime() - new Date(b.scheduledTime || 0).getTime())
+    .slice(0, 3);
 
   return (
     <Layout variant="minimal">
@@ -253,6 +260,151 @@ const Spectator = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
+
+        {/* ── Mobile layout ── */}
+        <div className="md:hidden flex flex-col min-h-screen bg-pb-ink">
+
+          {/* Dark header */}
+          <div className="px-4 pb-4 shrink-0" style={{ paddingTop: 'max(env(safe-area-inset-top), 20px)' }}>
+            <Eyebrow className="text-pb-amber mb-2">
+              {isLiveTournament ? "LIVE" : tournament.status?.toUpperCase()} · {format(new Date(), "h:mm a")}
+            </Eyebrow>
+            <h1 className="font-display font-bold text-[30px] text-white tracking-[-0.03em] leading-tight mb-1">
+              {tournament.name}
+            </h1>
+            <p className="font-mono text-[11px] text-pb-muted">
+              {tournament.location} · {format(new Date(tournament.startDate), "MMM d")}–{format(new Date(tournament.endDate), "MMM d")}
+            </p>
+          </div>
+
+          {/* Live now section */}
+          <div className="flex-1 overflow-y-auto pb-24">
+            <div className="px-4">
+              <Eyebrow className="text-pb-muted mb-3">LIVE NOW · {liveMatchCount} COURT{liveMatchCount !== 1 ? "S" : ""}</Eyebrow>
+
+              {matchesLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <CircleNotch size={22} className="animate-spin text-pb-court" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {allMatches
+                    .filter((m: any) => m.status === "in-progress")
+                    .map((match: any) => {
+                      const t1Score = match.score?.team1Score ?? 0;
+                      const t2Score = match.score?.team2Score ?? 0;
+                      const scoreDiff = Math.abs(t1Score - t2Score);
+                      const isTight = scoreDiff <= 2 && (t1Score + t2Score) >= 14;
+                      const leadingTeam1 = t1Score > t2Score;
+
+                      return (
+                        <div
+                          key={match._id}
+                          className="rounded-[8px] overflow-hidden border"
+                          style={{
+                            background: "#FFF",
+                            borderColor: isTight ? "var(--pb-amber)" : "var(--pb-hairline)",
+                          }}
+                        >
+                          <div className="flex items-center justify-between px-3 py-1.5" style={{ background: isTight ? "var(--pb-amber-tint)" : "var(--pb-surface2)" }}>
+                            <div className="flex items-center gap-1.5">
+                              <Dot color="amber" size={5} pulse />
+                              <span className="font-mono text-[10px] font-bold text-[#7C3F0A] uppercase tracking-wide">
+                                {isMatchPoint(match) ? "MATCH PT" : "LIVE"}
+                              </span>
+                            </div>
+                            <span className="font-mono text-[10px] text-pb-faint uppercase">
+                              CT {String(match.courtNumber ?? "—").padStart(2, "0")}
+                            </span>
+                          </div>
+                          <div className="px-3 py-2 space-y-1.5">
+                            {([1, 2] as const).map((t) => {
+                              const isT1 = t === 1;
+                              const name = isT1 ? getTeamName(match.team1) : getTeamName(match.team2);
+                              const score = isT1 ? t1Score : t2Score;
+                              const winning = isT1 ? leadingTeam1 : !leadingTeam1;
+                              return (
+                                <div key={t} className="flex items-center justify-between">
+                                  <span className={cn(
+                                    "text-[14px] font-display font-bold truncate max-w-[68%]",
+                                    winning ? "text-pb-ink" : "text-pb-muted"
+                                  )}>
+                                    {name}
+                                  </span>
+                                  <span className={cn(
+                                    "font-mono text-[18px] font-bold tabular-nums",
+                                    winning ? "text-pb-ink" : "text-pb-muted"
+                                  )}>
+                                    {score}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {allMatches.filter((m: any) => m.status === "in-progress").length === 0 && (
+                    <div className="rounded-[8px] border border-pb-hairline bg-pb-surface p-8 text-center">
+                      <p className="font-mono text-[12px] text-pb-muted">No live matches right now</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Up Next */}
+              {upNextMatches.length > 0 && (
+                <div className="mt-5">
+                  <Eyebrow className="text-pb-muted mb-3">UP NEXT</Eyebrow>
+                  <div className="space-y-2">
+                    {upNextMatches.map((match: any) => (
+                      <div
+                        key={match._id}
+                        className="bg-pb-court-tint border border-pb-hairline rounded-[8px] px-3 py-3"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-mono text-[10px] text-pb-faint uppercase">
+                            {match.scheduledTime ? format(new Date(match.scheduledTime), "h:mm a") : "TBD"}
+                          </span>
+                          <span className="font-mono text-[10px] text-pb-faint uppercase">
+                            {match.event?.name}
+                          </span>
+                        </div>
+                        <p className="font-display font-bold text-[13px] text-pb-ink">
+                          {getTeamName(match.team1)} vs {getTeamName(match.team2)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sticky bottom CTA */}
+          <div className="fixed left-0 right-0 flex items-center gap-2 px-4 py-3 bg-pb-surface border-t border-pb-hairline z-40" style={{ bottom: 'calc(64px + max(env(safe-area-inset-bottom), 0px))' }}>
+            <PbBtn
+              variant="amber"
+              size="md"
+              full
+              onClick={() => handleTabChange("matches")}
+            >
+              Watch Live
+            </PbBtn>
+            <PbBtn
+              variant="outline"
+              size="md"
+              onClick={() => handleTabChange("standings")}
+            >
+              Draw
+            </PbBtn>
+          </div>
+        </div>
+
+        {/* ── Desktop layout (md+) ── */}
+        <div className="hidden md:block">
+
         {/* Sticky header */}
         <div className="border-b border-border/60 bg-card/50 sticky top-0 z-30">
           <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
@@ -310,12 +462,12 @@ const Spectator = () => {
                 )}
                 {connected ? (
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20">
-                    <Wifi className="w-3.5 h-3.5 text-primary" />
+                    <WifiHigh className="w-3.5 h-3.5 text-primary" />
                     <span className="text-xs font-medium text-primary hidden sm:inline">Live</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted border border-border">
-                    <WifiOff className="w-3.5 h-3.5 text-muted-foreground" />
+                    <WifiSlash className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Polling</span>
                   </div>
                 )}
@@ -649,6 +801,7 @@ const Spectator = () => {
             </TabsContent>
           </Tabs>
         </div>
+        </div>{/* end hidden md:block */}
       </div>
     </Layout>
   );
