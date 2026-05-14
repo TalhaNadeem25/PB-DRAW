@@ -94,6 +94,9 @@ export const authAPI = {
     preferences?: {
       playingDays?: string[];
       partnerPreference?: string;
+      preferredSide?: string;
+      primaryPaddle?: string;
+      availability?: string[];
     };
   }) => {
     const response = await api.put('/auth/profile', data);

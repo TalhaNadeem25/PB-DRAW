@@ -72,7 +72,21 @@ const userSchema = new mongoose.Schema({
       type: String,
       enum: ['looking', 'have-partner', 'either'],
       default: 'either'
-    }
+    },
+    preferredSide: {
+      type: String,
+      enum: ['Left', 'Right', 'Both'],
+      default: 'Left'
+    },
+    primaryPaddle: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    availability: [{
+      type: String,
+      enum: ['morning', 'afternoon', 'evening', 'weekends']
+    }]
   },
   statistics: {
     matchesPlayed: {
