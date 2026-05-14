@@ -49,11 +49,15 @@ const server = http.createServer(app);
 
 // Allowed origins: web frontend + Capacitor mobile apps
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:8080',
+  'https://www.pbdraw.com',
+  'https://pbdraw.com',
+  process.env.CLIENT_URL,
   'capacitor://localhost',
   'ionic://localhost',
   'http://localhost',
-];
+  'http://localhost:8080',
+  'http://localhost:5173',
+].filter(Boolean);
 
 // Initialize Socket.IO
 const io = new Server(server, {
