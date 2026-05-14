@@ -5,8 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { Eye, EyeSlash, CircleNotch } from '@phosphor-icons/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Turnstile } from '@marsidev/react-turnstile';
+import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Eyebrow, PbLogo, PbBtn } from '@/components/ui/pb';
 import { ArrowRight } from 'lucide-react';
@@ -85,6 +87,8 @@ const AuthPage = () => {
     phone: '',
   });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const { login, register, loginWithGoogle, loginWithApple } = useAuth();
   const navigate = useNavigate();
@@ -136,15 +140,18 @@ const AuthPage = () => {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!turnstileToken) { setError('Please complete the bot verification.'); return; }
     setIsLoading(true);
     setError('');
     try {
-      await login(loginEmail, loginPassword);
+      await login(loginEmail, loginPassword, turnstileToken);
       haptics.success();
       navigate(redirectUrl);
     } catch {
       haptics.error();
       setError('Invalid email or password. Please try again.');
+      turnstileRef.current?.reset();
+      setTurnstileToken('');
     } finally {
       setIsLoading(false);
     }
@@ -165,6 +172,7 @@ const AuthPage = () => {
       setError('You must accept the terms and conditions');
       return;
     }
+    if (!turnstileToken) { setError('Please complete the bot verification.'); return; }
     setIsLoading(true);
     try {
       await register({
@@ -174,12 +182,15 @@ const AuthPage = () => {
         role: signupData.role,
         skillLevel: parseFloat(signupData.skillLevel),
         phone: signupData.phone || undefined,
+        turnstileToken,
       });
       haptics.success();
       navigate(redirectUrl, { state: { fromSignup: true } });
     } catch {
       haptics.error();
       setError('Failed to create account. Please try again.');
+      turnstileRef.current?.reset();
+      setTurnstileToken('');
     } finally {
       setIsLoading(false);
     }
@@ -263,7 +274,7 @@ const AuthPage = () => {
               {(['login', 'signup'] as const).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => { setActiveTab(tab); setError(''); }}
+                  onClick={() => { setActiveTab(tab); setError(''); setTurnstileToken(''); turnstileRef.current?.reset(); }}
                   className={cn(
                     "px-3.5 py-1.5 text-[12.5px] font-medium rounded-[6px] transition-colors duration-150",
                     activeTab === tab
@@ -337,12 +348,21 @@ const AuthPage = () => {
                   </Link>
                 </div>
 
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken('')}
+                  onError={() => setTurnstileToken('')}
+                  options={{ theme: 'light', size: 'normal' }}
+                />
+
                 <PbBtn
                   type="submit"
                   variant="primary"
                   size="lg"
                   full
-                  disabled={isLoading}
+                  disabled={isLoading || !turnstileToken}
                   className="mt-2 justify-between"
                 >
                   {isLoading ? (
@@ -466,12 +486,21 @@ const AuthPage = () => {
                   </span>
                 </label>
 
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken('')}
+                  onError={() => setTurnstileToken('')}
+                  options={{ theme: 'light', size: 'normal' }}
+                />
+
                 <PbBtn
                   type="submit"
                   variant="primary"
                   size="lg"
                   full
-                  disabled={isLoading}
+                  disabled={isLoading || !turnstileToken}
                   className="mt-1 justify-between"
                 >
                   {isLoading ? (
