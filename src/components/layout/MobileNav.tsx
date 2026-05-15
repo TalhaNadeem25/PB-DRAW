@@ -4,7 +4,7 @@ import { haptics } from "@/lib/haptics";
 import {
   PlusCircle, Radio, MagnifyingGlass, User, Trophy, Users,
   X, SquaresFour, Medal, Sparkle, GridNine, CreditCard,
-  CaretRight, UserCircle, SignOut, SignIn, ChartBar, House,
+  CaretRight, UserCircle, SignOut, SignIn, ChartBar, House, CalendarCheck,
 } from "@phosphor-icons/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -77,11 +77,14 @@ const MobileNav = () => {
   ];
 
   const navItems = [
-    { key: "home",   href: isAuthenticated ? "/dashboard" : "/", label: "Home",   icon: House },
-    { key: "live",   href: "/live",         label: "Live",   icon: Radio },
-    { key: "browse", href: null,            label: "Browse", icon: MagnifyingGlass },
-    ...(isOrganizer ? [{ key: "host", href: null, label: "Host", icon: PlusCircle }] : []),
-    { key: "me",     href: null,            label: "Me",     icon: User },
+    { key: "home",     href: "/",            label: "Home",      icon: House },
+    { key: "live",     href: "/live",        label: "Live",      icon: Radio },
+    { key: "browse",   href: null,           label: "Browse",    icon: MagnifyingGlass },
+    ...(isOrganizer
+      ? [{ key: "host",      href: null,           label: "Host",      icon: PlusCircle }]
+      : [{ key: "myevents",  href: "/dashboard",   label: "My Events", icon: CalendarCheck }]
+    ),
+    { key: "me",       href: null,           label: "Me",        icon: User },
   ];
 
   const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues");
