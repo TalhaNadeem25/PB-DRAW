@@ -38,7 +38,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, turnstileToken?: string) => Promise<void>;
+  login: (email: string, password: string, turnstileToken?: string, rememberMe?: boolean) => Promise<void>;
   loginWithGoogle: (credential: string) => Promise<void>;
   loginWithApple: (id_token: string, user?: { email?: string; name?: { firstName: string; lastName: string } }) => Promise<void>;
   register: (data: {
@@ -62,25 +62,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Returns whichever storage currently holds the session token
+  const getActiveStorage = () =>
+    localStorage.getItem('token') ? localStorage : sessionStorage;
+
+  // Load user from localStorage or sessionStorage on mount
   useEffect(() => {
     const loadUser = async () => {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('token') ?? sessionStorage.getItem('token');
+      const storedUser = localStorage.getItem('user') ?? sessionStorage.getItem('user');
 
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
 
-        // Verify token is still valid
         try {
           const response = await authAPI.getMe();
           setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
-        } catch (error) {
-          // Token is invalid, clear storage
+          getActiveStorage().setItem('user', JSON.stringify(response.data));
+        } catch {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
           setToken(null);
           setUser(null);
         }
@@ -92,15 +96,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUser();
   }, []);
 
-  const login = async (email: string, password: string, turnstileToken?: string) => {
+  const login = async (email: string, password: string, turnstileToken?: string, rememberMe = false) => {
     try {
       const response = await authAPI.login(email, password, turnstileToken);
       const { user: userData, token: userToken } = response.data;
 
       setUser(userData);
       setToken(userToken);
-      localStorage.setItem('token', userToken);
-      localStorage.setItem('user', JSON.stringify(userData));
+
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('token', userToken);
+      storage.setItem('user', JSON.stringify(userData));
 
       toast.success('Login successful!');
     } catch (error: any) {
@@ -177,12 +183,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     toast.success('Logged out successfully');
   };
 
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    getActiveStorage().setItem('user', JSON.stringify(updatedUser));
   };
 
   const setAuthData = (userData: User, userToken: string) => {

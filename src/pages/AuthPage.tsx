@@ -146,7 +146,7 @@ const AuthPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      await login(loginEmail, loginPassword, isNative ? undefined : turnstileToken);
+      await login(loginEmail, loginPassword, isNative ? undefined : turnstileToken, rememberMe);
       haptics.success();
       navigate(redirectUrl);
     } catch {
