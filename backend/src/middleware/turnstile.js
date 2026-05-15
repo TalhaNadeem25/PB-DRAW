@@ -1,4 +1,9 @@
 export const verifyTurnstile = async (req, res, next) => {
+  // Native mobile apps (iOS/Android via Capacitor) skip Turnstile
+  if (req.headers['x-app-platform'] === 'capacitor') {
+    return next();
+  }
+
   const token = req.body.turnstileToken;
 
   if (!token) {

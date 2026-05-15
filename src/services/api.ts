@@ -29,6 +29,9 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    if (Capacitor.isNativePlatform()) {
+      config.headers['X-App-Platform'] = 'capacitor';
+    }
     return config;
   },
   (error) => {
