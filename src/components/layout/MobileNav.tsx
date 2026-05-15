@@ -80,7 +80,7 @@ const MobileNav = () => {
     { key: "home",   href: isAuthenticated ? "/dashboard" : "/", label: "Home",   icon: House },
     { key: "live",   href: "/live",         label: "Live",   icon: Radio },
     { key: "browse", href: null,            label: "Browse", icon: MagnifyingGlass },
-    { key: "host",   href: null,            label: "Host",   icon: PlusCircle },
+    ...(isOrganizer ? [{ key: "host", href: null, label: "Host", icon: PlusCircle }] : []),
     { key: "me",     href: null,            label: "Me",     icon: User },
   ];
 
