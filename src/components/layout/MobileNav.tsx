@@ -90,8 +90,8 @@ const MobileNav = () => {
   const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues");
 
   const isActive = (href: string) => {
-    if (href === "/" || href === "/dashboard")
-      return location.pathname === "/" || location.pathname === "/dashboard";
+    if (href === "/") return location.pathname === "/";
+    if (href === "/dashboard") return location.pathname === "/dashboard";
     return (
       location.pathname.startsWith(href) &&
       (href !== "/tournaments" || location.pathname === "/tournaments" || location.pathname.startsWith("/tournaments/"))
