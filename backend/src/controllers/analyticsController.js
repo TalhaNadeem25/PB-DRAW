@@ -357,57 +357,34 @@ export const exportAnalyticsCSV = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    // Verify authorization
     if (req.user._id.toString() !== userId && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to export analytics'
-      });
+      return res.status(403).json({ success: false, error: 'Not authorized to export analytics' });
     }
 
-    // Get analytics data (reuse the function logic)
     const analyticsData = await getAnalyticsData(userId, req.query);
+    const rows = analyticsData.eventPopularity ?? [];
 
-    // Create CSV file
-    const timestamp = Date.now();
-    const filename = `analytics-${userId}-${timestamp}.csv`;
-    const filepath = path.join(__dirname, '../../temp', filename);
+    // Build CSV in memory — no temp files needed
+    const headers = ['Event Name', 'Registrations', 'Max Teams', 'Fill Rate (%)', 'Revenue ($)'];
+    const lines = [
+      headers.join(','),
+      ...rows.map((e) => [
+        `"${(e.eventName ?? '').replace(/"/g, '""')}"`,
+        e.registrations ?? 0,
+        e.maxTeams ?? 0,
+        (e.fillRate ?? 0).toFixed(1),
+        (e.revenue ?? 0).toFixed(2),
+      ].join(',')),
+    ];
+    const csv = lines.join('\n');
 
-    // Ensure temp directory exists
-    const tempDir = path.join(__dirname, '../../temp');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    // Prepare CSV data from eventPopularity
-    const csvWriter = createObjectCsvWriter({
-      path: filepath,
-      header: [
-        { id: 'eventName', title: 'Event Name' },
-        { id: 'registrations', title: 'Registrations' },
-        { id: 'maxTeams', title: 'Max Teams' },
-        { id: 'fillRate', title: 'Fill Rate (%)' },
-        { id: 'revenue', title: 'Revenue ($)' }
-      ]
-    });
-
-    await csvWriter.writeRecords(analyticsData.eventPopularity);
-
-    // Send file
-    res.download(filepath, filename, (err) => {
-      if (err) {
-        console.error('Error downloading CSV:', err);
-      }
-      // Delete temp file after download
-      fs.unlinkSync(filepath);
-    });
+    const filename = `analytics-${Date.now()}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
   } catch (error) {
     console.error('Error in exportAnalyticsCSV:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Server error while exporting CSV',
-      message: error.message
-    });
+    res.status(500).json({ success: false, error: 'Server error while exporting CSV', message: error.message });
   }
 };
 
