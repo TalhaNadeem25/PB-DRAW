@@ -77,21 +77,18 @@ const MobileNav = () => {
   ];
 
   const navItems = [
-    { key: "home",     href: "/",            label: "Home",      icon: House },
-    { key: "live",     href: "/live",        label: "Live",      icon: Radio },
-    { key: "browse",   href: null,           label: "Browse",    icon: MagnifyingGlass },
-    ...(isOrganizer
-      ? [{ key: "host",      href: null,           label: "Host",      icon: PlusCircle }]
-      : [{ key: "myevents",  href: "/dashboard",   label: "My Events", icon: CalendarCheck }]
-    ),
-    { key: "me",       href: null,           label: "Me",        icon: User },
+    { key: "home",   href: isAuthenticated ? "/dashboard" : "/", label: "Home",   icon: House },
+    { key: "live",   href: "/live",         label: "Live",   icon: Radio },
+    { key: "browse", href: null,            label: "Browse", icon: MagnifyingGlass },
+    ...(isOrganizer ? [{ key: "host", href: null, label: "Host", icon: PlusCircle }] : []),
+    { key: "me",     href: null,            label: "Me",     icon: User },
   ];
 
   const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues");
 
   const isActive = (href: string) => {
-    if (href === "/") return location.pathname === "/";
-    if (href === "/dashboard") return location.pathname === "/dashboard";
+    if (href === "/" || href === "/dashboard")
+      return location.pathname === "/" || location.pathname === "/dashboard";
     return (
       location.pathname.startsWith(href) &&
       (href !== "/tournaments" || location.pathname === "/tournaments" || location.pathname.startsWith("/tournaments/"))
