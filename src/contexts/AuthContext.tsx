@@ -39,8 +39,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string, turnstileToken?: string, rememberMe?: boolean) => Promise<void>;
-  loginWithGoogle: (credential: string) => Promise<void>;
-  loginWithApple: (id_token: string, user?: { email?: string; name?: { firstName: string; lastName: string } }) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<{ isNewUser: boolean }>;
+  loginWithApple: (id_token: string, user?: { email?: string; name?: { firstName: string; lastName: string } }) => Promise<{ isNewUser: boolean }>;
   register: (data: {
     name: string;
     email: string;
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async (access_token: string) => {
     try {
       const response = await api.post('/auth/google', { access_token });
-      const { user: userData, token: userToken } = response.data.data;
+      const { user: userData, token: userToken, isNewUser } = response.data.data;
 
       setUser(userData);
       setToken(userToken);
@@ -127,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('user', JSON.stringify(userData));
 
       toast.success('Signed in with Google!');
+      return { isNewUser: !!isNewUser };
     } catch (error: any) {
       const message = error.response?.data?.message || 'Google sign-in failed. Please try again.';
       toast.error(message);
@@ -137,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithApple = async (id_token: string, user?: { email?: string; name?: { firstName: string; lastName: string } }) => {
     try {
       const response = await api.post('/auth/apple', { id_token, user });
-      const { user: userData, token: userToken } = response.data.data;
+      const { user: userData, token: userToken, isNewUser } = response.data.data;
 
       setUser(userData);
       setToken(userToken);
@@ -145,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('user', JSON.stringify(userData));
 
       toast.success('Signed in with Apple!');
+      return { isNewUser: !!isNewUser };
     } catch (error: any) {
       const message = error.response?.data?.message || 'Apple sign-in failed. Please try again.';
       toast.error(message);

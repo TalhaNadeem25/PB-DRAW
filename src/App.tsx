@@ -57,6 +57,7 @@ const Spectator = lazy(() => import("./pages/Spectator"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Leagues = lazy(() => import("./pages/Leagues"));
 const Blog = lazy(() => import("./pages/Blog"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const BlogEditor = lazy(() => import("./pages/BlogEditor"));
 const CreateLeague = lazy(() => import("./pages/CreateLeague"));
@@ -82,6 +83,7 @@ function AppRoutes() {
             <Route path="/login" element={<AuthPage />} />
             <Route path="/signup" element={<AuthPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route

@@ -90,6 +90,7 @@ export const authAPI = {
     skillLevel?: number;
     avatar?: string;
     bio?: string;
+    role?: string;
     location?: {
       city?: string;
       state?: string;

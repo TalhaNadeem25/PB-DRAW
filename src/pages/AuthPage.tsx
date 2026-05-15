@@ -114,8 +114,8 @@ const AuthPage = () => {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        await loginWithGoogle(tokenResponse.access_token);
-        navigate(redirectUrl);
+        const { isNewUser } = await loginWithGoogle(tokenResponse.access_token);
+        navigate(isNewUser ? '/onboarding' : redirectUrl);
       } catch {
         setError('Google sign-in failed. Please try again.');
       }
@@ -126,8 +126,8 @@ const AuthPage = () => {
   const handleAppleSignIn = async () => {
     try {
       const response = await (window as any).AppleID.auth.signIn();
-      await loginWithApple(response.authorization.id_token, response.user);
-      navigate(redirectUrl);
+      const { isNewUser } = await loginWithApple(response.authorization.id_token, response.user);
+      navigate(isNewUser ? '/onboarding' : redirectUrl);
     } catch (err: any) {
       if (err?.error !== 'popup_closed_by_user') {
         setError('Apple sign-in failed. Please try again.');

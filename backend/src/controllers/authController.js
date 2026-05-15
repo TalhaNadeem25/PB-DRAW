@@ -224,7 +224,7 @@ export const getMe = async (req, res, next) => {
 // @access  Private
 export const updateProfile = async (req, res, next) => {
   try {
-    const { name, phone, skillLevel, avatar, bio, location, preferences } = req.body;
+    const { name, phone, skillLevel, avatar, bio, location, preferences, role } = req.body;
 
     const updateData = {
       name,
@@ -233,7 +233,8 @@ export const updateProfile = async (req, res, next) => {
       avatar,
       bio,
       location,
-      preferences
+      preferences,
+      role,
     };
 
     // Remove undefined fields
@@ -476,6 +477,7 @@ export const googleAuth = async (req, res, next) => {
 
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
+    let isNewUser = false;
     if (!user) {
       user = await User.create({
         name,
@@ -485,6 +487,7 @@ export const googleAuth = async (req, res, next) => {
         isEmailVerified: true,
         role: 'player',
       });
+      isNewUser = true;
     } else if (!user.googleId) {
       user.googleId = googleId;
       if (!user.avatar && picture) user.avatar = picture;
@@ -495,7 +498,7 @@ export const googleAuth = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: { user, token },
+      data: { user, token, isNewUser },
     });
   } catch (error) {
     console.error('Google auth error:', error);
@@ -527,6 +530,7 @@ export const appleAuth = async (req, res, next) => {
 
     let dbUser = await User.findOne({ $or: [{ appleId }, ...(email ? [{ email }] : [])] });
 
+    let isNewUser = false;
     if (!dbUser) {
       dbUser = await User.create({
         name,
@@ -535,6 +539,7 @@ export const appleAuth = async (req, res, next) => {
         isEmailVerified: true,
         role: 'player',
       });
+      isNewUser = true;
     } else if (!dbUser.appleId) {
       dbUser.appleId = appleId;
       await dbUser.save({ validateBeforeSave: false });
@@ -544,7 +549,7 @@ export const appleAuth = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: { user: dbUser, token },
+      data: { user: dbUser, token, isNewUser },
     });
   } catch (error) {
     console.error('Apple auth error:', error);
