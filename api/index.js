@@ -37,6 +37,7 @@ import statsRoutes from '../backend/src/routes/statsRoutes.js';
 import blogRoutes from '../backend/src/routes/blogRoutes.js';
 import { protect, authorize } from '../backend/src/middleware/auth.js';
 import { assignMatchToCourt } from '../backend/src/controllers/courtController.js';
+import { handleStripeWebhook } from '../backend/src/controllers/webhookController.js';
 
 // Load environment variables
 dotenv.config();
@@ -97,6 +98,10 @@ app.use(cors({
   },
   credentials: true
 }));
+// Stripe webhook needs the raw request body to verify its signature, so it's
+// registered before the global JSON body parser (which would otherwise consume it).
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
