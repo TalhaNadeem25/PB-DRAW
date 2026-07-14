@@ -20,6 +20,14 @@ export const getCourtConfiguration = async (req, res) => {
       });
     }
 
+    // Verify user is organizer
+    if (tournament.organizer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view court configuration'
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: {
@@ -119,6 +127,14 @@ export const getScheduleGrid = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Tournament not found'
+      });
+    }
+
+    // Verify user is organizer
+    if (tournament.organizer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view the schedule grid'
       });
     }
 
@@ -259,8 +275,17 @@ export const autoScheduleMatches = async (req, res) => {
       });
     }
 
-    // Get courts and scheduling config
-    const courts = tournament.courts || [{ number: 1, name: 'Court 1', available: true }];
+    // Get courts and scheduling config. `tournament.courts || [...]` doesn't fall back
+    // when courts is an empty array (empty arrays are truthy in JS), which silently
+    // produced zero available slots for auto-schedule when no courts were configured.
+    // The schedule UI always shows courts 1 and 2 as available by default, so match
+    // that here rather than falling back to just one.
+    const courts = (tournament.courts && tournament.courts.length > 0)
+      ? tournament.courts
+      : [
+          { number: 1, name: 'Court 1', available: true },
+          { number: 2, name: 'Court 2', available: true },
+        ];
     const scheduling = tournament.scheduling || {
       startTime: '08:00',
       endTime: '18:00',
@@ -426,6 +451,14 @@ export const checkConflicts = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Tournament not found'
+      });
+    }
+
+    // Verify user is organizer
+    if (tournament.organizer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to check conflicts for this tournament'
       });
     }
 

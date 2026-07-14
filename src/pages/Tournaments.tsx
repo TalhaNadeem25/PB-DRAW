@@ -9,7 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import WelcomeOnboarding, { getWelcomeDismissed } from "@/components/onboarding/WelcomeOnboarding";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { Eyebrow, Pill, PbBtn, Dot, KPI } from "@/components/ui/pb";
@@ -55,6 +55,7 @@ function TournamentRow({
   organizerName, fmt, organizerId, eventCount,
 }: RowProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isOwner = user?._id === organizerId || user?.role === "admin";
   const isLive = status === "in-progress";
   const isOpen = status === "open";
@@ -75,14 +76,12 @@ function TournamentRow({
 
   const subline = [organizerName, fmt].filter(Boolean).join(" · ");
 
-  const href = isOwner
-    ? `/tournaments/${id}`
-    : isOpen
-    ? `/tournaments/${id}/register`
-    : `/tournaments/${id}`;
+  const href = `/tournaments/${id}`;
 
   return (
-    <div className="grid items-center gap-4 py-[18px] border-b border-pb-hairline hover:bg-pb-surface2 transition-colors -mx-6 px-6 group cursor-pointer"
+    <div
+      onClick={() => navigate(href)}
+      className="grid items-center gap-4 py-[18px] border-b border-pb-hairline hover:bg-pb-surface2 transition-colors -mx-6 px-6 group cursor-pointer"
       style={{ gridTemplateColumns: "1.4fr 1fr 0.85fr 0.7fr 0.9fr auto" }}
     >
       {/* Tournament name + subline */}
@@ -342,7 +341,7 @@ const Tournaments = () => {
           {/* ── Filter chips + sort ─────────────────────────────────────── */}
           <div
             id="results"
-            className="sticky top-14 z-20 bg-pb-surface2 border-b border-pb-hairline"
+            className="sticky top-0 md:top-14 z-20 bg-pb-surface2 border-b border-pb-hairline"
           >
             <div className="max-w-[1200px] mx-auto px-6">
               <div className="flex items-center justify-between gap-4 h-12 overflow-x-auto scrollbar-hide">

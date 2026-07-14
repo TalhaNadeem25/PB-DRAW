@@ -2,6 +2,8 @@ import Event from '../models/Event.js';
 import Tournament from '../models/Tournament.js';
 import Team from '../models/Team.js';
 import Pool from '../models/Pool.js';
+import Waitlist from '../models/Waitlist.js';
+import Match from '../models/Match.js';
 
 // @desc    Get all events for a tournament
 // @route   GET /api/tournaments/:tournamentId/events
@@ -156,9 +158,13 @@ export const deleteEvent = async (req, res, next) => {
       });
     }
 
-    // Delete all related teams and pools
+    // Delete all related teams, pools, matches, and waitlist entries.
+    // Leaving Waitlist entries behind causes getMyWaitlistEntries and
+    // promoteNextWaitlist to crash later when they populate `event` and get null.
     await Team.deleteMany({ event: event._id });
     await Pool.deleteMany({ event: event._id });
+    await Match.deleteMany({ event: event._id });
+    await Waitlist.deleteMany({ event: event._id });
 
     await event.deleteOne();
 

@@ -26,7 +26,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        // Disable rubber-band bounce so position:fixed nav bar doesn't move during overscroll
+        if let bridge = (window?.rootViewController as? CAPBridgeViewController) {
+            bridge.webView?.scrollView.bounces = false
+            bridge.webView?.scrollView.alwaysBounceVertical = false
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

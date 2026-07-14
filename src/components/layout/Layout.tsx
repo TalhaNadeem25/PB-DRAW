@@ -1,5 +1,4 @@
 import { NotificationListener } from "@/components/notifications/NotificationListener";
-import { ConnectionStatus } from "@/components/ui/connection-status";
 import { ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import Footer from "./Footer";
@@ -16,15 +15,14 @@ const isNative = Capacitor.isNativePlatform();
 
 const Layout = ({ children, variant = "default" }: LayoutProps) => {
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="h-dvh md:h-auto md:min-h-screen flex flex-col">
       <NotificationListener />
-      <ConnectionStatus />
       {variant === "default" && <Navbar />}
       {variant === "minimal" && <MinimalNavbar />}
-      <main className="flex-1 pb-16 md:pb-0">
+      <main className={`flex-1 min-h-0 overflow-y-auto md:overflow-y-visible${variant === "default" ? " md:pb-0" : ""}`}>
         {children}
+        {variant === "default" && <div className="hidden md:block"><Footer /></div>}
       </main>
-      {variant === "default" && <div className="hidden md:block"><Footer /></div>}
       <MobileNav />
     </div>
   );

@@ -120,19 +120,19 @@ const AnalyticsDashboard = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-pb-paper">
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-8">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-8" style={{ paddingTop: 'max(env(safe-area-inset-top), 2rem)' }}>
 
           {/* ── Header ───────────────────────────────────────────────────── */}
-          <div className="flex items-start justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-8">
             <div>
               <Eyebrow className="mb-1">
                 {user?.name?.toUpperCase()} · {periodLabel}
               </Eyebrow>
-              <h1 className="font-display font-black text-[42px] sm:text-[56px] text-pb-ink tracking-[-0.03em] leading-none">
+              <h1 className="font-display font-black text-[32px] sm:text-[42px] lg:text-[56px] text-pb-ink tracking-[-0.03em] leading-none">
                 Analytics
               </h1>
             </div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 sm:mt-2 flex-wrap">
               <div className="flex items-center rounded-[6px] border border-pb-hairline overflow-hidden">
                 {PERIODS.map((p) => (
                   <button
@@ -158,9 +158,9 @@ const AnalyticsDashboard = () => {
           </div>
 
           {/* ── Stat strip ───────────────────────────────────────────────── */}
-          <div className="grid grid-cols-5 border border-pb-hairline rounded-[8px] overflow-hidden mb-8 bg-white divide-x divide-pb-hairline">
-            {statStrip.map(({ label, value, sub }) => (
-              <div key={label} className="px-5 py-5">
+          <div className="grid grid-cols-2 sm:grid-cols-5 border border-pb-hairline rounded-[8px] overflow-hidden mb-8 bg-white divide-y sm:divide-y-0 sm:divide-x divide-pb-hairline">
+            {statStrip.map(({ label, value, sub }, i) => (
+              <div key={label} className={cn("px-4 py-4 sm:px-5 sm:py-5", i === 4 && "col-span-2 sm:col-span-1")}>
                 <p className="font-mono text-[9.5px] text-pb-muted uppercase tracking-[0.12em] mb-1">{label}</p>
                 <p className={cn(
                   'font-mono font-bold leading-none mb-1',

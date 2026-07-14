@@ -103,6 +103,48 @@ const EventRegistration = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, tournamentId, eventId]);
 
+  // Always ask the backend to confirm the registration — even when the fee looks
+  // like $0 client-side, the server is the source of truth for pricing and is
+  // what actually marks the registration paid, creates the ticket, and (for
+  // singles events) writes the registeredPlayers entry that pool assignment and
+  // bracket generation depend on. Skipping this call for "free" registrations
+  // used to leave the team unpaid and invisible everywhere. Shared between the
+  // team-creation success handler and the "team already exists" retry path so
+  // neither one can skip straight to a screen without actually confirming
+  // anything server-side.
+  const confirmRegistration = async (teamId: string) => {
+    setIsPreparingPayment(true);
+    try {
+      console.log('Creating payment intent...');
+      const paymentResponse = await paymentAPI.createIntent({ teamId, eventId: eventId! });
+      console.log('Payment response:', paymentResponse);
+
+      if (paymentResponse.data.requiresPayment) {
+        console.log('Setting client secret and moving to payment step');
+        setClientSecret(paymentResponse.data.clientSecret);
+        setStep("payment");
+        setIsPreparingPayment(false);
+      } else {
+        console.log('No payment required');
+        setIsPreparingPayment(false);
+        toast.success("Successfully registered for the event!");
+        navigate('/registration-success', {
+          state: {
+            tournamentName: tournament?.name,
+            startDate: tournament?.startDate,
+            endDate: tournament?.endDate,
+            location: tournament?.location,
+            eventIds: eventId ? [eventId] : [],
+          },
+        });
+      }
+    } catch (paymentError: any) {
+      console.error('Payment setup error:', paymentError);
+      setIsPreparingPayment(false);
+      toast.error(paymentError.response?.data?.message || "Failed to set up payment");
+    }
+  };
+
   // Create team mutation
   const createTeamMutation = useMutation({
     mutationFn: async (data: { eventId: string; eventFormat: string; partnerName?: string; partnerEmail?: string }) => {
@@ -142,66 +184,8 @@ const EventRegistration = () => {
     onSuccess: async (data) => {
       console.log('Team created successfully:', data.data);
       queryClient.invalidateQueries({ queryKey: ['events', tournamentId] });
-
-      // Store the created team
       setCreatedTeam(data.data);
-
-      // Check if payment is required
-      const totalFee = (tournament?.entryFee || 0) + (event?.entryFee || 0);
-      console.log('Total fee (tournament + event):', totalFee);
-
-      if (totalFee > 0) {
-        // Create payment intent
-        setIsPreparingPayment(true);
-        try {
-          console.log('Creating payment intent...');
-          const paymentResponse = await paymentAPI.createIntent({
-            teamId: data.data._id,
-            eventId: eventId!,
-          });
-
-          console.log('Payment response:', paymentResponse);
-
-          if (paymentResponse.data.requiresPayment) {
-            // Move to payment step
-            console.log('Setting client secret and moving to payment step');
-            setClientSecret(paymentResponse.data.clientSecret);
-            setStep("payment");
-            setIsPreparingPayment(false);
-          } else {
-            // Free tournament
-            console.log('No payment required');
-            setIsPreparingPayment(false);
-            toast.success("Successfully registered for the event!");
-            navigate('/registration-success', {
-              state: {
-                tournamentName: tournament?.name,
-                startDate: tournament?.startDate,
-                endDate: tournament?.endDate,
-                location: tournament?.location,
-                eventIds: eventId ? [eventId] : [],
-              },
-            });
-          }
-        } catch (paymentError: any) {
-          console.error('Payment setup error:', paymentError);
-          setIsPreparingPayment(false);
-          toast.error(paymentError.response?.data?.message || "Failed to set up payment");
-        }
-      } else {
-        // No payment required
-        console.log('Free tournament, no payment needed');
-        toast.success("Successfully registered for the event!");
-        navigate('/registration-success', {
-          state: {
-            tournamentName: tournament?.name,
-            startDate: tournament?.startDate,
-            endDate: tournament?.endDate,
-            location: tournament?.location,
-            eventIds: eventId ? [eventId] : [],
-          },
-        });
-      }
+      await confirmRegistration(data.data._id);
     },
     onError: (error: any) => {
       const msg = error.response?.data?.message || "Failed to register for event";
@@ -219,9 +203,17 @@ const EventRegistration = () => {
       return;
     }
 
-    // Team already created (user went back from payment step) — skip straight to payment
+    // Team already created in this session:
+    // - If a payment intent is already pending (clientSecret set), just resume that step.
+    // - Otherwise (e.g. a free event where the previous confirm call never actually ran,
+    //   or errored out silently), re-run confirmation rather than jumping to a payment
+    //   step that has nothing to render.
     if (createdTeam) {
-      setStep("payment");
+      if (clientSecret) {
+        setStep("payment");
+      } else {
+        confirmRegistration(createdTeam._id);
+      }
       return;
     }
 

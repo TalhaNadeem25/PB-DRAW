@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Trophy, Envelope, ArrowLeft, CircleNotch, Check } from '@phosphor-icons/react';
+import { ArrowRight, Envelope, CircleNotch, Check } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
+import { PbLogo } from '@/components/ui/pb';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -17,26 +15,16 @@ const ForgotPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, {
-        email
-      });
-
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, { email });
       if (response.data.success) {
         setIsSuccess(true);
-        toast({
-          title: 'Email sent',
-          description: 'If an account exists with that email, we have sent a password reset link.',
-          variant: 'default'
-        });
       }
     } catch (error: any) {
-      console.error('Forgot password error:', error);
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Something went wrong. Please try again.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -45,152 +33,122 @@ const ForgotPassword = () => {
 
   return (
     <Layout variant="auth">
-      <div className="min-h-screen flex">
-        {/* Left side - Form */}
-        <div className="flex-1 flex items-center justify-center px-4 py-16">
-          <div className="w-full max-w-md space-y-8 animate-fade-in">
-            <div className="glass-card rounded-2xl p-8">
-            {/* Logo */}
-            <div className="text-center">
-              <Link to="/" className="inline-flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow">
-                  <Trophy className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <span className="font-display text-2xl font-bold">
-                  PICK<span className="text-primary">LIX</span>
-                </span>
-              </Link>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                Forgot Password?
+      <div className="min-h-screen flex flex-col lg:flex-row bg-pb-paper font-sans">
+
+        {/* Left: brand panel */}
+        <div className="hidden lg:flex lg:w-1/2 xl:w-7/12 relative overflow-hidden items-center justify-center">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuANcBh8658firenMfbo6Fsqiw6eDQlBp_lX5oMiyvz9HHqM_Jd_VxipHbrbU1coa37yAOe9HF3G9ayWR8yaHeAg0QCWwlV-BZH7y9jlClMKtniLg_5AF446YVkwzmODdPD0qa19WWtMsCo7acHQEFgTloRgospSAWsUBkcocmrTXrrY67dn4YMsPkfoSU7_xTwZ1mywWoHEhSxPLinFMMiozYwuZDW5igU-v51FA5LGwI5nkDtZFeFwilrM1kSGLJejRnHji8ZeaFg')` }}
+          />
+          <div className="absolute inset-0 bg-black/45 flex flex-col justify-end p-20 z-10">
+            <div className="max-w-xl">
+              <PbLogo color="#F5F2EB" size={18} className="mb-8" />
+              <h1 className="text-white text-5xl font-display font-black leading-tight mb-4">
+                Back on<br />the court<br />in minutes.
               </h1>
-              <p className="text-muted-foreground">
-                No worries, we'll send you reset instructions
+              <p className="text-white/75 text-[15px] font-mono max-w-md">
+                Reset your password and get back to managing your tournaments.
               </p>
+            </div>
+          </div>
+          <div className="absolute top-10 left-10 w-20 h-20 border-l-[3px] border-t-[3px] border-white/30 z-20" />
+        </div>
+
+        {/* Right: form panel */}
+        <div className="flex w-full flex-col lg:w-1/2 xl:w-5/12 bg-pb-paper px-6 py-10 sm:px-14 lg:px-16 xl:px-20 justify-center overflow-y-auto">
+          <div className="w-full max-w-md mx-auto">
+
+            <div className="lg:hidden mb-10">
+              <PbLogo size={16} />
             </div>
 
             {!isSuccess ? (
               <>
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                      <div className="relative">
-                        <Envelope className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="john@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          disabled={isLoading}
-                          className="pl-12 h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary/20 transition-all"
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Enter the email address associated with your account
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    size="lg"
-                    className="w-full h-12 text-base shadow-glow hover:shadow-glow-lg transition-shadow"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <CircleNotch className="w-5 h-5 animate-spin mr-2" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Reset Link'
-                    )}
-                  </Button>
-                </form>
-
-                {/* Back to login */}
-                <Link
-                  to="/login"
-                  className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to login
-                </Link>
-              </>
-            ) : (
-              <div className="text-center space-y-6">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <Check className="w-10 h-10 text-primary" />
-                </div>
-
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-display font-bold">Check Your Email</h2>
-                  <p className="text-muted-foreground">
-                    We've sent a password reset link to <span className="font-semibold text-foreground">{email}</span>
+                <div className="mb-8">
+                  <h2 className="font-display font-extrabold text-[30px] tracking-[-0.035em] text-pb-ink mb-1.5">
+                    Forgot password?
+                  </h2>
+                  <p className="text-[13px] font-mono text-pb-muted">
+                    No worries — we'll send a reset link to your email.
                   </p>
                 </div>
 
-                <div className="bg-muted/50 rounded-xl p-6 space-y-2 text-sm text-muted-foreground">
-                  <p>Didn't receive the email?</p>
-                  <ul className="space-y-1 list-disc list-inside text-left">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-1.5">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Envelope size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-pb-faint" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full h-11 pl-9 pr-4 rounded-[6px] border border-pb-hairline bg-pb-surface2 text-[13px] font-sans text-pb-ink placeholder:text-pb-faint focus:outline-none focus:border-pb-rule"
+                        placeholder="name@example.com"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-12 rounded-[6px] bg-pb-ink text-white font-display font-bold text-[14px] uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-pb-ink/90 transition-colors disabled:opacity-60"
+                  >
+                    {isLoading ? (
+                      <><CircleNotch size={16} className="animate-spin" /> Sending…</>
+                    ) : (
+                      <>Send Reset Link <ArrowRight size={15} /></>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-8 text-center">
+                  <Link
+                    to="/login"
+                    className="text-[13px] font-mono text-pb-muted hover:text-pb-ink transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <ArrowRight size={13} className="rotate-180" /> Back to login
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-pb-court/10 flex items-center justify-center mx-auto mb-6">
+                  <Check size={28} className="text-pb-court" />
+                </div>
+                <h2 className="font-display font-extrabold text-[28px] tracking-[-0.03em] text-pb-ink mb-2">
+                  Check your email
+                </h2>
+                <p className="text-[13px] font-mono text-pb-muted mb-6">
+                  We sent a reset link to{' '}
+                  <span className="text-pb-ink font-semibold">{email}</span>
+                </p>
+                <div className="bg-pb-surface2 border border-pb-hairline rounded-[8px] p-5 text-left mb-8">
+                  <p className="text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-2">Didn't receive it?</p>
+                  <ul className="space-y-1.5 text-[12px] font-mono text-pb-muted list-disc list-inside">
                     <li>Check your spam folder</li>
                     <li>Make sure you entered the correct email</li>
                     <li>The link expires in 1 hour</li>
                   </ul>
                 </div>
-
-                <div className="space-y-3">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full h-12"
-                    onClick={() => {
-                      setIsSuccess(false);
-                      setEmail('');
-                    }}
-                  >
-                    Try Another Email
-                  </Button>
-
-                  <Link to="/login">
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className="w-full h-12"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back to Login
-                    </Button>
-                  </Link>
-                </div>
+                <button
+                  onClick={() => { setIsSuccess(false); setEmail(''); }}
+                  className="w-full h-11 rounded-[6px] border border-pb-hairline text-[13px] font-mono text-pb-ink hover:bg-pb-surface2 transition-colors mb-3"
+                >
+                  Try another email
+                </button>
+                <Link
+                  to="/login"
+                  className="text-[13px] font-mono text-pb-muted hover:text-pb-ink transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <ArrowRight size={13} className="rotate-180" /> Back to login
+                </Link>
               </div>
             )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right side - Visual (neutral, no green hero) */}
-        <div className="hidden lg:flex flex-1 relative overflow-hidden bg-muted/50 border-l border-border">
-          <div className="flex flex-col items-center justify-center w-full p-12">
-            <div className="rounded-3xl p-8 max-w-md text-center border border-border bg-card shadow-sm">
-              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Envelope className="w-10 h-10 text-primary" />
-              </div>
-              <h2 className="text-2xl font-display font-bold text-foreground mb-4">
-                Account Recovery
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                We'll help you get back to playing in no time. Check your email for a secure reset link.
-              </p>
-              <div className="text-sm text-muted-foreground space-y-2">
-                <p>Reset link expires in 1 hour</p>
-                <p>Having trouble? Contact support</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

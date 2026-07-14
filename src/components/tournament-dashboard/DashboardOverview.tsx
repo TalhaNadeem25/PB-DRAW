@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Users, CurrencyDollar, GitBranch, SquaresFour, Chat,
+  Users, CurrencyDollar, GitBranch, Chat,
   DownloadSimple, CheckCircle, Circle, Clock, Pulse,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
@@ -101,10 +101,9 @@ const DashboardOverview = ({ tournament, recentActivities }: DashboardOverviewPr
       {/* ── Quick Actions ── */}
       <div>
         <p className="text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-3">Quick Actions</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
             { icon: GitBranch,    label: "Brackets",     to: `/tournaments/${tournament._id}?tab=brackets`  },
-            { icon: SquaresFour,  label: "Court Manager",to: `/tournaments/${tournament._id}/courts`         },
             { icon: Chat,         label: "Broadcast",    to: `/tournaments/${tournament._id}/communications` },
             { icon: DownloadSimple, label: "Export",     to: `/tournaments/${tournament._id}?tab=dashboard`  },
           ].map(({ icon: Icon, label, to }) => (

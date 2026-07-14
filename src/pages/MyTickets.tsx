@@ -179,8 +179,10 @@ export default function MyTickets() {
                 return (
                   <div
                     key={ticket.paymentId}
-                    className="bg-pb-surface border border-pb-hairline rounded-[8px] overflow-hidden cursor-pointer"
-                    onClick={() => navigate(`/tournaments/${ticket.tournament.id}`)}
+                    className={`bg-pb-surface border border-pb-hairline rounded-[8px] overflow-hidden ${ticket.tournament.id ? "cursor-pointer" : ""}`}
+                    onClick={() => {
+                      if (ticket.tournament.id) navigate(`/tournaments/${ticket.tournament.id}`);
+                    }}
                   >
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-2 bg-pb-surface2 border-b border-pb-hairline">

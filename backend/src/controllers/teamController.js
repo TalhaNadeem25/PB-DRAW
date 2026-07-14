@@ -122,11 +122,26 @@ export const createTeam = async (req, res, next) => {
         promotionExpiresAt: { $gt: new Date() }
       });
       if (promotedEntry) {
+        // Atomically claim a spot: the $expr filter means this only succeeds if
+        // capacity is still available at the moment of the update, closing the race
+        // where two promoted users (or a stale `event` read) could both slip past
+        // an in-memory currentTeams check and overbook the event.
+        const reserved = await Event.findOneAndUpdate(
+          { _id: req.params.eventId, $expr: { $lt: ['$currentTeams', '$maxTeams'] } },
+          { $inc: { currentTeams: 1 } },
+          { new: true }
+        );
+
+        if (!reserved) {
+          return res.status(409).json({
+            success: false,
+            message: 'This event just filled up. Please check the waitlist for availability.'
+          });
+        }
+
         req.body.event = req.params.eventId;
         const team = await Team.create(req.body);
-        event.teams.push(team._id);
-        event.currentTeams += 1;
-        await event.save();
+        await Event.findByIdAndUpdate(req.params.eventId, { $push: { teams: team._id } });
         promotedEntry.status = 'converted';
         promotedEntry.convertedAt = new Date();
         promotedEntry.teamId = team._id;
@@ -156,14 +171,25 @@ export const createTeam = async (req, res, next) => {
       });
     }
 
-    // Event has space - create team normally
+    // Event has space - create team normally.
+    // Atomically claim a spot first so two concurrent registrations can't both pass
+    // the currentTeams < maxTeams check above and overbook the event.
+    const reserved = await Event.findOneAndUpdate(
+      { _id: req.params.eventId, $expr: { $lt: ['$currentTeams', '$maxTeams'] } },
+      { $inc: { currentTeams: 1 } },
+      { new: true }
+    );
+
+    if (!reserved) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event is full and waitlist is not available'
+      });
+    }
+
     req.body.event = req.params.eventId;
     const team = await Team.create(req.body);
-
-    // Add team to event
-    event.teams.push(team._id);
-    event.currentTeams += 1;
-    await event.save();
+    await Event.findByIdAndUpdate(req.params.eventId, { $push: { teams: team._id } });
 
     res.status(201).json({
       success: true,
@@ -180,7 +206,9 @@ export const createTeam = async (req, res, next) => {
 // @access  Private
 export const updateTeam = async (req, res, next) => {
   try {
-    let team = await Team.findById(req.params.id).populate('players');
+    let team = await Team.findById(req.params.id)
+      .populate('players')
+      .populate({ path: 'event', populate: { path: 'tournament' } });
 
     if (!team) {
       return res.status(404).json({
@@ -189,12 +217,13 @@ export const updateTeam = async (req, res, next) => {
       });
     }
 
-    // Check if user is part of the team
+    // Check if user is part of the team, or organizes the tournament this team belongs to
     const isTeamMember = team.players.some(
       player => player._id.toString() === req.user.id
     );
+    const isOrganizer = team.event?.tournament?.organizer?.toString() === req.user.id;
 
-    if (!isTeamMember && req.user.role !== 'organizer' && req.user.role !== 'admin') {
+    if (!isTeamMember && !isOrganizer && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this team'
@@ -221,7 +250,9 @@ export const updateTeam = async (req, res, next) => {
 // @access  Private
 export const deleteTeam = async (req, res, next) => {
   try {
-    const team = await Team.findById(req.params.id).populate('players event');
+    const team = await Team.findById(req.params.id)
+      .populate('players')
+      .populate({ path: 'event', populate: { path: 'tournament' } });
 
     if (!team) {
       return res.status(404).json({
@@ -230,12 +261,13 @@ export const deleteTeam = async (req, res, next) => {
       });
     }
 
-    // Check if user is part of the team or organizer
+    // Check if user is part of the team, or organizes the tournament this team belongs to
     const isTeamMember = team.players.some(
       player => player._id.toString() === req.user.id
     );
+    const isOrganizer = team.event?.tournament?.organizer?.toString() === req.user.id;
 
-    if (!isTeamMember && req.user.role !== 'organizer' && req.user.role !== 'admin') {
+    if (!isTeamMember && !isOrganizer && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this team'

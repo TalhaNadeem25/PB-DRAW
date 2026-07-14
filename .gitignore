@@ -34,3 +34,9 @@ backend/.env.development
 *.sln
 *.sw?
 .vercel
+
+# Claude Code local session data (not project source)
+.claude/
+
+# Android build artifacts
+android/app/release/

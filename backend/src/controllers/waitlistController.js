@@ -228,6 +228,30 @@ export const leaveWaitlist = async (req, res, next) => {
  */
 export const promoteNextWaitlist = async (eventId, reason = 'spot-available', io = null) => {
   try {
+    // Only promote if a spot is actually available. currentTeams tracks registered
+    // teams/players; entries already 'promoted' with an unexpired window have a spot
+    // reserved for them (they just haven't finished registering yet), so those count
+    // against capacity too. Without this check, promotion could be triggered by an
+    // event that doesn't free a spot (e.g. a partner-invitation payment) and overbook
+    // the event once the promoted user registers.
+    const event = await Event.findById(eventId).populate('tournament');
+    if (!event) {
+      console.log(`Event ${eventId} not found; cannot promote waitlist`);
+      return null;
+    }
+
+    const activePromotions = await Waitlist.countDocuments({
+      event: eventId,
+      status: 'promoted',
+      promotionExpiresAt: { $gt: new Date() }
+    });
+
+    const availableSpots = event.maxTeams - event.currentTeams - activePromotions;
+    if (availableSpots <= 0) {
+      console.log(`No available spots to promote for event ${eventId}`);
+      return null;
+    }
+
     // Find next waiting entry
     const nextEntry = await Waitlist.findOne({
       event: eventId,
@@ -245,8 +269,7 @@ export const promoteNextWaitlist = async (eventId, reason = 'spot-available', io
     nextEntry.promotionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     await nextEntry.save();
 
-    // Get event and tournament details
-    const event = await Event.findById(eventId).populate('tournament');
+    // Get tournament details
     const tournament = await Tournament.findById(event.tournament);
     const tournamentId = tournament._id?.toString?.() || tournament.toString();
 
@@ -376,22 +399,27 @@ export const getMyWaitlistEntries = async (req, res, next) => {
       .populate({ path: 'event', populate: { path: 'tournament', select: 'name startDate' } })
       .sort({ createdAt: -1 });
 
-    // Reshape to include tournament at the top level for convenience
-    const data = entries.map(entry => ({
-      _id: entry._id,
-      event: {
-        _id: entry.event._id,
-        name: entry.event.name,
-        maxTeams: entry.event.maxTeams,
-      },
-      tournament: entry.event.tournament,
-      position: entry.position,
-      status: entry.status,
-      promotedAt: entry.promotedAt,
-      promotionExpiresAt: entry.promotionExpiresAt,
-      metadata: entry.metadata,
-      createdAt: entry.createdAt,
-    }));
+    // Reshape to include tournament at the top level for convenience.
+    // entry.event can populate to null if the event was deleted (e.g. stale data
+    // from before event/tournament deletion cascaded to Waitlist) — skip those
+    // rather than crashing the whole request for every other entry.
+    const data = entries
+      .filter(entry => entry.event)
+      .map(entry => ({
+        _id: entry._id,
+        event: {
+          _id: entry.event._id,
+          name: entry.event.name,
+          maxTeams: entry.event.maxTeams,
+        },
+        tournament: entry.event.tournament,
+        position: entry.position,
+        status: entry.status,
+        promotedAt: entry.promotedAt,
+        promotionExpiresAt: entry.promotionExpiresAt,
+        metadata: entry.metadata,
+        createdAt: entry.createdAt,
+      }));
 
     res.status(200).json({ success: true, count: data.length, data });
   } catch (error) {

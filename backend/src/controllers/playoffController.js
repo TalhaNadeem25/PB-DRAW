@@ -1,6 +1,7 @@
 import Pool from '../models/Pool.js';
 import Match from '../models/Match.js';
 import Event from '../models/Event.js';
+import Team from '../models/Team.js';
 import { generateSingleEliminationBracket, generateSingleEliminationForEventTier, generateDoubleEliminationForEventTier, isPowerOf2 } from '../utils/bracketGenerator.js';
 import { getMatchFormatConfig } from '../constants/matchFormatConfig.js';
 
@@ -546,66 +547,98 @@ export const generateEventPlayoffs = async (req, res, next) => {
       });
     }
 
-    const pools = await Pool.find({ event: eventId, poolPlayFinalizedAt: { $ne: null } })
-      .sort({ name: 1 })
-      .populate({ path: 'teams', populate: { path: 'players', select: 'name' } });
-    if (pools.length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least 2 pools must be marked complete (Complete pool) before generating event playoffs.'
-      });
-    }
     const isSingles = event.format === 'singles';
     const teamModel = isSingles ? 'User' : 'Team';
 
-    // Combine top N from each pool into one advancing list
-    const allAdvancing = [];
-    for (const pool of pools) {
-      const top = await getTopFromPool(pool, event, advanceCountPerPool, isSingles);
-      allAdvancing.push(...top);
-    }
+    let pools = [];
+    let allAdvancing;
 
-    // Cross-pool seeding: re-compute stats for every advancing team directly from
-    // their pool-play matches, then sort globally so the best performer across ALL
-    // pools becomes S1 (not just the pool-1 winner by alphabetical pool order).
-    const advancingIds = allAdvancing.map((t) => (t._id ?? t).toString());
-    const poolPlayMatchesAll = await Match.find({
-      event: eventId,
-      pool: { $ne: null },
-      isByeMatch: { $ne: true },
-      $or: [{ bracket: { $exists: false } }, { bracket: null }]
-    }).lean();
+    if (event.playFormat === 'pool-play') {
+      // Pools + Playoffs: advance the top N from each of 2+ completed pools,
+      // then re-seed everyone globally across pools.
+      pools = await Pool.find({ event: eventId, poolPlayFinalizedAt: { $ne: null } })
+        .sort({ name: 1 })
+        .populate({ path: 'teams', populate: { path: 'players', select: 'name' } });
+      if (pools.length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least 2 pools must be marked complete (Complete pool) before generating event playoffs.'
+        });
+      }
 
-    const globalStats = new Map();
-    advancingIds.forEach((id) => {
-      globalStats.set(id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 });
-    });
-    poolPlayMatchesAll.forEach((m) => {
-      if (m.status !== 'completed') return;
-      const id1 = m.team1 ? m.team1.toString() : null;
-      const id2 = m.team2 ? m.team2.toString() : null;
-      const s1 = id1 ? globalStats.get(id1) : null;
-      const s2 = id2 ? globalStats.get(id2) : null;
-      const t1 = m.score?.team1Score ?? 0;
-      const t2 = m.score?.team2Score ?? 0;
-      if (s1) { s1.pointsFor += t1; s1.pointsAgainst += t2; if (t1 > t2) s1.wins++; else if (t2 > t1) s1.losses++; }
-      if (s2) { s2.pointsFor += t2; s2.pointsAgainst += t1; if (t2 > t1) s2.wins++; else if (t1 > t2) s2.losses++; }
-    });
-    globalStats.forEach((s) => { s.pointDifferential = s.pointsFor - s.pointsAgainst; });
+      // Combine top N from each pool into one advancing list
+      allAdvancing = [];
+      for (const pool of pools) {
+        const top = await getTopFromPool(pool, event, advanceCountPerPool, isSingles);
+        allAdvancing.push(...top);
+      }
 
-    allAdvancing.sort((a, b) => {
-      const sa = globalStats.get((a._id ?? a).toString()) || {};
-      const sb = globalStats.get((b._id ?? b).toString()) || {};
-      if ((sb.wins ?? 0) !== (sa.wins ?? 0)) return (sb.wins ?? 0) - (sa.wins ?? 0);
-      if ((sb.pointDifferential ?? 0) !== (sa.pointDifferential ?? 0)) return (sb.pointDifferential ?? 0) - (sa.pointDifferential ?? 0);
-      return (sb.pointsFor ?? 0) - (sa.pointsFor ?? 0);
-    });
+      // Cross-pool seeding: re-compute stats for every advancing team directly from
+      // their pool-play matches, then sort globally so the best performer across ALL
+      // pools becomes S1 (not just the pool-1 winner by alphabetical pool order).
+      const advancingIds = allAdvancing.map((t) => (t._id ?? t).toString());
+      const poolPlayMatchesAll = await Match.find({
+        event: eventId,
+        pool: { $ne: null },
+        isByeMatch: { $ne: true },
+        $or: [{ bracket: { $exists: false } }, { bracket: null }]
+      }).lean();
 
-    if (allAdvancing.length < 4) {
-      return res.status(400).json({
-        success: false,
-        message: `Need at least 4 ${isSingles ? 'players' : 'teams'} to generate playoffs. Only ${allAdvancing.length} advancing (${pools.length} pools × ${advanceCountPerPool} per pool). Increase "advance per pool" or add more ${isSingles ? 'players' : 'teams'} to pools.`
+      const globalStats = new Map();
+      advancingIds.forEach((id) => {
+        globalStats.set(id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 });
       });
+      poolPlayMatchesAll.forEach((m) => {
+        if (m.status !== 'completed') return;
+        const id1 = m.team1 ? m.team1.toString() : null;
+        const id2 = m.team2 ? m.team2.toString() : null;
+        const s1 = id1 ? globalStats.get(id1) : null;
+        const s2 = id2 ? globalStats.get(id2) : null;
+        const t1 = m.score?.team1Score ?? 0;
+        const t2 = m.score?.team2Score ?? 0;
+        if (s1) { s1.pointsFor += t1; s1.pointsAgainst += t2; if (t1 > t2) s1.wins++; else if (t2 > t1) s1.losses++; }
+        if (s2) { s2.pointsFor += t2; s2.pointsAgainst += t1; if (t2 > t1) s2.wins++; else if (t1 > t2) s2.losses++; }
+      });
+      globalStats.forEach((s) => { s.pointDifferential = s.pointsFor - s.pointsAgainst; });
+
+      allAdvancing.sort((a, b) => {
+        const sa = globalStats.get((a._id ?? a).toString()) || {};
+        const sb = globalStats.get((b._id ?? b).toString()) || {};
+        if ((sb.wins ?? 0) !== (sa.wins ?? 0)) return (sb.wins ?? 0) - (sa.wins ?? 0);
+        if ((sb.pointDifferential ?? 0) !== (sa.pointDifferential ?? 0)) return (sb.pointDifferential ?? 0) - (sa.pointDifferential ?? 0);
+        return (sb.pointsFor ?? 0) - (sa.pointsFor ?? 0);
+      });
+
+      if (allAdvancing.length < 4) {
+        return res.status(400).json({
+          success: false,
+          message: `Need at least 4 ${isSingles ? 'players' : 'teams'} to generate playoffs. Only ${allAdvancing.length} advancing (${pools.length} pools × ${advanceCountPerPool} per pool). Increase "advance per pool" or add more ${isSingles ? 'players' : 'teams'} to pools.`
+        });
+      }
+    } else {
+      // Single Elimination / Double Elimination chosen as the event's own format
+      // (not "Pools + Playoffs"): seed the bracket directly from every paid
+      // registrant, in registration/seed order — no pools required.
+      if (isSingles) {
+        allAdvancing = event.registeredPlayers
+          .filter((reg) => reg.paymentStatus === 'paid' && reg.player)
+          .map((reg) => ({ _id: reg.player._id, name: reg.player.name || 'Player' }));
+      } else {
+        const teams = await Team.find({ event: eventId, paymentStatus: 'paid' }).lean();
+        // Seeded teams (lower seed = better) sort first; unseeded teams fall to the
+        // end in registration order. Mongo's { seed: 1 } would sort nulls first,
+        // which is the opposite of what we want, so sort in JS instead.
+        teams.sort((a, b) => (a.seed ?? Infinity) - (b.seed ?? Infinity));
+        allAdvancing = teams.map((t) => ({ _id: t._id, name: t.name || 'Team' }));
+      }
+
+      const minRequired = event.playFormat === 'double-elimination' ? 4 : 2;
+      if (allAdvancing.length < minRequired) {
+        return res.status(400).json({
+          success: false,
+          message: `Need at least ${minRequired} paid ${isSingles ? 'players' : 'teams'} to generate a bracket. Only ${allAdvancing.length} registered and paid.`
+        });
+      }
     }
 
     await Match.deleteMany({

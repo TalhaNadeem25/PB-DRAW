@@ -209,9 +209,26 @@ export const clearTestData = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
-    // Find all test users
+    // Find events for this tournament
+    const events = await Event.find({ tournament: tournamentId });
+    const eventIds = events.map(e => e._id);
+
+    // Only consider test users who are actually part of THIS tournament (via singles
+    // registration or a team in one of its events) — not every test user on the
+    // platform. Each call to generateTestData creates uniquely-timestamped users
+    // scoped to one event, so this can't miss data or collide with another
+    // tournament's test batch.
+    const testEmailRegex = new RegExp(TEST_EMAIL_DOMAIN.replace('.', '\\.') + '$');
+
+    const singlesPlayerIds = events.flatMap(event => event.registeredPlayers.map(reg => reg.player));
+    const teamsInTournament = await Team.find({ event: { $in: eventIds } }).select('players');
+    const teamPlayerIds = teamsInTournament.flatMap(t => t.players);
+
+    const candidateUserIds = [...new Set([...singlesPlayerIds, ...teamPlayerIds].map((id) => id.toString()))];
+
     const testUsers = await User.find({
-      email: { $regex: TEST_EMAIL_DOMAIN.replace('.', '\\.') + '$' },
+      _id: { $in: candidateUserIds },
+      email: testEmailRegex,
     });
 
     const testUserIds = testUsers.map(u => u._id);
@@ -223,9 +240,6 @@ export const clearTestData = async (req, res, next) => {
         data: { usersRemoved: 0, teamsRemoved: 0, paymentsRemoved: 0 },
       });
     }
-
-    // Find events for this tournament
-    const events = await Event.find({ tournament: tournamentId });
 
     let teamsRemoved = 0;
 
@@ -261,9 +275,10 @@ export const clearTestData = async (req, res, next) => {
       await event.save();
     }
 
-    // Delete teams, payments, and users
-    const deletedTeams = await Team.deleteMany({ players: { $in: testUserIds } });
-    const deletedPayments = await Payment.deleteMany({ user: { $in: testUserIds } });
+    // Delete teams, payments, and users — scoped to this tournament's events so
+    // clearing test data here can't touch another tournament's test batch.
+    const deletedTeams = await Team.deleteMany({ event: { $in: eventIds }, players: { $in: testUserIds } });
+    const deletedPayments = await Payment.deleteMany({ tournament: tournamentId, user: { $in: testUserIds } });
     const deletedUsers = await User.deleteMany({ _id: { $in: testUserIds } });
 
     res.status(200).json({

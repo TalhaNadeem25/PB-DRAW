@@ -1,6 +1,5 @@
 import AuthGate from "@/components/AuthGate";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import SplashAnimation, { useShouldShowSplash } from "@/components/SplashAnimation";
 import { useSwipeBack } from "@/hooks/useSwipeBack";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -90,7 +89,15 @@ function AppRoutes() {
               path="/dashboard"
               element={
                 <ErrorBoundary>
-                  <ProtectedRoute>
+                  <ProtectedRoute
+                    unauthenticatedFallback={
+                      <AuthGate
+                        title="Your Dashboard"
+                        description="Sign in to see your tournaments, registrations, and activity."
+                        icon={<Users className="w-7 h-7" />}
+                      />
+                    }
+                  >
                     <Dashboard />
                   </ProtectedRoute>
                 </ErrorBoundary>
@@ -252,9 +259,6 @@ function AppRoutes() {
 }
 
 const App = () => {
-  const shouldShowSplash = useShouldShowSplash();
-  const [splashDone, setSplashDone] = useState(!shouldShowSplash);
-
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
@@ -264,7 +268,6 @@ const App = () => {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
-                {!splashDone && <SplashAnimation onComplete={() => setSplashDone(true)} />}
                 <ErrorBoundary>
                   <BrowserRouter>
                     <AppRoutes />

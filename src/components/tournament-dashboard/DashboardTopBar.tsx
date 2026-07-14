@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Heart, ShareNetwork, Trophy, Trash, Calendar, CheckCircle } from "@phosphor-icons/react";
 import ExportButtons from "@/components/tournament/ExportButtons";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Pill, PbBtn, Dot } from "@/components/ui/pb";
+import { poolAPI, matchAPI, teamAPI } from "@/services/api";
 
 const statusConfig = {
   open:        { label: "Registration Open", tone: "court"   as const, pulse: true  },
@@ -31,6 +33,48 @@ const DashboardTopBar = ({
   onDeleteTournament,
 }: DashboardTopBarProps) => {
   const status = statusConfig[tournament.status as keyof typeof statusConfig] ?? statusConfig.draft;
+
+  // Tournament documents don't carry matches/teams directly (those live under each
+  // event's pools) — fetch them here so Print/Export has real data instead of the
+  // always-empty tournament.matches / tournament.teams.
+  const events: any[] = tournament.events || [];
+  const { data: exportData } = useQuery({
+    queryKey: ["tournament-export-data", tournament._id],
+    queryFn: async () => {
+      const allMatches: any[] = [];
+      const allTeams: any[] = [];
+
+      for (const event of events) {
+        try {
+          const teamsResponse = await teamAPI.getByEvent(event._id);
+          allTeams.push(...(teamsResponse.data || []));
+        } catch (error) {
+          console.error(`Error fetching teams for event ${event._id}:`, error);
+        }
+
+        try {
+          const poolsResponse = await poolAPI.getByEvent(event._id);
+          const pools = poolsResponse.data || [];
+          for (const pool of pools) {
+            try {
+              const matchesResponse = await matchAPI.getByPool(pool._id);
+              const matches = matchesResponse.data || [];
+              allMatches.push(
+                ...matches.map((m: any) => ({ ...m, event: { _id: event._id, name: event.name } }))
+              );
+            } catch (error) {
+              console.error(`Error fetching matches for pool ${pool._id}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching pools for event ${event._id}:`, error);
+        }
+      }
+
+      return { matches: allMatches, teams: allTeams };
+    },
+    enabled: events.length > 0,
+  });
 
   return (
     <div className="mb-6 space-y-4">
@@ -78,9 +122,9 @@ const DashboardTopBar = ({
 
         <ExportButtons
           tournament={tournament}
-          matches={tournament.matches || []}
-          teams={tournament.teams || []}
-          events={tournament.events || []}
+          matches={exportData?.matches || []}
+          teams={exportData?.teams || []}
+          events={events}
           variant="outline"
         />
 

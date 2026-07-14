@@ -964,7 +964,7 @@ const MatchSchedule = ({
                         className="w-full flex items-center justify-between gap-2 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors group"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <ChevronDown
+                          <CaretDown
                             className={cn(
                               "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200",
                               isCollapsed && "-rotate-90"

@@ -1,5 +1,6 @@
 import Payment from '../models/Payment.js';
 import Tournament from '../models/Tournament.js';
+import User from '../models/User.js';
 
 /**
  * Scan QR code and check in player
@@ -171,24 +172,33 @@ export const getMyTickets = async (req, res, next) => {
       .populate('team', 'name')
       .sort({ createdAt: -1 });
 
-    const validPayments = payments.filter(p => p.tournament != null);
+    // A ticket's tournament can be missing if the tournament was later deleted —
+    // this used to silently drop the ticket entirely, making a real, paid
+    // registration disappear from "My Tickets" with no explanation. Keep it
+    // visible with a fallback label instead of hiding it.
     const eventsList = (p) => (p.events && p.events.length ? p.events : p.event ? [p.event] : []);
     const teamsList = (p) => (p.teams && p.teams.length ? p.teams : p.team ? [p.team] : []);
 
     res.status(200).json({
       success: true,
-      count: validPayments.length,
-      data: validPayments.map(p => ({
+      count: payments.length,
+      data: payments.map(p => ({
         paymentId: p._id,
         ticketCode: p.ticketCode,
         qrCodeUrl: p.qrCodeUrl,
         ticketPdfUrl: p.ticketPdfUrl,
-        tournament: {
+        tournament: p.tournament ? {
           id: p.tournament._id,
           name: p.tournament.name,
           location: p.tournament.location,
           startDate: p.tournament.startDate,
           status: p.tournament.status
+        } : {
+          id: null,
+          name: 'Tournament no longer available',
+          location: null,
+          startDate: null,
+          status: null
         },
         events: eventsList(p).map(e => ({
           id: e._id,

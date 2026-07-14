@@ -39,6 +39,7 @@ import statsRoutes from './routes/statsRoutes.js';
 import testDataRoutes from './routes/testDataRoutes.js';
 import leagueRoutes from './routes/leagueRoutes.js';
 import { assignMatchToCourt } from './controllers/courtController.js';
+import { handleStripeWebhook } from './controllers/webhookController.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
 
 // Initialize Express app
@@ -83,6 +84,10 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true
 }));
+// Stripe webhook needs the raw request body to verify its signature, so it's
+// registered before the global JSON body parser (which would otherwise consume it).
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
 app.use(express.json()); // Body parser
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev')); // HTTP request logger

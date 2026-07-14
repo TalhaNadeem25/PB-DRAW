@@ -7,7 +7,9 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import QRScanner from '../components/check-in/QRScanner';
+import { userAPI } from '../services/api';
 import {
   QrCode,
   Users,
@@ -48,6 +50,15 @@ export default function OrganizerScanner() {
   const [recentScans, setRecentScans] = useState<RecentScan[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [manualEmail, setManualEmail] = useState('');
+  const [selectedTournamentId, setSelectedTournamentId] = useState('');
+
+  const { data: myTournaments } = useQuery({
+    queryKey: ['my-tournaments'],
+    queryFn: () => userAPI.getMyTournaments(),
+    select: (data) => (data as any[]).filter((t: any) =>
+      t.status === 'active' || t.status === 'registration_open' || t.status === 'upcoming'
+    ),
+  });
 
   // Check-in mutation
   const checkInMutation = useMutation({
@@ -120,10 +131,8 @@ export default function OrganizerScanner() {
 
   const handleManualCheckIn = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Get tournamentId from context or props
-    const tournamentId = 'YOUR_TOURNAMENT_ID'; // This should come from route params or selection
-    if (manualEmail.trim()) {
-      manualCheckInMutation.mutate({ email: manualEmail, tournamentId });
+    if (manualEmail.trim() && selectedTournamentId) {
+      manualCheckInMutation.mutate({ email: manualEmail, tournamentId: selectedTournamentId });
     }
   };
 
@@ -206,6 +215,16 @@ export default function OrganizerScanner() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleManualCheckIn} className="space-y-4">
+                <Select value={selectedTournamentId} onValueChange={setSelectedTournamentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tournament" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(myTournaments ?? []).map((t: any) => (
+                      <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <div>
                   <Input
                     type="email"
@@ -216,7 +235,7 @@ export default function OrganizerScanner() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={!manualEmail.trim() || manualCheckInMutation.isPending}
+                  disabled={!manualEmail.trim() || !selectedTournamentId || manualCheckInMutation.isPending}
                   className="w-full"
                 >
                   {manualCheckInMutation.isPending ? (

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PB Draw — Redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #EAE6DC; font-family: 'Geist', sans-serif; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  body { color: #0F0F0E; }
+  button { font-family: inherit; }
+  @keyframes pbpulse {
+    0%   { box-shadow: 0 0 0 0 rgba(194,105,26,0.55); }
+    70%  { box-shadow: 0 0 0 7px rgba(194,105,26,0); }
+    100% { box-shadow: 0 0 0 0 rgba(194,105,26,0); }
+  }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="brand.jsx"></script>
+  <script type="text/babel" src="shell.jsx"></script>
+  <script type="text/babel" src="screen-bracket.jsx"></script>
+  <script type="text/babel" src="screen-browse-court.jsx"></script>
+  <script type="text/babel" src="screen-detail.jsx"></script>
+  <script type="text/babel" src="screen-organizer.jsx"></script>
+  <script type="text/babel" src="screen-extras-1.jsx"></script>
+  <script type="text/babel" src="screen-extras-2.jsx"></script>
+  <script type="text/babel" src="screen-extras-3.jsx"></script>
+  <script type="text/babel" src="screen-extras-4.jsx"></script>
+
+  <script type="text/babel">
+    const { useEffect, useState } = React;
+
+    function App() {
+      // Wait until all global components have loaded (scripts are async).
+      const [ready, setReady] = useState(false);
+      useEffect(() => {
+        const tick = () => {
+          if (window.BrowseScreen && window.DetailScreen && window.BracketScreen && window.CourtDisplayScreen && window.OrganizerScreen && window.DesignCanvas && window.PoolStandingsScreen && window.ScoreEntryScreen && window.PlayerDashboardScreen && window.AuthScreen && window.MobileBrowse && window.MobileTicket && window.CreateScreen && window.ComponentsScreen && window.IOSDevice && window.PlayerProfileScreen && window.PartnerScreen && window.CheckoutScreen && window.SettingsScreen && window.InboxScreen && window.ResultsScreen && window.AnalyticsScreen && window.LeaguesScreen && window.LeagueDetailScreen && window.TeamsScreen && window.SpectatorScreen && window.ScannerScreen && window.SkillQuizScreen && window.PaymentSuccessScreen && window.BlogScreen && window.NotFoundScreen) {
+            setReady(true);
+          } else setTimeout(tick, 60);
+        };
+        tick();
+      }, []);
+
+      if (!ready) {
+        return (
+          <div style={{ height: '100vh', display: 'grid', placeItems: 'center', fontFamily: "'Geist Mono', monospace", color: '#6B6863', fontSize: 12, letterSpacing: '0.18em' }}>
+            LOADING DRAW…
+          </div>
+        );
+      }
+
+      const { DesignCanvas, DCSection, DCArtboard } = window;
+
+      return (
+        <DesignCanvas
+          title="PB Draw"
+          subtitle="A complete redesign of the Picklix tournament platform — editorial, broadcast-grade, built around the bracket."
+        >
+          <DCSection id="player" title="Player surfaces" subtitle="Discovery → Tournament → Spectate. Editorial type, pure-white surfaces on warm cream.">
+            <DCArtboard id="browse" label="Tournaments — discovery" width={1440} height={1024}>
+              <window.BrowseScreen />
+            </DCArtboard>
+            <DCArtboard id="detail" label="Tournament detail" width={1440} height={1100}>
+              <window.DetailScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="draw" title="The draw, resolved" subtitle="Single-elim bracket — broadcast-style, with live state, mono scoring, real connectors. The marquee surface.">
+            <DCArtboard id="bracket" label="Live bracket — 16 teams · single elim" width={1600} height={1100}>
+              <window.BracketScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="venue" title="Venue & operations" subtitle="The operator command center, and the courtside scoreboard for spectators.">
+            <DCArtboard id="organizer" label="Organizer command center" width={1440} height={1080}>
+              <window.OrganizerScreen />
+            </DCArtboard>
+            <DCArtboard id="court" label="Courtside scoreboard · 1920×1080" width={1920} height={1080}>
+              <window.CourtDisplayScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="draw-2" title="Pool play & live scoring" subtitle="Round-robin standings, advancement, and the referee score sheet.">
+            <DCArtboard id="pools" label="Pool standings — round-robin" width={1440} height={1100}>
+              <window.PoolStandingsScreen />
+            </DCArtboard>
+            <DCArtboard id="score" label="Score entry · referee sheet" width={1440} height={900}>
+              <window.ScoreEntryScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="player-2" title="Player home" subtitle="Post-login dashboard — next match front and center.">
+            <DCArtboard id="dashboard" label="Player dashboard" width={1440} height={1000}>
+              <window.PlayerDashboardScreen />
+            </DCArtboard>
+            <DCArtboard id="auth" label="Sign in · editorial" width={1440} height={900}>
+              <window.AuthScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="organizer-2" title="Tournament builder" subtitle="Six-step wizard with a draw-assistant suggesting layouts.">
+            <DCArtboard id="create" label="Create — Format step" width={1440} height={1000}>
+              <window.CreateScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="mobile" title="Mobile" subtitle="On-the-go discovery and the day-of ticket.">
+            <DCArtboard id="m-browse" label="Browse · iPhone" width={420} height={870}>
+              <window.IOSDevice width={420} height={870}>
+                <window.MobileBrowse />
+              </window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="m-ticket" label="Match ticket · iPhone" width={420} height={870}>
+              <window.IOSDevice width={420} height={870}>
+                <window.MobileTicket />
+              </window.IOSDevice>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="player-3" title="Profiles & social" subtitle="Public profile, partner directory, messaging — the people-shaped surfaces.">
+            <DCArtboard id="profile" label="Player profile — public" width={1440} height={1100}>
+              <window.PlayerProfileScreen />
+            </DCArtboard>
+            <DCArtboard id="partner" label="Partner directory" width={1440} height={1000}>
+              <window.PartnerScreen />
+            </DCArtboard>
+            <DCArtboard id="inbox" label="Inbox — messages & invites" width={1440} height={900}>
+              <window.InboxScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="commerce" title="Commerce & account" subtitle="Checkout flow, settings, the practical bits.">
+            <DCArtboard id="checkout" label="Checkout — confirm & pay" width={1440} height={980}>
+              <window.CheckoutScreen />
+            </DCArtboard>
+            <DCArtboard id="settings" label="Settings — profile" width={1440} height={1000}>
+              <window.SettingsScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="closer" title="Tournament closer" subtitle="The editorial wrap — podium, standings, awards.">
+            <DCArtboard id="results" label="Final results" width={1440} height={1100}>
+              <window.ResultsScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="leagues" title="Leagues" subtitle="Recurring play — multi-week seasons with form, standings, and stats leaders.">
+            <DCArtboard id="leagues" label="Leagues — listing" width={1440} height={1000}>
+              <window.LeaguesScreen />
+            </DCArtboard>
+            <DCArtboard id="league-detail" label="League detail — standings" width={1440} height={1100}>
+              <window.LeagueDetailScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="social-2" title="Teams & spectators" subtitle="Team management and the public live hub for non-players.">
+            <DCArtboard id="teams" label="Teams — management" width={1440} height={980}>
+              <window.TeamsScreen />
+            </DCArtboard>
+            <DCArtboard id="spectator" label="Spectator — live hub" width={1440} height={1000}>
+              <window.SpectatorScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="ops-2" title="Operations" subtitle="Analytics for organizers, plus the day-of check-in scanner.">
+            <DCArtboard id="analytics" label="Analytics — organizer" width={1440} height={1100}>
+              <window.AnalyticsScreen />
+            </DCArtboard>
+            <DCArtboard id="scanner" label="QR scanner — check-in" width={1440} height={900}>
+              <window.ScannerScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="flows" title="Onboarding & states" subtitle="Skill quiz, the success state after registration, and the empty / error fallbacks.">
+            <DCArtboard id="skill" label="Skill assessment quiz" width={1440} height={900}>
+              <window.SkillQuizScreen />
+            </DCArtboard>
+            <DCArtboard id="success" label="Payment success" width={1440} height={900}>
+              <window.PaymentSuccessScreen />
+            </DCArtboard>
+            <DCArtboard id="404" label="404 — draw not found" width={1440} height={900}>
+              <window.NotFoundScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="editorial" title="Editorial" subtitle="Magazine surface — the brand-building, retention-driving content layer.">
+            <DCArtboard id="blog" label="The Draw — magazine" width={1440} height={1100}>
+              <window.BlogScreen />
+            </DCArtboard>
+          </DCSection>
+          <DCSection id="system" title="Design system" subtitle="The atoms — type, color, components.">
+            <DCArtboard id="components" label="Components reference" width={1440} height={1100}>
+              <window.ComponentsScreen />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

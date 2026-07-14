@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="180" viewBox="0 0 640 180" fill="none">
+  <title>PB Draw — Horizontal Lockup</title>
+  
+  <g transform="translate(0 0)" stroke="#0F0F0E" stroke-width="11" stroke-linecap="square" fill="none">
+    <path d="M 28 47 L 76 47"></path>
+    <path d="M 28 133 L 76 133"></path>
+    <path d="M 76 47 L 76 77"></path>
+    <path d="M 76 133 L 76 103"></path>
+    <path d="M 76 77 L 112 77"></path>
+    <path d="M 76 103 L 112 103"></path>
+    <path d="M 112 77 L 112 103"></path>
+    <path d="M 112 90 L 144 90"></path>
+  </g>
+  <circle cx="154" cy="90" r="7" fill="#C2691A"></circle>
+
+  
+  <line x1="196" y1="34" x2="196" y2="146" stroke="#0F0F0E" stroke-opacity="0.18" stroke-width="1"></line>
+
+  
+  <text x="230" y="120" font-family="&#39;Bricolage Grotesque&#39;, &#39;Times New Roman&#39;, serif" font-weight="800" font-style="italic" font-size="112" letter-spacing="-6" fill="#0F0F0E">PB</text>
+
+  
+  <text x="412" y="116" font-family="&#39;Geist Mono&#39;, ui-monospace, monospace" font-weight="600" font-size="24" letter-spacing="6.7" fill="#0F0F0E">DRAW</text>
+</svg>

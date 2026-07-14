@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <title>PB Draw — App Icon</title>
+  
+  <rect width="1024" height="1024" fill="#1F4A2E"></rect>
+
+  
+  <g opacity="0.06" stroke="#F5F2EB" stroke-width="3" fill="none">
+    <rect x="102" y="102" width="820" height="820"></rect>
+    <line x1="102" y1="512" x2="922" y2="512"></line>
+    <line x1="512" y1="102" x2="512" y2="358"></line>
+    <line x1="512" y1="666" x2="512" y2="922"></line>
+  </g>
+
+  
+  <g transform="translate(80 80) scale(3.6)" stroke="#F5F2EB" stroke-width="20" stroke-linecap="square" fill="none">
+    <path d="M 40 56 L 96 56"></path>
+    <path d="M 40 184 L 96 184"></path>
+    <path d="M 96 56 L 96 96"></path>
+    <path d="M 96 184 L 96 144"></path>
+    <path d="M 96 96 L 144 96"></path>
+    <path d="M 96 144 L 144 144"></path>
+    <path d="M 144 96 L 144 144"></path>
+    <path d="M 144 120 L 188 120"></path>
+  </g>
+  <circle cx="800" cy="512" r="40" fill="#C2691A"></circle>
+</svg>

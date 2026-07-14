@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
@@ -65,16 +65,20 @@ const SCard = ({ icon: Icon, title, sub, children }: { icon: React.ElementType; 
 );
 
 /* ── Date picker trigger ── */
-const DateBtn = ({ date, onClick }: { date?: Date; onClick?: () => void }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="w-full h-9 rounded-[6px] border border-pb-hairline bg-pb-surface2 px-3 text-[13px] font-mono text-pb-ink flex items-center gap-2 hover:border-pb-rule focus:outline-none focus:border-pb-rule transition-colors"
-  >
-    <CalendarBlank size={13} className="text-pb-muted shrink-0" />
-    {date ? format(date, "MMM d, yyyy") : <span className="text-pb-faint">Pick a date</span>}
-  </button>
+const DateBtn = forwardRef<HTMLButtonElement, { date?: Date; onClick?: () => void }>(
+  ({ date, onClick }, ref) => (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onClick}
+      className="w-full h-9 rounded-[6px] border border-pb-hairline bg-pb-surface2 px-3 text-[13px] font-mono text-pb-ink flex items-center gap-2 hover:border-pb-rule focus:outline-none focus:border-pb-rule transition-colors"
+    >
+      <CalendarBlank size={13} className="text-pb-muted shrink-0" />
+      {date ? format(date, "MMM d, yyyy") : <span className="text-pb-faint">Pick a date</span>}
+    </button>
+  )
 );
+DateBtn.displayName = "DateBtn";
 
 const EditTournament = () => {
   const { id } = useParams();

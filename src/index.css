@@ -116,6 +116,24 @@
 
 }
 
+/* iOS autofill override for dark inputs */
+input.dark-autofill {
+  color-scheme: dark;
+  background-color: #242424 !important;
+}
+input.dark-autofill:-webkit-autofill,
+input.dark-autofill:-webkit-autofill:hover,
+input.dark-autofill:-webkit-autofill:focus,
+input.dark-autofill:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #242424 inset !important;
+  box-shadow: 0 0 0 1000px #242424 inset !important;
+  -webkit-text-fill-color: white !important;
+  caret-color: white;
+  background-color: #242424 !important;
+  /* delay background-color so the autofill flash never shows */
+  transition: background-color 9999s ease-in-out 0s !important;
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -133,10 +151,12 @@
 
   html {
     @apply font-sans;
+    overscroll-behavior: none;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    overscroll-behavior: none;
   }
 
   /* Display (Bricolage Grotesque): page heroes, section headings */

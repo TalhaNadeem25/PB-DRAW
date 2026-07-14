@@ -149,30 +149,28 @@ const Register = () => {
     },
     onSuccess: async (teamRegistrations) => {
       queryClient.invalidateQueries({ queryKey: ["events", id] });
-      const totalFee = selectedEvents.reduce((sum, sel) => sum + (sel.event.entryFee || 0), 0);
-      if (totalFee > 0) {
-        try {
-          const res = await paymentAPI.createMultiEventIntent({ eventRegistrations: teamRegistrations });
-          if (res.data.requiresPayment) {
-            setClientSecret(res.data.clientSecret);
-            setEventBreakdown(res.data.eventBreakdown);
-            setIsPaymentDialogOpen(true);
-          } else {
-            toast.success("Registered successfully!");
-            setSelectedEvents([]);
-            navigate("/registration-success", {
-              state: { tournamentName: tournamentData?.data?.name, eventIds: teamRegistrations.map((r) => r.eventId) },
-            });
-          }
-        } catch (err: any) {
-          toast.error(err.response?.data?.message || "Failed to set up payment");
+      // Always ask the backend to confirm the registration — even when every
+      // selected event looks free client-side, the server is the source of
+      // truth for pricing and is what actually creates the Payment record,
+      // generates the ticket, and (for singles events) writes the
+      // registeredPlayers entry that pool assignment and bracket generation
+      // depend on. Skipping this call for "free" carts used to leave the
+      // registration completely unpersisted while still showing success.
+      try {
+        const res = await paymentAPI.createMultiEventIntent({ eventRegistrations: teamRegistrations });
+        if (res.data.requiresPayment) {
+          setClientSecret(res.data.clientSecret);
+          setEventBreakdown(res.data.eventBreakdown);
+          setIsPaymentDialogOpen(true);
+        } else {
+          toast.success("Registered successfully!");
+          setSelectedEvents([]);
+          navigate("/registration-success", {
+            state: { tournamentName: tournamentData?.data?.name, eventIds: teamRegistrations.map((r) => r.eventId) },
+          });
         }
-      } else {
-        toast.success("Registered successfully!");
-        setSelectedEvents([]);
-        navigate("/registration-success", {
-          state: { tournamentName: tournamentData?.data?.name, eventIds: teamRegistrations.map((r) => r.eventId) },
-        });
+      } catch (err: any) {
+        toast.error(err.response?.data?.message || "Failed to set up payment");
       }
     },
     onError: (err: any) => toast.error(err.response?.data?.message || "Failed to create teams"),

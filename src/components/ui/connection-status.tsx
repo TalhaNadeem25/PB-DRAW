@@ -1,34 +1,23 @@
+import { useEffect, useRef } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
-import { WifiHigh, WifiSlash } from '@phosphor-icons/react';
-import { cn } from '@/lib/utils';
+import { WifiSlash } from '@phosphor-icons/react';
 
 export const ConnectionStatus = () => {
   const { socket, connected } = useSocket();
+  const wasConnected = useRef(false);
 
-  // Socket is null when running on a serverless host (e.g. Vercel) where no
-  // persistent Socket.IO server exists. Don't show a status badge in that case.
-  if (socket === null) return null;
+  useEffect(() => {
+    if (connected) wasConnected.current = true;
+  }, [connected]);
+
+  // Never show the badge if socket is disabled, or if we never had a connection
+  // (avoids showing "Reconnecting..." on first load / during screenshots)
+  if (socket === null || !wasConnected.current || connected) return null;
 
   return (
-    <div
-      className={cn(
-        "fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-lg",
-        connected
-          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
-      )}
-    >
-      {connected ? (
-        <>
-          <WifiHigh className="w-4 h-4" />
-          <span>Live</span>
-        </>
-      ) : (
-        <>
-          <WifiSlash className="w-4 h-4 animate-pulse" />
-          <span>Reconnecting...</span>
-        </>
-      )}
+    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium shadow-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
+      <WifiSlash className="w-4 h-4 animate-pulse" />
+      <span>Reconnecting...</span>
     </div>
   );
 };

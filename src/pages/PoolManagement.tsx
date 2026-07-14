@@ -129,6 +129,13 @@ const PoolManagement = () => {
   // Check if this is a singles event
   const isSingles = event?.format === 'singles';
 
+  // Single/Double Elimination chosen as the event's own format (not "Pools + Playoffs")
+  // generate a bracket directly from every paid registrant — no pools required.
+  const isDirectBracket = event?.playFormat === 'single-elimination' || event?.playFormat === 'double-elimination';
+  const directBracketRosterCount = isSingles
+    ? (event?.registeredPlayers || []).filter((reg: any) => reg.paymentStatus === 'paid').length
+    : teams.filter((t: any) => t.paymentStatus === 'paid').length;
+
   // Get unassigned teams (teams without a pool) OR unassigned players for singles
   const unassignedTeams = isSingles
     ? [] // For singles, we'll handle players separately
@@ -753,7 +760,7 @@ const PoolManagement = () => {
                         >
                           <Button
                             variant={selectedPoolId === pool._id && sidebarSection === 'pools' ? "default" : "outline"}
-                            className={`flex-1 justify-start transition-all min-w-0 rounded-[6px] ${selectedPoolId === pool._id && sidebarSection === 'pools' ? 'bg-pb-court-tint2 text-pb-court border-pb-court/30' : 'hover:border-pb-rule hover:bg-pb-surface'}`}
+                            className={`flex-1 justify-start transition-all min-w-0 rounded-[6px] ${selectedPoolId === pool._id && sidebarSection === 'pools' ? 'bg-pb-court-tint2 text-pb-court border-pb-court/30' : 'border-pb-hairline hover:border-pb-rule hover:bg-pb-surface'}`}
                             onClick={() => {
                               setSelectedPoolId(pool._id);
                               setSidebarSection('pools');
@@ -762,7 +769,7 @@ const PoolManagement = () => {
                             <span className="flex flex-col items-start text-left min-w-0 flex-1">
                               <span className="font-semibold truncate w-full">{pool.name}</span>
                               {pool.matchFormat && (
-                                <span className={`text-xs truncate w-full ${selectedPoolId === pool._id && sidebarSection === 'pools' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                                <span className={`text-xs truncate w-full ${selectedPoolId === pool._id && sidebarSection === 'pools' ? 'text-pb-court/70' : 'text-muted-foreground'}`}>
                                   {formatMatchFormatShort(pool.matchFormat)}
                                 </span>
                               )}
@@ -921,7 +928,7 @@ const PoolManagement = () => {
                   <CardContent>
                     <Button
                       variant={sidebarSection === 'playoffs' ? "default" : "outline"}
-                      className={`w-full justify-start rounded-[6px] transition-all ${sidebarSection === 'playoffs' ? 'bg-pb-court-tint2 text-pb-court border-pb-court/30' : 'hover:border-pb-rule hover:bg-pb-surface'}`}
+                      className={`w-full justify-start rounded-[6px] transition-all ${sidebarSection === 'playoffs' ? 'bg-pb-court-tint2 text-pb-court border-pb-court/30' : 'border-pb-hairline hover:border-pb-rule hover:bg-pb-surface'}`}
                       onClick={() => {
                         setSidebarSection('playoffs');
                         if (!selectedPoolId && pools.length > 0) setSelectedPoolId(pools[0]._id);
@@ -982,7 +989,13 @@ const PoolManagement = () => {
                           )}
                           <Button
                             onClick={() => setIsGeneratePlayoffOpen(true)}
-                            disabled={generateEventPlayoffsMutation.isPending || eventPlayoffsFinalized || completedPoolsCount < 2}
+                            disabled={
+                              generateEventPlayoffsMutation.isPending ||
+                              eventPlayoffsFinalized ||
+                              (isDirectBracket
+                                ? directBracketRosterCount < (event?.playFormat === 'double-elimination' ? 4 : 2)
+                                : completedPoolsCount < 2)
+                            }
                             size="sm"
                             className="bg-pb-ink text-white hover:bg-pb-ink/90 shrink-0 rounded-[6px] border-0"
                           >
@@ -1022,51 +1035,76 @@ const PoolManagement = () => {
                         <DialogContent className="bg-pb-surface border border-pb-hairline rounded-[6px] shadow-none max-h-[90vh] overflow-y-auto">
                           {(() => {
                             const isDoubleElim = event?.playFormat === 'double-elimination';
-                            const totalAdvancing = completedPoolsCount * playoffAdvanceCount;
+                            const totalAdvancing = isDirectBracket ? directBracketRosterCount : completedPoolsCount * playoffAdvanceCount;
                             const validDE = totalAdvancing >= 4 && (totalAdvancing & (totalAdvancing - 1)) === 0;
+                            const minRequired = isDirectBracket && !isDoubleElim ? 2 : 4;
                             const generateDisabled = generateEventPlayoffsMutation.isPending
-                              || completedPoolsCount < 2
-                              || totalAdvancing < 4
+                              || (!isDirectBracket && completedPoolsCount < 2)
+                              || totalAdvancing < minRequired
                               || (isDoubleElim && !validDE);
                             return (
                               <>
                                 <DialogHeader>
                                   <DialogTitle>Generate event playoffs</DialogTitle>
                                   <DialogDescription>
-                                    {isDoubleElim
-                                      ? `Double elimination — teams must lose twice to be eliminated. Total advancing must be 4, 8, or 16.`
-                                      : `Choose how many ${isSingles ? 'players' : 'teams'} advance from each completed pool. They will play qualifiers, then semifinals. Semifinal winners play for gold/silver; losers play for bronze/4th. Need at least 2 completed pools.`}
+                                    {isDirectBracket
+                                      ? (isDoubleElim
+                                          ? `Double elimination — every paid ${isSingles ? 'player' : 'team'} is seeded directly into the bracket. Teams must lose twice to be eliminated. Total entrants must be 4, 8, or 16.`
+                                          : `Every paid ${isSingles ? 'player' : 'team'} is seeded directly into a single-elimination bracket — lose once and you're out.`)
+                                      : (isDoubleElim
+                                          ? `Double elimination — teams must lose twice to be eliminated. Total advancing must be 4, 8, or 16.`
+                                          : `Choose how many ${isSingles ? 'players' : 'teams'} advance from each completed pool. They will play qualifiers, then semifinals. Semifinal winners play for gold/silver; losers play for bronze/4th. Need at least 2 completed pools.`)}
                                   </DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
-                                  <p className="text-sm text-muted-foreground">
-                                    Completed pools: {completedPoolsCount}
-                                  </p>
-                                  <div className="grid gap-2">
-                                    <Label>How many {isSingles ? 'players' : 'teams'} advance from each pool?</Label>
-                                    <Select
-                                      value={String(playoffAdvanceCount)}
-                                      onValueChange={(v) => setPlayoffAdvanceCount(parseInt(v, 10))}
-                                    >
-                                      <SelectTrigger className="rounded-xl">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <p className="text-xs text-muted-foreground">
-                                      Total advancing: {totalAdvancing} {isSingles ? 'players' : 'teams'}
-                                      {isDoubleElim ? ' (must be 4, 8, or 16 for DE)' : ' (must be at least 4 for bracket)'}.
-                                    </p>
-                                    {isDoubleElim && totalAdvancing >= 4 && !validDE && (
-                                      <p className="text-xs text-amber-600">
-                                        {totalAdvancing} teams is not valid for double elimination. Needs to be 4, 8, or 16.
+                                  {isDirectBracket ? (
+                                    <div className="grid gap-2">
+                                      <p className="text-sm text-muted-foreground">
+                                        Registered &amp; paid {isSingles ? 'players' : 'teams'}: {directBracketRosterCount}
                                       </p>
-                                    )}
-                                  </div>
+                                      <p className="text-xs text-muted-foreground">
+                                        {isDoubleElim
+                                          ? '(must be exactly 4, 8, or 16 for double elimination)'
+                                          : '(need at least 2 to generate a bracket)'}
+                                      </p>
+                                      {isDoubleElim && totalAdvancing >= 4 && !validDE && (
+                                        <p className="text-xs text-amber-600">
+                                          {totalAdvancing} {isSingles ? 'players' : 'teams'} is not valid for double elimination. Needs to be 4, 8, or 16.
+                                        </p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <p className="text-sm text-muted-foreground">
+                                        Completed pools: {completedPoolsCount}
+                                      </p>
+                                      <div className="grid gap-2">
+                                        <Label>How many {isSingles ? 'players' : 'teams'} advance from each pool?</Label>
+                                        <Select
+                                          value={String(playoffAdvanceCount)}
+                                          onValueChange={(v) => setPlayoffAdvanceCount(parseInt(v, 10))}
+                                        >
+                                          <SelectTrigger className="rounded-xl">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                          Total advancing: {totalAdvancing} {isSingles ? 'players' : 'teams'}
+                                          {isDoubleElim ? ' (must be 4, 8, or 16 for DE)' : ' (must be at least 4 for bracket)'}.
+                                        </p>
+                                        {isDoubleElim && totalAdvancing >= 4 && !validDE && (
+                                          <p className="text-xs text-amber-600">
+                                            {totalAdvancing} teams is not valid for double elimination. Needs to be 4, 8, or 16.
+                                          </p>
+                                        )}
+                                      </div>
+                                    </>
+                                  )}
                                   <div className="border-t border-border/50 pt-4 space-y-4">
                                     <p className="text-sm font-medium text-muted-foreground">
                                       Match format per round (same options as pool format)

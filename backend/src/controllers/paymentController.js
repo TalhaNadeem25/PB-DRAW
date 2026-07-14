@@ -7,6 +7,7 @@ import User from '../models/User.js';
 import { sendTicketPurchaseEmail } from '../services/emailService.js';
 import { generateTicketCode, generateQRCode, generateTicketPDF } from '../utils/qrCodeGenerator.js';
 import { promoteNextWaitlist } from './waitlistController.js';
+import cloudinary from '../config/cloudinary.js';
 
 // Initialize Stripe with lazy loading to ensure env vars are loaded
 let stripe;
@@ -79,15 +80,7 @@ export const createPaymentIntent = async (req, res, next) => {
       });
     }
 
-    // Check if organizer has Stripe Connect onboarded
     const organizer = tournament.organizer;
-    if (!organizer.stripeConnectAccountId || !organizer.stripeConnectOnboarded) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tournament organizer has not completed Stripe setup yet. Please contact the organizer.',
-        requiresStripeOnboarding: true
-      });
-    }
 
     // Check if payment already exists
     const existingPayment = await Payment.findOne({
@@ -108,23 +101,21 @@ export const createPaymentIntent = async (req, res, next) => {
     const eventFee = event.entryFee || 0;
     const amount = tournamentFee + eventFee;
 
+    // Free events don't move any money, so they shouldn't require the organizer
+    // to have Stripe Connect set up at all — only check once we know it's paid.
+    if (amount > 0 && (!organizer.stripeConnectAccountId || !organizer.stripeConnectOnboarded)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tournament organizer has not completed Stripe setup yet. Please contact the organizer.',
+        requiresStripeOnboarding: true
+      });
+    }
+
     if (amount === 0) {
       // Free tournament - no Stripe payment, but create a Payment record and ticket so it shows on My Tickets
       team.paymentStatus = 'paid';
       team.registrationConfirmed = true;
       await team.save();
-
-      // Update event team count (same as paid flow)
-      const eventForCount = await Event.findById(eventId);
-      if (eventForCount) {
-        const teamObjectId = (team._id || teamId).toString();
-        const alreadyInEvent = eventForCount.teams.some(id => id.toString() === teamObjectId);
-        if (!alreadyInEvent) {
-          eventForCount.teams.push(team._id || teamId);
-        }
-        eventForCount.currentTeams = eventForCount.teams.length;
-        await eventForCount.save();
-      }
 
       const payment = await Payment.create({
         user: req.user.id,
@@ -139,6 +130,44 @@ export const createPaymentIntent = async (req, res, next) => {
           receiptEmail: req.user.email
         }
       });
+
+      // Update event team count (same as paid flow)
+      const eventForCount = await Event.findById(eventId);
+      if (eventForCount) {
+        const teamObjectId = (team._id || teamId).toString();
+        const alreadyInEvent = eventForCount.teams.some(id => id.toString() === teamObjectId);
+        if (!alreadyInEvent) {
+          eventForCount.teams.push(team._id || teamId);
+        }
+
+        // Singles events register through this same team-based flow (a 1-player
+        // Team is always created, even for singles) but pool assignment, bracket
+        // generation, and the Players list all read event.registeredPlayers for
+        // singles events — without this, the registration is invisible everywhere
+        // except the raw team list.
+        if (eventForCount.format === 'singles') {
+          for (const playerId of team.players) {
+            const playerIdStr = playerId.toString();
+            const existingReg = eventForCount.registeredPlayers.find(
+              (reg) => reg.player.toString() === playerIdStr
+            );
+            if (existingReg) {
+              existingReg.paymentStatus = 'paid';
+              if (!existingReg.payment) existingReg.payment = payment._id;
+            } else {
+              eventForCount.registeredPlayers.push({
+                player: playerId,
+                paymentStatus: 'paid',
+                payment: payment._id
+              });
+            }
+          }
+          eventForCount.currentTeams = eventForCount.registeredPlayers.filter((r) => r.paymentStatus === 'paid').length;
+        } else {
+          eventForCount.currentTeams = eventForCount.teams.length;
+        }
+        await eventForCount.save();
+      }
 
       try {
         const userDoc = await User.findById(req.user.id).select('name email').lean();
@@ -346,15 +375,6 @@ export const createMultiEventPaymentIntent = async (req, res, next) => {
     const tournament = events[0].tournament;
     const organizer = tournament.organizer;
 
-    // Check Stripe Connect onboarding
-    if (!organizer.stripeConnectAccountId || !organizer.stripeConnectOnboarded) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tournament organizer has not completed Stripe setup yet. Please contact the organizer.',
-        requiresStripeOnboarding: true
-      });
-    }
-
     // Check for existing payments for these specific teams
     const existingPayment = await Payment.findOne({
       user: req.user.id,
@@ -419,10 +439,28 @@ export const createMultiEventPaymentIntent = async (req, res, next) => {
 
     // Handle free events
     if (totalAmount === 0) {
+      // Free events don't move any money, so no Payment record was created yet —
+      // create one now (status 'completed', amount 0) and generate a ticket so
+      // this registration shows up on My Tickets like a paid one does.
+      const payment = await Payment.create({
+        user: req.user.id,
+        teams: teams.length > 0 ? teams.map(t => t._id) : undefined,
+        events: events.map(e => e._id),
+        tournament: tournament._id,
+        amount: 0,
+        status: 'completed',
+        eventBreakdown,
+        metadata: {
+          description: `Free entry for ${events.length} event(s) in ${tournament.name}`,
+          receiptEmail: req.user.email
+        }
+      });
+
       // Mark all teams as paid
       for (const team of teams) {
         team.paymentStatus = 'paid';
         team.registrationConfirmed = true;
+        team.payments.push(payment._id);
         await team.save();
       }
 
@@ -431,16 +469,50 @@ export const createMultiEventPaymentIntent = async (req, res, next) => {
         const event = await Event.findById(reg.eventId);
         event.registeredPlayers.push({
           player: req.user.id,
-          paymentStatus: 'paid'
+          paymentStatus: 'paid',
+          payment: payment._id
         });
         event.currentTeams = (event.teams?.length || 0) + event.registeredPlayers.length;
         await event.save();
+      }
+
+      try {
+        const userDoc = await User.findById(req.user.id).select('name email').lean();
+        const ticketCode = generateTicketCode();
+        const qrCodeUrl = await generateQRCode(ticketCode, payment._id.toString());
+        const ticketPdfUrl = await generateTicketPDF({
+          ticketCode,
+          qrCodeUrl,
+          playerName: userDoc?.name || req.user.email,
+          tournamentName: tournament.name,
+          eventNames: events.map(e => e.name),
+          tournamentLocation: tournament.location || '',
+          eventDate: tournament.startDate,
+          paymentId: payment._id.toString()
+        });
+        payment.ticketCode = ticketCode;
+        payment.qrCodeUrl = qrCodeUrl;
+        payment.ticketPdfUrl = ticketPdfUrl;
+        await payment.save();
+        console.log(`✅ Free ticket generated for payment ${payment._id}: ${ticketCode}`);
+      } catch (ticketError) {
+        console.error('❌ Failed to generate free ticket:', ticketError);
       }
 
       return res.status(200).json({
         success: true,
         message: 'No payment required - all events are free',
         data: { requiresPayment: false, teams, singlesRegistered: singlesRegistrations.length }
+      });
+    }
+
+    // Free events don't move any money, so they shouldn't require the organizer
+    // to have Stripe Connect set up at all — only check once we know it's paid.
+    if (!organizer.stripeConnectAccountId || !organizer.stripeConnectOnboarded) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tournament organizer has not completed Stripe setup yet. Please contact the organizer.',
+        requiresStripeOnboarding: true
       });
     }
 
@@ -607,6 +679,45 @@ export const createPartnerPaymentIntent = async (req, res, next) => {
         { status: 'cancelled' }
       );
 
+      // No money moves for a free event, but the partner still needs their own
+      // Payment record + ticket so their registration shows up on My Tickets.
+      const payment = await Payment.create({
+        user: req.user.id,
+        team: team._id,
+        event: event._id,
+        events: [event._id],
+        tournament: tournament._id,
+        amount: 0,
+        status: 'completed',
+        metadata: {
+          description: `Free entry for ${tournament.name} - ${event.name}`,
+          receiptEmail: req.user.email
+        }
+      });
+
+      try {
+        const userDoc = await User.findById(req.user.id).select('name email').lean();
+        const ticketCode = generateTicketCode();
+        const qrCodeUrl = await generateQRCode(ticketCode, payment._id.toString());
+        const ticketPdfUrl = await generateTicketPDF({
+          ticketCode,
+          qrCodeUrl,
+          playerName: userDoc?.name || req.user.email,
+          tournamentName: tournament.name,
+          eventNames: [event.name],
+          tournamentLocation: tournament.location || '',
+          eventDate: tournament.startDate,
+          paymentId: payment._id.toString()
+        });
+        payment.ticketCode = ticketCode;
+        payment.qrCodeUrl = qrCodeUrl;
+        payment.ticketPdfUrl = ticketPdfUrl;
+        await payment.save();
+        console.log(`✅ Free ticket generated for payment ${payment._id}: ${ticketCode}`);
+      } catch (ticketError) {
+        console.error('❌ Failed to generate free ticket:', ticketError);
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Invitation accepted - no payment required',
@@ -699,6 +810,318 @@ export const createPartnerPaymentIntent = async (req, res, next) => {
 // @desc    Confirm payment after successful Stripe payment
 // @route   POST /api/payments/confirm
 // @access  Private
+// Completes a successfully-paid Payment: marks teams/singles registrations paid,
+// accepts pending partner invitations, promotes waitlists, registers the user to the
+// tournament, and generates/emails the ticket. Shared by the client-driven /confirm
+// endpoint and the Stripe webhook, so payment fulfillment isn't solely dependent on
+// the client's browser staying open long enough to call /confirm.
+export const fulfillPayment = async (payment, paymentIntent, io) => {
+  // Update payment record
+  payment.status = 'completed';
+  payment.stripeChargeId = paymentIntent.latest_charge;
+  payment.paymentMethod = paymentIntent.payment_method;
+  await payment.save();
+
+  const userId = payment.user._id.toString();
+
+  // Handle both single-team (legacy) and multi-team (new) payments
+  const teamsToUpdate = payment.teams && payment.teams.length > 0
+    ? payment.teams  // Multi-event payment
+    : (payment.team ? [payment.team] : []); // Legacy single-event payment or no teams (singles)
+
+  // Update teams (for doubles/mixed)
+  for (const teamId of teamsToUpdate) {
+    const team = await Team.findById(teamId);
+    if (team) {
+      // Calculate this team's portion of payment
+      const teamPortion = payment.eventBreakdown
+        ? payment.eventBreakdown.find(eb => eb.teamId && eb.teamId.toString() === teamId._id.toString())?.amount || 0
+        : payment.amount;
+
+      team.paidAmount = teamPortion;
+      team.paymentStatus = 'paid';
+      team.registrationConfirmed = true;
+      await team.save();
+
+      // Update event's currentTeams count
+      const event = await Event.findById(team.event);
+      if (event) {
+        // Add team to event.teams array if not already there
+        // Must compare with .toString() because event.teams holds ObjectIds
+        const teamObjectId = (teamId._id || teamId).toString();
+        const alreadyInEvent = event.teams.some(id => id.toString() === teamObjectId);
+        if (!alreadyInEvent) {
+          event.teams.push(team._id);
+        }
+
+        // Singles events registered through the team-based flow (EventRegistration.tsx
+        // always creates a 1-player Team, even for singles) also need a matching
+        // registeredPlayers entry — that's what pool assignment, bracket generation,
+        // and the Players list all actually read for singles events. Without this,
+        // a singles registration is invisible everywhere except the raw team list.
+        if (event.format === 'singles') {
+          for (const playerId of team.players) {
+            const playerIdStr = playerId.toString();
+            const existingReg = event.registeredPlayers.find(
+              (reg) => reg.player.toString() === playerIdStr
+            );
+            if (existingReg) {
+              existingReg.paymentStatus = 'paid';
+              if (!existingReg.payment) existingReg.payment = payment._id;
+            } else {
+              event.registeredPlayers.push({
+                player: playerId,
+                paymentStatus: 'paid',
+                payment: payment._id
+              });
+            }
+          }
+          event.currentTeams = event.registeredPlayers.filter((r) => r.paymentStatus === 'paid').length;
+        } else {
+          // Update the count
+          event.currentTeams = event.teams.length;
+        }
+        await event.save();
+      }
+    }
+  }
+
+  // Handle partner invitation payments (add partner to team after payment)
+  if (payment.metadata && payment.metadata.paymentType === 'partner_invitation' && payment.metadata.invitationId) {
+    try {
+      const Invitation = (await import('../models/Invitation.js')).default;
+      const invitation = await Invitation.findById(payment.metadata.invitationId);
+
+      if (invitation && invitation.status === 'pending') {
+        const team = await Team.findById(payment.team);
+
+        if (team) {
+          // Add partner to team (guard: skip if already on this team OR already in another team for this event)
+          const alreadyInEvent = await Team.findOne({
+            event: team.event,
+            players: userId,
+            paymentStatus: { $ne: 'refunded' }
+          });
+          if (!alreadyInEvent && !team.players.map(p => p.toString()).includes(userId)) {
+            team.players.push(payment.user._id);
+            await team.save();
+            console.log(`Partner ${payment.user.email} added to team ${team._id} after payment confirmation`);
+          }
+
+          // Accept invitation
+          invitation.status = 'accepted';
+          invitation.invitee = payment.user._id;
+          await invitation.save();
+
+          // Cancel other pending invitations for this team
+          await Invitation.updateMany(
+            {
+              team: team._id,
+              status: 'pending',
+              _id: { $ne: invitation._id }
+            },
+            { status: 'cancelled' }
+          );
+
+          console.log(`Invitation ${invitation._id} accepted after partner payment`);
+        }
+      }
+    } catch (invitationError) {
+      console.error('Error handling partner invitation after payment:', invitationError);
+      // Don't fail the payment confirmation if invitation handling fails
+    }
+  }
+
+  // Update singles registrations (for singles events)
+  if (payment.eventBreakdown) {
+    const singlesBreakdown = payment.eventBreakdown.filter(eb => eb.isSingles);
+
+    for (const breakdown of singlesBreakdown) {
+      const event = await Event.findById(breakdown.eventId);
+      if (event) {
+        // Find and update the player's registration
+        const playerReg = event.registeredPlayers.find(
+          reg => reg.player.toString() === userId && reg.payment && reg.payment.toString() === payment._id.toString()
+        );
+
+        if (playerReg) {
+          playerReg.paymentStatus = 'paid';
+
+          // Update currentTeams count (for singles, this tracks # of registered players)
+          const paidPlayersCount = event.registeredPlayers.filter(
+            reg => reg.paymentStatus === 'paid'
+          ).length;
+          event.currentTeams = paidPlayersCount;
+
+          await event.save();
+        }
+      }
+    }
+  }
+
+  // Promote next person on waitlist for each event (if applicable)
+  try {
+    const eventsToCheck = payment.events && payment.events.length > 0
+      ? payment.events
+      : payment.event
+        ? [payment.event]
+        : [];
+
+    for (const event of eventsToCheck) {
+      await promoteNextWaitlist(event._id, 'payment_completed', io);
+    }
+  } catch (waitlistError) {
+    console.error('Error promoting waitlist after payment:', waitlistError);
+    // Don't fail the payment if waitlist promotion fails
+  }
+
+  // Auto-register user to tournament if not already registered
+  const tournament = await Tournament.findById(payment.tournament._id);
+  if (tournament && !tournament.registeredPlayers.includes(userId)) {
+    tournament.registeredPlayers.push(payment.user._id);
+    tournament.currentPlayers = tournament.registeredPlayers.length;
+    await tournament.save();
+  }
+
+  // Generate QR code and ticket PDF
+  try {
+    const ticketCode = generateTicketCode();
+
+    // Generate QR code
+    const qrCodeUrl = await generateQRCode(ticketCode, payment._id.toString());
+
+    // Prepare event names for PDF
+    const eventNamesForPDF = payment.events && payment.events.length > 0
+      ? payment.events.map(e => e.name)
+      : payment.event
+        ? [payment.event.name]
+        : [];
+
+    // Generate ticket PDF
+    const ticketPdfUrl = await generateTicketPDF({
+      ticketCode,
+      qrCodeUrl,
+      playerName: payment.user.name,
+      tournamentName: payment.tournament.name,
+      eventNames: eventNamesForPDF,
+      tournamentLocation: payment.tournament.location,
+      eventDate: payment.tournament.startDate,
+      paymentId: payment._id.toString()
+    });
+
+    // Update payment with ticket information
+    payment.ticketCode = ticketCode;
+    payment.qrCodeUrl = qrCodeUrl;
+    payment.ticketPdfUrl = ticketPdfUrl;
+    await payment.save();
+
+    console.log(`✅ Ticket generated for payment ${payment._id}: ${ticketCode}`);
+  } catch (ticketError) {
+    console.error('❌ Failed to generate ticket:', ticketError);
+    // Don't fail the payment if ticket generation fails
+  }
+
+  // Send ticket purchase confirmation email
+  try {
+    // Determine which event(s) to use for email
+    const events = payment.events && payment.events.length > 0
+      ? payment.events
+      : payment.event
+        ? [payment.event]
+        : [];
+
+    if (events.length === 0) {
+      console.warn('No events found for payment confirmation email');
+    } else {
+      const eventNames = events.map(e => e.name).join(', ');
+      const eventName = events.length === 1
+        ? events[0].name
+        : `${events.length} Events: ${eventNames}`;
+
+      await sendTicketPurchaseEmail({
+        to: payment.user.email,
+        playerName: payment.user.name,
+        tournamentName: payment.tournament.name,
+        tournamentLocation: payment.tournament.location,
+        eventName: eventName,
+        eventDate: payment.tournament.startDate,
+        entryFee: payment.amount,
+        transactionId: payment.stripePaymentIntentId,
+        organizerName: payment.tournament.organizer.name,
+        organizerEmail: payment.tournament.organizer.email,
+        ticketCode: payment.ticketCode,
+        qrCodeUrl: payment.qrCodeUrl,
+        ticketPdfUrl: payment.ticketPdfUrl
+      });
+
+      console.log(`Ticket confirmation email sent to ${payment.user.email}`);
+    }
+  } catch (emailError) {
+    // Don't fail the payment if email fails
+    console.error('Failed to send ticket purchase email:', emailError);
+  }
+
+  // Send partner invitation emails for teams that just became paid
+  try {
+    const Invitation = (await import('../models/Invitation.js')).default;
+    const User = (await import('../models/User.js')).default;
+    const { sendTeamInvitationEmail } = await import('../services/emailService.js');
+
+    for (const teamId of teamsToUpdate) {
+      // Find pending invitations for this team
+      const invitations = await Invitation.find({
+        team: teamId,
+        status: 'pending'
+      });
+
+      console.log(`Found ${invitations.length} pending invitation(s) for team ${teamId}`);
+
+      // Send email for each pending invitation
+      for (const invitation of invitations) {
+        try {
+          // Get team with populated event and tournament
+          const team = await Team.findById(teamId)
+            .populate({
+              path: 'event',
+              populate: {
+                path: 'tournament',
+                select: 'name'
+              }
+            });
+
+          const inviter = await User.findById(invitation.inviter);
+
+          if (team && team.event && team.event.tournament && inviter) {
+            console.log(`Sending partner invitation email to ${invitation.inviteeEmail} for team ${team.name}`);
+
+            await sendTeamInvitationEmail({
+              to: invitation.inviteeEmail,
+              inviteeName: invitation.inviteeName || 'Player',
+              inviterName: inviter.name,
+              teamName: team.name,
+              eventName: team.event.name,
+              tournamentName: team.event.tournament.name,
+              invitationId: invitation._id.toString()
+            });
+
+            console.log(`Partner invitation email sent successfully to ${invitation.inviteeEmail}`);
+          } else {
+            console.warn(`Missing data for invitation email: team=${!!team}, event=${!!team?.event}, tournament=${!!team?.event?.tournament}, inviter=${!!inviter}`);
+          }
+        } catch (invitationEmailError) {
+          console.error(`Failed to send invitation email to ${invitation.inviteeEmail}:`, invitationEmailError);
+          // Don't fail the entire payment if one invitation email fails
+        }
+      }
+    }
+  } catch (invitationError) {
+    console.error('Failed to send partner invitation emails:', invitationError);
+    // Don't fail the payment if invitation emails fail
+  }
+
+  return { teamsToUpdate };
+};
+
 export const confirmPayment = async (req, res, next) => {
   try {
     const { paymentIntentId } = req.body;
@@ -748,281 +1171,7 @@ export const confirmPayment = async (req, res, next) => {
     const paymentIntent = await getStripe().paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status === 'succeeded') {
-      // Update payment record
-      payment.status = 'completed';
-      payment.stripeChargeId = paymentIntent.latest_charge;
-      payment.paymentMethod = paymentIntent.payment_method;
-      await payment.save();
-
-      // Handle both single-team (legacy) and multi-team (new) payments
-      const teamsToUpdate = payment.teams && payment.teams.length > 0
-        ? payment.teams  // Multi-event payment
-        : (payment.team ? [payment.team] : []); // Legacy single-event payment or no teams (singles)
-
-      // Update teams (for doubles/mixed)
-      for (const teamId of teamsToUpdate) {
-        const team = await Team.findById(teamId);
-        if (team) {
-          // Calculate this team's portion of payment
-          const teamPortion = payment.eventBreakdown
-            ? payment.eventBreakdown.find(eb => eb.teamId && eb.teamId.toString() === teamId._id.toString())?.amount || 0
-            : payment.amount;
-
-          team.paidAmount = teamPortion;
-          team.paymentStatus = 'paid';
-          team.registrationConfirmed = true;
-          await team.save();
-
-          // Update event's currentTeams count
-          const event = await Event.findById(team.event);
-          if (event) {
-            // Add team to event.teams array if not already there
-            // Must compare with .toString() because event.teams holds ObjectIds
-            const teamObjectId = (teamId._id || teamId).toString();
-            const alreadyInEvent = event.teams.some(id => id.toString() === teamObjectId);
-            if (!alreadyInEvent) {
-              event.teams.push(team._id);
-            }
-            // Update the count
-            event.currentTeams = event.teams.length;
-            await event.save();
-          }
-        }
-      }
-
-      // Handle partner invitation payments (add partner to team after payment)
-      if (payment.metadata && payment.metadata.paymentType === 'partner_invitation' && payment.metadata.invitationId) {
-        try {
-          const Invitation = (await import('../models/Invitation.js')).default;
-          const invitation = await Invitation.findById(payment.metadata.invitationId);
-
-          if (invitation && invitation.status === 'pending') {
-            const team = await Team.findById(payment.team);
-
-            if (team) {
-              // Add partner to team (guard: skip if already on this team OR already in another team for this event)
-              const alreadyInEvent = await Team.findOne({
-                event: team.event,
-                players: req.user.id,
-                paymentStatus: { $ne: 'refunded' }
-              });
-              if (!alreadyInEvent && !team.players.map(p => p.toString()).includes(req.user.id)) {
-                team.players.push(req.user.id);
-                await team.save();
-                console.log(`Partner ${req.user.email} added to team ${team._id} after payment confirmation`);
-              }
-
-              // Accept invitation
-              invitation.status = 'accepted';
-              invitation.invitee = req.user.id;
-              await invitation.save();
-
-              // Cancel other pending invitations for this team
-              await Invitation.updateMany(
-                {
-                  team: team._id,
-                  status: 'pending',
-                  _id: { $ne: invitation._id }
-                },
-                { status: 'cancelled' }
-              );
-
-              console.log(`Invitation ${invitation._id} accepted after partner payment`);
-            }
-          }
-        } catch (invitationError) {
-          console.error('Error handling partner invitation after payment:', invitationError);
-          // Don't fail the payment confirmation if invitation handling fails
-        }
-      }
-
-      // Update singles registrations (for singles events)
-      if (payment.eventBreakdown) {
-        const singlesBreakdown = payment.eventBreakdown.filter(eb => eb.isSingles);
-
-        for (const breakdown of singlesBreakdown) {
-          const event = await Event.findById(breakdown.eventId);
-          if (event) {
-            // Find and update the player's registration
-            const playerReg = event.registeredPlayers.find(
-              reg => reg.player.toString() === req.user.id && reg.payment && reg.payment.toString() === payment._id.toString()
-            );
-
-            if (playerReg) {
-              playerReg.paymentStatus = 'paid';
-
-              // Update currentTeams count (for singles, this tracks # of registered players)
-              const paidPlayersCount = event.registeredPlayers.filter(
-                reg => reg.paymentStatus === 'paid'
-              ).length;
-              event.currentTeams = paidPlayersCount;
-
-              await event.save();
-            }
-          }
-        }
-      }
-
-      // Promote next person on waitlist for each event (if applicable)
-      try {
-        const eventsToCheck = payment.events && payment.events.length > 0
-          ? payment.events
-          : payment.event
-            ? [payment.event]
-            : [];
-
-        const io = req.app.get('io');
-        for (const event of eventsToCheck) {
-          await promoteNextWaitlist(event._id, 'payment_completed', io);
-        }
-      } catch (waitlistError) {
-        console.error('Error promoting waitlist after payment:', waitlistError);
-        // Don't fail the payment if waitlist promotion fails
-      }
-
-      // Auto-register user to tournament if not already registered
-      const tournament = await Tournament.findById(payment.tournament._id);
-      if (tournament && !tournament.registeredPlayers.includes(req.user.id)) {
-        tournament.registeredPlayers.push(req.user.id);
-        tournament.currentPlayers = tournament.registeredPlayers.length;
-        await tournament.save();
-      }
-
-      // Generate QR code and ticket PDF
-      try {
-        const ticketCode = generateTicketCode();
-
-        // Generate QR code
-        const qrCodeUrl = await generateQRCode(ticketCode, payment._id.toString());
-
-        // Prepare event names for PDF
-        const eventNamesForPDF = payment.events && payment.events.length > 0
-          ? payment.events.map(e => e.name)
-          : payment.event
-            ? [payment.event.name]
-            : [];
-
-        // Generate ticket PDF
-        const ticketPdfUrl = await generateTicketPDF({
-          ticketCode,
-          qrCodeUrl,
-          playerName: payment.user.name,
-          tournamentName: payment.tournament.name,
-          eventNames: eventNamesForPDF,
-          tournamentLocation: payment.tournament.location,
-          eventDate: payment.tournament.startDate,
-          paymentId: payment._id.toString()
-        });
-
-        // Update payment with ticket information
-        payment.ticketCode = ticketCode;
-        payment.qrCodeUrl = qrCodeUrl;
-        payment.ticketPdfUrl = ticketPdfUrl;
-        await payment.save();
-
-        console.log(`✅ Ticket generated for payment ${payment._id}: ${ticketCode}`);
-      } catch (ticketError) {
-        console.error('❌ Failed to generate ticket:', ticketError);
-        // Don't fail the payment if ticket generation fails
-      }
-
-      // Send ticket purchase confirmation email
-      try {
-        // Determine which event(s) to use for email
-        const events = payment.events && payment.events.length > 0
-          ? payment.events
-          : payment.event
-            ? [payment.event]
-            : [];
-
-        if (events.length === 0) {
-          console.warn('No events found for payment confirmation email');
-        } else {
-          const eventNames = events.map(e => e.name).join(', ');
-          const eventName = events.length === 1
-            ? events[0].name
-            : `${events.length} Events: ${eventNames}`;
-
-          await sendTicketPurchaseEmail({
-            to: payment.user.email,
-            playerName: payment.user.name,
-            tournamentName: payment.tournament.name,
-            tournamentLocation: payment.tournament.location,
-            eventName: eventName,
-            eventDate: payment.tournament.startDate,
-            entryFee: payment.amount,
-            transactionId: payment.stripePaymentIntentId,
-            organizerName: payment.tournament.organizer.name,
-            organizerEmail: payment.tournament.organizer.email,
-            ticketCode: payment.ticketCode,
-            qrCodeUrl: payment.qrCodeUrl,
-            ticketPdfUrl: payment.ticketPdfUrl
-          });
-
-          console.log(`Ticket confirmation email sent to ${payment.user.email}`);
-        }
-      } catch (emailError) {
-        // Don't fail the payment if email fails
-        console.error('Failed to send ticket purchase email:', emailError);
-      }
-
-      // Send partner invitation emails for teams that just became paid
-      try {
-        const Invitation = (await import('../models/Invitation.js')).default;
-        const User = (await import('../models/User.js')).default;
-        const { sendTeamInvitationEmail } = await import('../services/emailService.js');
-
-        for (const teamId of teamsToUpdate) {
-          // Find pending invitations for this team
-          const invitations = await Invitation.find({
-            team: teamId,
-            status: 'pending'
-          });
-
-          console.log(`Found ${invitations.length} pending invitation(s) for team ${teamId}`);
-
-          // Send email for each pending invitation
-          for (const invitation of invitations) {
-            try {
-              // Get team with populated event and tournament
-              const team = await Team.findById(teamId)
-                .populate({
-                  path: 'event',
-                  populate: {
-                    path: 'tournament',
-                    select: 'name'
-                  }
-                });
-
-              const inviter = await User.findById(invitation.inviter);
-
-              if (team && team.event && team.event.tournament && inviter) {
-                console.log(`Sending partner invitation email to ${invitation.inviteeEmail} for team ${team.name}`);
-
-                await sendTeamInvitationEmail({
-                  to: invitation.inviteeEmail,
-                  inviteeName: invitation.inviteeName || 'Player',
-                  inviterName: inviter.name,
-                  teamName: team.name,
-                  eventName: team.event.name,
-                  tournamentName: team.event.tournament.name,
-                  invitationId: invitation._id.toString()
-                });
-
-                console.log(`Partner invitation email sent successfully to ${invitation.inviteeEmail}`);
-              } else {
-                console.warn(`Missing data for invitation email: team=${!!team}, event=${!!team?.event}, tournament=${!!team?.event?.tournament}, inviter=${!!inviter}`);
-              }
-            } catch (invitationEmailError) {
-              console.error(`Failed to send invitation email to ${invitation.inviteeEmail}:`, invitationEmailError);
-              // Don't fail the entire payment if one invitation email fails
-            }
-          }
-        }
-      } catch (invitationError) {
-        console.error('Failed to send partner invitation emails:', invitationError);
-        // Don't fail the payment if invitation emails fail
-      }
+      const { teamsToUpdate } = await fulfillPayment(payment, paymentIntent, req.app.get('io'));
 
       return res.status(200).json({
         success: true,
@@ -1092,6 +1241,44 @@ export const getPayment = async (req, res, next) => {
   }
 };
 
+// @desc    Redirect to a freshly-signed download link for a ticket PDF
+// @route   GET /api/payments/:id/ticket-pdf
+// @access  Private (payment owner or admin)
+//
+// Ticket PDFs are stored in Cloudinary under the "authenticated" delivery
+// type (required to bypass Cloudinary's "Restricted media types" block on
+// raw PDF/ZIP delivery). The signed download URLs that grants only stay
+// valid for about an hour, so they can't be generated once and stored — this
+// endpoint generates one fresh on every request instead, meaning the link we
+// actually store/email never itself expires.
+export const downloadTicketPDF = async (req, res, next) => {
+  try {
+    const payment = await Payment.findById(req.params.id).select('user ticketCode');
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment not found' });
+    }
+
+    if (payment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized to access this ticket' });
+    }
+
+    if (!payment.ticketCode) {
+      return res.status(404).json({ success: false, message: 'No ticket has been generated for this payment' });
+    }
+
+    const publicId = `tickets/pdfs/ticket-${payment._id}.pdf`;
+    const downloadUrl = cloudinary.utils.private_download_url(publicId, null, {
+      resource_type: 'raw',
+      type: 'authenticated'
+    });
+
+    res.redirect(downloadUrl);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get user's payment history
 // @route   GET /api/payments/my-payments
 // @access  Private
@@ -1125,7 +1312,8 @@ export const refundPayment = async (req, res, next) => {
         path: 'tournament',
         populate: { path: 'organizer' }
       })
-      .populate('team');
+      .populate('team')
+      .populate('teams');
 
     if (!payment) {
       return res.status(404).json({
@@ -1172,12 +1360,42 @@ export const refundPayment = async (req, res, next) => {
     payment.refundReason = reason || 'Refund requested';
     await payment.save();
 
-    // Update team payment status
-    const team = payment.team;
-    team.paidAmount = Math.max(0, team.paidAmount - payment.amount);
-    team.paymentStatus = team.paidAmount === 0 ? 'unpaid' : 'partially_paid';
-    team.registrationConfirmed = false;
-    await team.save();
+    // Update team payment status (handles legacy single-team and multi-team/multi-event payments)
+    const teamsToUpdate = payment.teams && payment.teams.length > 0
+      ? payment.teams
+      : (payment.team ? [payment.team] : []);
+
+    for (const team of teamsToUpdate) {
+      const teamPortion = payment.eventBreakdown
+        ? payment.eventBreakdown.find(eb => eb.teamId && eb.teamId.toString() === team._id.toString())?.amount || payment.amount
+        : payment.amount;
+
+      team.paidAmount = Math.max(0, team.paidAmount - teamPortion);
+      team.paymentStatus = team.paidAmount === 0 ? 'unpaid' : 'partially_paid';
+      team.registrationConfirmed = false;
+      await team.save();
+    }
+
+    // Update singles registrations (for singles events, which have no Team document)
+    if (payment.eventBreakdown) {
+      const singlesBreakdown = payment.eventBreakdown.filter(eb => eb.isSingles);
+
+      for (const breakdown of singlesBreakdown) {
+        const event = await Event.findById(breakdown.eventId);
+        if (event) {
+          const playerReg = event.registeredPlayers.find(
+            reg => reg.payment && reg.payment.toString() === payment._id.toString()
+          );
+          if (playerReg) {
+            playerReg.paymentStatus = 'unpaid';
+            event.currentTeams = event.registeredPlayers.filter(
+              reg => reg.paymentStatus === 'paid'
+            ).length;
+            await event.save();
+          }
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,

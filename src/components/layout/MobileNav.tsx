@@ -77,18 +77,20 @@ const MobileNav = () => {
   ];
 
   const navItems = [
-    { key: "home",   href: isAuthenticated ? "/dashboard" : "/", label: "Home",   icon: House },
-    { key: "live",   href: "/live",         label: "Live",   icon: Radio },
-    { key: "browse", href: null,            label: "Browse", icon: MagnifyingGlass },
+    { key: "home",   href: "/dashboard",   label: "Home",   icon: House },
+    { key: "live",   href: "/live",        label: "Live",   icon: Radio },
+    { key: "browse", href: null,           label: "Browse", icon: MagnifyingGlass },
     ...(isOrganizer ? [{ key: "host", href: null, label: "Host", icon: PlusCircle }] : []),
-    { key: "me",     href: null,            label: "Me",     icon: User },
+    { key: "me",     href: null,           label: "Me",     icon: User },
   ];
 
   const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues");
 
+  const isAuthRoute = ["/login", "/signup", "/auth"].includes(location.pathname);
+  if (isAuthRoute) return null;
+
   const isActive = (href: string) => {
-    if (href === "/" || href === "/dashboard")
-      return location.pathname === "/" || location.pathname === "/dashboard";
+    if (href === "/dashboard") return location.pathname === "/dashboard";
     return (
       location.pathname.startsWith(href) &&
       (href !== "/tournaments" || location.pathname === "/tournaments" || location.pathname.startsWith("/tournaments/"))
@@ -379,7 +381,7 @@ const MobileNav = () => {
       </AnimatePresence>
 
       {/* Bottom Nav Bar */}
-      <div className="mobile-nav-bar md:hidden fixed bottom-0 left-0 right-0 bg-pb-surface border-t border-pb-hairline z-50" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+      <div className="mobile-nav-bar md:hidden bg-pb-surface border-t border-pb-hairline" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
         <nav className="flex items-center justify-between h-[54px]">
           {navItems.map((item) => {
             if (item.key === "host") {

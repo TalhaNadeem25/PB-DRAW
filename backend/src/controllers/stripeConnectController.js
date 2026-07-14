@@ -178,15 +178,10 @@ export const disconnectAccount = async (req, res, next) => {
     const user = await User.findById(req.user.id);
 
     if (user.stripeConnectAccountId) {
-      // Note: In production, you may want to keep the account
-      // and just remove the connection instead of deleting
-      try {
-        await getStripe().accounts.del(user.stripeConnectAccountId);
-      } catch (stripeError) {
-        console.error('Error deleting Stripe account:', stripeError);
-        // Continue anyway to disconnect from our side
-      }
-
+      // Only remove the link on our side — do NOT delete the Stripe account itself.
+      // Deleting it is irreversible and would orphan the organizer's historical
+      // payout/transfer records if they've already received real payouts through it.
+      // If they reconnect later, createConnectAccountLink will just create a new one.
       user.stripeConnectAccountId = null;
       user.stripeConnectOnboarded = false;
       user.stripeConnectOnboardingCompleted = null;

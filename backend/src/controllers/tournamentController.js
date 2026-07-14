@@ -1,7 +1,12 @@
 import Tournament from '../models/Tournament.js';
 import Event from '../models/Event.js';
 import Payment from '../models/Payment.js';
+import Team from '../models/Team.js';
+import Pool from '../models/Pool.js';
+import Match from '../models/Match.js';
+import Waitlist from '../models/Waitlist.js';
 import cloudinary from '../config/cloudinary.js';
+import { emitTournamentUpdate } from '../utils/socket.js';
 
 // Location filter: state code -> regex for tournament location field
 const LOCATION_REGEX = {
@@ -180,6 +185,11 @@ export const updateTournament = async (req, res, next) => {
       { new: true, runValidators: true }
     );
 
+    emitTournamentUpdate(req.app.get('io'), tournament._id.toString(), {
+      tournamentId: tournament._id,
+      status: tournament.status
+    });
+
     res.status(200).json({
       success: true,
       message: 'Tournament updated successfully',
@@ -212,7 +222,16 @@ export const deleteTournament = async (req, res, next) => {
       });
     }
 
-    // Delete all related events
+    // Delete all related events and everything under them (teams, pools, matches,
+    // waitlist entries) — otherwise those get orphaned and crash later whenever
+    // something populates their deleted `event` reference.
+    const events = await Event.find({ tournament: tournament._id }).select('_id');
+    const eventIds = events.map(e => e._id);
+
+    await Team.deleteMany({ event: { $in: eventIds } });
+    await Pool.deleteMany({ event: { $in: eventIds } });
+    await Match.deleteMany({ event: { $in: eventIds } });
+    await Waitlist.deleteMany({ event: { $in: eventIds } });
     await Event.deleteMany({ tournament: tournament._id });
 
     await tournament.deleteOne();
@@ -261,6 +280,11 @@ export const startTournament = async (req, res, next) => {
     tournament.status = 'in-progress';
     await tournament.save();
 
+    emitTournamentUpdate(req.app.get('io'), tournament._id.toString(), {
+      tournamentId: tournament._id,
+      status: tournament.status
+    });
+
     res.status(200).json({
       success: true,
       message: 'Tournament started successfully! It is now live.',
@@ -303,6 +327,11 @@ export const completeTournament = async (req, res, next) => {
 
     tournament.status = 'completed';
     await tournament.save();
+
+    emitTournamentUpdate(req.app.get('io'), tournament._id.toString(), {
+      tournamentId: tournament._id,
+      status: tournament.status
+    });
 
     res.status(200).json({
       success: true,

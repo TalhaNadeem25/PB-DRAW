@@ -93,12 +93,22 @@ export const generateTicketPDF = async ({
         try {
           const pdfBuffer = Buffer.concat(chunks);
 
-          // Upload to Cloudinary
+          // Cloudinary blocks delivery of raw PDF/ZIP files under the regular
+          // "upload" delivery type by default (its "Restricted media types"
+          // security setting) — confirmed this applies even to signed CDN
+          // delivery URLs (cloudinary.url with sign_url: true), not just
+          // unsigned ones. The only combination that actually works is
+          // uploading under the "authenticated" delivery type AND serving it
+          // via Cloudinary's raw/download API endpoint (private_download_url)
+          // rather than the normal res.cloudinary.com CDN URL — the CDN path
+          // stays blocked even for authenticated+signed resources, but the
+          // API download endpoint is exempt.
           const result = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
               {
                 folder: 'tickets/pdfs',
                 resource_type: 'raw',
+                type: 'authenticated',
                 public_id: `ticket-${paymentId}`,
                 format: 'pdf',
                 overwrite: true
@@ -112,7 +122,16 @@ export const generateTicketPDF = async ({
             Readable.from(pdfBuffer).pipe(uploadStream);
           });
 
-          resolve(result.secure_url);
+          // Cloudinary's private_download_url embeds a timestamp that expires
+          // after about an hour — it can't be generated once here and stored
+          // permanently on the Payment record. Store our own backend's proxy
+          // URL instead; that route (GET /api/payments/:id/ticket-pdf) mints a
+          // fresh Cloudinary download URL on every request, so the link we
+          // actually persist/email never itself expires.
+          const apiBaseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3001}/api`;
+          const downloadUrl = `${apiBaseUrl}/payments/${paymentId}/ticket-pdf`;
+
+          resolve(downloadUrl);
         } catch (error) {
           reject(error);
         }

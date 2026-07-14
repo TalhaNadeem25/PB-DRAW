@@ -6,7 +6,8 @@ import {
   confirmPayment,
   getPayment,
   getMyPayments,
-  refundPayment
+  refundPayment,
+  downloadTicketPDF
 } from '../controllers/paymentController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -20,6 +21,7 @@ router.post('/create-multi-event-intent', protect, createMultiEventPaymentIntent
 router.post('/create-partner-intent', protect, createPartnerPaymentIntent);
 router.post('/confirm', protect, confirmPayment);
 router.get('/my-payments', protect, getMyPayments);
+router.get('/:id/ticket-pdf', protect, downloadTicketPDF);
 router.get('/:id', protect, getPayment);
 
 // Admin/Organizer routes

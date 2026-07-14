@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Trophy, Lock, CircleNotch, Eye, EyeSlash, Check } from '@phosphor-icons/react';
+import { ArrowRight, Lock, CircleNotch, Eye, EyeSlash, Check } from '@phosphor-icons/react';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
+import { PbLogo } from '@/components/ui/pb';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -23,60 +21,32 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate passwords match
     if (password !== confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Passwords do not match',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Passwords do not match', variant: 'destructive' });
       return;
     }
-
-    // Validate password length
     if (password.length < 6) {
-      toast({
-        title: 'Error',
-        description: 'Password must be at least 6 characters long',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
       return;
     }
-
     setIsLoading(true);
-
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/auth/reset-password/${token}`,
         { password }
       );
-
       if (response.data.success) {
         setIsSuccess(true);
-
-        // Auto-login the user with the returned token
         if (response.data.data.token && response.data.data.user) {
           setAuthData(response.data.data.user, response.data.data.token);
         }
-
-        toast({
-          title: 'Success',
-          description: 'Your password has been reset successfully',
-          variant: 'default'
-        });
-
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
+        setTimeout(() => navigate('/dashboard'), 2000);
       }
     } catch (error: any) {
-      console.error('Reset password error:', error);
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Invalid or expired reset token. Please request a new password reset.',
-        variant: 'destructive'
+        description: error.response?.data?.message || 'Invalid or expired reset token. Please request a new link.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -85,161 +55,139 @@ const ResetPassword = () => {
 
   return (
     <Layout variant="auth">
-      <div className="min-h-screen flex">
-        {/* Left side - Form */}
-        <div className="flex-1 flex items-center justify-center px-4 py-16">
-          <div className="w-full max-w-md space-y-8 animate-fade-in">
-            <div className="glass-card rounded-2xl p-8">
-            {/* Logo */}
-            <div className="text-center">
-              <Link to="/" className="inline-flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 rounded-xl bg-hero-gradient flex items-center justify-center shadow-glow">
-                  <Trophy className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <span className="font-display text-2xl font-bold">
-                  PICK<span className="text-primary">LIX</span>
-                </span>
-              </Link>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                {isSuccess ? 'Password Reset!' : 'Reset Password'}
+      <div className="min-h-screen flex flex-col lg:flex-row bg-pb-paper font-sans">
+
+        {/* Left: brand panel */}
+        <div className="hidden lg:flex lg:w-1/2 xl:w-7/12 relative overflow-hidden items-center justify-center">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuANcBh8658firenMfbo6Fsqiw6eDQlBp_lX5oMiyvz9HHqM_Jd_VxipHbrbU1coa37yAOe9HF3G9ayWR8yaHeAg0QCWwlV-BZH7y9jlClMKtniLg_5AF446YVkwzmODdPD0qa19WWtMsCo7acHQEFgTloRgospSAWsUBkcocmrTXrrY67dn4YMsPkfoSU7_xTwZ1mywWoHEhSxPLinFMMiozYwuZDW5igU-v51FA5LGwI5nkDtZFeFwilrM1kSGLJejRnHji8ZeaFg')` }}
+          />
+          <div className="absolute inset-0 bg-black/45 flex flex-col justify-end p-20 z-10">
+            <div className="max-w-xl">
+              <PbLogo color="#F5F2EB" size={18} className="mb-8" />
+              <h1 className="text-white text-5xl font-display font-black leading-tight mb-4">
+                New password,<br />same game.
               </h1>
-              <p className="text-muted-foreground">
-                {isSuccess ? 'You can now access your account' : 'Enter your new password below'}
+              <p className="text-white/75 text-[15px] font-mono max-w-md">
+                Choose a strong password to keep your account secure.
               </p>
+            </div>
+          </div>
+          <div className="absolute top-10 left-10 w-20 h-20 border-l-[3px] border-t-[3px] border-white/30 z-20" />
+        </div>
+
+        {/* Right: form panel */}
+        <div className="flex w-full flex-col lg:w-1/2 xl:w-5/12 bg-pb-paper px-6 py-10 sm:px-14 lg:px-16 xl:px-20 justify-center overflow-y-auto">
+          <div className="w-full max-w-md mx-auto">
+
+            <div className="lg:hidden mb-10">
+              <PbLogo size={16} />
             </div>
 
             {!isSuccess ? (
               <>
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-sm font-medium">New Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Enter new password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                          disabled={isLoading}
-                          className="pl-12 pr-12 h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary/20 transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Must be at least 6 characters long
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          placeholder="Confirm new password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          required
-                          disabled={isLoading}
-                          className="pl-12 pr-12 h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary/20 transition-all"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    size="lg"
-                    className="w-full h-12 text-base shadow-glow hover:shadow-glow-lg transition-shadow"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <CircleNotch className="w-5 h-5 animate-spin mr-2" />
-                        Resetting Password...
-                      </>
-                    ) : (
-                      'Reset Password'
-                    )}
-                  </Button>
-                </form>
-
-                {/* Back to login */}
-                <p className="text-center text-muted-foreground">
-                  Remember your password?{' '}
-                  <Link to="/login" className="text-primary hover:underline font-medium">
-                    Back to login
-                  </Link>
-                </p>
-              </>
-            ) : (
-              <div className="text-center space-y-6">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <Check className="w-10 h-10 text-primary" />
-                </div>
-
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-display font-bold">Password Reset Successful!</h2>
-                  <p className="text-muted-foreground">
-                    Your password has been changed successfully. You're now logged in.
+                <div className="mb-8">
+                  <h2 className="font-display font-extrabold text-[30px] tracking-[-0.035em] text-pb-ink mb-1.5">
+                    Reset password
+                  </h2>
+                  <p className="text-[13px] font-mono text-pb-muted">
+                    Enter your new password below.
                   </p>
                 </div>
 
-                <div className="bg-muted/50 rounded-xl p-6 space-y-2 text-sm text-muted-foreground">
-                  <p>Redirecting you to your dashboard...</p>
-                </div>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-1.5">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-pb-faint" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full h-11 pl-9 pr-11 rounded-[6px] border border-pb-hairline bg-pb-surface2 text-[13px] font-sans text-pb-ink placeholder:text-pb-faint focus:outline-none focus:border-pb-rule"
+                        placeholder="At least 6 characters"
+                        required
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-pb-muted hover:text-pb-ink"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
 
-                <Button
-                  variant="hero"
-                  size="lg"
-                  className="w-full h-12"
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-[0.08em] text-pb-muted mb-1.5">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-pb-faint" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full h-11 pl-9 pr-11 rounded-[6px] border border-pb-hairline bg-pb-surface2 text-[13px] font-sans text-pb-ink placeholder:text-pb-faint focus:outline-none focus:border-pb-rule"
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-pb-muted hover:text-pb-ink"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-12 rounded-[6px] bg-pb-ink text-white font-display font-bold text-[14px] uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-pb-ink/90 transition-colors disabled:opacity-60"
+                  >
+                    {isLoading ? (
+                      <><CircleNotch size={16} className="animate-spin" /> Resetting…</>
+                    ) : (
+                      <>Reset Password <ArrowRight size={15} /></>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-8 text-center">
+                  <Link
+                    to="/login"
+                    className="text-[13px] font-mono text-pb-muted hover:text-pb-ink transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <ArrowRight size={13} className="rotate-180" /> Back to login
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-pb-court/10 flex items-center justify-center mx-auto mb-6">
+                  <Check size={28} className="text-pb-court" />
+                </div>
+                <h2 className="font-display font-extrabold text-[28px] tracking-[-0.03em] text-pb-ink mb-2">
+                  Password reset!
+                </h2>
+                <p className="text-[13px] font-mono text-pb-muted mb-6">
+                  You're now logged in. Redirecting to your dashboard…
+                </p>
+                <button
                   onClick={() => navigate('/dashboard')}
+                  className="w-full h-12 rounded-[6px] bg-pb-ink text-white font-display font-bold text-[14px] uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-pb-ink/90 transition-colors"
                 >
-                  Go to Dashboard
-                </Button>
+                  Go to Dashboard <ArrowRight size={15} />
+                </button>
               </div>
             )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right side - Visual (neutral, no green hero) */}
-        <div className="hidden lg:flex flex-1 relative overflow-hidden bg-muted/50 border-l border-border">
-          <div className="flex flex-col items-center justify-center w-full p-12">
-            <div className="rounded-3xl p-8 max-w-md text-center border border-border bg-card shadow-sm">
-              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Lock className="w-10 h-10 text-primary" />
-              </div>
-              <h2 className="text-2xl font-display font-bold text-foreground mb-4">
-                Secure Password Reset
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Choose a strong password that you haven't used before. Your account security is important to us.
-              </p>
-              <div className="text-sm text-muted-foreground space-y-2">
-                <p>Use at least 6 characters</p>
-                <p>Include letters and numbers</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

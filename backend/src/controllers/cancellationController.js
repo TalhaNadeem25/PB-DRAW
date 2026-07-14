@@ -3,9 +3,9 @@ import Event from '../models/Event.js';
 import Team from '../models/Team.js';
 import Payment from '../models/Payment.js';
 import Tournament from '../models/Tournament.js';
-import Waitlist from '../models/Waitlist.js';
+import { promoteNextWaitlist } from './waitlistController.js';
 import stripe from '../config/stripe.js';
-import { sendCancellationConfirmationEmail, sendPartnerNotificationEmail, sendPartnerRefundEmail, sendWaitlistPromotionEmail, sendOrganizerRefundEmail, sendTournamentCancelledEmail } from '../services/emailService.js';
+import { sendCancellationConfirmationEmail, sendPartnerNotificationEmail, sendPartnerRefundEmail, sendOrganizerRefundEmail, sendTournamentCancelledEmail } from '../services/emailService.js';
 
 /**
  * Calculate refund percentage based on days until tournament
@@ -107,7 +107,7 @@ export const requestCancellation = async (req, res, next) => {
 
     // Calculate refund
     const refundPercentage = calculateRefundPercentage(tournament.startDate);
-    const amountPaid = payment.amount;
+    const amountPaid = Math.round(payment.amount * 100); // payment.amount is stored in dollars; convert to cents
 
     // Stripe fees are non-refundable (2.9% + $0.30)
     const stripeFee = (amountPaid * 0.029) + 30; // in cents
@@ -191,7 +191,7 @@ export const respondToPartnerCancellation = async (req, res, next) => {
     }
 
     // Verify user is the partner
-    if (cancellation.partner._id.toString() !== req.user.id) {
+    if (!cancellation.partner || cancellation.partner._id.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized'
@@ -219,7 +219,7 @@ export const respondToPartnerCancellation = async (req, res, next) => {
       await processCancellation(cancellationId);
 
       res.status(200).json({
-        success: false,
+        success: true,
         message: 'Your refund request has been processed. You and your partner will both receive refunds within 5-10 business days.'
       });
     } else {
@@ -266,9 +266,9 @@ const processCancellation = async (cancellationId) => {
 
   try {
     // Process Stripe refund
-    if (refundAmount > 0 && payment.paymentIntentId) {
+    if (refundAmount > 0 && payment.stripePaymentIntentId) {
       const refund = await stripe.refunds.create({
-        payment_intent: payment.paymentIntentId,
+        payment_intent: payment.stripePaymentIntentId,
         amount: refundAmount
       });
 
@@ -313,7 +313,7 @@ const processCancellation = async (cancellationId) => {
     });
 
     // Check and promote waitlist
-    await promoteFromWaitlist(event._id);
+    await promoteNextWaitlist(event._id, 'cancellation');
 
   } catch (error) {
     console.error('Error processing cancellation:', error);
@@ -332,9 +332,9 @@ const processIndividualRefund = async (cancellation) => {
 
   try {
     // Process Stripe refund for individual player
-    if (cancellation.refundAmount > 0 && payment.paymentIntentId) {
+    if (cancellation.refundAmount > 0 && payment.stripePaymentIntentId) {
       const refund = await stripe.refunds.create({
-        payment_intent: payment.paymentIntentId,
+        payment_intent: payment.stripePaymentIntentId,
         amount: cancellation.refundAmount
       });
 
@@ -362,30 +362,6 @@ const processIndividualRefund = async (cancellation) => {
   } catch (error) {
     console.error('Error processing individual refund:', error);
     throw error;
-  }
-};
-
-/**
- * Promote next person from waitlist
- */
-const promoteFromWaitlist = async (eventId) => {
-  try {
-    const waitlistEntry = await Waitlist.findOne({
-      event: eventId,
-      status: 'waiting'
-    }).sort({ position: 1 });
-
-    if (waitlistEntry) {
-      waitlistEntry.status = 'promoted';
-      waitlistEntry.promotedAt = new Date();
-      waitlistEntry.promotionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-      await waitlistEntry.save();
-
-      // Send promotion email
-      await sendWaitlistPromotionEmail(waitlistEntry);
-    }
-  } catch (error) {
-    console.error('Error promoting from waitlist:', error);
   }
 };
 
@@ -467,7 +443,7 @@ export const calculateRefundPreview = async (req, res, next) => {
     }
 
     const refundPercentage = calculateRefundPercentage(event.tournament.startDate);
-    const amountPaid = payment.amount;
+    const amountPaid = Math.round(payment.amount * 100); // payment.amount is stored in dollars; convert to cents
     const stripeFee = (amountPaid * 0.029) + 30;
     const refundableAmount = amountPaid - stripeFee;
     const refundAmount = Math.floor((refundableAmount * refundPercentage) / 100);
@@ -569,10 +545,12 @@ export const organizerRefundPayment = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
-    // Calculate refund amount (default full, cap at payment amount)
+    // Calculate refund amount in cents (default full, cap at payment amount)
+    // payment.amount is stored in dollars; requestedAmount (from the request body) is also dollars
+    const paymentAmountCents = Math.round(payment.amount * 100);
     const refundAmount = requestedAmount
-      ? Math.min(Math.round(requestedAmount * 100), payment.amount) // Convert dollars to cents if needed
-      : payment.amount;
+      ? Math.min(Math.round(requestedAmount * 100), paymentAmountCents)
+      : paymentAmountCents;
 
     // Process Stripe refund
     let refundId = null;
@@ -601,7 +579,7 @@ export const organizerRefundPayment = async (req, res, next) => {
       cancellationType: 'organizer-initiated',
       requestedBy: req.user.id,
       refundAmount,
-      refundPercentage: Math.round((refundAmount / payment.amount) * 100),
+      refundPercentage: Math.round((refundAmount / paymentAmountCents) * 100),
       stripeFeeDeducted: 0,
       refundProcessed: !!refundId,
       refundId,
@@ -635,7 +613,7 @@ export const organizerRefundPayment = async (req, res, next) => {
       await event.save();
 
       // Promote from waitlist
-      await promoteFromWaitlist(event._id);
+      await promoteNextWaitlist(event._id, 'organizer-refund');
     }
 
     // Send email to player
@@ -712,11 +690,13 @@ export const bulkRefundTournament = async (req, res, next) => {
 
     for (const payment of payments) {
       try {
+        // payment.amount is stored in dollars; Stripe and Cancellation.refundAmount expect cents
+        const paymentAmountCents = Math.round(payment.amount * 100);
         let refundId = null;
-        if (payment.amount > 0 && payment.stripePaymentIntentId) {
+        if (paymentAmountCents > 0 && payment.stripePaymentIntentId) {
           const refund = await stripe.refunds.create({
             payment_intent: payment.stripePaymentIntentId,
-            amount: payment.amount,
+            amount: paymentAmountCents,
           });
           refundId = refund.id;
         }
@@ -730,7 +710,7 @@ export const bulkRefundTournament = async (req, res, next) => {
           payment: payment._id,
           cancellationType: 'tournament-cancelled',
           requestedBy: req.user.id,
-          refundAmount: payment.amount,
+          refundAmount: paymentAmountCents,
           refundPercentage: 100,
           stripeFeeDeducted: 0,
           refundProcessed: !!refundId,
@@ -747,7 +727,7 @@ export const bulkRefundTournament = async (req, res, next) => {
         payment.refundReason = reason;
         await payment.save();
 
-        totalRefunded += payment.amount;
+        totalRefunded += paymentAmountCents;
         paymentsProcessed++;
 
         // Send email
@@ -755,14 +735,14 @@ export const bulkRefundTournament = async (req, res, next) => {
           await sendTournamentCancelledEmail({
             user: payment.user,
             tournament,
-            refundAmount: payment.amount / 100,
+            refundAmount: payment.amount,
             reason,
           });
         } catch (emailErr) {
           console.error(`Failed to send cancellation email to ${payment.user.email}:`, emailErr);
         }
 
-        results.push({ paymentId: payment._id, status: 'refunded', amount: payment.amount / 100 });
+        results.push({ paymentId: payment._id, status: 'refunded', amount: payment.amount });
       } catch (err) {
         failedCount++;
         results.push({ paymentId: payment._id, status: 'failed', error: err.message });

@@ -781,7 +781,13 @@ export const moveMember = async (req, res, next) => {
       if (fromPoolId === toPoolId) {
         return res.status(400).json({ success: false, message: 'Player is already in that pool' });
       }
-      if (fromPoolId) affectedPoolIds.add(fromPoolId);
+      if (fromPoolId) {
+        const fromPool = await Pool.findById(fromPoolId);
+        if (fromPool?.poolPlayFinalizedAt) {
+          return res.status(400).json({ success: false, message: 'Player\'s current pool is already finalized and cannot be modified' });
+        }
+        affectedPoolIds.add(fromPoolId);
+      }
 
       reg.pool = toPoolId;
       await event.save();
@@ -794,6 +800,10 @@ export const moveMember = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'Team is already in that pool' });
       }
       if (fromPoolId) {
+        const fromPool = await Pool.findById(fromPoolId);
+        if (fromPool?.poolPlayFinalizedAt) {
+          return res.status(400).json({ success: false, message: 'Team\'s current pool is already finalized and cannot be modified' });
+        }
         affectedPoolIds.add(fromPoolId);
         await Pool.findByIdAndUpdate(fromPoolId, { $pull: { teams: team._id } });
       }

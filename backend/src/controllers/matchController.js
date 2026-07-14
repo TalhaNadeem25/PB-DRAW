@@ -2,7 +2,7 @@ import Match from '../models/Match.js';
 import Pool from '../models/Pool.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
-import { emitMatchScoreUpdate, notifyTeamPlayers } from '../utils/socket.js';
+import { emitMatchScoreUpdate, emitMatchUpdate, notifyTeamPlayers } from '../utils/socket.js';
 import { validateSingleGameScore } from '../utils/matchFormatUtils.js';
 
 // @desc    Get all matches for a pool
@@ -521,9 +521,18 @@ export const updateMatch = async (req, res, next) => {
       });
     }
 
+    const tournamentId = match.event.tournament._id.toString();
+    const eventId = match.event._id.toString();
+
     match = await Match.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
+    });
+
+    const io = req.app.get('io');
+    emitMatchUpdate(io, match._id.toString(), tournamentId, eventId, {
+      matchId: match._id,
+      status: match.status
     });
 
     res.status(200).json({
@@ -543,7 +552,8 @@ export const checkInMatch = async (req, res, next) => {
   try {
     const match = await Match.findById(req.params.id)
       .populate('team1')
-      .populate('team2');
+      .populate('team2')
+      .populate({ path: 'event', populate: { path: 'tournament' } });
 
     if (!match) {
       return res.status(404).json({
@@ -616,6 +626,13 @@ export const checkInMatch = async (req, res, next) => {
 
     await match.save();
 
+    const io = req.app.get('io');
+    emitMatchUpdate(io, match._id.toString(), match.event.tournament._id.toString(), match.event._id.toString(), {
+      matchId: match._id,
+      status: match.status,
+      checkIn: match.checkIn
+    });
+
     res.status(200).json({
       success: true,
       message: 'Successfully checked in for the match',
@@ -677,6 +694,13 @@ export const markNoShow = async (req, res, next) => {
     }
 
     await match.save();
+
+    const io = req.app.get('io');
+    emitMatchUpdate(io, match._id.toString(), match.event.tournament._id.toString(), match.event._id.toString(), {
+      matchId: match._id,
+      status: match.status,
+      winner: match.winner
+    });
 
     res.status(200).json({
       success: true,

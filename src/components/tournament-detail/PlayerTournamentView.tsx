@@ -1,19 +1,21 @@
 import ExportButtons from "@/components/tournament/ExportButtons";
-import TournamentSchedule from "@/components/tournament/TournamentSchedule";
 import BracketViewer from "@/components/tournament/BracketViewer";
-import RegisteredPlayers from "@/components/tournament/RegisteredPlayers";
+import PublicRegisteredPlayers from "@/components/tournament/PublicRegisteredPlayers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatEventSkillLevel } from "@/types/tournament";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {
   ArrowLeft, ArrowRight, Heart, MapPin, ShareNetwork,
-  Trophy, Users, CaretDown,
+  Trophy, Users, CaretDown, X, QrCode, Graph,
 } from "@phosphor-icons/react";
 import Layout from "@/components/layout/Layout";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eyebrow, Pill, PbBtn, PbCard, Dot } from "@/components/ui/pb";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { poolAPI, matchAPI, teamAPI } from "@/services/api";
 
 export interface StatusInfo {
   label: string;
@@ -135,6 +137,97 @@ export default function PlayerTournamentView({
 }: PlayerTournamentViewProps) {
   const isLive = tournament.status === "in-progress";
   const isOpen = tournament.status === "open";
+  const navigate = useNavigate();
+
+  // Tournament documents don't carry matches/teams directly (those live under each
+  // event's pools) — fetch them here so Print/Export has real data instead of the
+  // always-empty tournament.matches / tournament.teams.
+  const events: any[] = tournament.events || [];
+  const { data: exportData } = useQuery({
+    queryKey: ["tournament-export-data", tournament._id],
+    queryFn: async () => {
+      const allMatches: any[] = [];
+      const allTeams: any[] = [];
+
+      for (const event of events) {
+        try {
+          const teamsResponse = await teamAPI.getByEvent(event._id);
+          allTeams.push(...(teamsResponse.data || []));
+        } catch (error) {
+          console.error(`Error fetching teams for event ${event._id}:`, error);
+        }
+
+        try {
+          const poolsResponse = await poolAPI.getByEvent(event._id);
+          const pools = poolsResponse.data || [];
+          for (const pool of pools) {
+            try {
+              const matchesResponse = await matchAPI.getByPool(pool._id);
+              const matches = matchesResponse.data || [];
+              allMatches.push(
+                ...matches.map((m: any) => ({ ...m, event: { _id: event._id, name: event.name } }))
+              );
+            } catch (error) {
+              console.error(`Error fetching matches for pool ${pool._id}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching pools for event ${event._id}:`, error);
+        }
+      }
+
+      return { matches: allMatches, teams: allTeams };
+    },
+    enabled: events.length > 0,
+  });
+
+  // ── Mobile state ────────────────────────────────────────────────────────
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [partnerName, setPartnerName] = useState("");
+
+  const selectedEvent = selectedEventId
+    ? tournament.events?.find((e: any) => e._id === selectedEventId)
+    : null;
+
+  const isDoublesEvent = (evt: any) =>
+    evt?.format === "doubles" || evt?.format === "mixed-doubles";
+
+  const getEventAbbr = (evt: any): string => {
+    const map: Record<string, string> = {
+      singles: "SG",
+      doubles: "DB",
+      "mixed-doubles": "MX",
+    };
+    return map[evt?.format] ?? (evt?.format?.substring(0, 2).toUpperCase() ?? "");
+  };
+
+  const formatPlayFormatShort = (pf: string): string => {
+    const map: Record<string, string> = {
+      "pool-to-bracket": "POOL → BRACKET",
+      "round-robin": "ROUND ROBIN",
+      "single-elim": "SINGLE ELIM",
+      "double-elim": "DBL ELIM",
+      "pool-play": "POOL PLAY",
+    };
+    return map[pf] ?? pf?.toUpperCase().replace(/-/g, " ") ?? "";
+  };
+
+  const handleMobileRegister = () => {
+    if (!selectedEvent) return;
+    if (isDoublesEvent(selectedEvent)) {
+      setShowTeamModal(true);
+    } else {
+      navigate(`/tournaments/${id}/register/${selectedEvent._id}`);
+    }
+  };
+
+  const handleTeamCheckout = () => {
+    setShowTeamModal(false);
+    navigate(`/tournaments/${id}/register/${selectedEvent!._id}`, {
+      state: { partnerName: partnerName.trim() || null },
+    });
+  };
 
   // Breadcrumb city
   const city = tournament.location?.split(",")[0]?.trim() || tournament.location;
@@ -171,15 +264,14 @@ export default function PlayerTournamentView({
     { value: "overview",  label: "Overview" },
     { value: "events",    label: "Events" },
     { value: "brackets",  label: "Draw & Bracket" },
-    { value: "schedule",  label: "Schedule" },
     { value: "players",   label: "Players" },
     { value: "venue",     label: "Venue" },
     { value: "rules",     label: "Rules" },
   ];
 
   const TAB_TRIGGER =
-    "relative pb-3 px-0 mr-6 bg-transparent rounded-none border-0 text-[13px] font-sans font-medium text-pb-muted capitalize transition-colors duration-150 " +
-    "data-[state=active]:text-pb-ink data-[state=active]:shadow-none hover:text-pb-ink " +
+    "relative pb-3 px-0 py-0 mr-6 bg-transparent rounded-none border-0 text-[13px] font-sans font-medium text-pb-muted capitalize transition-colors duration-150 " +
+    "data-[state=active]:bg-transparent data-[state=active]:text-pb-ink data-[state=active]:shadow-none hover:text-pb-ink " +
     "after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-pb-ink after:opacity-0 " +
     "data-[state=active]:after:opacity-100";
 
@@ -195,6 +287,277 @@ export default function PlayerTournamentView({
       </Helmet>
 
       <div className="min-h-screen bg-pb-paper">
+
+        {/* ══ MOBILE LAYOUT ═════════════════════════════════════════════ */}
+        <div className="md:hidden">
+
+          {/* Hero */}
+          <div className="relative h-52 bg-pb-court overflow-hidden">
+            {tournament.image ? (
+              <img src={tournament.image} alt={tournament.name} className="w-full h-full object-cover" />
+            ) : (
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 390 208" preserveAspectRatio="xMidYMid slice" fill="none">
+                <rect x="20" y="20" width="350" height="168" rx="2" stroke="rgba(245,242,235,0.2)" strokeWidth="1.5" />
+                <rect x="60" y="20" width="270" height="168" stroke="rgba(245,242,235,0.2)" strokeWidth="1.5" />
+                <line x1="195" y1="20" x2="195" y2="188" stroke="rgba(245,242,235,0.2)" strokeWidth="1.5" />
+                <circle cx="195" cy="104" r="26" stroke="rgba(245,242,235,0.2)" strokeWidth="1.5" />
+              </svg>
+            )}
+            <div className="absolute bottom-4 left-4">
+              {isLive ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pb-amber-tint border border-[#E8C9A1]">
+                  <Dot color="amber" size={5} pulse />
+                  <span className="font-mono text-[10px] font-bold text-[#7C3F0A] uppercase tracking-wide">
+                    {tournament.startDate ? `DAY ${Math.max(1, Math.floor((new Date().getTime() - new Date(tournament.startDate).getTime()) / 86400000) + 1)} · LIVE` : "LIVE"}
+                  </span>
+                </div>
+              ) : isOpen ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 border border-white/25">
+                  <span className="font-mono text-[10px] font-bold text-white uppercase tracking-wide">REGISTRATION OPEN</span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Tournament info */}
+          <div className="px-4 pt-4 pb-3">
+            <p className="font-mono text-[10.5px] text-pb-muted uppercase tracking-[0.08em] mb-2">
+              {[
+                tournament.startDate && tournament.endDate
+                  ? `${format(new Date(tournament.startDate), "EEE d")} – ${format(new Date(tournament.endDate), "EEE d MMM").toUpperCase()}`
+                  : tournament.startDate
+                  ? format(new Date(tournament.startDate), "EEE d MMM yyyy").toUpperCase()
+                  : null,
+                tournament.location?.split(",")[0]?.trim().toUpperCase() || tournament.location?.toUpperCase(),
+                tournament.venue?.courts ? `${tournament.venue.courts} COURTS` : null,
+              ].filter(Boolean).join(" · ")}
+            </p>
+            <h1 className="font-display font-black text-[34px] tracking-[-0.04em] leading-[0.95] text-pb-ink mb-3">
+              {tournament.name}
+            </h1>
+            <div className="flex flex-wrap gap-1.5">
+              {tournament.format && (
+                <span className="px-2.5 py-1 rounded-full border border-pb-hairline font-mono text-[10.5px] text-pb-ink uppercase tracking-[0.06em]">
+                  {tournament.format}
+                </span>
+              )}
+              {fees.length > 0 && (
+                <span className="px-2.5 py-1 rounded-full border border-pb-hairline font-mono text-[10.5px] text-pb-ink uppercase tracking-[0.06em]">
+                  {feeRange} ENTRY
+                </span>
+              )}
+              {isLive && (
+                <span className="px-2.5 py-1 rounded-full bg-pb-amber-tint border border-[#E8C9A1] font-mono text-[10.5px] text-[#7C3F0A] uppercase tracking-[0.06em] flex items-center gap-1">
+                  <Dot color="amber" size={4} pulse /> LIVE
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Event selection — full cards */}
+          {tournament.events?.length > 0 && (
+            <div className="px-4 py-3 border-t border-pb-hairline">
+              <p className="font-mono text-[10px] text-pb-muted uppercase tracking-[0.12em] mb-3">
+                {isLive ? "EVENTS" : "YOUR EVENT"}
+              </p>
+
+              <div className="flex flex-col gap-2">
+                {tournament.events.map((evt: any) => {
+                  const isSelected = selectedEventId === evt._id;
+                  const spots = Math.max(0, (evt.maxTeams ?? 0) - (evt.currentTeams ?? 0));
+                  const isFull = spots === 0 && (evt.maxTeams ?? 0) > 0;
+                  return (
+                    <button
+                      key={evt._id}
+                      onClick={() => !isFull && setSelectedEventId(isSelected ? null : evt._id)}
+                      disabled={isFull}
+                      className={cn(
+                        "w-full text-left p-4 rounded-[12px] border transition-all",
+                        isSelected
+                          ? "border-pb-ink bg-white shadow-sm"
+                          : isFull
+                          ? "border-pb-hairline bg-pb-surface opacity-50 cursor-not-allowed"
+                          : "border-pb-hairline bg-white active:bg-pb-surface"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-display font-bold text-[15px] text-pb-ink leading-tight">
+                            {evt.name}
+                            {evt.skillLevel ? ` · ${evt.skillLevel}` : ""}
+                          </p>
+                          <p className="font-mono text-[11px] text-pb-muted mt-1">
+                            {[
+                              `${evt.currentTeams ?? 0} / ${evt.maxTeams ?? "—"} PLAYERS`,
+                              evt.playFormat ? formatPlayFormatShort(evt.playFormat) : null,
+                            ].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                        <div className="shrink-0 mt-0.5">
+                          {isFull ? (
+                            <span className="px-2.5 py-1 rounded-full border border-pb-hairline font-mono text-[10px] text-pb-muted uppercase">FULL</span>
+                          ) : evt.entryFee > 0 ? (
+                            <span className={cn(
+                              "px-2.5 py-1 rounded-full font-mono text-[11px] font-medium",
+                              isSelected
+                                ? "bg-[#FEF3E2] border border-[#F5D79E] text-[#92400E]"
+                                : "bg-pb-surface border border-pb-hairline text-pb-muted"
+                            )}>
+                              ${evt.entryFee}
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full border border-pb-hairline font-mono text-[10px] text-pb-muted">FREE</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Schedule (live only — upcoming matches) */}
+          {isLive && tournament.matches?.length > 0 && (
+            <div className="px-4 py-3 border-t border-pb-hairline">
+              <p className="font-mono text-[10px] text-pb-muted uppercase tracking-[0.12em] mb-3">
+                UPCOMING MATCHES
+              </p>
+              <div className="divide-y divide-pb-hairline">
+                {(tournament.matches as any[])
+                  .filter((m: any) => m.status !== "completed")
+                  .sort((a: any, b: any) => new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime())
+                  .slice(0, 5)
+                  .map((match: any, i: number) => {
+                    const isMatchLive = match.status === "in-progress";
+                    const timeStr = match.startTime ? format(new Date(match.startTime), "HH:mm") : "—";
+                    const teamA = match.teams?.[0]?.name || match.team1?.name || "TBD";
+                    const teamB = match.teams?.[1]?.name || match.team2?.name || "TBD";
+                    return (
+                      <div key={i} className={cn("flex items-center gap-4 py-3", isMatchLive && "bg-pb-amber-tint/30 -mx-4 px-4")}>
+                        <span className="font-mono text-[13px] text-pb-muted w-10 shrink-0 tabular-nums">{timeStr}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-mono text-[10px] text-pb-muted uppercase tracking-[0.06em]">
+                            {match.round || "MATCH"}
+                            {match.courtNumber ? ` · CT ${match.courtNumber}` : ""}
+                          </p>
+                          <p className="font-display font-bold text-[13px] text-pb-ink truncate mt-0.5">
+                            {teamA} vs {teamB}
+                          </p>
+                        </div>
+                        {isMatchLive && (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-pb-amber-tint border border-[#E8C9A1]">
+                            <Dot color="amber" size={4} pulse />
+                            <span className="font-mono text-[9px] font-bold text-[#7C3F0A] uppercase">NOW</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {/* Spacer for bottom bar */}
+          <div className="h-28" />
+
+          {/* Team selection modal */}
+          {showTeamModal && selectedEvent && (
+            <div className="fixed inset-0 z-50">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setShowTeamModal(false)} />
+              <div className="absolute bottom-0 left-0 right-0 bg-pb-paper rounded-t-[16px] px-5 pb-8" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 32px)" }}>
+                {/* Handle */}
+                <div className="w-10 h-1 bg-pb-hairline rounded-full mx-auto mt-3 mb-6" />
+
+                <div className="flex items-start justify-between mb-5">
+                  <div>
+                    <p className="font-mono text-[10px] text-pb-muted uppercase tracking-[0.12em] mb-0.5">Register</p>
+                    <h3 className="font-display font-black text-[22px] text-pb-ink tracking-[-0.03em] leading-tight">
+                      {selectedEvent.name}
+                    </h3>
+                    <p className="font-mono text-[11px] text-pb-muted mt-0.5">
+                      {selectedEvent.entryFee > 0 ? `$${selectedEvent.entryFee} entry` : "Free entry"}
+                      {selectedEvent.skillLevel ? ` · Skill ${selectedEvent.skillLevel}` : ""}
+                    </p>
+                  </div>
+                  <button onClick={() => setShowTeamModal(false)} className="text-pb-muted mt-1">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="mb-5">
+                  <label className="block font-mono text-[10px] text-pb-muted uppercase tracking-[0.12em] mb-2">
+                    Partner name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={partnerName}
+                    onChange={(e) => setPartnerName(e.target.value)}
+                    placeholder="Leave blank to find a partner"
+                    className="w-full px-4 py-3 border border-pb-hairline rounded-[10px] bg-white text-[14px] text-pb-ink placeholder:text-pb-faint font-sans outline-none focus:border-pb-ink transition-colors"
+                  />
+                  <p className="font-mono text-[10px] text-pb-faint mt-1.5">
+                    You can also find or invite a partner during checkout.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleTeamCheckout}
+                  className="w-full h-[52px] bg-pb-ink text-white rounded-[10px] font-display font-bold text-[15px] flex items-center justify-center gap-2"
+                >
+                  Continue to checkout
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile sticky bottom bar */}
+        <div className="md:hidden fixed bottom-[54px] left-0 right-0 bg-pb-paper border-t border-pb-hairline px-4 py-3 z-20 flex gap-3">
+          {isLive ? (
+            <>
+              <Link
+                to={`/tournaments/${id}/tickets`}
+                className="flex items-center justify-center gap-2 flex-1 h-[46px] rounded-[10px] border border-pb-hairline bg-white font-display font-bold text-[14px] text-pb-ink"
+              >
+                <QrCode size={16} />
+                Ticket
+              </Link>
+              <Link
+                to={`/live/${id}`}
+                className="flex items-center justify-center gap-2 flex-[2] h-[46px] rounded-[10px] bg-pb-ink font-display font-bold text-[14px] text-white"
+              >
+                <Graph size={16} />
+                Live draw
+              </Link>
+            </>
+          ) : isOpen ? (
+            <button
+              onClick={handleMobileRegister}
+              disabled={!selectedEventId}
+              className={cn(
+                "flex-1 h-[46px] rounded-[10px] font-display font-bold text-[15px] text-white bg-pb-ink transition-all",
+                !selectedEventId && "opacity-30 blur-[1.5px] cursor-default"
+              )}
+            >
+              {selectedEventId
+                ? `Register · ${selectedEvent?.entryFee > 0 ? `$${selectedEvent.entryFee}` : "Free"}`
+                : "Select an event"}
+            </button>
+          ) : (
+            <Link
+              to={`/live/${id}`}
+              className="flex items-center justify-center gap-2 flex-1 h-[46px] rounded-[10px] bg-pb-ink font-display font-bold text-[14px] text-white"
+            >
+              <Graph size={16} />
+              View bracket
+            </Link>
+          )}
+        </div>
+
+        {/* ══ DESKTOP LAYOUT ════════════════════════════════════════════ */}
+        <div className="hidden md:block">
 
         {/* ── Hero ──────────────────────────────────────────────────────── */}
         <div className="max-w-[1200px] mx-auto px-6 pt-6 pb-0">
@@ -265,9 +628,9 @@ export default function PlayerTournamentView({
                   </button>
                   <ExportButtons
                     tournament={tournament}
-                    matches={tournament.matches || []}
-                    teams={tournament.teams || []}
-                    events={tournament.events || []}
+                    matches={exportData?.matches || []}
+                    teams={exportData?.teams || []}
+                    events={events}
                     variant="outline"
                   />
                 </div>
@@ -468,14 +831,9 @@ export default function PlayerTournamentView({
                   <BracketViewer tournamentId={id} />
                 </TabsContent>
 
-                {/* Schedule */}
-                <TabsContent value="schedule" className="mt-0">
-                  <TournamentSchedule tournamentId={id} tournamentStartDate={tournament.startDate} />
-                </TabsContent>
-
                 {/* Players */}
                 <TabsContent value="players" className="mt-0">
-                  <RegisteredPlayers tournamentId={id} />
+                  <PublicRegisteredPlayers eventIds={events.map((e: any) => e._id)} />
                 </TabsContent>
 
                 {/* Venue */}
@@ -668,6 +1026,7 @@ export default function PlayerTournamentView({
             </div>
           </Tabs>
         </div>
+        </div>{/* end desktop wrapper */}
       </div>
     </Layout>
   );

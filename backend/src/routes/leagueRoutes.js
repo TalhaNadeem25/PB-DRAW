@@ -140,6 +140,21 @@ router.post('/:id/register', protect, async (req, res) => {
       return res.status(404).json({ success: false, message: 'League not found' });
     }
 
+    if (league.status !== 'open') {
+      return res.status(400).json({
+        success: false,
+        message: `Registration is not open for this league (status: ${league.status})`
+      });
+    }
+
+    if (league.signupType === 'closed') {
+      return res.status(400).json({ success: false, message: 'This league is invite-only' });
+    }
+
+    if (league.registrationDeadline && new Date() > new Date(league.registrationDeadline)) {
+      return res.status(400).json({ success: false, message: 'Registration deadline has passed' });
+    }
+
     const alreadyRegistered = league.players.some(
       (p) => p.player.toString() === req.user._id.toString()
     );
@@ -455,6 +470,10 @@ router.put('/:id/matches/:matchId/score', protect, async (req, res) => {
 
     const s1 = Number(score1);
     const s2 = Number(score2);
+
+    if (s1 === s2) {
+      return res.status(400).json({ success: false, message: 'Scores cannot be tied — a match must have a winner' });
+    }
 
     // Validate against match format if provided
     if (matchFormat && MATCH_FORMAT_CONFIGS[matchFormat]) {
