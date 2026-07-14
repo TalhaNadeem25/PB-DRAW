@@ -4,6 +4,7 @@ import Team from '../models/Team.js';
 import Event from '../models/Event.js';
 import User from '../models/User.js';
 import { sendBulkCommunicationEmail } from '../services/emailService.js';
+import { createBatchNotifications } from './notificationController.js';
 
 /**
  * Get recipients based on type
@@ -191,7 +192,7 @@ export const previewRecipients = async (req, res) => {
 export const sendBulkMessage = async (req, res) => {
   try {
     const { tournamentId } = req.params;
-    const { subject, message, recipientType, recipientEventId, template = 'custom' } = req.body;
+    const { subject, message, recipientType, recipientEventId, template = 'custom', channels = ['email'] } = req.body;
 
     // Validate required fields
     if (!subject || !message || !recipientType) {
@@ -200,6 +201,14 @@ export const sendBulkMessage = async (req, res) => {
         message: 'Subject, message, and recipient type are required'
       });
     }
+    if (!Array.isArray(channels) || channels.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Select at least one channel (email or push)'
+      });
+    }
+    const sendEmail = channels.includes('email');
+    const sendPush = channels.includes('push');
 
     // Verify tournament exists and user is organizer
     const tournament = await Tournament.findById(tournamentId);
@@ -243,41 +252,63 @@ export const sendBulkMessage = async (req, res) => {
         status: 'pending'
       })),
       template,
+      channels,
       status: 'sending'
     });
+
+    const io = req.app.get('io');
+
+    // Push + in-app notification, sent together via the shared notification pipeline
+    if (sendPush) {
+      const pushRecipientIds = recipients.filter(r => r.user).map(r => r.user);
+      if (pushRecipientIds.length > 0) {
+        createBatchNotifications(io, pushRecipientIds, {
+          type: 'tournament-update',
+          title: subject,
+          message,
+          data: { tournamentId }
+        }).catch(error => console.error('Communication push send error:', error));
+      }
+    }
 
     // Send emails in background
     let successCount = 0;
     let failedCount = 0;
 
-    // Process in batches of 10 for better performance
-    const batchSize = 10;
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const batch = recipients.slice(i, i + batchSize);
-      
-      await Promise.all(batch.map(async (recipient, index) => {
-        try {
-          await sendBulkCommunicationEmail({
-            to: recipient.email,
-            recipientName: recipient.name,
-            subject,
-            message,
-            tournamentName: tournament.name,
-            organizerName: req.user.name,
-            template
-          });
-          
-          // Update recipient status
-          communication.recipients[i + index].status = 'sent';
-          communication.recipients[i + index].sentAt = new Date();
-          successCount++;
-        } catch (error) {
-          console.error(`Failed to send to ${recipient.email}:`, error);
-          communication.recipients[i + index].status = 'failed';
-          communication.recipients[i + index].error = error.message;
-          failedCount++;
-        }
-      }));
+    if (sendEmail) {
+      // Process in batches of 10 for better performance
+      const batchSize = 10;
+      for (let i = 0; i < recipients.length; i += batchSize) {
+        const batch = recipients.slice(i, i + batchSize);
+
+        await Promise.all(batch.map(async (recipient, index) => {
+          try {
+            await sendBulkCommunicationEmail({
+              to: recipient.email,
+              recipientName: recipient.name,
+              subject,
+              message,
+              tournamentName: tournament.name,
+              organizerName: req.user.name,
+              template
+            });
+
+            // Update recipient status
+            communication.recipients[i + index].status = 'sent';
+            communication.recipients[i + index].sentAt = new Date();
+            successCount++;
+          } catch (error) {
+            console.error(`Failed to send to ${recipient.email}:`, error);
+            communication.recipients[i + index].status = 'failed';
+            communication.recipients[i + index].error = error.message;
+            failedCount++;
+          }
+        }));
+      }
+    } else {
+      // Push-only send — no per-recipient email status to track
+      communication.recipients.forEach(r => { r.status = 'sent'; r.sentAt = new Date(); });
+      successCount = recipients.length;
     }
 
     // Update communication status
@@ -287,7 +318,6 @@ export const sendBulkMessage = async (req, res) => {
     await communication.save();
 
     // Emit socket event for real-time notification
-    const io = req.app.get('io');
     if (io) {
       io.to(`tournament:${tournamentId}`).emit('communication-sent', {
         id: communication._id,

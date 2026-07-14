@@ -56,6 +56,11 @@ const communicationSchema = new mongoose.Schema({
     enum: ['custom', 'schedule-update', 'reminder', 'announcement', 'cancellation'],
     default: 'custom'
   },
+  channels: {
+    type: [String],
+    enum: ['email', 'push'],
+    default: ['email']
+  },
   status: {
     type: String,
     enum: ['draft', 'sending', 'sent', 'failed'],

@@ -93,7 +93,8 @@ const TournamentCommunications = () => {
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>(["all"]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-  
+  const [channels, setChannels] = useState<("email" | "push")[]>(["email"]);
+
   // UI state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [recipientPreview, setRecipientPreview] = useState<RecipientPreview | null>(null);
@@ -143,6 +144,7 @@ const TournamentCommunications = () => {
       setSelectedRecipients(["all"]);
       setSelectedEventId("");
       setSelectedTemplate("");
+      setChannels(["email"]);
       setIsPreviewOpen(false);
     },
     onError: (error: any) => {
@@ -184,6 +186,10 @@ const TournamentCommunications = () => {
       toast.error("Please enter a message");
       return;
     }
+    if (channels.length === 0) {
+      toast.error("Select at least one delivery channel");
+      return;
+    }
 
     const recipientType = selectedRecipients[0] || 'all';
     sendMutation.mutate({
@@ -192,7 +198,14 @@ const TournamentCommunications = () => {
       recipientType,
       recipientEventId: recipientType === 'event' ? selectedEventId : undefined,
       template: selectedTemplate || 'custom',
+      channels,
     });
+  };
+
+  const handleChannelChange = (channel: "email" | "push", checked: boolean) => {
+    setChannels((prev) =>
+      checked ? [...prev, channel] : prev.filter((c) => c !== channel)
+    );
   };
 
   const handleRecipientChange = (type: string, checked: boolean) => {
@@ -378,6 +391,29 @@ const TournamentCommunications = () => {
                       <p className="text-xs text-muted-foreground">
                         Supports basic formatting: **bold**, *italic*, [links](url)
                       </p>
+                    </div>
+
+                    {/* Delivery channels */}
+                    <div className="space-y-2">
+                      <Label>Send via *</Label>
+                      <div className="flex gap-6">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="channel-email"
+                            checked={channels.includes("email")}
+                            onCheckedChange={(checked) => handleChannelChange("email", !!checked)}
+                          />
+                          <Label htmlFor="channel-email" className="font-normal cursor-pointer">Email</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="channel-push"
+                            checked={channels.includes("push")}
+                            onCheckedChange={(checked) => handleChannelChange("push", !!checked)}
+                          />
+                          <Label htmlFor="channel-push" className="font-normal cursor-pointer">Push notification</Label>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Actions */}

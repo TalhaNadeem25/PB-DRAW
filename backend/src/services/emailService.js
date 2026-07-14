@@ -706,6 +706,52 @@ export const sendBulkCommunicationEmail = async ({
   }
 };
 
+// ─── 11b. Platform announcement (superadmin) ──────────────────────────────────
+
+export const sendAdminAnnouncementEmail = async ({ to, name, subject, message }) => {
+  const transport = getTransporter();
+  if (!transport) return { success: false, message: 'Email service not configured' };
+
+  const formatMessage = (msg) => msg
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n\n/g, '</p><p style="margin:0 0 16px 0;">')
+    .replace(/\n/g, '<br>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#1F4A2E;">$1</a>');
+
+  const html = wrap(`
+    ${header()}
+    <div class="body">
+      <div class="pill pill-green">Announcement</div>
+      <p class="p">Hi ${name || 'there'},</p>
+      <div style="font-size:15px;color:#47443E;line-height:1.7;">
+        <p style="margin:0 0 16px 0;">${formatMessage(message)}</p>
+      </div>
+      <div class="btn-wrap">
+        <a href="${process.env.CLIENT_URL}/dashboard" class="btn">View Dashboard</a>
+      </div>
+    </div>
+    ${footer('This is a message from the PB Draw team.')}
+  `);
+
+  const text = `Hi ${name || 'there'},\n\n${message}\n\n---\nPB Draw\n${process.env.CLIENT_URL}/dashboard`;
+
+  try {
+    const info = await transport.sendMail({
+      from: `"PB Draw" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log('Admin announcement email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending admin announcement email:', error);
+    throw error;
+  }
+};
+
 // ─── 12. Email verification ───────────────────────────────────────────────────
 
 export const sendEmailVerificationEmail = async ({ to, name, verificationToken }) => {
@@ -859,6 +905,7 @@ export default {
   sendPartnerNotificationEmail,
   sendPartnerRefundEmail,
   sendBulkCommunicationEmail,
+  sendAdminAnnouncementEmail,
   sendEmailVerificationEmail,
   sendOrganizerRefundEmail,
   sendTournamentCancelledEmail,

@@ -35,6 +35,7 @@ import testDataRoutes from '../backend/src/routes/testDataRoutes.js';
 import leagueRoutes from '../backend/src/routes/leagueRoutes.js';
 import statsRoutes from '../backend/src/routes/statsRoutes.js';
 import blogRoutes from '../backend/src/routes/blogRoutes.js';
+import adminRoutes from '../backend/src/routes/adminRoutes.js';
 import { protect, authorize } from '../backend/src/middleware/auth.js';
 import { assignMatchToCourt } from '../backend/src/controllers/courtController.js';
 import { handleStripeWebhook } from '../backend/src/controllers/webhookController.js';
@@ -141,6 +142,7 @@ app.use('/api/court-management', courtRoutes);
 app.use('/api/leagues', leagueRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/blog', blogRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api', testDataRoutes);
 
 // Nested routes (must come before standalone routes)

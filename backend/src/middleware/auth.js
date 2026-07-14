@@ -61,3 +61,15 @@ export const authorize = (...roles) => {
     next();
   };
 };
+
+// Restrict to the platform super admin — same email used for the blog/newsletter admin gates
+export const SUPER_ADMIN_EMAIL = 'nadeemtalha24@gmail.com';
+export const requireSuperAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.email !== SUPER_ADMIN_EMAIL) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to access this route'
+    });
+  }
+  next();
+};

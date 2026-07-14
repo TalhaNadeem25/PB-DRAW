@@ -744,6 +744,7 @@ export const communicationAPI = {
     recipientType: string;
     recipientEventId?: string;
     template?: string;
+    channels?: ('email' | 'push')[];
   }) => {
     const response = await api.post(`/communications/${tournamentId}/send`, data);
     return response.data;
@@ -981,6 +982,25 @@ export const stripeConfigAPI = {
 
   delete: async () => {
     const response = await api.delete('/stripe-config');
+    return response.data;
+  },
+};
+
+// Superadmin
+export const adminAPI = {
+  searchUsers: async (q: string) => {
+    const response = await api.get('/admin/users/search', { params: { q } });
+    return response.data;
+  },
+
+  sendNotification: async (data: {
+    target: 'single' | 'all';
+    userId?: string;
+    title: string;
+    message: string;
+    channels: ('email' | 'push')[];
+  }) => {
+    const response = await api.post('/admin/notifications/send', data);
     return response.data;
   },
 };

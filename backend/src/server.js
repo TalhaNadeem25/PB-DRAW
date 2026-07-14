@@ -38,6 +38,7 @@ import courtRoutes from './routes/courtRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import testDataRoutes from './routes/testDataRoutes.js';
 import leagueRoutes from './routes/leagueRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { assignMatchToCourt } from './controllers/courtController.js';
 import { handleStripeWebhook } from './controllers/webhookController.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
@@ -136,6 +137,7 @@ app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/leagues', leagueRoutes);
 app.use('/api/communications', communicationRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/court-management', courtRoutes);
 app.use('/api', testDataRoutes);
 

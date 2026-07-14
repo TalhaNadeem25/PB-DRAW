@@ -3,6 +3,7 @@ import CancelRegistrationDialog from "@/components/registration/CancelRegistrati
 import OrganizerDashboard from "@/components/dashboard/OrganizerDashboard";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import NewsletterSubscribersPanel from "@/components/dashboard/NewsletterSubscribersPanel";
+import AdminNotificationPanel from "@/components/dashboard/AdminNotificationPanel";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/contexts/AuthContext";
 import { Warning, Bell, Gear, Article, ArrowRight } from "@phosphor-icons/react";
@@ -324,6 +325,7 @@ const Dashboard = () => {
                   Manage Blog
                 </Link>
               </div>
+              <AdminNotificationPanel />
               <NewsletterSubscribersPanel />
             </div>
           )}
