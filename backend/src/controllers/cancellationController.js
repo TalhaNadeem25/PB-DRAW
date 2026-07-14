@@ -4,6 +4,7 @@ import Team from '../models/Team.js';
 import Payment from '../models/Payment.js';
 import Tournament from '../models/Tournament.js';
 import { promoteNextWaitlist } from './waitlistController.js';
+import { createNotification } from './notificationController.js';
 import stripe from '../config/stripe.js';
 import { sendCancellationConfirmationEmail, sendPartnerNotificationEmail, sendPartnerRefundEmail, sendOrganizerRefundEmail, sendTournamentCancelledEmail } from '../services/emailService.js';
 
@@ -636,6 +637,24 @@ export const organizerRefundPayment = async (req, res, next) => {
       console.error('Failed to send refund email:', emailErr);
     }
 
+    // In-app notification so it shows up immediately, not just via email
+    try {
+      await createNotification(req.app.get('io'), payment.user._id, {
+        type: 'registration-refunded',
+        title: `Refund processed — ${event.name}`,
+        message: refundAmount > 0
+          ? `You've been refunded $${(refundAmount / 100).toFixed(2)} for ${event.name} at ${tournament.name}.`
+          : `Your registration for ${event.name} at ${tournament.name} has been cancelled by the organizer.`,
+        data: {
+          tournamentId: tournament._id,
+          eventId: event._id,
+          paymentId: payment._id
+        }
+      });
+    } catch (notifErr) {
+      console.error('Failed to send refund notification:', notifErr);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Refund processed successfully',
@@ -746,6 +765,20 @@ export const bulkRefundTournament = async (req, res, next) => {
           });
         } catch (emailErr) {
           console.error(`Failed to send cancellation email to ${payment.user.email}:`, emailErr);
+        }
+
+        // In-app notification
+        try {
+          await createNotification(req.app.get('io'), payment.user._id, {
+            type: 'registration-refunded',
+            title: `${tournament.name} cancelled`,
+            message: paymentAmountCents > 0
+              ? `${tournament.name} has been cancelled. You've been refunded $${payment.amount.toFixed(2)}.`
+              : `${tournament.name} has been cancelled.`,
+            data: { tournamentId: tournament._id, paymentId: payment._id }
+          });
+        } catch (notifErr) {
+          console.error(`Failed to send refund notification to ${payment.user.email}:`, notifErr);
         }
 
         results.push({ paymentId: payment._id, status: 'refunded', amount: payment.amount });

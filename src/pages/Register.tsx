@@ -398,18 +398,22 @@ const Register = () => {
                       )}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-display font-bold text-[14px] text-pb-ink leading-snug truncate">{event.name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-display font-bold text-[14px] text-pb-ink leading-snug truncate">{event.name}</p>
+                          {isAlreadyRegistered && <Pill tone="court" mono className="text-[10px] shrink-0">Registered</Pill>}
+                        </div>
                         <p className="font-mono text-[10px] text-pb-muted mt-0.5">
                           {spotsLeft} spots · {event.entryFee > 0 ? `$${event.entryFee}` : "Free"}
                         </p>
                       </div>
-                      <div className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3",
-                        isSelected ? "border-pb-ink bg-pb-ink" : "border-pb-rule"
-                      )}>
-                        {isSelected && <Check size={10} weight="bold" className="text-white" />}
-                        {isAlreadyRegistered && <Check size={10} weight="bold" className="text-white" />}
-                      </div>
+                      {!isAlreadyRegistered && (
+                        <div className={cn(
+                          "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3",
+                          isSelected ? "border-pb-ink bg-pb-ink" : "border-pb-rule"
+                        )}>
+                          {isSelected && <Check size={10} weight="bold" className="text-white" />}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -19,6 +19,7 @@ const notificationSchema = new mongoose.Schema({
       'waitlist-promoted',
       'tournament-update',
       'registration-confirmed',
+      'registration-refunded',
       'check-in-reminder',
       'score-update',
       'general'
