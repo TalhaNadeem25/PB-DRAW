@@ -18,12 +18,21 @@ export const getFirebaseApp = () => {
   }
 
   try {
+    let privateKey = FIREBASE_PRIVATE_KEY.trim();
+    // Dashboard env var UIs (e.g. Vercel) don't strip surrounding quotes the
+    // way a .env file parser does — if the value was pasted with them, they
+    // end up as literal characters and break PEM parsing.
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    // Env vars store literal "\n" sequences instead of real newlines
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
     app = initializeApp({
       credential: cert({
         projectId: FIREBASE_PROJECT_ID,
         clientEmail: FIREBASE_CLIENT_EMAIL,
-        // Env vars store literal "\n" sequences instead of real newlines
-        privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+        privateKey
       })
     });
     return app;
