@@ -27,72 +27,77 @@ const getTransporter = () => {
 };
 
 // ─── Shared CSS ───────────────────────────────────────────────────────────────
+// Restrained, editorial styling — a single accent color used sparingly, quiet
+// hairline borders instead of tinted boxes, and sentence-case labels instead
+// of boxed all-caps monospace badges. Every send*Email function below reuses
+// these same class names, so the whole system's look changes from editing
+// only this block, header()/footer()/wrap() — no need to touch the 14
+// individual templates.
 
 const BASE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #F5F2EB; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 600px; margin: 32px auto; background: #ffffff; border: 1px solid #E8E4DC; }
+  body { background: #EDE9E0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 560px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; }
   /* Header */
-  .hdr { background: #0F0F0E; padding: 32px 40px; }
-  .hdr-logo { font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; line-height: 1; }
-  .hdr-sub { font-size: 12px; color: #888; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
-  /* Stripe */
-  .stripe { height: 3px; background: #1F4A2E; }
+  .hdr { padding: 34px 40px 26px; border-bottom: 2px solid #1F4A2E; }
+  .hdr-logo { font-size: 18px; font-weight: 700; color: #0F0F0E; letter-spacing: -0.01em; }
+  .hdr-sub { display: none; }
+  .stripe { display: none; }
   /* Body */
   .body { padding: 40px; }
-  /* Status pill */
-  .pill { display: inline-block; padding: 4px 10px; font-size: 11px; font-weight: 600; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.08em; border-radius: 100px; margin-bottom: 24px; }
-  .pill-green { background: #EEF6EE; color: #1F4A2E; border: 1px solid #B7DEB7; }
-  .pill-amber { background: #FEF6E8; color: #7C4A00; border: 1px solid #F0C87A; }
-  .pill-red   { background: #FEF0F0; color: #8B1A1A; border: 1px solid #F0A8A8; }
-  .pill-grey  { background: #F5F2EB; color: #555; border: 1px solid #E8E4DC; }
+  /* Eyebrow (plain text, no badge/box — a boxed status chip is what read as templated) */
+  .pill { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 16px; background: none; border: none; padding: 0; border-radius: 0; }
+  .pill-green { color: #1F4A2E; }
+  .pill-amber { color: #96650F; }
+  .pill-red   { color: #A23B2E; }
+  .pill-grey  { color: #86807A; }
   /* Heading */
-  .h1 { font-size: 26px; font-weight: 700; color: #0F0F0E; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 12px; }
-  .h2 { font-size: 14px; font-weight: 600; color: #0F0F0E; margin-bottom: 16px; }
+  .h1 { font-size: 23px; font-weight: 700; color: #0F0F0E; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 14px; }
+  .h2 { font-size: 15px; font-weight: 600; color: #0F0F0E; margin-bottom: 8px; }
   /* Body text */
-  .p { font-size: 15px; color: #3A3A38; line-height: 1.6; margin-bottom: 16px; }
-  .p-sm { font-size: 13px; color: #6B6B6B; line-height: 1.6; margin-bottom: 12px; }
-  /* Detail card */
-  .card { background: #FAFAF8; border: 1px solid #E8E4DC; margin: 24px 0; }
-  .card-hdr { padding: 12px 20px; border-bottom: 1px solid #E8E4DC; }
-  .card-label { font-size: 10px; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.12em; color: #888; }
-  .card-row { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 20px; border-bottom: 1px solid #E8E4DC; }
+  .p { font-size: 15px; color: #47443E; line-height: 1.65; margin-bottom: 16px; }
+  .p-sm { font-size: 13px; color: #86807A; line-height: 1.6; margin-bottom: 12px; }
+  /* Detail table */
+  .card { margin: 28px 0; }
+  .card-hdr { padding: 0 0 10px; }
+  .card-label { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: #86807A; }
+  .card-row { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #F0EDE6; }
   .card-row:last-child { border-bottom: none; }
-  .row-label { font-size: 13px; color: #6B6B6B; }
-  .row-value { font-size: 13px; font-weight: 600; color: #0F0F0E; text-align: right; max-width: 60%; }
-  .row-value-mono { font-family: 'Courier New', monospace; font-size: 12px; font-weight: 600; color: #0F0F0E; }
+  .row-label { font-size: 14px; color: #86807A; }
+  .row-value { font-size: 14px; font-weight: 600; color: #0F0F0E; text-align: right; max-width: 60%; }
+  .row-value-mono { font-family: 'SF Mono', 'Courier New', monospace; font-size: 13px; font-weight: 500; color: #0F0F0E; }
   /* CTA button */
-  .btn { display: inline-block; padding: 13px 28px; background: #1F4A2E; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; border-radius: 4px; }
-  .btn-outline { display: inline-block; padding: 13px 28px; background: transparent; color: #1F4A2E !important; text-decoration: none; font-size: 14px; font-weight: 600; border: 2px solid #1F4A2E; border-radius: 4px; }
-  .btn-red { display: inline-block; padding: 13px 28px; background: #8B1A1A; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 4px; }
-  .btn-wrap { margin: 28px 0; }
-  /* Info box */
-  .info { background: #FAFAF8; border-left: 3px solid #1F4A2E; padding: 16px 20px; margin: 20px 0; }
-  .info-amber { background: #FEF6E8; border-left: 3px solid #E8A020; padding: 16px 20px; margin: 20px 0; }
-  .info-red { background: #FEF0F0; border-left: 3px solid #C0392B; padding: 16px 20px; margin: 20px 0; }
-  .info p { font-size: 14px; color: #3A3A38; line-height: 1.6; margin: 0; }
-  .info-amber p { font-size: 14px; color: #7C4A00; line-height: 1.6; margin: 0; }
-  .info-red p { font-size: 14px; color: #8B1A1A; line-height: 1.6; margin: 0; }
+  .btn { display: inline-block; padding: 13px 26px; background: #1F4A2E; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; }
+  .btn-outline { display: inline-block; padding: 13px 26px; background: transparent; color: #1F4A2E !important; text-decoration: none; font-size: 14px; font-weight: 600; border: 1.5px solid #D8D2C5; border-radius: 8px; }
+  .btn-red { display: inline-block; padding: 13px 26px; background: #A23B2E; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; }
+  .btn-wrap { margin: 30px 0 6px; }
+  /* Note box — a thin rule instead of a tinted background block */
+  .info, .info-amber, .info-red { border-left: 2px solid #D8D2C5; padding: 1px 0 1px 16px; margin: 22px 0; background: none; }
+  .info-amber { border-left-color: #C08A2E; }
+  .info-red { border-left-color: #A23B2E; }
+  .info p, .info-amber p, .info-red p { font-size: 14px; line-height: 1.6; margin: 0; }
+  .info p { color: #6B665F; }
+  .info-amber p { color: #7C5215; }
+  .info-red p { color: #8B3226; }
   /* QR section */
-  .qr-box { border: 1px solid #E8E4DC; padding: 32px; margin: 24px 0; text-align: center; background: #FAFAF8; }
-  .qr-label { font-size: 10px; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.12em; color: #888; margin-bottom: 16px; }
-  .ticket-code { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: #0F0F0E; letter-spacing: 0.12em; display: inline-block; padding: 10px 20px; background: #F5F2EB; border: 1px solid #E8E4DC; margin: 12px 0; }
+  .qr-box { border: 1px solid #ECE8E0; border-radius: 10px; padding: 32px; margin: 28px 0; text-align: center; background: #FBFAF7; }
+  .qr-label { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: #86807A; margin-bottom: 18px; }
+  .ticket-code { font-family: 'SF Mono', 'Courier New', monospace; font-size: 15px; font-weight: 600; color: #0F0F0E; letter-spacing: 0.04em; display: inline-block; padding: 9px 18px; background: #ffffff; border: 1px solid #ECE8E0; border-radius: 8px; margin: 14px 0; }
   /* Divider */
-  .divider { height: 1px; background: #E8E4DC; margin: 28px 0; }
+  .divider { height: 1px; background: #ECE8E0; margin: 28px 0; }
   /* Big stat */
-  .stat { text-align: center; padding: 24px 0; }
-  .stat-num { font-size: 56px; font-weight: 700; color: #1F4A2E; letter-spacing: -0.04em; line-height: 1; }
-  .stat-label { font-size: 12px; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-top: 8px; }
+  .stat { text-align: center; padding: 20px 0; }
+  .stat-num { font-size: 46px; font-weight: 700; color: #1F4A2E; letter-spacing: -0.03em; line-height: 1; }
+  .stat-label { font-size: 13px; text-transform: none; letter-spacing: 0; color: #86807A; margin-top: 10px; }
   /* Organizer row */
-  .org { margin-top: 24px; padding-top: 20px; border-top: 1px solid #E8E4DC; }
-  .org-label { font-size: 10px; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.12em; color: #888; margin-bottom: 4px; }
+  .org { margin-top: 28px; padding-top: 20px; border-top: 1px solid #ECE8E0; }
+  .org-label { font-size: 12px; text-transform: none; letter-spacing: 0; color: #86807A; margin-bottom: 4px; }
   .org-name { font-size: 14px; font-weight: 600; color: #0F0F0E; margin-bottom: 2px; }
   .org-email { font-size: 13px; color: #1F4A2E; text-decoration: none; }
   /* Footer */
-  .ftr { background: #F5F2EB; border-top: 1px solid #E8E4DC; padding: 24px 40px; text-align: center; }
-  .ftr p { font-size: 12px; color: #888; line-height: 1.6; margin-bottom: 4px; }
-  .ftr a { color: #1F4A2E; text-decoration: none; }
+  .ftr { padding: 26px 40px 34px; text-align: center; }
+  .ftr p { font-size: 12px; color: #A6A196; line-height: 1.6; margin-bottom: 4px; }
+  .ftr a { color: #86807A; text-decoration: underline; }
 `;
 
 // ─── Shared layout helpers ────────────────────────────────────────────────────
@@ -100,15 +105,14 @@ const BASE_CSS = `
 const header = (subtitle) => `
   <div class="hdr">
     <div class="hdr-logo">PB Draw</div>
-    <div class="hdr-sub">${subtitle}</div>
+    <div class="hdr-sub">${subtitle || ''}</div>
   </div>
-  <div class="stripe"></div>
 `;
 
 const footer = (note) => `
   <div class="ftr">
     ${note ? `<p>${note}</p>` : ''}
-    <p>© ${new Date().getFullYear()} PB Draw. All rights reserved.</p>
+    <p>© ${new Date().getFullYear()} PB Draw</p>
   </div>
 `;
 
@@ -669,7 +673,7 @@ export const sendBulkCommunicationEmail = async ({
     ${header(tournamentName)}
     <div class="body">
       <p class="p">Hi ${recipientName || 'there'},</p>
-      <div style="font-size:15px;color:#3A3A38;line-height:1.7;">
+      <div style="font-size:15px;color:#47443E;line-height:1.7;">
         <p style="margin:0 0 16px 0;">${formatMessage(message)}</p>
       </div>
       <div class="divider"></div>
