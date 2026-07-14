@@ -6,7 +6,9 @@ import {
   markAsRead,
   markAllAsRead,
   deleteNotification,
-  deleteReadNotifications
+  deleteReadNotifications,
+  registerDeviceToken,
+  unregisterDeviceToken
 } from '../controllers/notificationController.js';
 
 const router = express.Router();
@@ -31,5 +33,9 @@ router.delete('/:id', deleteNotification);
 
 // Delete all read notifications
 router.delete('/read', deleteReadNotifications);
+
+// Register / unregister this device's push token
+router.post('/device-token', registerDeviceToken);
+router.delete('/device-token', unregisterDeviceToken);
 
 export default router;

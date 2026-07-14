@@ -1,5 +1,7 @@
 import Notification from '../models/Notification.js';
+import User from '../models/User.js';
 import { notifyPlayer } from '../utils/socket.js';
+import { sendPushToUser, sendPushToUsers } from '../utils/pushNotifications.js';
 
 // Get notifications for current user
 export const getNotifications = async (req, res) => {
@@ -135,6 +137,14 @@ export const createNotification = async (io, userId, notificationData) => {
       createdAt: notification.createdAt
     });
 
+    // Push to the user's registered devices. Best-effort — a push failure
+    // shouldn't fail whatever action (refund, waitlist promotion, etc.) triggered this.
+    sendPushToUser(userId, {
+      title: notification.title,
+      body: notification.message,
+      data: notification.data
+    }).catch((error) => console.error('Push notification error:', error));
+
     return notification;
   } catch (error) {
     console.error('Create notification error:', error);
@@ -162,9 +172,60 @@ export const createBatchNotifications = async (io, userIds, notificationData) =>
       });
     });
 
+    sendPushToUsers(userIds, {
+      title: notificationData.title,
+      body: notificationData.message,
+      data: notificationData.data
+    }).catch((error) => console.error('Push notification error:', error));
+
     return notifications;
   } catch (error) {
     console.error('Batch create notifications error:', error);
     throw error;
+  }
+};
+
+// Register (or refresh) a device's push token for the current user
+export const registerDeviceToken = async (req, res) => {
+  try {
+    const { token, platform } = req.body;
+    if (!token || !['ios', 'android'].includes(platform)) {
+      return res.status(400).json({ success: false, message: 'token and platform (ios|android) are required' });
+    }
+
+    // A token can only belong to one account at a time — strip it from any
+    // other user first (e.g. a shared device that logged into a new account).
+    await User.updateMany(
+      { _id: { $ne: req.user.id }, 'deviceTokens.token': token },
+      { $pull: { deviceTokens: { token } } }
+    );
+
+    await User.updateOne({ _id: req.user.id }, { $pull: { deviceTokens: { token } } });
+    await User.updateOne(
+      { _id: req.user.id },
+      { $push: { deviceTokens: { token, platform, addedAt: new Date() } } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Register device token error:', error);
+    res.status(500).json({ success: false, message: 'Failed to register device token' });
+  }
+};
+
+// Unregister a device's push token (e.g. on logout)
+export const unregisterDeviceToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'token is required' });
+    }
+
+    await User.updateOne({ _id: req.user.id }, { $pull: { deviceTokens: { token } } });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Unregister device token error:', error);
+    res.status(500).json({ success: false, message: 'Failed to unregister device token' });
   }
 };

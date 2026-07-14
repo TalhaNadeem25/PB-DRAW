@@ -56,6 +56,7 @@ const allowedOrigins = [
   'capacitor://localhost',
   'ionic://localhost',
   'http://localhost',
+  'https://localhost',
   'http://localhost:8080',
   'http://localhost:5173',
 ].filter(Boolean);

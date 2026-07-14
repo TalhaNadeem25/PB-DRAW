@@ -14,6 +14,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { setOnUnauthorized } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { initPushNotifications, setOnNotificationTapped } from "@/lib/pushNotifications";
 import { Users, Ticket } from "@phosphor-icons/react";
 import { Analytics } from "@vercel/analytics/react";
 import { PageSkeleton } from "@/components/ui/skeleton-card";
@@ -67,11 +69,21 @@ const queryClient = new QueryClient();
 
 function AppRoutes() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   useSwipeBack();
   useEffect(() => {
     setOnUnauthorized(() => navigate("/login"));
     return () => setOnUnauthorized(null);
   }, [navigate]);
+  useEffect(() => {
+    setOnNotificationTapped((url) => navigate(url));
+    return () => setOnNotificationTapped(null);
+  }, [navigate]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      initPushNotifications();
+    }
+  }, [isAuthenticated]);
   return (
     <>
       <ScrollToTop />

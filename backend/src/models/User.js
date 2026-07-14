@@ -126,6 +126,12 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Push notification device tokens (FCM registration tokens, shared format for iOS/Android)
+  deviceTokens: [{
+    token: { type: String, required: true },
+    platform: { type: String, enum: ['ios', 'android'], required: true },
+    addedAt: { type: Date, default: Date.now }
+  }],
   // Stripe Connect fields
   stripeConnectAccountId: {
     type: String,

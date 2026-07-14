@@ -21,7 +21,11 @@ end
 
 target 'App' do
   capacitor_pods
-  # Add your Pods here
+  # Bridges the raw APNs token into an FCM registration token, so
+  # @capacitor/push-notifications hands the JS layer an FCM token on iOS
+  # too and the backend can send to both platforms through one Firebase
+  # Admin SDK code path.
+  pod 'FirebaseMessaging'
 end
 
 post_install do |installer|
