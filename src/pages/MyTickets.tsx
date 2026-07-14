@@ -8,6 +8,7 @@ import TicketCard from '../components/check-in/TicketCard';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Dialog, DialogContent, DialogTitle } from '../components/ui/dialog';
 import { Eyebrow, Pill } from '../components/ui/pb';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,7 @@ export default function MyTickets() {
   const navigate = useNavigate();
   const [searchTerm, setMagnifyingGlassTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'all'>('upcoming');
+  const [qrModalTicket, setQrModalTicket] = useState<TicketData | null>(null);
 
   // Fetch user's tickets
   const { data: tickets, isLoading, error } = useQuery<TicketData[]>({
@@ -213,10 +215,17 @@ export default function MyTickets() {
                         <span className="font-mono text-[10px] text-pb-faint uppercase tracking-[0.12em]">
                           #{ticket.ticketCode}
                         </span>
-                        <div className="flex items-center gap-1.5 text-pb-court">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setQrModalTicket(ticket);
+                          }}
+                          className="flex items-center gap-1.5 text-pb-court"
+                        >
                           <QrCode size={13} />
                           <span className="font-mono text-[11px]">Show QR</span>
-                        </div>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -367,6 +376,52 @@ export default function MyTickets() {
         </div>
 
       </div>
+
+      <Dialog open={!!qrModalTicket} onOpenChange={(open) => !open && setQrModalTicket(null)}>
+        <DialogContent className="max-w-sm rounded-[8px] p-0 gap-0 overflow-hidden">
+          {qrModalTicket && (
+            <div className="bg-pb-surface">
+              <div className="px-5 py-4 border-b border-pb-hairline">
+                <DialogTitle className="font-display font-bold text-[16px] text-pb-ink leading-snug">
+                  {qrModalTicket.tournament.name}
+                </DialogTitle>
+                <p className="font-mono text-[11px] text-pb-muted mt-0.5">
+                  {qrModalTicket.events.map((e) => e.name).join(" · ")}
+                </p>
+              </div>
+              <div className="px-5 py-6 flex flex-col items-center">
+                {qrModalTicket.qrCodeUrl ? (
+                  <img
+                    src={qrModalTicket.qrCodeUrl}
+                    alt="QR Code"
+                    className="w-56 h-56 object-contain bg-white rounded-[8px] border border-pb-hairline p-3"
+                  />
+                ) : (
+                  <div className="w-56 h-56 flex items-center justify-center bg-pb-surface2 rounded-[8px] border border-pb-hairline">
+                    <p className="font-mono text-[11px] text-pb-muted">Ticket generating...</p>
+                  </div>
+                )}
+                <span className="font-mono text-[14px] font-bold tracking-[0.12em] text-pb-court mt-4">
+                  #{qrModalTicket.ticketCode}
+                </span>
+                <p className="font-mono text-[11px] text-pb-muted mt-2 text-center">
+                  Present this QR code at check-in on event day
+                </p>
+                {qrModalTicket.ticketPdfUrl && (
+                  <Button
+                    variant="outline"
+                    className="mt-5 w-full"
+                    onClick={() => window.open(qrModalTicket.ticketPdfUrl, '_blank')}
+                  >
+                    <DownloadSimple className="w-4 h-4 mr-2" />
+                    Download PDF Ticket
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
