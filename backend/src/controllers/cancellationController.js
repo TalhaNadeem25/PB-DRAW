@@ -109,8 +109,10 @@ export const requestCancellation = async (req, res, next) => {
     const refundPercentage = calculateRefundPercentage(tournament.startDate);
     const amountPaid = Math.round(payment.amount * 100); // payment.amount is stored in dollars; convert to cents
 
-    // Stripe fees are non-refundable (2.9% + $0.30)
-    const stripeFee = (amountPaid * 0.029) + 30; // in cents
+    // Free registrations never had a Stripe fee charged against them, so there's
+    // nothing to deduct — computing one here would produce a negative "refundable"
+    // amount for a $0 payment.
+    const stripeFee = amountPaid > 0 ? (amountPaid * 0.029) + 30 : 0; // in cents
     const refundableAmount = amountPaid - stripeFee;
     const refundAmount = Math.floor((refundableAmount * refundPercentage) / 100);
 
@@ -444,7 +446,8 @@ export const calculateRefundPreview = async (req, res, next) => {
 
     const refundPercentage = calculateRefundPercentage(event.tournament.startDate);
     const amountPaid = Math.round(payment.amount * 100); // payment.amount is stored in dollars; convert to cents
-    const stripeFee = (amountPaid * 0.029) + 30;
+    // Free registrations never had a Stripe fee charged against them.
+    const stripeFee = amountPaid > 0 ? (amountPaid * 0.029) + 30 : 0;
     const refundableAmount = amountPaid - stripeFee;
     const refundAmount = Math.floor((refundableAmount * refundPercentage) / 100);
 
@@ -579,7 +582,10 @@ export const organizerRefundPayment = async (req, res, next) => {
       cancellationType: 'organizer-initiated',
       requestedBy: req.user.id,
       refundAmount,
-      refundPercentage: Math.round((refundAmount / paymentAmountCents) * 100),
+      // paymentAmountCents is 0 for free registrations — there's nothing to take a
+      // percentage of, and dividing by zero produced NaN, which failed the Number
+      // cast on save.
+      refundPercentage: paymentAmountCents > 0 ? Math.round((refundAmount / paymentAmountCents) * 100) : 0,
       stripeFeeDeducted: 0,
       refundProcessed: !!refundId,
       refundId,
