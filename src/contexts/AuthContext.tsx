@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '@/services/api';
 import api from '@/services/api';
 import { toast } from 'sonner';
-import { teardownPushNotifications } from '@/lib/pushNotifications';
 
 interface User {
   _id: string;
@@ -182,7 +181,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    teardownPushNotifications();
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
