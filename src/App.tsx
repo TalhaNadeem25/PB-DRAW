@@ -16,6 +16,7 @@ import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { setOnUnauthorized } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { initPushNotifications, setOnNotificationTapped } from "@/lib/pushNotifications";
+import { initDeepLinks, setOnDeepLink } from "@/lib/deepLinks";
 import { Users, Ticket } from "@phosphor-icons/react";
 import { Analytics } from "@vercel/analytics/react";
 import { PageSkeleton } from "@/components/ui/skeleton-card";
@@ -84,6 +85,11 @@ function AppRoutes() {
       initPushNotifications();
     }
   }, [isAuthenticated]);
+  useEffect(() => {
+    initDeepLinks();
+    setOnDeepLink((path) => navigate(path));
+    return () => setOnDeepLink(null);
+  }, [navigate]);
   return (
     <>
       <ScrollToTop />

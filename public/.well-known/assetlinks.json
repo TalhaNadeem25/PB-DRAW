@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.pbdraw.app",
+      "sha256_cert_fingerprints": [
+        "A8:0C:EB:A4:37:5E:64:2C:DF:08:BD:B5:D7:FD:C9:78:93:03:31:A2:CB:E3:15:3C:04:8F:C1:AA:FF:51:2A:6F"
+      ]
+    }
+  }
+]
