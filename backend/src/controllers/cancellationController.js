@@ -648,7 +648,8 @@ export const organizerRefundPayment = async (req, res, next) => {
         data: {
           tournamentId: tournament._id,
           eventId: event._id,
-          paymentId: payment._id
+          paymentId: payment._id,
+          actionUrl: '/tickets'
         }
       });
     } catch (notifErr) {
@@ -775,7 +776,7 @@ export const bulkRefundTournament = async (req, res, next) => {
             message: paymentAmountCents > 0
               ? `${tournament.name} has been cancelled. You've been refunded $${payment.amount.toFixed(2)}.`
               : `${tournament.name} has been cancelled.`,
-            data: { tournamentId: tournament._id, paymentId: payment._id }
+            data: { tournamentId: tournament._id, paymentId: payment._id, actionUrl: '/tickets' }
           });
         } catch (notifErr) {
           console.error(`Failed to send refund notification to ${payment.user.email}:`, notifErr);

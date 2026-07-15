@@ -165,7 +165,7 @@ export const sendPartnerRequest = async (req, res) => {
       title: 'New Partner Request',
       message: `${sender.name} (${sender.skillLevel} skill) wants to be your partner!`,
       data: {
-        actionUrl: '/find-partner?tab=requests'
+        actionUrl: '/teams'
       }
     });
 
@@ -266,7 +266,7 @@ export const respondToRequest = async (req, res) => {
         message: `${receiver.name} accepted your partner request!`,
         data: {
           teamId: team?._id,
-          actionUrl: team ? '/teams' : '/find-partner'
+          actionUrl: '/teams'
         }
       });
 
@@ -286,7 +286,7 @@ export const respondToRequest = async (req, res) => {
         type: 'partner-declined',
         title: 'Partner Request Declined',
         message: `${receiver.name} declined your partner request.`,
-        data: {}
+        data: { actionUrl: '/teams' }
       });
 
       res.json({ success: true, message: 'Partner request declined' });

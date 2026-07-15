@@ -88,6 +88,36 @@ export function useDashboardData(user: { _id: string; role?: string; skillLevel?
         t.status === "open" || t.status === "upcoming" || t.status === "in-progress"
     ) || [];
 
+  // Doubles/mixed registrations have a Team record. Singles registrations don't —
+  // they're recorded directly on event.registeredPlayers — so they'd never show up
+  // here if we only looked at myTeams. Tickets exist for every completed
+  // registration regardless of format, so any ticket with no team attached is a
+  // singles registration and gets folded in below.
+  const tickets = ticketsData ?? [];
+  const teamEventIds = new Set(myTeams.map((team: any) => team.event?._id).filter(Boolean));
+
+  const singlesRegistrationsFromTickets = tickets
+    .filter((ticket: any) => (!ticket.teams || ticket.teams.length === 0) && ticket.tournament?.id)
+    .flatMap((ticket: any) =>
+      (ticket.events || [])
+        .filter((event: any) => !teamEventIds.has(event.id))
+        .map((event: any) => ({
+          eventId: event.id,
+          eventName: event.name,
+          eventFormat: "singles",
+          tournamentId: ticket.tournament.id,
+          tournamentName: ticket.tournament.name || "Tournament",
+          tournamentStartDate: ticket.tournament.startDate,
+          tournamentLocation: ticket.tournament.location || "TBD",
+          tournamentStatus: ticket.tournament.status || "upcoming",
+          teamId: undefined,
+          teamName: undefined,
+          isDoubles: false,
+          partnerName: undefined,
+          registeredAt: ticket.createdAt,
+        }))
+    );
+
   const myEventRegistrations = myTeams
     .filter((team: any) => team.event && team.event.tournament)
     .map((team: any) => ({
@@ -105,6 +135,7 @@ export function useDashboardData(user: { _id: string; role?: string; skillLevel?
       partnerName: team.players?.find((p: any) => p._id !== user?._id)?.name,
       registeredAt: team.createdAt,
     }))
+    .concat(singlesRegistrationsFromTickets)
     .filter((reg: any) => {
       const status = reg.tournamentStatus;
       return (

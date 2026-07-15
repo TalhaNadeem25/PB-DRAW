@@ -274,7 +274,7 @@ export const promoteNextWaitlist = async (eventId, reason = 'spot-available', io
     const tournamentId = tournament._id?.toString?.() || tournament.toString();
 
     // Generate payment URL (event registration page with tournament context)
-    const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register/${eventId}`;
+    const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register`;
 
     // Send in-app notification
     if (io) {
@@ -286,7 +286,7 @@ export const promoteNextWaitlist = async (eventId, reason = 'spot-available', io
           data: {
             tournamentId,
             eventId: eventId.toString(),
-            actionUrl: `/tournaments/${tournamentId}/register/${eventId}`
+            actionUrl: `/tournaments/${tournamentId}/register`
           }
         });
       } catch (notifError) {
@@ -341,7 +341,7 @@ export const expirePromotion = async (waitlistId) => {
         to: entry.user.email,
         playerName: entry.user.name,
         eventName: entry.event.name,
-        rejoinUrl: `${process.env.CLIENT_URL}/events/${entry.event._id}`
+        rejoinUrl: `${process.env.CLIENT_URL}/tournaments/${entry.event.tournament}/register`
       });
     } catch (emailError) {
       console.error('Failed to send expiration email:', emailError);
@@ -518,7 +518,7 @@ export const approveWaitlistEntry = async (req, res, next) => {
     await entry.save();
 
     const tournamentId = tournament._id.toString();
-    const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register/${eventId}`;
+    const paymentUrl = `${process.env.CLIENT_URL}/tournaments/${tournamentId}/register`;
 
     // Send in-app notification
     try {
@@ -530,7 +530,7 @@ export const approveWaitlistEntry = async (req, res, next) => {
         data: {
           tournamentId,
           eventId,
-          actionUrl: `/tournaments/${tournamentId}/register/${eventId}`
+          actionUrl: `/tournaments/${tournamentId}/register`
         }
       });
     } catch (notifError) {

@@ -266,7 +266,7 @@ export const sendBulkMessage = async (req, res) => {
           type: 'tournament-update',
           title: subject,
           message,
-          data: { tournamentId }
+          data: { tournamentId, actionUrl: `/tournaments/${tournamentId}` }
         }).catch(error => console.error('Communication push send error:', error));
       }
     }
