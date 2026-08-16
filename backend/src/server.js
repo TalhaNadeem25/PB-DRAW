@@ -14,6 +14,10 @@ import { apiLimiter, authLimiter, paymentLimiter, createLimiter } from './middle
 // Load environment variables
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required but not set');
+}
+
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import tournamentRoutes from './routes/tournamentRoutes.js';
@@ -38,10 +42,12 @@ import courtRoutes from './routes/courtRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import testDataRoutes from './routes/testDataRoutes.js';
 import leagueRoutes from './routes/leagueRoutes.js';
+import clubRoutes from './routes/clubRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { assignMatchToCourt } from './controllers/courtController.js';
 import { handleStripeWebhook } from './controllers/webhookController.js';
 import { startWaitlistExpirationJob } from './jobs/waitlistExpirationJob.js';
+import { startClubGameReminderJob } from './jobs/clubGameReminderJob.js';
 
 // Initialize Express app
 const app = express();
@@ -136,6 +142,7 @@ app.use('/api/newsletter', newsletterRoutes);
 // app.use('/api/partners', partnerRoutes); // disabled: Find Partner removed for now
 app.use('/api/stats', statsRoutes);
 app.use('/api/leagues', leagueRoutes);
+app.use('/api/clubs', clubRoutes);
 app.use('/api/communications', communicationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/court-management', courtRoutes);
@@ -196,6 +203,18 @@ io.on('connection', (socket) => {
     console.log(`👤 Socket ${socket.id} joined user:${userId}`);
   });
 
+  // Join club room (for live chat)
+  socket.on('join-club', (clubId) => {
+    socket.join(`club:${clubId}`);
+    console.log(`💬 Socket ${socket.id} joined club:${clubId}`);
+  });
+
+  // Leave club room
+  socket.on('leave-club', (clubId) => {
+    socket.leave(`club:${clubId}`);
+    console.log(`👋 Socket ${socket.id} left club:${clubId}`);
+  });
+
   socket.on('disconnect', () => {
     console.log(`❌ User disconnected: ${socket.id}`);
   });
@@ -215,4 +234,5 @@ server.listen(PORT, () => {
 
   // Start cron jobs
   startWaitlistExpirationJob();
+  startClubGameReminderJob(io);
 });

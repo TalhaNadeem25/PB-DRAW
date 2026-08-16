@@ -19,6 +19,7 @@ const hostOptions = [
 const browseOptions = [
   { href: "/tournaments", icon: Trophy, label: "Tournaments", desc: "Find & join pickleball tournaments" },
   { href: "/leagues", icon: Medal, label: "Leagues", desc: "Browse & join local leagues" },
+  { href: "/clubs", icon: Users, label: "Clubs", desc: "Join a local pickleball club" },
 ];
 
 const MobileNav = () => {
@@ -84,7 +85,7 @@ const MobileNav = () => {
     { key: "me",     href: null,           label: "Me",     icon: User },
   ];
 
-  const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues");
+  const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues") || location.pathname.startsWith("/clubs");
 
   const isAuthRoute = ["/login", "/signup", "/auth"].includes(location.pathname);
   if (isAuthRoute) return null;

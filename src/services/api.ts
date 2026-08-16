@@ -924,6 +924,148 @@ export const leagueAPI = {
   },
 };
 
+export const clubAPI = {
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    joinType?: string;
+  }) => {
+    const response = await api.get('/clubs', { params });
+    return response.data;
+  },
+
+  getById: async (id: string) => {
+    const response = await api.get(`/clubs/${id}`);
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post('/clubs', data);
+    return response.data;
+  },
+
+  update: async (id: string, data: any) => {
+    const response = await api.put(`/clubs/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/clubs/${id}`);
+    return response.data;
+  },
+
+  join: async (id: string) => {
+    const response = await api.post(`/clubs/${id}/join`);
+    return response.data;
+  },
+
+  leave: async (id: string) => {
+    const response = await api.delete(`/clubs/${id}/leave`);
+    return response.data;
+  },
+
+  getMembers: async (id: string) => {
+    const response = await api.get(`/clubs/${id}/members`);
+    return response.data;
+  },
+
+  addMember: async (id: string, email: string) => {
+    const response = await api.post(`/clubs/${id}/members`, { email });
+    return response.data;
+  },
+
+  getAnnouncements: async (id: string) => {
+    const response = await api.get(`/clubs/${id}/announcements`);
+    return response.data;
+  },
+
+  createAnnouncement: async (id: string, message: string) => {
+    const response = await api.post(`/clubs/${id}/announcements`, { message });
+    return response.data;
+  },
+
+  deleteAnnouncement: async (id: string, announcementId: string) => {
+    const response = await api.delete(`/clubs/${id}/announcements/${announcementId}`);
+    return response.data;
+  },
+
+  getMessages: async (id: string, before?: string) => {
+    const response = await api.get(`/clubs/${id}/messages`, { params: before ? { before } : undefined });
+    return response.data;
+  },
+
+  sendMessage: async (id: string, message: string) => {
+    const response = await api.post(`/clubs/${id}/messages`, { message });
+    return response.data;
+  },
+
+  deleteMessage: async (id: string, messageId: string) => {
+    const response = await api.delete(`/clubs/${id}/messages/${messageId}`);
+    return response.data;
+  },
+
+  getRequests: async (id: string) => {
+    const response = await api.get(`/clubs/${id}/requests`);
+    return response.data;
+  },
+
+  approveRequest: async (id: string, userId: string) => {
+    const response = await api.post(`/clubs/${id}/requests/${userId}/approve`);
+    return response.data;
+  },
+
+  rejectRequest: async (id: string, userId: string) => {
+    const response = await api.post(`/clubs/${id}/requests/${userId}/reject`);
+    return response.data;
+  },
+
+  updateMemberRole: async (id: string, userId: string, role: 'admin' | 'member') => {
+    const response = await api.put(`/clubs/${id}/members/${userId}/role`, { role });
+    return response.data;
+  },
+
+  removeMember: async (id: string, userId: string) => {
+    const response = await api.delete(`/clubs/${id}/members/${userId}`);
+    return response.data;
+  },
+
+  getGames: async (id: string, params?: { status?: string }) => {
+    const response = await api.get(`/clubs/${id}/games`, { params });
+    return response.data;
+  },
+
+  getGame: async (id: string, gameId: string) => {
+    const response = await api.get(`/clubs/${id}/games/${gameId}`);
+    return response.data;
+  },
+
+  createGame: async (id: string, data: any) => {
+    const response = await api.post(`/clubs/${id}/games`, data);
+    return response.data;
+  },
+
+  createGamesBatch: async (id: string, games: any[]) => {
+    const response = await api.post(`/clubs/${id}/games/batch`, { games });
+    return response.data;
+  },
+
+  updateGame: async (id: string, gameId: string, data: any) => {
+    const response = await api.put(`/clubs/${id}/games/${gameId}`, data);
+    return response.data;
+  },
+
+  cancelGame: async (id: string, gameId: string) => {
+    const response = await api.delete(`/clubs/${id}/games/${gameId}`);
+    return response.data;
+  },
+
+  rsvp: async (id: string, gameId: string, status: 'going' | 'maybe' | 'not-going') => {
+    const response = await api.post(`/clubs/${id}/games/${gameId}/rsvp`, { status });
+    return response.data;
+  },
+};
+
 // Newsletter
 export const newsletterAPI = {
   subscribe: async (email: string) => {

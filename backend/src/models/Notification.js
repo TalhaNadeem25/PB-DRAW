@@ -22,6 +22,14 @@ const notificationSchema = new mongoose.Schema({
       'registration-refunded',
       'check-in-reminder',
       'score-update',
+      'club-join-request',
+      'club-request-approved',
+      'club-request-rejected',
+      'club-game-created',
+      'club-game-cancelled',
+      'club-member-added',
+      'club-game-reminder',
+      'club-announcement',
       'general'
     ],
     required: true

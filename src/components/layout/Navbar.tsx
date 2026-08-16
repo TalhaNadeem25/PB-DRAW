@@ -43,7 +43,7 @@ const Navbar = () => {
     { href: "/dashboard", label: "Dashboard", icon: SquaresFour },
   ];
 
-  const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues");
+  const isBrowseActive = location.pathname.startsWith("/tournaments") || location.pathname.startsWith("/leagues") || location.pathname.startsWith("/clubs");
 
   const authenticatedNavLinks = isAuthenticated
     ? [
@@ -114,6 +114,11 @@ const Navbar = () => {
                 <DropdownMenuItem asChild className="cursor-pointer rounded-[6px]">
                   <Link to="/leagues" className="flex items-center gap-2 px-2 py-1.5 text-[13px] text-pb-ink2">
                     <Medal className="w-3.5 h-3.5 text-pb-muted" /> Leagues
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer rounded-[6px]">
+                  <Link to="/clubs" className="flex items-center gap-2 px-2 py-1.5 text-[13px] text-pb-ink2">
+                    <Users className="w-3.5 h-3.5 text-pb-muted" /> Clubs
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -291,6 +296,16 @@ const Navbar = () => {
                   onClick={() => setIsOpen(false)}
                 >
                   <Medal className="w-4 h-4" /> Leagues
+                </Link>
+                <Link
+                  to="/clubs"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2.5 text-[14px] font-medium rounded-[6px] transition-colors",
+                    isActive("/clubs") ? "text-pb-ink bg-pb-surface2" : "text-pb-muted hover:text-pb-ink hover:bg-pb-surface2"
+                  )}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Users className="w-4 h-4" /> Clubs
                 </Link>
 
                 <div className="pt-3 border-t border-pb-hairline space-y-1">

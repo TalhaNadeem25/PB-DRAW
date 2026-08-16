@@ -53,6 +53,32 @@ export const emitTournamentUpdate = (io, tournamentId, tournamentData) => {
 };
 
 /**
+ * Emit a new club chat message to everyone in that club's room
+ */
+export const emitClubMessage = (io, clubId, messageData) => {
+  if (!io) {
+    console.warn('⚠️  Socket.IO not available (serverless environment) - skipping real-time emit');
+    return;
+  }
+
+  io.to(`club:${clubId}`).emit('club-message', messageData);
+
+  console.log(`💬 Club message emitted for club:${clubId}`);
+};
+
+/**
+ * Emit a club message deletion to everyone in that club's room
+ */
+export const emitClubMessageDeleted = (io, clubId, messageId) => {
+  if (!io) {
+    console.warn('⚠️  Socket.IO not available (serverless environment) - skipping real-time emit');
+    return;
+  }
+
+  io.to(`club:${clubId}`).emit('club-message-deleted', { messageId });
+};
+
+/**
  * Send notification to a specific user
  */
 export const notifyPlayer = (io, userId, notification) => {

@@ -9,6 +9,8 @@ interface SocketContextType {
   leaveTournament: (tournamentId: string) => void;
   joinMatch: (matchId: string) => void;
   leaveMatch: (matchId: string) => void;
+  joinClub: (clubId: string) => void;
+  leaveClub: (clubId: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -28,6 +30,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user, isAuthenticated } = useAuth();
   const tournamentRefCount = useRef<Record<string, number>>({});
   const matchRefCount = useRef<Record<string, number>>({});
+  const clubRefCount = useRef<Record<string, number>>({});
 
   useEffect(() => {
     // VITE_SOCKET_URL overrides; otherwise derive from VITE_API_URL (strip /api path for Socket.IO)
@@ -124,6 +127,27 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [socket]);
 
+  const joinClub = useCallback((clubId: string) => {
+    if (!socket) return;
+    const prev = clubRefCount.current[clubId] ?? 0;
+    clubRefCount.current[clubId] = prev + 1;
+    if (prev === 0) {
+      socket.emit('join-club', clubId);
+      console.log(`💬 Joined club:${clubId}`);
+    }
+  }, [socket]);
+
+  const leaveClub = useCallback((clubId: string) => {
+    if (!socket) return;
+    const prev = clubRefCount.current[clubId] ?? 0;
+    const next = Math.max(0, prev - 1);
+    clubRefCount.current[clubId] = next;
+    if (prev === 1) {
+      socket.emit('leave-club', clubId);
+      console.log(`👋 Left club:${clubId}`);
+    }
+  }, [socket]);
+
   // Announce score updates for screen readers (aria-live)
   useEffect(() => {
     if (!socket) return;
@@ -150,6 +174,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         leaveTournament,
         joinMatch,
         leaveMatch,
+        joinClub,
+        leaveClub,
       }}
     >
       {/* Screen reader announcement for live score updates */}

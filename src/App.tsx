@@ -65,6 +65,10 @@ const BlogEditor = lazy(() => import("./pages/BlogEditor"));
 const CreateLeague = lazy(() => import("./pages/CreateLeague"));
 const LeagueDetail = lazy(() => import("./pages/LeagueDetail"));
 const LeagueManage = lazy(() => import("./pages/LeagueManage"));
+const Clubs = lazy(() => import("./pages/Clubs"));
+const CreateClub = lazy(() => import("./pages/CreateClub"));
+const ClubDetail = lazy(() => import("./pages/ClubDetail"));
+const ClubManage = lazy(() => import("./pages/ClubManage"));
 
 const queryClient = new QueryClient();
 
@@ -161,6 +165,24 @@ function AppRoutes() {
               element={
                 <ProtectedRoute requireRole={['organizer', 'admin']}>
                   <LeagueManage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/clubs" element={<Clubs />} />
+            <Route
+              path="/clubs/create"
+              element={
+                <ProtectedRoute>
+                  <CreateClub />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/clubs/:id" element={<ClubDetail />} />
+            <Route
+              path="/clubs/:id/manage"
+              element={
+                <ProtectedRoute>
+                  <ClubManage />
                 </ProtectedRoute>
               }
             />
