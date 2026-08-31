@@ -11,6 +11,7 @@ import { Turnstile } from '@marsidev/react-turnstile';
 import type { TurnstileInstance } from '@marsidev/react-turnstile';
 import { Capacitor } from '@capacitor/core';
 import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Eyebrow, PbLogo, PbBtn } from '@/components/ui/pb';
 import { ArrowRight } from 'lucide-react';
 
@@ -95,6 +96,15 @@ const AuthPage = () => {
     return () => { document.body.removeChild(script); };
   }, []);
 
+  // Google's OAuth pages refuse to load inside an embedded WebView (which is
+  // what the Capacitor Android/iOS app is), so the web popup flow below is
+  // unusable natively — initialize the native Google Sign-In SDK instead.
+  useEffect(() => {
+    if (isNative) {
+      GoogleAuth.initialize();
+    }
+  }, [isNative]);
+
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -106,6 +116,23 @@ const AuthPage = () => {
     },
     onError: () => setError('Google sign-in failed. Please try again.'),
   });
+
+  const handleGoogleSignIn = async () => {
+    if (!isNative) {
+      googleLogin();
+      return;
+    }
+    try {
+      const googleUser = await GoogleAuth.signIn();
+      const { isNewUser } = await loginWithGoogle(googleUser.authentication.accessToken);
+      navigate(isNewUser ? '/onboarding' : redirectUrl);
+    } catch (err: any) {
+      // User cancelling the native account picker isn't an error worth showing.
+      if (err?.error !== 'popup_closed_by_user' && err?.code !== '12501') {
+        setError('Google sign-in failed. Please try again.');
+      }
+    }
+  };
 
   const handleAppleSignIn = async () => {
     try {
@@ -299,7 +326,7 @@ const AuthPage = () => {
                 {/* Google */}
                 <button
                   type="button"
-                  onClick={() => googleLogin()}
+                  onClick={handleGoogleSignIn}
                   className="flex items-center justify-center gap-2.5 w-full h-[50px] rounded-[12px] font-display font-bold text-[15px] text-pb-ink bg-pb-surface border border-pb-hairline transition-colors"
                 >
                   <GoogleIcon />
@@ -663,7 +690,7 @@ const AuthPage = () => {
 
             {/* Social buttons */}
             <div className="flex flex-col gap-2.5">
-              <button onClick={() => googleLogin()}
+              <button onClick={handleGoogleSignIn}
                 className="flex items-center justify-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium text-pb-ink bg-pb-surface border border-pb-hairline rounded-[6px] hover:bg-pb-surface2 transition-colors">
                 <GoogleIcon />
                 Continue with Google

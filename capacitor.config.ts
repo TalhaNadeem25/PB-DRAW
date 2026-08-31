@@ -38,6 +38,15 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert']
+    },
+    GoogleAuth: {
+      // Web OAuth client ID — used on Android/iOS too so the returned token's
+      // audience matches what the backend already verifies (see main.tsx's
+      // GoogleOAuthProvider clientId). The separate Android-type OAuth client
+      // (package name + SHA-1 fingerprint) only needs to exist in Google Cloud
+      // Console; it's never referenced here.
+      clientId: '498337994484-ph3f3ps676q6jp3m3of8nh1jbcs8v6ep.apps.googleusercontent.com',
+      scopes: ['profile', 'email'],
     }
   },
   android: {
