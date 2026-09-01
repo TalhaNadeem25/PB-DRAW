@@ -31,4 +31,18 @@ end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+
+  # Capacitor's own assertDeploymentTarget only raises pods below 13.0 up to
+  # 13.0 — it doesn't match them to this project's actual minimum (15.0, set
+  # above). Most pods still default to 13.0, which the current Xcode/SDK no
+  # longer accepts (it requires 15.0+), so force every pod target up to at
+  # least what this app targets.
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      deployment_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f
+      if deployment_target != 0.0 && deployment_target < 15.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      end
+    end
+  end
 end
