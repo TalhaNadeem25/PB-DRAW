@@ -26,12 +26,19 @@ npm -v
 echo "== ci_post_clone: installing JS dependencies =="
 # CI_WORKSPACE is set by Xcode Cloud to the repo root.
 cd "$CI_WORKSPACE"
+pwd
 npm ci
 
 echo "== ci_post_clone: building web app =="
 npm run build
 
 echo "== ci_post_clone: syncing Capacitor iOS project (copies dist/, runs pod install) =="
-npx cap sync ios
+# Call the locally-installed CLI directly (./node_modules/.bin) instead of
+# `npx cap`, which can resolve a different, unpinned @capacitor/cli version
+# in a fresh CI environment and misbehave (seen: "ios platform has not been
+# added yet" even though ios/ was right there — npx pulling a different
+# CLI build than the one in package-lock.json is the likely cause).
+ls -la ios
+./node_modules/.bin/cap sync ios
 
 echo "== ci_post_clone: done =="
