@@ -24,9 +24,20 @@ node -v
 npm -v
 
 echo "== ci_post_clone: installing JS dependencies =="
-# CI_WORKSPACE is set by Xcode Cloud to the repo root.
-cd "$CI_WORKSPACE"
+# $CI_WORKSPACE turned out to be unset/empty in this Xcode Cloud environment
+# (cd "$CI_WORKSPACE" silently no-op'd and left us in ci_scripts/, which is
+# where Xcode Cloud starts this script — see ios/App/ci_scripts). Apple's
+# actual repo-root variable is CI_PRIMARY_REPOSITORY_PATH; fall back to
+# walking up from this script's own known location (repo root is always
+# three directories above ios/App/ci_scripts) if that's unset too, and
+# verify we actually landed somewhere sane either way.
+if [ -n "$CI_PRIMARY_REPOSITORY_PATH" ]; then
+  cd "$CI_PRIMARY_REPOSITORY_PATH"
+else
+  cd "$(dirname "$0")/../../.."
+fi
 pwd
+test -f package.json || { echo "ERROR: not at repo root (no package.json here)"; exit 1; }
 npm ci
 
 echo "== ci_post_clone: building web app =="
