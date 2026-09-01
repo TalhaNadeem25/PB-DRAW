@@ -12,11 +12,20 @@
 
 set -e
 
+echo "== ci_post_clone: ensuring Node.js is available =="
+# Xcode Cloud's macOS image doesn't ship Node by default, but it does have
+# Homebrew preinstalled — use that to get a Node matching package.json's
+# "engines" requirement (>=20).
+if ! command -v node >/dev/null 2>&1; then
+  brew install node@20
+  brew link --overwrite --force node@20
+fi
+node -v
+npm -v
+
 echo "== ci_post_clone: installing JS dependencies =="
 # CI_WORKSPACE is set by Xcode Cloud to the repo root.
 cd "$CI_WORKSPACE"
-node -v
-npm -v
 npm ci
 
 echo "== ci_post_clone: building web app =="
