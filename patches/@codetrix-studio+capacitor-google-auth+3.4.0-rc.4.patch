@@ -1,0 +1,137 @@
+diff --git a/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec b/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec
+index 6432925..c2fbd8a 100644
+--- a/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec
++++ b/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec
+@@ -10,6 +10,6 @@
+     s.source_files = 'ios/Plugin/**/*.{swift,h,m,c,cc,mm,cpp}'
+     s.ios.deployment_target  = '12.0'
+     s.dependency 'Capacitor'
+-    s.dependency 'GoogleSignIn', '~> 6.2.4'
++    s.dependency 'GoogleSignIn', '>= 7.1.0'
+     s.static_framework = true
+   end
+diff --git a/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift b/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift
+index fd39ed9..de71706 100644
+--- a/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift
++++ b/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift
+@@ -23,6 +23,9 @@ public class GoogleAuth: CAPPlugin {
+         let serverClientId = getServerClientIdValue();
+ 
+         googleSignInConfiguration = GIDConfiguration.init(clientID: customClientId, serverClientID: serverClientId)
++        // GoogleSignIn 7.0+ removed the per-call configuration parameter on signIn(withPresenting:...) —
++        // the configuration must be set on the shared instance beforehand instead.
++        googleSignIn.configuration = googleSignInConfiguration
+         
+         // these are scopes granted by default by the signIn method
+         let defaultGrantedScopes = ["email", "profile", "openid"];
+@@ -70,56 +73,71 @@ public class GoogleAuth: CAPPlugin {
+     @objc
+     func signIn(_ call: CAPPluginCall) {
+         signInCall = call;
+-        DispatchQueue.main.async {
++        // Newer Swift/Xcode toolchains resolve a bare trailing closure passed to
++        // DispatchQueue.main.async(execute:) to the wrong overload (the one taking a
++        // DispatchWorkItem) when the closure captures a non-Sendable `self` — wrapping it
++        // explicitly in DispatchWorkItem sidesteps the ambiguity.
++        DispatchQueue.main.async(execute: DispatchWorkItem(block: {
+             if self.googleSignIn.hasPreviousSignIn() && !self.forceAuthCode {
+                 self.googleSignIn.restorePreviousSignIn() { user, error in
+                 if let error = error {
+                     self.signInCall?.reject(error.localizedDescription);
+                     return;
+                 }
+-                self.resolveSignInCallWith(user: user!)
++                self.resolveSignInCallWith(user: user!, serverAuthCode: nil)
+                 }
+             } else {
+                 let presentingVc = self.bridge!.viewController!;
+ 
+-                self.googleSignIn.signIn(with: self.googleSignInConfiguration, presenting: presentingVc, hint: nil, additionalScopes: self.additionalScopes) { user, error in
++                // GoogleSignIn 7.0+ dropped the `with: GIDConfiguration` parameter — the
++                // active configuration (set on the shared instance in loadSignInClient)
++                // is used implicitly instead. serverAuthCode also moved off GIDGoogleUser
++                // onto the GIDSignInResult returned here.
++                self.googleSignIn.signIn(withPresenting: presentingVc, hint: nil, additionalScopes: self.additionalScopes) { signInResult, error in
+                     if let error = error {
+                         self.signInCall?.reject(error.localizedDescription, "\(error._code)");
+                         return;
+                     }
+-                    self.resolveSignInCallWith(user: user!);
++                    guard let signInResult = signInResult else {
++                        self.signInCall?.reject("Sign-in failed.");
++                        return;
++                    }
++                    self.resolveSignInCallWith(user: signInResult.user, serverAuthCode: signInResult.serverAuthCode);
+                 };
+             }
+-        }
++        }))
+     }
+ 
+     @objc
+     func refresh(_ call: CAPPluginCall) {
+-        DispatchQueue.main.async {
+-            if self.googleSignIn.currentUser == nil {
++        DispatchQueue.main.async(execute: DispatchWorkItem(block: {
++            guard let currentUser = self.googleSignIn.currentUser else {
+                 call.reject("User not logged in.");
+                 return
+             }
+-            self.googleSignIn.currentUser!.authentication.do { (authentication, error) in
+-                guard let authentication = authentication else {
++            // GoogleSignIn 7.0+ replaced `.authentication.do{}` with this completion-based
++            // refresh call directly on the user object, returning an updated GIDGoogleUser
++            // whose token properties (GIDToken, via `.tokenString`) are already current.
++            currentUser.refreshTokensIfNeeded { user, error in
++                guard let user = user else {
+                     call.reject(error?.localizedDescription ?? "Something went wrong.");
+                     return;
+                 }
+                 let authenticationData: [String: Any] = [
+-                    "accessToken": authentication.accessToken,
+-                    "idToken": authentication.idToken ?? NSNull(),
+-                    "refreshToken": authentication.refreshToken
++                    "accessToken": user.accessToken.tokenString,
++                    "idToken": user.idToken?.tokenString ?? NSNull(),
++                    "refreshToken": user.refreshToken.tokenString
+                 ]
+                 call.resolve(authenticationData);
+             }
+-        }
++        }))
+     }
+ 
+     @objc
+     func signOut(_ call: CAPPluginCall) {
+-        DispatchQueue.main.async {
++        DispatchQueue.main.async(execute: DispatchWorkItem(block: {
+             self.googleSignIn.signOut();
+-        }
++        }))
+         call.resolve();
+     }
+ 
+@@ -159,14 +177,18 @@ public class GoogleAuth: CAPPlugin {
+         return nil;
+     }
+ 
+-    func resolveSignInCallWith(user: GIDGoogleUser) {
++    func resolveSignInCallWith(user: GIDGoogleUser, serverAuthCode: String?) {
++        // GoogleSignIn 7.0+: token access moved from `.authentication` (removed) to
++        // `.accessToken`/`.idToken`/`.refreshToken` (each a GIDToken with `.tokenString`).
++        // serverAuthCode moved off GIDGoogleUser onto GIDSignInResult, so it's passed in
++        // by the caller (nil for a restored/silent sign-in, which has no fresh auth code).
+         var userData: [String: Any] = [
+             "authentication": [
+-                "accessToken": user.authentication.accessToken,
+-                "idToken": user.authentication.idToken,
+-                "refreshToken": user.authentication.refreshToken
++                "accessToken": user.accessToken.tokenString,
++                "idToken": user.idToken?.tokenString ?? NSNull(),
++                "refreshToken": user.refreshToken.tokenString
+             ],
+-            "serverAuthCode": user.serverAuthCode ?? NSNull(),
++            "serverAuthCode": serverAuthCode ?? NSNull(),
+             "email": user.profile?.email ?? NSNull(),
+             "familyName": user.profile?.familyName ?? NSNull(),
+             "givenName": user.profile?.givenName ?? NSNull(),
