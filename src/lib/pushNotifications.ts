@@ -48,15 +48,29 @@ export const initPushNotifications = async () => {
     });
   }
 
-  const permStatus = await PushNotifications.checkPermissions();
-  let granted = permStatus.receive === 'granted';
+  try {
+    const permStatus = await PushNotifications.checkPermissions();
+    console.log('[push] checkPermissions:', permStatus.receive);
+    let granted = permStatus.receive === 'granted';
 
-  if (permStatus.receive === 'prompt') {
-    const result = await PushNotifications.requestPermissions();
-    granted = result.receive === 'granted';
-  }
+    // 'prompt-with-rationale' (Android, after a prior soft-decline) also needs
+    // a fresh request — only 'denied' and 'granted' are terminal states.
+    if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
+      const result = await PushNotifications.requestPermissions();
+      console.log('[push] requestPermissions result:', result.receive);
+      granted = result.receive === 'granted';
+    }
 
-  if (granted) {
-    await PushNotifications.register();
+    if (granted) {
+      await PushNotifications.register();
+      console.log('[push] register() called');
+    } else {
+      console.log('[push] permission not granted, skipping register()');
+    }
+  } catch (error) {
+    // Without this, any native-side failure here (plugin not linked, a
+    // thrown error from checkPermissions/requestPermissions/register) fails
+    // completely silently — no prompt, no log, nothing visible to debug from.
+    console.error('[push] initPushNotifications failed:', error);
   }
 };
