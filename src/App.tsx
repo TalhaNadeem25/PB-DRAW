@@ -1,3 +1,4 @@
+import AppLaunchIntro from "@/components/AppLaunchIntro";
 import AuthGate from "@/components/AuthGate";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useSwipeBack } from "@/hooks/useSwipeBack";
@@ -301,6 +302,7 @@ function AppRoutes() {
 const App = () => {
   return (
     <HelmetProvider>
+      <AppLaunchIntro />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <SocketProvider>

@@ -19,8 +19,10 @@ const config: CapacitorConfig = {
     : undefined,
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1200,
-      launchAutoHide: true,
+      // AppLaunchIntro (src/components/AppLaunchIntro.tsx) takes over as soon as it
+      // mounts and calls SplashScreen.hide() itself — it shares this exact background
+      // color, so the handoff to the animated intro is seamless. No fixed timer here.
+      launchAutoHide: false,
       backgroundColor: '#1F4A2E',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
