@@ -270,9 +270,15 @@ const processCancellation = async (cancellationId) => {
   try {
     // Process Stripe refund
     if (refundAmount > 0 && payment.stripePaymentIntentId) {
+      // reverse_transfer + refund_application_fee claw back the organizer's
+      // payout and the platform's cut proportionally, so a refund doesn't
+      // leave the platform paying the player back out of its own pocket
+      // while the organizer keeps the money and the platform fee is never returned.
       const refund = await stripe.refunds.create({
         payment_intent: payment.stripePaymentIntentId,
-        amount: refundAmount
+        amount: refundAmount,
+        reverse_transfer: true,
+        refund_application_fee: true
       });
 
       cancellation.refundId = refund.id;
@@ -338,7 +344,9 @@ const processIndividualRefund = async (cancellation) => {
     if (cancellation.refundAmount > 0 && payment.stripePaymentIntentId) {
       const refund = await stripe.refunds.create({
         payment_intent: payment.stripePaymentIntentId,
-        amount: cancellation.refundAmount
+        amount: cancellation.refundAmount,
+        reverse_transfer: true,
+        refund_application_fee: true
       });
 
       cancellation.refundId = refund.id;
@@ -563,6 +571,8 @@ export const organizerRefundPayment = async (req, res, next) => {
         const refund = await stripe.refunds.create({
           payment_intent: payment.stripePaymentIntentId,
           amount: refundAmount,
+          reverse_transfer: true,
+          refund_application_fee: true
         });
         refundId = refund.id;
       } catch (stripeErr) {
@@ -723,6 +733,8 @@ export const bulkRefundTournament = async (req, res, next) => {
           const refund = await stripe.refunds.create({
             payment_intent: payment.stripePaymentIntentId,
             amount: paymentAmountCents,
+            reverse_transfer: true,
+            refund_application_fee: true
           });
           refundId = refund.id;
         }

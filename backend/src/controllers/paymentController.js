@@ -1351,7 +1351,9 @@ export const refundPayment = async (req, res, next) => {
     // Create refund in Stripe
     const refund = await getStripe().refunds.create({
       payment_intent: payment.stripePaymentIntentId,
-      reason: 'requested_by_customer'
+      reason: 'requested_by_customer',
+      reverse_transfer: true,
+      refund_application_fee: true
     });
 
     // Update payment record
